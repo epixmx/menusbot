@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bella Vita · Panel del Restaurante — MenusBot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --esp:#151210; --esp2:#1D1915; --crema:#EFE7D8; --humo:#A79D8C; --humo2:#6E665A;
+    --pomodoro:#E4593B; --basilico:#8FAE8B; --oro:#C9A227; --papel:#F2EBDD; --ink:#241F18;
+    --linea:rgba(239,231,216,.14); --linea2:rgba(239,231,216,.28);
+    --serif:'Fraunces',Georgia,serif; --grot:'Space Grotesk',system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--grot);background:var(--esp);color:var(--crema);min-height:100vh}
+  body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:250;opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")}
+  .caps{font-size:9.5px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase}
+  .cont{max-width:1120px;margin:0 auto;padding:0 22px 60px}
+
+  header{border-bottom:1px solid var(--linea);position:sticky;top:0;background:rgba(21,18,16,.96);backdrop-filter:blur(12px);z-index:50}
+  .head-int{max-width:1120px;margin:0 auto;padding:16px 22px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+  .marca{font-family:var(--serif);font-style:italic;font-size:24px;font-weight:500}
+  .marca small{display:block;font-family:var(--grot);font-style:normal;font-size:8.5px;letter-spacing:2.6px;color:var(--humo);font-weight:700;margin-top:2px}
+  .vivo{display:flex;align-items:center;gap:8px;font-size:9px;letter-spacing:2px;font-weight:700;color:var(--basilico);border:1px solid var(--linea2);padding:8px 13px;border-radius:2px}
+  .vivo i{width:7px;height:7px;border-radius:50%;background:var(--basilico);animation:parp 1.6s infinite}
+  @keyframes parp{0%,100%{opacity:1}50%{opacity:.25}}
+  .tabs{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+  .tab{font-family:var(--grot);font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;padding:11px 16px;background:transparent;border:none;color:var(--humo2);cursor:pointer;position:relative}
+  .tab .mini-badge{position:absolute;top:2px;right:2px;min-width:15px;height:15px;border-radius:8px;background:var(--pomodoro);color:var(--papel);font-size:9px;display:none;align-items:center;justify-content:center;padding:0 4px;letter-spacing:0}
+  .tab .mini-badge.visible{display:flex}
+  .tab.activo{color:var(--crema);border-bottom:2px solid var(--pomodoro)}
+
+  .vista{display:none;padding-top:26px}
+  .vista.activa{display:block}
+  .vista-titulo{display:flex;align-items:baseline;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+  .vista-titulo h1{font-family:var(--serif);font-style:italic;font-weight:500;font-size:32px;letter-spacing:-.5px}
+  .vista-titulo .caps{color:var(--humo)}
+
+  /* ---------- Tablero de comandas ---------- */
+  .tablero{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media(max-width:860px){.tablero{grid-template-columns:1fr}}
+  .columna{border:1px solid var(--linea);border-radius:3px;min-height:300px;background:var(--esp2)}
+  .col-cab{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--linea)}
+  .col-cab .caps{color:var(--crema)}
+  .col-cab .cuenta-col{margin-left:auto;font-family:var(--serif);font-style:italic;font-size:16px;color:var(--pomodoro)}
+  .col-cuerpo{padding:12px;display:flex;flex-direction:column;gap:12px}
+  .comanda{background:var(--papel);color:var(--ink);border-radius:3px;padding:14px 16px;box-shadow:0 12px 30px rgba(0,0,0,.35);position:relative}
+  .comanda::before{content:'';position:absolute;left:0;right:0;top:-6px;height:7px;background-image:radial-gradient(circle at 7px 7px, transparent 4px, var(--papel) 4.5px);background-size:14px 7px}
+  .comanda .c-top{display:flex;align-items:baseline;gap:10px}
+  .comanda .c-folio{font-family:var(--grot);font-weight:700;font-size:12px;color:var(--pomodoro);letter-spacing:1px}
+  .comanda .c-mesa{font-family:var(--serif);font-style:italic;font-size:15px}
+  .comanda .c-tiempo{margin-left:auto;font-size:10px;font-weight:700;letter-spacing:1px;color:#8A7D69}
+  .comanda .c-tiempo.tarde{color:var(--pomodoro)}
+  .comanda .c-items{margin-top:10px;border-top:1px dashed rgba(36,31,24,.3);padding-top:8px}
+  .comanda .c-item{display:flex;gap:8px;font-size:12.5px;padding:3px 0}
+  .comanda .c-item b{font-family:var(--grot);font-size:11px;color:var(--pomodoro);min-width:24px}
+  .comanda .c-item small{display:block;font-size:10px;color:#8A7D69;letter-spacing:.4px}
+  .comanda .c-pie{display:flex;align-items:center;gap:10px;margin-top:10px;border-top:1px dotted rgba(36,31,24,.25);padding-top:10px}
+  .comanda .c-total{font-family:var(--grot);font-weight:700;font-size:13px}
+  .btn-avanza{margin-left:auto;border:none;background:var(--ink);color:var(--papel);font-family:var(--grot);font-size:9px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;padding:10px 14px;border-radius:2px;cursor:pointer}
+  .btn-avanza:active{transform:scale(.97)}
+  .btn-avanza.rojo{background:var(--pomodoro)}
+  .quien{margin-top:10px;border-top:1px dotted rgba(36,31,24,.25);padding-top:10px}
+  .quien .caps{color:#8A7D69;font-size:8.5px}
+  .quien .meseros{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .btn-mesero{border:1px solid rgba(36,31,24,.35);background:transparent;color:var(--ink);font-family:var(--grot);font-size:10.5px;font-weight:700;letter-spacing:1px;padding:9px 13px;border-radius:2px;cursor:pointer}
+  .btn-mesero:hover{background:var(--pomodoro);border-color:var(--pomodoro);color:var(--papel)}
+  .col-vacia{text-align:center;color:var(--humo2);font-size:11px;letter-spacing:1.4px;text-transform:uppercase;padding:34px 10px}
+  .entregas-hoy{margin-top:20px;border:1px solid var(--linea);border-radius:3px;padding:14px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .entregas-hoy .caps{color:var(--humo)}
+  .entregas-hoy .lista{font-size:12px;color:var(--crema);font-family:var(--serif)}
+
+  /* ---------- Registro / conciliación ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+  @media(max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{border:1px solid var(--linea);border-radius:3px;padding:16px 18px;background:var(--esp2)}
+  .kpi .num{font-family:var(--serif);font-size:28px;font-weight:500;margin-top:6px}
+  .kpi .num em{font-style:italic;color:var(--pomodoro)}
+  .kpi .caps{color:var(--humo)}
+  .fila-controles{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+  select.filtro{background:var(--esp2);border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:11px;letter-spacing:1px;padding:10px 13px;border-radius:2px;outline:none}
+  .btn-sec{border:1px solid var(--linea2);background:transparent;color:var(--crema);font-family:var(--grot);font-size:9.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:11px 16px;border-radius:2px;cursor:pointer}
+  .btn-sec.rojo{border-color:rgba(228,89,59,.5);color:var(--pomodoro)}
+  .btn-sec:hover{border-color:var(--crema)}
+  table{width:100%;border-collapse:collapse;background:var(--esp2);border:1px solid var(--linea)}
+  th{font-family:var(--grot);font-size:8.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--humo);text-align:left;padding:13px 14px;border-bottom:1px solid var(--linea2)}
+  td{padding:13px 14px;border-bottom:1px solid var(--linea);font-size:12.5px;vertical-align:top}
+  td .serif{font-family:var(--serif);font-size:13.5px}
+  td small{color:var(--humo);font-size:11px}
+  .pill-est{display:inline-block;font-size:8.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:5px 10px;border-radius:2px;border:1px solid var(--linea2);color:var(--humo)}
+  .pill-est.e0{border-color:rgba(228,89,59,.5);color:var(--pomodoro)}
+  .pill-est.e1{border-color:rgba(201,162,39,.5);color:var(--oro)}
+  .pill-est.e2{border-color:rgba(143,174,139,.6);color:var(--basilico)}
+  .pill-est.e3{background:var(--basilico);border-color:var(--basilico);color:var(--esp)}
+  .tabla-scroll{overflow-x:auto}
+
+  /* ---------- Carta ---------- */
+  .carta-lista{border:1px solid var(--linea);border-radius:3px;background:var(--esp2)}
+  .carta-fila{display:flex;align-items:center;gap:16px;padding:14px 18px;border-bottom:1px solid var(--linea)}
+  .carta-fila:last-child{border-bottom:none}
+  .carta-fila .cf-nombre{font-family:var(--serif);font-size:15.5px;flex:1;min-width:200px}
+  .carta-fila .cf-nombre small{display:block;font-family:var(--grot);font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:var(--humo2);margin-top:3px}
+  .cf-precio{display:flex;align-items:center;gap:7px}
+  .cf-precio span{color:var(--humo);font-size:12px}
+  .cf-precio input{width:76px;background:var(--esp);border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-weight:700;font-size:13px;padding:9px 10px;border-radius:2px;outline:none;text-align:right}
+  .cf-precio input:focus{border-color:var(--pomodoro)}
+  .switch{position:relative;width:46px;height:24px;border-radius:12px;border:1px solid var(--linea2);background:transparent;cursor:pointer;flex-shrink:0}
+  .switch i{position:absolute;top:3px;left:4px;width:16px;height:16px;border-radius:50%;background:var(--humo2);transition:.2s}
+  .switch.on{background:var(--basilico);border-color:var(--basilico)}
+  .switch.on i{left:24px;background:var(--esp)}
+  .agotado{opacity:.45}
+
+  /* ---------- Temas ---------- */
+  .temas-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:900px){.temas-grid{grid-template-columns:repeat(2,1fr)}}
+  .tema-card{border:1px solid var(--linea);border-radius:3px;overflow:hidden;background:var(--esp2)}
+  .tema-card.activo{border-color:var(--pomodoro)}
+  .tc-preview{height:150px;padding:16px;display:flex;flex-direction:column;gap:8px}
+  .tc-preview .p-marca{font-family:var(--serif);font-style:italic;font-size:15px}
+  .tc-preview .p-linea{height:7px;border-radius:2px;width:70%}
+  .tc-preview .p-linea.corta{width:45%}
+  .tc-preview .p-boton{margin-top:auto;height:24px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:7.5px;font-weight:700;letter-spacing:2px}
+  .tc-info{padding:13px 16px;border-top:1px solid var(--linea);display:flex;align-items:center;gap:10px}
+  .tc-info .nombre-t{font-family:var(--serif);font-style:italic;font-size:15px;flex:1}
+  .btn-aplicar{border:1px solid var(--linea2);background:transparent;color:var(--crema);font-family:var(--grot);font-size:8.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;padding:9px 13px;border-radius:2px;cursor:pointer}
+  .tema-card.activo .btn-aplicar{background:var(--pomodoro);border-color:var(--pomodoro);color:var(--papel);pointer-events:none}
+  .nota-pie{margin-top:18px;font-size:10.5px;color:var(--humo2);line-height:1.8;border-left:2px solid var(--linea2);padding-left:12px;max-width:640px}
+
+  /* llamadas de mesa */
+  .llamada{display:flex;align-items:center;gap:14px;border:1px solid rgba(228,89,59,.55);border-left:3px solid var(--pomodoro);background:rgba(228,89,59,.08);padding:12px 16px;border-radius:3px;margin-bottom:12px;animation:llega .3s}
+  @keyframes llega{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  .llamada .l-txt{font-family:var(--serif);font-size:15px}
+  .llamada .l-hace{font-size:10px;letter-spacing:1.4px;color:var(--humo);text-transform:uppercase;font-weight:700}
+  .llamada .btn-sec{margin-left:auto}
+
+  /* reportes */
+  .rep-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:16px}
+  @media(max-width:960px){.rep-grid{grid-template-columns:1fr}}
+  .rep-caja{border:1px solid var(--linea);border-radius:3px;background:var(--esp2);padding:16px 18px;min-height:200px}
+  .rep-cab{color:var(--humo);margin-bottom:14px}
+  .barras{display:flex;align-items:flex-end;gap:6px;height:150px}
+  .barra{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+  .barra i{width:100%;background:var(--pomodoro);border-radius:2px 2px 0 0;min-height:2px;opacity:.85}
+  .barra small{font-size:8px;letter-spacing:.6px;color:var(--humo2);font-weight:700;white-space:nowrap}
+  .top-fila{display:flex;align-items:baseline;gap:10px;padding:8px 0;border-bottom:1px dotted var(--linea)}
+  .top-fila:last-child{border-bottom:none}
+  .top-fila .t-pos{font-family:var(--serif);font-style:italic;color:var(--pomodoro);min-width:18px}
+  .top-fila .t-nom{font-size:12.5px;flex:1}
+  .top-fila .t-dato{font-family:var(--grot);font-weight:700;font-size:12px}
+  .top-fila .t-dato small{display:block;font-weight:600;color:var(--humo2);font-size:9px;letter-spacing:1px;text-align:right}
+
+  /* importador */
+  .importador{border:1px dashed var(--linea2);border-radius:3px;padding:20px 22px;background:var(--esp2)}
+  .imp-cab{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+  .imp-cab>div:first-child{flex:1;min-width:260px}
+  .imp-sub{font-size:12px;color:var(--humo);line-height:1.7;margin-top:8px;max-width:560px}
+  .imp-proceso{margin-top:18px}
+  .imp-barra{height:3px;background:var(--linea);border-radius:2px;overflow:hidden;margin-bottom:10px}
+  .imp-barra i{display:block;height:100%;width:0%;background:var(--pomodoro);transition:width .4s}
+  .borrador-fila{display:grid;grid-template-columns:1.4fr .5fr .7fr 1.6fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dotted var(--linea)}
+  @media(max-width:900px){.borrador-fila{grid-template-columns:1fr 1fr;padding:14px 0}}
+  .borrador-fila input,.borrador-fila select{background:var(--esp);border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:12px;padding:9px 11px;border-radius:2px;outline:none;width:100%}
+  .borrador-fila input:focus{border-color:var(--pomodoro)}
+  .nutri-mini{font-size:10px;letter-spacing:.6px;color:var(--basilico);font-weight:700;white-space:nowrap}
+  .nutri-mini.pendiente{color:var(--humo2)}
+  .btn-mini{border:1px solid var(--linea2);background:transparent;color:var(--crema);font-family:var(--grot);font-size:8.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:8px 11px;border-radius:2px;cursor:pointer;white-space:nowrap}
+  .btn-mini:hover{border-color:var(--pomodoro);color:var(--pomodoro)}
+  .cf-foto{width:44px;height:44px;border-radius:3px;overflow:hidden;background:var(--esp);border:1px solid var(--linea);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--humo2);font-size:9px}
+  .cf-foto img{width:100%;height:100%;object-fit:cover}
+
+  .toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,30px);background:var(--papel);color:var(--ink);font-family:var(--grot);font-size:11px;font-weight:600;letter-spacing:.6px;padding:13px 20px;border-radius:2px;z-index:300;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 16px 44px rgba(0,0,0,.55)}
+  .toast.visible{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-int">
+    <div class="marca">Bella Vita<small>PANEL DEL RESTAURANTE · MENUSBOT</small></div>
+    <div class="vivo" id="chipVivo"><i></i> EN VIVO</div>
+    <div class="tabs">
+      <button class="tab activo" data-v="comandas">Comandas<span class="mini-badge" id="badgeNuevas">0</span></button>
+      <button class="tab" data-v="registro">Registro</button>
+      <button class="tab" data-v="reportes">Reportes</button>
+      <button class="tab" data-v="carta">Carta</button>
+      <button class="tab" data-v="equipo">Equipo</button>
+      <button class="tab" data-v="temas">Temas</button>\n      <button class="tab" data-v="qr">QR</button>
+    </div>
+  </div>
+</header>
+
+<div class="cont">
+
+  <!-- COMANDAS -->
+  <div class="vista activa" id="v-comandas">
+    <div class="vista-titulo"><h1>Comandas en vivo</h1><span class="caps" id="resumenHoy"></span></div>
+    <div id="llamadasZona"></div>
+    <div class="tablero">
+      <div class="columna">
+        <div class="col-cab"><span class="caps">01 · Recibidas</span><span class="cuenta-col" id="n0">0</span></div>
+        <div class="col-cuerpo" id="col0"></div>
+      </div>
+      <div class="columna">
+        <div class="col-cab"><span class="caps">02 · En preparación</span><span class="cuenta-col" id="n1">0</span></div>
+        <div class="col-cuerpo" id="col1"></div>
+      </div>
+      <div class="columna">
+        <div class="col-cab"><span class="caps">03 · En camino — confirmar entrega</span><span class="cuenta-col" id="n2">0</span></div>
+        <div class="col-cuerpo" id="col2"></div>
+      </div>
+    </div>
+    <div class="entregas-hoy"><span class="caps">Últimas entregas</span><span class="lista" id="ultimasEntregas">—</span></div>
+  </div>
+
+  <!-- REGISTRO -->
+  <div class="vista" id="v-registro">
+    <div class="vista-titulo"><h1>Registro y conciliación</h1><span class="caps">Todas las comandas del servicio</span></div>
+    <div class="kpis">
+      <div class="kpi"><span class="caps">Vendido</span><div class="num" id="kpiVendido">$0</div></div>
+      <div class="kpi"><span class="caps">Comandas</span><div class="num" id="kpiOrdenes">0</div></div>
+      <div class="kpi"><span class="caps">Ticket promedio</span><div class="num" id="kpiTicket">$0</div></div>
+      <div class="kpi"><span class="caps">Entregadas</span><div class="num" id="kpiEntregadas">0<em>%</em></div></div>
+    </div>
+    <div class="fila-controles">
+      <select class="filtro" id="filtroEstado">
+        <option value="todas">Todos los estados</option>
+        <option value="0">Recibidas</option>
+        <option value="1">En preparación</option>
+        <option value="2">En camino</option>
+        <option value="3">Entregadas</option>
+      </select>
+      <button class="btn-sec" onclick="exportarCSV()">Exportar CSV (Excel)</button>
+      
+    </div>
+    <div class="tabla-scroll">
+    <table>
+      <thead><tr><th>Folio</th><th>Hora</th><th>Mesa</th><th>Artículos</th><th>Total</th><th>Estado</th><th>Entregó</th><th>Servicio</th></tr></thead>
+      <tbody id="tablaRegistro"></tbody>
+    </table>
+    </div>
+    <div class="nota-pie">Este registro es la base de la conciliación del turno: cada comanda queda con folio, hora, mesa, quién la entregó y el tiempo de servicio. En el producto real vive en la nube y puede cruzarse contra el corte de caja del punto de venta.</div>
+  </div>
+
+  <!-- REPORTES -->
+  <div class="vista" id="v-reportes">
+    <div class="vista-titulo"><h1>Reportes</h1><span class="caps">Ventas, platillos y desempeño del equipo</span>
+      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+        <select class="filtro" id="periodo">
+          <option value="1">Hoy (corte del día)</option>
+          <option value="7">Últimos 7 días</option>
+          <option value="30">Últimos 30 días</option>
+        </select>
+        <button class="btn-sec" onclick="imprimirCorte()">Imprimir corte</button>
+        <button class="btn-sec" onclick="exportarCSV()">Exportar CSV</button>
+      </div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><span class="caps">Vendido</span><div class="num" id="rVendido">$0</div></div>
+      <div class="kpi"><span class="caps">Comandas</span><div class="num" id="rOrdenes">0</div></div>
+      <div class="kpi"><span class="caps">Ticket promedio</span><div class="num" id="rTicket">$0</div></div>
+      <div class="kpi"><span class="caps">Servicio promedio</span><div class="num" id="rServicio">—</div></div>
+    </div>
+    <div class="rep-grid">
+      <div class="rep-caja">
+        <div class="rep-cab caps">Ventas por día</div>
+        <div class="barras" id="barrasVentas"></div>
+      </div>
+      <div class="rep-caja">
+        <div class="rep-cab caps">Top platillos</div>
+        <div id="topPlatillos"></div>
+      </div>
+      <div class="rep-caja">
+        <div class="rep-cab caps">Desempeño por mesero</div>
+        <div id="topMeseros"></div>
+      </div>
+    </div>
+    <div class="nota-pie">El corte del día imprime un resumen del turno (ventas, comandas, top platillos y entregas por mesero) listo para engrapar al corte de caja. En el producto real estos reportes se envían también por correo cada noche.</div>
+  </div>
+
+  <!-- CARTA -->
+  <div class="vista" id="v-carta">
+    <div class="vista-titulo"><h1>La carta</h1><span class="caps">Precios, fotos y disponibilidad — el comensal lo ve al instante</span></div>
+
+    <div class="importador" id="importador">
+      <div class="imp-cab">
+        <div>
+          <div class="caps" style="color:var(--pomodoro)">Importar carta con AI</div>
+          <div class="imp-sub">Sube tu menú actual — PDF, foto o archivo de texto — y la AI lo convierte en borrador editable. Después define los ingredientes principales de cada platillo y la AI estima calorías y valores nutricionales.</div>
+        </div>
+        <label class="btn-sec" style="cursor:pointer">Subir menú (PDF / foto / TXT)
+          <input type="file" id="archivoMenu" accept=".pdf,.png,.jpg,.jpeg,.txt,.csv" style="display:none">
+        </label>
+      </div>
+      <div class="imp-proceso" id="impProceso" style="display:none">
+        <div class="imp-barra"><i id="impBarra"></i></div>
+        <div class="caps" id="impTexto" style="color:var(--humo)">Leyendo el documento…</div>
+      </div>
+      <div id="borradorZona" style="display:none">
+        <div class="caps" style="margin:18px 0 10px;color:var(--crema)">Borrador extraído — revisa, ajusta y publica</div>
+        <div id="borradorLista"></div>
+        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+          <button class="btn-sec" style="border-color:var(--pomodoro);color:var(--pomodoro)" onclick="publicarBorrador()">Publicar en la carta</button>
+          <button class="btn-sec" onclick="descartarBorrador()">Descartar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="carta-lista" id="cartaLista" style="margin-top:18px"></div>
+    <div class="nota-pie">La foto de cada platillo puede ser propia (botón de cámara) o generarse con AI. Los platillos publicados aparecen en la app del comensal al instante, con la nutrición estimada por AI hasta que el restaurante la ajuste.</div>
+  </div>
+
+  <!-- EQUIPO -->
+  <div class="vista" id="v-equipo">
+    <div class="vista-titulo"><h1>El equipo</h1><span class="caps">Meseros que confirman entregas en mesa</span></div>
+    <div class="carta-lista" id="equipoLista" style="max-width:560px"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;max-width:560px">
+      <input class="filtro" id="nuevoMesero" placeholder="Nombre del mesero…" style="flex:1;background:var(--esp2)">
+      <button class="btn-sec" onclick="agregarMesero()">Agregar</button>
+    </div>
+    <div class="nota-pie">Estos nombres aparecen en el tablero de comandas al confirmar una entrega, y en los reportes de desempeño. En el producto real cada mesero tendría su PIN o su propio acceso desde el teléfono.</div>
+  </div>
+
+  <!-- TEMAS -->
+  <div class="vista" id="v-temas">
+    <div class="vista-titulo"><h1>Temas</h1><span class="caps">La identidad visual que ve el comensal</span></div>
+    <div class="temas-grid" id="temasGrid"></div>
+    <div class="nota-pie">Al aplicar un tema, la app del comensal cambia al instante (pruébalo con las dos ventanas abiertas lado a lado). En el producto real también se configuran logotipo, tipografía y fotos propias del restaurante.</div>
+  </div>
+
+  <!-- QR POR MESA -->
+  <div class="vista" id="v-qr">
+    <div class="vista-titulo"><h1>Códigos QR por mesa</h1><span class="caps">Imprime y coloca uno en cada mesa</span>
+      <button class="btn-sec" style="margin-left:auto" onclick="imprimirQRs()">Imprimir hoja de QRs</button>
+    </div>
+    <div class="temas-grid" id="qrGrid" style="grid-template-columns:repeat(4,1fr)"></div>
+    <div class="nota-pie">Cada QR abre la carta con la mesa ya asignada (…/carta.html?mesa=N). El comensal escanea, ordena y su comanda llega aquí con su número de mesa.</div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- Candado de acceso (nivel piloto) -->
+<div id="candado" style="position:fixed;inset:0;z-index:400;background:var(--esp);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px">
+  <div class="marca" style="text-align:center">Bella Vita<small>PANEL DEL RESTAURANTE</small></div>
+  <div class="caps" style="color:var(--humo)">PIN DE ACCESO</div>
+  <input id="pinInp" type="password" inputmode="numeric" maxlength="6" class="filtro" style="width:140px;text-align:center;font-size:22px;letter-spacing:8px;padding:14px">
+  <button class="btn-sec" onclick="probarPin()">Entrar</button>
+  <div class="caps" id="pinError" style="color:var(--pomodoro);visibility:hidden">PIN INCORRECTO</div>
+</div>
+
+<script>
+/* ================================================================
+   PANEL DEL RESTAURANTE — comparte la capa de datos demo con la
+   app del comensal (misma máquina). En producción: Supabase Realtime.
+   ================================================================ */
+const $ = s => document.querySelector(s);
+const fmt = n => '$' + (+n).toLocaleString('es-MX');
+/* ================================================================
+   NUBE — Supabase (proyecto colecta, tablas menusbot_)
+   ================================================================ */
+const SUPA_URL = 'https://xwcgqhlsubyfmpdjabjt.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3Y2dxaGxzdWJ5Zm1wZGphYmp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMTc5NjYsImV4cCI6MjA5Nzg5Mzk2Nn0.DK4oPmMcNA0xLwkAkxGigiudIZUobxB_UYFurrMCc9g';
+const RID = 'bellavita';
+async function api(ruta, opc = {}){
+  const r = await fetch(SUPA_URL + '/rest/v1/' + ruta, {
+    ...opc,
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', ...(opc.headers || {}) },
+  });
+  if(!r.ok) throw new Error(await r.text());
+  const tx = await r.text();
+  return tx ? JSON.parse(tx) : null;
+}
+let cfgCache = { config:{ tema:'editoriale', meseros:['Marco','Lucía','Giovanni'], pin:'1987', mesas:12 }, precios:{}, ocultos:[], platillos:[], fotos:{}, adminVisto:0 };
+let ordenesCache = [], llamadasCache = [];
+let enLinea = false;
+
+function dbLeer(){
+  return { ...cfgCache, config: cfgCache.config, ordenes: ordenesCache, llamadas: llamadasCache };
+}
+async function cargar(){
+  try{
+    const cfgs = await api(`menusbot_config?id=eq.${RID}&select=data`);
+    if(cfgs && cfgs[0]) cfgCache = cfgs[0].data || cfgCache;
+    const filas = await api(`menusbot_ordenes?restaurante_id=eq.${RID}&order=creada.desc&limit=500&select=*`);
+    ordenesCache = (filas || []).map(f => ({
+      dbId: f.id, folio: 'BV-' + (1000 + f.id), mesa: f.mesa, items: f.items || [], total: +f.total,
+      estado: f.estado, creada: Date.parse(f.creada),
+      entregada_at: f.entregada_at ? Date.parse(f.entregada_at) : null, entregada_por: f.entregada_por,
+    }));
+    const lls = await api(`menusbot_llamadas?restaurante_id=eq.${RID}&atendida=eq.false&order=ts.desc&limit=20&select=*`);
+    llamadasCache = (lls || []).map(l => ({ dbId: l.id, mesa: l.mesa, ts: Date.parse(l.ts), atendida: false }));
+    enLinea = true;
+  }catch(e){ enLinea = false; }
+  const chip = document.getElementById('chipVivo');
+  if(chip){ chip.style.color = enLinea ? 'var(--basilico)' : 'var(--pomodoro)'; chip.lastChild.textContent = enLinea ? ' EN VIVO' : ' SIN CONEXIÓN'; }
+  render();
+}
+async function configEscribir(mut){
+  mut(cfgCache);
+  render();
+  try{ await api(`menusbot_config?id=eq.${RID}`, { method:'PATCH', body: JSON.stringify({ data: cfgCache, actualizado: new Date().toISOString() }) }); }
+  catch(e){ toast('Sin conexión — el cambio se reintentará'); }
+}
+const dbEscribir = configEscribir; // los escritores de carta / temas / equipo mutan el documento de configuración
+setInterval(cargar, 4000);
+setInterval(() => {
+  cfgCache.adminVisto = Date.now();
+  api(`menusbot_config?id=eq.${RID}`, { method:'PATCH', body: JSON.stringify({ data: cfgCache }) }).catch(() => {});
+}, 10000);
+
+const CARTA = [
+ {id:'bruschetta', nombre:'Bruschetta al Pomodoro', cat:'Antipasti', precio:95},
+ {id:'carpaccio', nombre:'Carpaccio di Manzo', cat:'Antipasti', precio:165},
+ {id:'carbonara', nombre:'Spaghetti alla Carbonara', cat:'Paste', precio:185},
+ {id:'lasagna', nombre:'Lasagna alla Bolognese', cat:'Paste', precio:195},
+ {id:'ravioli', nombre:'Ravioli di Spinaci e Ricotta', cat:'Paste', precio:175},
+ {id:'margherita', nombre:'Pizza Margherita', cat:'Pizze', precio:160},
+ {id:'quattro', nombre:'Pizza Quattro Formaggi', cat:'Pizze', precio:190},
+ {id:'ossobuco', nombre:'Ossobuco alla Milanese', cat:'Secondi', precio:265},
+ {id:'salmone', nombre:'Salmone alla Griglia', cat:'Secondi', precio:245},
+ {id:'tiramisu', nombre:'Tiramisù della Casa', cat:'Dolci', precio:110},
+ {id:'pannacotta', nombre:'Panna Cotta ai Frutti di Bosco', cat:'Dolci', precio:95},
+ {id:'limonada', nombre:'Limonada al Basilico', cat:'Da bere', precio:55},
+ {id:'vino', nombre:'Vino Tinto de la Casa', cat:'Da bere', precio:85},
+];
+const TEMAS = {
+  editoriale:{ nombre:'Editoriale', fondo:'#151210', texto:'#EFE7D8', acento:'#E4593B', papel:'#F2EBDD' },
+  notte:{ nombre:'Notte Verde', fondo:'#0A111E', texto:'#EAF2EC', acento:'#2FD98B', papel:'#EDF6EF' },
+  giorno:{ nombre:'Giorno', fondo:'#F5EFE4', texto:'#2A241C', acento:'#C94A2F', papel:'#FFFFFF' },
+  mare:{ nombre:'Mare', fondo:'#0D1B22', texto:'#EAF3F1', acento:'#43AEC5', papel:'#EEF5F2' },
+};
+const ESTADOS_TXT = ['Recibida','En preparación','En camino','Entregada'];
+
+/* ---------- vistas ---------- */
+let vista = 'comandas';
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  vista = t.dataset.v;
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('activo', x === t));
+  document.querySelectorAll('.vista').forEach(x => x.classList.remove('activa'));
+  $('#v-' + vista).classList.add('activa');
+  render();
+});
+
+let toastTimer = null;
+function toast(txt){
+  const t = $('#toast');
+  t.textContent = txt;
+  t.classList.add('visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('visible'), 2600);
+}
+
+const mm = ms => { const m = Math.floor(ms/60000), s = Math.floor(ms%60000/1000); return (m? m+'m ':'') + String(s).padStart(2,'0') + 's'; };
+const hora = ts => new Date(ts).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+
+async function avanzar(folio){
+  const o = ordenesCache.find(x => x.folio === folio);
+  if(!o || o.estado >= 2) return;
+  o.estado++;
+  render();
+  try{ await api(`menusbot_ordenes?id=eq.${o.dbId}`, { method:'PATCH', body: JSON.stringify({ estado: o.estado }) }); }catch(e){ toast('Sin conexión — reintenta'); }
+}
+async function entregar(folio, mesero){
+  const o = ordenesCache.find(x => x.folio === folio);
+  if(!o) return;
+  o.estado = 3; o.entregada_por = mesero; o.entregada_at = Date.now();
+  render();
+  try{ await api(`menusbot_ordenes?id=eq.${o.dbId}`, { method:'PATCH', body: JSON.stringify({ estado: 3, entregada_por: mesero, entregada_at: new Date().toISOString() }) }); }catch(e){ toast('Sin conexión — reintenta'); }
+  toast(`Comanda ${folio} entregada — confirmó ${mesero}`);
+}
+function tarjetaComanda(o, d){
+  const transcurrido = Date.now() - o.creada;
+  const tarde = transcurrido > 20*60000;
+  let acciones = '';
+  if(o.estado === 0) acciones = `<div class="c-pie"><span class="c-total">${fmt(o.total)}</span><button class="btn-avanza" onclick="avanzar('${o.folio}')">Empezar preparación</button></div>`;
+  if(o.estado === 1) acciones = `<div class="c-pie"><span class="c-total">${fmt(o.total)}</span><button class="btn-avanza" onclick="avanzar('${o.folio}')">Sale a la mesa</button></div>`;
+  if(o.estado === 2) acciones = `<div class="c-pie"><span class="c-total">${fmt(o.total)}</span></div>
+    <div class="quien"><span class="caps">¿Quién la entregó en la mesa?</span>
+    <div class="meseros">${(d.config.meseros||[]).map(m => `<button class="btn-mesero" onclick="entregar('${o.folio}','${m}')">${m}</button>`).join('')}</div></div>`;
+  return `<div class="comanda">
+    <div class="c-top"><span class="c-folio">${o.folio}</span><span class="c-mesa">Tavolo ${String(o.mesa).padStart(2,'0')}</span>
+      <span class="c-tiempo ${tarde?'tarde':''}">${hora(o.creada)} · ${mm(transcurrido)}</span></div>
+    <div class="c-items">${o.items.map(i => `<div class="c-item"><b>${i.qty}×</b><span>${i.nombre}${i.notas?`<small>— ${i.notas}</small>`:''}</span></div>`).join('')}</div>
+    ${acciones}
+  </div>`;
+}
+
+function render(){
+  const d = dbLeer();
+  const activas = d.ordenes.filter(o => o.estado < 3);
+  $('#badgeNuevas').textContent = activas.length;
+  $('#badgeNuevas').classList.toggle('visible', activas.length > 0);
+
+  if(vista === 'comandas'){
+    const llamadas = (d.llamadas || []).filter(l => !l.atendida && Date.now() - l.ts < 30*60000);
+    $('#llamadasZona').innerHTML = llamadas.map(l => `
+      <div class="llamada">
+        <span class="l-txt">El tavolo ${String(l.mesa).padStart(2,'0')} llama al mesero</span>
+        <span class="l-hace">hace ${mm(Date.now() - l.ts)}</span>
+        <button class="btn-sec" onclick="atenderLlamada(${l.ts})">Atendida</button>
+      </div>`).join('');
+    for(const e of [0,1,2]){
+      const del = d.ordenes.filter(o => o.estado === e).sort((a,b) => a.creada - b.creada);
+      $('#n'+e).textContent = del.length;
+      $('#col'+e).innerHTML = del.length ? del.map(o => tarjetaComanda(o,d)).join('') : '<div class="col-vacia">Sin comandas</div>';
+    }
+    const inicioDia = new Date().setHours(0,0,0,0);
+    const deHoy = d.ordenes.filter(o => o.creada >= inicioDia);
+    const entregadasHoy = deHoy.filter(o => o.estado === 3);
+    $('#resumenHoy').textContent = `${deHoy.length} comandas hoy · ${entregadasHoy.length} entregadas`;
+    const conEntrega = d.ordenes.filter(o => o.estado === 3 && o.entregada_at).sort((a,b) => a.entregada_at - b.entregada_at);
+    $('#ultimasEntregas').textContent = conEntrega.length
+      ? conEntrega.slice(-3).reverse().map(o => `${o.folio} → Tavolo ${o.mesa} (${o.entregada_por}, ${hora(o.entregada_at)})`).join('  ·  ')
+      : 'Aún no hay entregas en este servicio';
+  }
+
+  if(vista === 'registro'){
+    const filtro = $('#filtroEstado').value;
+    const filas = d.ordenes.filter(o => filtro === 'todas' || o.estado === +filtro).sort((a,b) => b.creada - a.creada);
+    const vendido = d.ordenes.reduce((s,o) => s + (+o.total||0), 0);
+    const entregadas = d.ordenes.filter(o => o.estado === 3).length;
+    $('#kpiVendido').textContent = fmt(vendido);
+    $('#kpiOrdenes').textContent = d.ordenes.length;
+    $('#kpiTicket').textContent = d.ordenes.length ? fmt(Math.round(vendido / d.ordenes.length)) : '$0';
+    $('#kpiEntregadas').innerHTML = (d.ordenes.length ? Math.round(entregadas / d.ordenes.length * 100) : 0) + '<em>%</em>';
+    $('#tablaRegistro').innerHTML = filas.length ? filas.map(o => `<tr>
+      <td class="serif">${o.folio}</td>
+      <td>${hora(o.creada)}</td>
+      <td>Tavolo ${String(o.mesa).padStart(2,'0')}</td>
+      <td>${o.items.map(i => `${i.qty}× ${i.nombre}`).join('<br>')}${o.items.some(i=>i.notas) ? '<br><small>'+o.items.filter(i=>i.notas).map(i=>'— '+i.notas).join(' · ')+'</small>' : ''}</td>
+      <td><b>${fmt(o.total)}</b></td>
+      <td><span class="pill-est e${o.estado}">${ESTADOS_TXT[o.estado]}</span></td>
+      <td>${o.entregada_por || '<small>—</small>'}</td>
+      <td>${o.entregada_at ? mm(o.entregada_at - o.creada) : '<small>en curso</small>'}</td>
+    </tr>`).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--humo2)">Sin comandas con ese filtro</td></tr>';
+  }
+
+  if(vista === 'carta'){
+    const CAT_NOMBRE = { entradas:'Antipasti', pastas:'Paste', pizzas:'Pizze', principales:'Secondi', postres:'Dolci', bebidas:'Da bere' };
+    const todos = [
+      ...CARTA.map(p => ({...p, extra:false})),
+      ...(d.platillos || []).map(p => ({ id:p.id, nombre:p.nombre, cat:(CAT_NOMBRE[p.cat] || p.cat) + ' · importado con AI', precio:p.precio, extra:true })),
+    ];
+    $('#cartaLista').innerHTML = todos.map(p => {
+      const precio = d.precios[p.id] != null ? d.precios[p.id] : p.precio;
+      const oculto = d.ocultos.includes(p.id);
+      const fotoUrl = (d.fotos || {})[p.id] || (!p.extra ? 'https://xwcgqhlsubyfmpdjabjt.supabase.co/storage/v1/object/public/menusbot-demo/' + p.id + '.jpg' : null);
+      return `<div class="carta-fila ${oculto?'agotado':''}">
+        <div class="cf-foto">${fotoUrl ? `<img src="${fotoUrl}">` : 'SIN<br>FOTO'}</div>
+        <div class="cf-nombre">${p.nombre}<small>${p.cat}</small></div>
+        <button class="btn-mini" onclick="subirFoto('${p.id}')" title="Subir foto propia del platillo">Foto</button>
+        <div class="cf-precio"><span>$</span><input type="number" value="${precio}" onchange="cambiarPrecio('${p.id}', this.value)"></div>
+        <button class="switch ${oculto?'':'on'}" title="${oculto?'Agotado — no visible para el comensal':'Disponible'}" onclick="alternarDisp('${p.id}')"><i></i></button>
+        ${p.extra ? `<button class="btn-mini" onclick="quitarPlatillo('${p.id}')" title="Eliminar de la carta">×</button>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  if(vista === 'reportes') renderReportes(d);
+
+  if(vista === 'qr') renderQRs(d);
+
+  if(vista === 'equipo'){
+    $('#equipoLista').innerHTML = (d.config.meseros || []).map(m => {
+      const entregas = d.ordenes.filter(o => o.entregada_por === m).length;
+      return `<div class="carta-fila">
+        <div class="cf-nombre">${m}<small>${entregas} entrega(s) confirmadas</small></div>
+        <button class="btn-mini" onclick="quitarMesero('${m.replace(/'/g,"\\'")}')" title="Quitar del equipo">×</button>
+      </div>`;
+    }).join('') || '<div class="carta-fila"><div class="cf-nombre" style="color:var(--humo2)">Sin meseros — agrega al primero abajo</div></div>';
+  }
+
+  if(vista === 'temas'){
+    $('#temasGrid').innerHTML = Object.entries(TEMAS).map(([k,t]) => `
+      <div class="tema-card ${d.config.tema===k?'activo':''}">
+        <div class="tc-preview" style="background:${t.fondo};color:${t.texto}">
+          <div class="p-marca">Bella Vita</div>
+          <div class="p-linea" style="background:${t.texto};opacity:.25"></div>
+          <div class="p-linea corta" style="background:${t.texto};opacity:.15"></div>
+          <div class="p-boton" style="background:${t.acento};color:${t.papel}">AGREGAR</div>
+        </div>
+        <div class="tc-info"><span class="nombre-t">${t.nombre}</span>
+          <button class="btn-aplicar" onclick="aplicarTemaCliente('${k}')">${d.config.tema===k?'Activo':'Aplicar'}</button></div>
+      </div>`).join('');
+  }
+}
+
+/* ================================================================
+   IMPORTADOR DE CARTA CON AI (demo local — en producción: LLM con
+   visión que lee el PDF/foto real del menú)
+   ================================================================ */
+const EJEMPLO_EXTRACCION = [
+  { nombre:'Fettuccine ai Funghi', precio:170, cat:'pastas', ingredientes:'pasta, champiñones, crema, parmesano, ajo' },
+  { nombre:'Insalata Caprese', precio:120, cat:'entradas', ingredientes:'jitomate, mozzarella, albahaca, aceite de oliva' },
+  { nombre:'Gnocchi al Pesto', precio:165, cat:'pastas', ingredientes:'papa, harina, albahaca, piñones, parmesano, aceite de oliva' },
+  { nombre:'Affogato al Caffè', precio:75, cat:'postres', ingredientes:'helado de vainilla, café expreso' },
+];
+let borrador = [];
+
+/* Estimador nutricional por ingredientes (heurística demo; en producción: LLM) */
+const NUTRI_BASE = [
+  [/pasta|spaghetti|fettuccine|harina|gnocchi|papa|pan|masa|arroz/, {kcal:280, p:8, c:56, g:2}],
+  [/queso|parmesano|mozzarella|gorgonzola|ricotta|provolone|mascarpone/, {kcal:120, p:8, c:1, g:9}],
+  [/crema|mantequilla|bechamel/, {kcal:110, p:1, c:2, g:11}],
+  [/res|ternera|cerdo|guanciale|tocino|carne/, {kcal:180, p:22, c:0, g:10}],
+  [/pollo/, {kcal:140, p:26, c:0, g:4}],
+  [/pescado|salmon|salmón|atun|camaron/, {kcal:150, p:22, c:0, g:7}],
+  [/huevo|yema/, {kcal:70, p:6, c:0, g:5}],
+  [/aceite|oliva|pinones|piñones|nuez|almendra/, {kcal:90, p:1, c:1, g:10}],
+  [/jitomate|tomate|verdura|espinaca|champinon|champiñon|albahaca|arugula|esparrago|ensalada|lechuga/, {kcal:25, p:1, c:4, g:0}],
+  [/azucar|azúcar|miel|chocolate|cacao|helado|dulce/, {kcal:150, p:2, c:24, g:6}],
+  [/cafe|café|expreso/, {kcal:5, p:0, c:1, g:0}],
+  [/limon|limón|fruta|frutos rojos|fresa/, {kcal:40, p:0, c:9, g:0}],
+];
+function estimarNutricion(ingredientesTxt){
+  const t = ingredientesTxt.toLowerCase();
+  let kcal = 60, p = 2, c = 4, g = 2, aciertos = 0; // base de preparación
+  for(const [re, n] of NUTRI_BASE){
+    if(re.test(t)){ kcal += n.kcal; p += n.p; c += n.c; g += n.g; aciertos++; }
+  }
+  if(!aciertos) return null;
+  return { kcal: Math.round(kcal), prot: Math.round(p), carb: Math.round(c), grasa: Math.round(g) };
+}
+
+$('#archivoMenu').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  $('#impProceso').style.display = 'block';
+  $('#borradorZona').style.display = 'none';
+  const pasos = ['Leyendo el documento…','Detectando platillos y precios…','Clasificando por categoría…','Armando el borrador…'];
+  for(let i = 0; i < pasos.length; i++){
+    $('#impTexto').textContent = pasos[i];
+    $('#impBarra').style.width = ((i+1) / pasos.length * 100) + '%';
+    await new Promise(r => setTimeout(r, 650));
+  }
+  // TXT/CSV: extracción real línea por línea ("Nombre ... $precio"). PDF/foto: demo con ejemplo.
+  let extraidos = [];
+  if(/\.(txt|csv)$/i.test(f.name)){
+    const texto = await f.text();
+    for(const linea of texto.split(/\r?\n/)){
+      const m = linea.match(/^(.*?)[\s.,;|-]*\$?\s?(\d{2,4})\s*$/);
+      if(m && m[1].trim().length > 2) extraidos.push({ nombre: m[1].trim(), precio: +m[2], cat: 'principales', ingredientes: '' });
+    }
+  }
+  if(!extraidos.length) extraidos = EJEMPLO_EXTRACCION.map(x => ({...x}));
+  borrador = extraidos.map((x, i) => ({ ...x, id: 'ai_' + Date.now().toString(36) + '_' + i, nutri: null }));
+  $('#impProceso').style.display = 'none';
+  $('#borradorZona').style.display = 'block';
+  pintarBorrador();
+  toast(`AI extrajo ${borrador.length} platillo(s) — revisa el borrador`);
+  e.target.value = '';
+});
+function pintarBorrador(){
+  const CATS = [['entradas','Antipasti'],['pastas','Paste'],['pizzas','Pizze'],['principales','Secondi'],['postres','Dolci'],['bebidas','Da bere']];
+  $('#borradorLista').innerHTML = borrador.map((b, i) => `
+    <div class="borrador-fila">
+      <input value="${b.nombre.replace(/"/g,'&quot;')}" onchange="borrador[${i}].nombre=this.value">
+      <input type="number" value="${b.precio}" onchange="borrador[${i}].precio=+this.value">
+      <select onchange="borrador[${i}].cat=this.value">${CATS.map(c => `<option value="${c[0]}" ${b.cat===c[0]?'selected':''}>${c[1]}</option>`).join('')}</select>
+      <input placeholder="Ingredientes principales (para estimar nutrición)…" value="${b.ingredientes.replace(/"/g,'&quot;')}" onchange="borrador[${i}].ingredientes=this.value;borrador[${i}].nutri=null;pintarBorrador()">
+      <div style="display:flex;align-items:center;gap:8px">
+        ${b.nutri
+          ? `<span class="nutri-mini">${b.nutri.kcal} kcal · ${b.nutri.prot}p/${b.nutri.carb}c/${b.nutri.grasa}g</span>`
+          : `<button class="btn-mini" onclick="estimarFila(${i})">Estimar con AI</button>`}
+        <button class="btn-mini" title="Quitar" onclick="borrador.splice(${i},1);pintarBorrador()">×</button>
+      </div>
+    </div>`).join('');
+}
+function estimarFila(i){
+  const b = borrador[i];
+  if(!b.ingredientes.trim()){ toast('Escribe primero los ingredientes principales'); return; }
+  const n = estimarNutricion(b.ingredientes);
+  if(!n){ toast('No reconocí los ingredientes — intenta con términos más comunes'); return; }
+  b.nutri = n;
+  pintarBorrador();
+  toast(`AI estimó ${n.kcal} kcal para «${b.nombre}» — ajustable después`);
+}
+function publicarBorrador(){
+  if(!borrador.length) return;
+  dbEscribir(d => {
+    d.platillos = d.platillos || [];
+    for(const b of borrador){
+      d.platillos.push({
+        id: b.id, nombre: b.nombre, precio: +b.precio || 0, cat: b.cat,
+        ingredientes: b.ingredientes.split(',').map(s => s.trim()).filter(Boolean),
+        kcal: b.nutri?.kcal || 0, prot: b.nutri?.prot || 0, carb: b.nutri?.carb || 0, grasa: b.nutri?.grasa || 0,
+        desc: b.ingredientes ? b.ingredientes.split(',').slice(0,4).join(', ') : 'Platillo de la casa.',
+      });
+    }
+  });
+  toast(`${borrador.length} platillo(s) publicados — el comensal ya los ve en su carta`);
+  borrador = [];
+  $('#borradorZona').style.display = 'none';
+  render();
+}
+function descartarBorrador(){ borrador = []; $('#borradorZona').style.display = 'none'; }
+
+/* ---------- Fotos propias por platillo ---------- */
+function subirFoto(id){
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.onchange = () => {
+    const f = inp.files[0];
+    if(!f) return;
+    const img = new Image();
+    img.onload = () => {
+      const esc = Math.min(1, 900 / img.width);
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(img.width * esc);
+      cv.height = Math.round(img.height * esc);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      cv.toBlob(async blob => {
+        const rutaF = `fotos/${id}_${Date.now()}.jpg`;
+        try{
+          const r = await fetch(`${SUPA_URL}/storage/v1/object/menusbot-demo/${rutaF}`, {
+            method:'POST',
+            headers:{ 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type':'image/jpeg', 'x-upsert':'true' },
+            body: blob,
+          });
+          if(!r.ok) throw new Error(await r.text());
+          configEscribir(d => { d.fotos = d.fotos || {}; d.fotos[id] = `${SUPA_URL}/storage/v1/object/public/menusbot-demo/${rutaF}`; });
+          toast('Foto publicada — el comensal ya la ve');
+        }catch(e){ toast('No se pudo subir la foto — revisa tu conexión'); }
+      }, 'image/jpeg', .78);
+    };
+    img.src = URL.createObjectURL(f);
+  };
+  inp.click();
+}
+function quitarPlatillo(id){
+  dbEscribir(d => {
+    d.platillos = (d.platillos || []).filter(p => p.id !== id);
+    if(d.fotos) delete d.fotos[id];
+    d.ocultos = d.ocultos.filter(x => x !== id);
+  });
+}
+
+/* ---------- Equipo de meseros ---------- */
+function agregarMesero(){
+  const n = $('#nuevoMesero').value.trim();
+  if(!n) return;
+  dbEscribir(d => { if(!d.config.meseros.includes(n)) d.config.meseros.push(n); });
+  $('#nuevoMesero').value = '';
+  toast(`${n} agregado al equipo`);
+}
+function quitarMesero(n){
+  dbEscribir(d => { d.config.meseros = d.config.meseros.filter(x => x !== n); });
+}
+
+/* ---------- Llamadas de mesa ---------- */
+async function atenderLlamada(ts){
+  const l = llamadasCache.find(x => x.ts === ts);
+  if(!l) return;
+  llamadasCache = llamadasCache.filter(x => x !== l);
+  render();
+  try{ await api(`menusbot_llamadas?id=eq.${l.dbId}`, { method:'PATCH', body: JSON.stringify({ atendida: true }) }); }catch(e){}
+}
+
+/* ---------- Reportes y corte ---------- */
+function ordenesPeriodo(d, dias){
+  const desde = dias === 1 ? new Date().setHours(0,0,0,0) : Date.now() - dias * 86400000;
+  return d.ordenes.filter(o => o.creada >= desde);
+}
+function renderReportes(d){
+  const dias = +$('#periodo').value;
+  const os = ordenesPeriodo(d, dias);
+  const vendido = os.reduce((s,o) => s + (+o.total||0), 0);
+  const entregadas = os.filter(o => o.estado === 3 && o.entregada_at);
+  const servProm = entregadas.length ? entregadas.reduce((s,o) => s + (o.entregada_at - o.creada), 0) / entregadas.length : 0;
+  $('#rVendido').textContent = fmt(vendido);
+  $('#rOrdenes').textContent = os.length;
+  $('#rTicket').textContent = os.length ? fmt(Math.round(vendido / os.length)) : '$0';
+  $('#rServicio').textContent = servProm ? Math.round(servProm/60000) + ' min' : '—';
+  // barras por día
+  const porDia = {};
+  const nDias = Math.max(dias, 1);
+  for(let i = nDias - 1; i >= 0; i--){
+    const f = new Date(Date.now() - i * 86400000);
+    porDia[f.toLocaleDateString('es-MX', {day:'2-digit', month:'2-digit'})] = 0;
+  }
+  for(const o of os){
+    const k = new Date(o.creada).toLocaleDateString('es-MX', {day:'2-digit', month:'2-digit'});
+    if(k in porDia) porDia[k] += +o.total || 0;
+  }
+  const max = Math.max(...Object.values(porDia), 1);
+  const claves = Object.keys(porDia);
+  const paso = claves.length > 10 ? Math.ceil(claves.length / 10) : 1;
+  $('#barrasVentas').innerHTML = claves.map((k, i) =>
+    `<div class="barra"><i style="height:${Math.round(porDia[k] / max * 130)}px" title="${k}: ${fmt(porDia[k])}"></i><small>${i % paso === 0 ? k : ''}</small></div>`).join('');
+  // top platillos
+  const cuenta = {};
+  for(const o of os) for(const i of o.items){
+    cuenta[i.nombre] = cuenta[i.nombre] || { u:0, m:0 };
+    cuenta[i.nombre].u += i.qty;
+    cuenta[i.nombre].m += i.qty * (+i.precio || 0);
+  }
+  const top = Object.entries(cuenta).sort((a,b) => b[1].m - a[1].m).slice(0,6);
+  $('#topPlatillos').innerHTML = top.length ? top.map(([n,v], i) =>
+    `<div class="top-fila"><span class="t-pos">${i+1}.</span><span class="t-nom">${n}</span><span class="t-dato">${fmt(v.m)}<small>${v.u} uds</small></span></div>`).join('')
+    : '<div style="color:var(--humo2);font-size:11px">Sin ventas en el periodo</div>';
+  // meseros
+  const porMesero = {};
+  for(const o of entregadas){
+    porMesero[o.entregada_por] = porMesero[o.entregada_por] || { n:0, t:0 };
+    porMesero[o.entregada_por].n++;
+    porMesero[o.entregada_por].t += o.entregada_at - o.creada;
+  }
+  const ms = Object.entries(porMesero).sort((a,b) => b[1].n - a[1].n);
+  $('#topMeseros').innerHTML = ms.length ? ms.map(([n,v], i) =>
+    `<div class="top-fila"><span class="t-pos">${i+1}.</span><span class="t-nom">${n}</span><span class="t-dato">${v.n} entregas<small>${Math.round(v.t/v.n/60000)} min prom.</small></span></div>`).join('')
+    : '<div style="color:var(--humo2);font-size:11px">Sin entregas confirmadas en el periodo</div>';
+}
+function imprimirCorte(){
+  const d = dbLeer();
+  const dias = +$('#periodo').value;
+  const os = ordenesPeriodo(d, dias).sort((a,b) => a.creada - b.creada);
+  const vendido = os.reduce((s,o) => s + (+o.total||0), 0);
+  const titulo = dias === 1 ? 'Corte del día' : `Reporte — últimos ${dias} días`;
+  const w = window.open('', '_blank');
+  w.document.write(`<html><head><title>${titulo} · Bella Vita</title><style>
+    body{font-family:Georgia,serif;max-width:640px;margin:30px auto;color:#241F18;padding:0 20px}
+    h1{font-style:italic;font-weight:500} .caps{font-family:Arial;font-size:10px;letter-spacing:2px;color:#777}
+    table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}
+    th{font-family:Arial;font-size:9px;letter-spacing:1.5px;text-align:left;border-bottom:1px solid #999;padding:7px 6px}
+    td{border-bottom:1px dotted #bbb;padding:7px 6px;vertical-align:top}
+    .tot{font-size:18px;margin-top:18px;border-top:2px solid #241F18;padding-top:10px;display:flex;justify-content:space-between}
+  </style></head><body>
+    <div class="caps">TRATTORIA BELLA VITA · MENUSBOT</div>
+    <h1>${titulo}</h1>
+    <div class="caps">${new Date().toLocaleString('es-MX')} · ${os.length} comandas</div>
+    <table><tr><th>FOLIO</th><th>HORA</th><th>MESA</th><th>ARTÍCULOS</th><th>ENTREGÓ</th><th style="text-align:right">TOTAL</th></tr>
+    ${os.map(o => `<tr><td>${o.folio}</td><td>${hora(o.creada)}</td><td>${o.mesa}</td><td>${o.items.map(i => i.qty + '× ' + i.nombre).join('<br>')}</td><td>${o.entregada_por || '—'}</td><td style="text-align:right"><b>${fmt(o.total)}</b></td></tr>`).join('')}
+    </table>
+    <div class="tot"><span>TOTAL VENDIDO</span><b>${fmt(vendido)} MXN</b></div>
+  </body></html>`);
+  w.document.close();
+  setTimeout(() => { try{ w.print(); }catch(e){} }, 400);
+}
+
+function cambiarPrecio(id, val){
+  const n = Math.max(1, Math.round(+val || 0));
+  dbEscribir(d => { d.precios[id] = n; });
+  toast('Precio actualizado — el comensal ya lo ve');
+}
+function alternarDisp(id){
+  dbEscribir(d => {
+    if(d.ocultos.includes(id)) d.ocultos = d.ocultos.filter(x => x !== id);
+    else d.ocultos.push(id);
+  });
+}
+function aplicarTemaCliente(t){
+  dbEscribir(d => { d.config.tema = t; });
+  toast(`Tema «${TEMAS[t].nombre}» aplicado — la app del comensal cambió al instante`);
+}
+function exportarCSV(){
+  const d = dbLeer();
+  const filas = [['Folio','Fecha','Hora','Mesa','Articulos','Notas','Total','Estado','EntregadaPor','HoraEntrega','MinutosServicio']];
+  for(const o of [...d.ordenes].sort((a,b) => a.creada - b.creada)){
+    const f = new Date(o.creada);
+    filas.push([
+      o.folio, f.toLocaleDateString('es-MX'), hora(o.creada), o.mesa,
+      o.items.map(i => `${i.qty}x ${i.nombre}`).join(' | '),
+      o.items.filter(i=>i.notas).map(i=>i.notas).join(' | '),
+      o.total, ESTADOS_TXT[o.estado], o.entregada_por || '', o.entregada_at ? hora(o.entregada_at) : '',
+      o.entregada_at ? Math.round((o.entregada_at - o.creada)/60000) : '',
+    ]);
+  }
+  const csv = '﻿' + filas.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
+  a.download = 'bellavita_conciliacion.csv';
+  a.click();
+  toast('Registro exportado — ábrelo en Excel');
+}
+
+
+/* refresco en vivo */
+$('#filtroEstado').onchange = render;
+$('#periodo').onchange = render;
+/* ---------- QR por mesa ---------- */
+let qrListos = -1;
+function renderQRs(d){
+  const n = (d.config && d.config.mesas) || 12;
+  if(typeof QRCode === 'undefined'){ $('#qrGrid').innerHTML = '<div class="caps" style="color:var(--humo2)">CARGANDO GENERADOR DE QR…</div>'; return; }
+  if(qrListos === n) return;
+  qrListos = n;
+  const base = new URL('carta.html', location.href).href;
+  $('#qrGrid').innerHTML = '';
+  for(let i = 1; i <= n; i++){
+    const celda = document.createElement('div');
+    celda.className = 'tema-card';
+    celda.innerHTML = `<div class="tc-preview qr-celda" style="background:#fff;align-items:center;justify-content:center;display:flex"></div>
+      <div class="tc-info"><span class="nombre-t">Tavolo ${String(i).padStart(2,'0')}</span></div>`;
+    $('#qrGrid').appendChild(celda);
+    new QRCode(celda.querySelector('.qr-celda'), { text: base + '?mesa=' + i, width: 108, height: 108, correctLevel: QRCode.CorrectLevel.M });
+  }
+}
+function imprimirQRs(){
+  const imgs = [...document.querySelectorAll('#qrGrid .qr-celda')].map((el, i) => {
+    const cv = el.querySelector('canvas');
+    const im = el.querySelector('img');
+    const src = cv ? cv.toDataURL() : (im ? im.src : '');
+    return `<div style="display:inline-block;text-align:center;margin:14px;padding:16px;border:1px solid #999"><img src="${src}" style="width:150px"><div style="font-family:Georgia;font-style:italic;margin-top:8px">Tavolo ${String(i+1).padStart(2,'0')}</div><div style="font-family:Arial;font-size:8px;letter-spacing:2px;color:#777;margin-top:3px">ESCANEA PARA VER LA CARTA Y ORDENAR</div></div>`;
+  }).join('');
+  const w = window.open('', '_blank');
+  w.document.write(`<html><head><title>QRs · Bella Vita</title></head><body style="text-align:center;font-family:Georgia"><h2 style="font-style:italic">Trattoria Bella Vita</h2>${imgs}</body></html>`);
+  w.document.close();
+  setTimeout(() => { try{ w.print(); }catch(e){} }, 500);
+}
+
+/* ---------- Candado PIN (nivel piloto) ---------- */
+function probarPin(){
+  const pin = (cfgCache.config && cfgCache.config.pin) || '1987';
+  if($('#pinInp').value === pin){
+    sessionStorage.setItem('menusbot_pin_ok','1');
+    $('#candado').style.display = 'none';
+  } else {
+    $('#pinError').style.visibility = 'visible';
+    $('#pinInp').value = '';
+  }
+}
+document.getElementById('pinInp').addEventListener('keydown', e => { if(e.key === 'Enter') probarPin(); });
+if(sessionStorage.getItem('menusbot_pin_ok')) document.getElementById('candado').style.display = 'none';
+
+setInterval(render, 1000);
+cargar();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>\n</body>\n</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MenusBot · Piloto Trattoria Bella Vita</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;1,9..144,500&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--esp:#151210;--crema:#EFE7D8;--humo:#A79D8C;--pomodoro:#E4593B;--papel:#F2EBDD;--linea:rgba(239,231,216,.15)}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Space Grotesk',sans-serif;background:var(--esp);color:var(--crema);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .caja{max-width:520px;width:100%;text-align:center}
+  .caps{font-size:10px;letter-spacing:3px;font-weight:700;color:var(--humo);text-transform:uppercase}
+  h1{font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:44px;margin:14px 0 6px}
+  h1 em{font-style:italic;color:var(--pomodoro)}
+  p{font-size:13px;color:var(--humo);line-height:1.8;margin:14px auto 30px;max-width:420px}
+  .opciones{display:grid;gap:14px}
+  a.tarjeta{display:block;border:1px solid var(--linea);padding:22px;text-decoration:none;color:var(--crema);border-radius:3px;transition:.2s;text-align:left}
+  a.tarjeta:hover{border-color:var(--pomodoro)}
+  a.tarjeta b{font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:21px;display:block}
+  a.tarjeta span{font-size:11.5px;color:var(--humo);margin-top:6px;display:block;line-height:1.6}
+  a.tarjeta .flecha{float:right;color:var(--pomodoro);font-size:20px}
+  footer{margin-top:34px;font-size:9px;letter-spacing:2px;color:#6E665A;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="caja">
+  <div class="caps">Piloto · MenusBot</div>
+  <h1>Trattoria <em>Bella Vita</em></h1>
+  <p>Menú digital con mesera virtual, órdenes por mesa en la nube y panel de operación para el restaurante.</p>
+  <div class="opciones">
+    <a class="tarjeta" href="carta.html?mesa=1"><span class="flecha">→</span><b>La carta del comensal</b><span>Lo que ve el cliente al escanear el QR de su mesa: menú con fotos, Sofía (texto y voz), orden y seguimiento. Prueba con ?mesa=N en la URL.</span></a>
+    <a class="tarjeta" href="panel.html"><span class="flecha">→</span><b>Panel del restaurante</b><span>Comandas en vivo, confirmación de entrega por mesero, registro y corte, reportes, carta con AI, temas y QRs imprimibles. PIN: 1987</span></a>
+  </div>
+  <footer>Sistema en la nube · Supabase + Vercel</footer>
+</div>
+</body>
+</html>
