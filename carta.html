@@ -73,6 +73,7 @@
   .titulo-zona h1{font-family:var(--serif);font-weight:500;font-size:44px;line-height:.95;letter-spacing:-1.2px}
   .titulo-zona h1 em{font-style:italic;color:var(--pomodoro)}
   .titulo-zona .sello{position:absolute;right:-4px;top:-14px;width:84px;height:84px;animation:gira 28s linear infinite;opacity:.9}
+  .titulo-zona .sello-logo{position:absolute;right:-4px;top:-14px;width:84px;height:84px;border-radius:50%;object-fit:cover;border:1px solid var(--linea2);background:var(--esp2)}
   @keyframes gira{to{transform:rotate(360deg)}}
   .sello text{font-family:var(--grot);font-size:10.5px;letter-spacing:2px;fill:var(--humo);font-weight:600}
   .sello .centro{font-family:var(--serif);font-style:italic;font-size:20px;fill:var(--pomodoro)}
@@ -349,7 +350,7 @@
   <div class="splash" id="splash">
     <div class="splash-caja">
       <div class="sobre">CUCINA ITALIANA ARTIGIANALE</div>
-      <h1><span>TRATTORIA</span>Bella Vita</h1>
+      <h1 id="splashMarca"><span>TRATTORIA</span>Bella Vita</h1>
       <div class="orn"><i></i>✳<i></i></div>
       <div class="pregunta">¿EN QUÉ MESA TE ENCUENTRAS?</div>
       <div class="mesas" id="gridMesas"></div>
@@ -366,11 +367,12 @@
       </div>
       <div class="titulo-zona">
         <h1>La nostra<br><em>cucina</em></h1>
-        <svg class="sello" viewBox="0 0 100 100">
+        <svg class="sello" id="selloSvg" viewBox="0 0 100 100">
           <defs><path id="circ" d="M 50,50 m -36,0 a 36,36 0 1,1 72,0 a 36,36 0 1,1 -72,0"/></defs>
-          <text><textPath href="#circ">TRATTORIA BELLA VITA · EST. 1987 · </textPath></text>
-          <text class="centro" x="50" y="57" text-anchor="middle">B.V.</text>
+          <text><textPath id="selloTexto" href="#circ">TRATTORIA BELLA VITA · EST. 1987 · </textPath></text>
+          <text class="centro" id="selloCentro" x="50" y="57" text-anchor="middle">B.V.</text>
         </svg>
+        <img class="sello-logo" id="selloLogo" alt="" style="display:none">
       </div>
       <div class="marquee"><div class="tira" id="tiraMarquee"></div></div>
     </div>
@@ -682,6 +684,38 @@ function aplicarTema(t){
   for(const [k,v] of Object.entries(TEMAS[t])){
     if(k !== 'nombre') document.documentElement.style.setProperty('--' + k, v);
   }
+  marcaAplicada = ''; // el tema pisó las variables: re-aplicar colores corporativos
+}
+
+/* ---------- Identidad de marca (el restaurante la define en su panel) ---------- */
+let MARCA = { prefijo:'Trattoria', nombre:'Bella Vita', lema:'Est. 1987', logo:'', acento:'', secundario:'' };
+let marcaAplicada = '';
+const iniciales = n => (n || 'BV').split(/\s+/).filter(Boolean).slice(0,2).map(w => w[0].toUpperCase()).join('') || 'BV';
+function aplicarMarca(){
+  const m = Object.assign({}, MARCA, (dbCache.config && dbCache.config.marca) || {});
+  const hash = JSON.stringify(m) + temaActual;
+  if(hash === marcaAplicada) return;
+  marcaAplicada = hash;
+  MARCA = m;
+  const completo = (m.prefijo ? m.prefijo + ' ' : '') + m.nombre;
+  document.title = completo;
+  RESTAURANTE.nombre = completo;
+  const splash = $('#splashMarca');
+  if(splash) splash.innerHTML = (m.prefijo ? `<span>${m.prefijo.toUpperCase()}</span>` : '') + m.nombre;
+  const anillo = $('#selloTexto');
+  if(anillo) anillo.textContent = `${completo.toUpperCase()} · ${(m.lema || 'MENÚ DIGITAL').toUpperCase()} · `;
+  const centro = $('#selloCentro');
+  if(centro) centro.textContent = iniciales(m.nombre).split('').join('.') + '.';
+  const svgSello = $('#selloSvg'), logoImg = $('#selloLogo');
+  if(svgSello && logoImg){
+    if(m.logo){ logoImg.src = m.logo; logoImg.style.display = 'block'; svgSello.style.display = 'none'; }
+    else{ logoImg.style.display = 'none'; svgSello.style.display = 'block'; }
+  }
+  const base = TEMAS[temaActual] || TEMAS.editoriale;
+  document.documentElement.style.setProperty('--pomodoro', m.acento || base.pomodoro);
+  document.documentElement.style.setProperty('--oro', m.secundario || base.oro);
+  pintarMarquee();
+  if(vistaActual === 'orden') pintarVistaOrden();
 }
 
 /* ---------- Sincronización con la nube ---------- */
@@ -693,6 +727,7 @@ async function sincronizar(){
     if(cfgs && cfgs[0]) dbCache = cfgs[0].data || dbCache;
     sinConexion = false;
     aplicarTema((dbCache.config && dbCache.config.tema) || 'editoriale');
+    aplicarMarca();
     const h = JSON.stringify([dbCache.precios, dbCache.ocultos, dbCache.platillos || [], Object.keys(dbCache.fotos || {})]);
     if(h !== hashCarta){
       hashCarta = h;
@@ -788,7 +823,8 @@ function pintarIndicadores(){
 
 /* Marquee */
 function pintarMarquee(){
-  const items = ['FORNO A LEGNA','PASTA FRESCA QUOTIDIANA','EST. 1987','RICETTE DELLA NONNA','SLOW FOOD'];
+  const lema = (MARCA.lema || 'EST. 1987').toUpperCase();
+  const items = ['FORNO A LEGNA','PASTA FRESCA QUOTIDIANA', lema, 'RICETTE DELLA NONNA','SLOW FOOD'];
   const mitad = items.map(t => `<span>${t}</span>`).join('');
   $('#tiraMarquee').innerHTML = mitad + mitad;
 }
@@ -1031,7 +1067,7 @@ function pintarVistaOrden(){
     v.innerHTML = html; return;
   }
   html += `<div class="ticket"><div class="t-int">
-    <div class="t-cab"><div class="t-marca">Bella Vita</div><div class="caps">Comanda · Tavolo ${String(mesa).padStart(2,'0')}</div></div>`;
+    <div class="t-cab"><div class="t-marca">${MARCA.nombre}</div><div class="caps">Comanda · Tavolo ${String(mesa).padStart(2,'0')}</div></div>`;
   html += pedido.map((i,idx) => {
     const d = PLATILLOS.find(x => x.id === i.id);
     return `<div class="t-item">
@@ -1121,7 +1157,7 @@ async function enviarOrden(){
     toast('Sin conexión con cocina — revisa tu internet e intenta de nuevo');
     return;
   }
-  const folioN = 'BV-' + (1000 + fila.id);
+  const folioN = iniciales(MARCA.nombre) + '-' + (1000 + fila.id);
   const o = { num: folioN, folio: folioN, dbId: fila.id, items: pedido.slice(), total, estado: 0, mesa: mesa ?? '–' };
   misIds.push(fila.id);
   ordenes.push(o);
@@ -1236,7 +1272,7 @@ function responder(texto){
   if(/^(hola|buenas|buenos dias|buen dia|hey|ciao|que tal)/.test(t))
     return R(`Ciao. Soy Sofía, tu mesera virtual del tavolo ${mesa ?? '—'}. Puedo recomendarte, contarte ingredientes y calorías, cuidar tus alergias y tomar tu comanda — dime «quiero…» y lo agrego. ¿Qué se te antoja?`);
   if(/(gracias|perfecto|excelente|muy amable)/.test(t)) return R('Con muchísimo gusto. Buon appetito.');
-  if(/(adios|hasta luego|bye|nos vemos)/.test(t)) return R('Arrivederci. Que disfrutes tu visita a Bella Vita.');
+  if(/(adios|hasta luego|bye|nos vemos)/.test(t)) return R(`Arrivederci. Que disfrutes tu visita a ${MARCA.nombre}.`);
   if(/alerg/.test(t)){
     if(/(gluten|celiac)/.test(t)){
       const ok = PLATILLOS.filter(x => !x.alergenos.includes('Gluten'));

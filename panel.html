@@ -116,6 +116,11 @@
   /* ---------- Temas ---------- */
   .temas-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
   @media(max-width:900px){.temas-grid{grid-template-columns:repeat(2,1fr)}}
+  .marca-zona{border:1px solid var(--linea);border-radius:3px;background:var(--esp2);padding:20px;max-width:920px}
+  .marca-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+  .marca-form .lbl{color:var(--humo);margin-bottom:8px}
+  .marca-form .filtro{width:100%;background:var(--esp)}
+  .color-inp{width:64px;height:38px;border:1px solid var(--linea2);border-radius:2px;background:var(--esp);padding:3px;cursor:pointer}
   .tema-card{border:1px solid var(--linea);border-radius:3px;overflow:hidden;background:var(--esp2)}
   .tema-card.activo{border-color:var(--pomodoro)}
   .tc-preview{height:150px;padding:16px;display:flex;flex-direction:column;gap:8px}
@@ -179,7 +184,10 @@
 
 <header>
   <div class="head-int">
-    <div class="marca">Bella Vita<small>PANEL DEL RESTAURANTE · MENUSBOT</small></div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <img id="logoHead" alt="" style="display:none;width:42px;height:42px;border-radius:50%;object-fit:cover;border:1px solid var(--linea2)">
+      <div class="marca" id="marcaHead">Bella Vita<small>PANEL DEL RESTAURANTE · MENUSBOT</small></div>
+    </div>
     <div class="vivo" id="chipVivo"><i></i> EN VIVO</div>
     <div class="tabs">
       <button class="tab activo" data-v="comandas">Comandas<span class="mini-badge" id="badgeNuevas">0</span></button>
@@ -324,11 +332,32 @@
     <div class="nota-pie">Estos nombres aparecen en el tablero de comandas al confirmar una entrega, y en los reportes de desempeño. En el producto real cada mesero tendría su PIN o su propio acceso desde el teléfono.</div>
   </div>
 
-  <!-- TEMAS -->
+  <!-- TEMAS E IDENTIDAD -->
   <div class="vista" id="v-temas">
-    <div class="vista-titulo"><h1>Temas</h1><span class="caps">La identidad visual que ve el comensal</span></div>
+    <div class="vista-titulo"><h1>Identidad</h1><span class="caps">Logo, nombre y colores corporativos — aplican a la carta del comensal y a este panel</span></div>
+    <div class="marca-zona" id="marcaZona">
+      <div class="marca-form">
+        <div><div class="caps lbl">Tipo / prefijo</div><input class="filtro" id="mPrefijo" placeholder="Trattoria, Taquería, Restaurante…"></div>
+        <div><div class="caps lbl">Nombre del restaurante</div><input class="filtro" id="mNombre" placeholder="Bella Vita"></div>
+        <div><div class="caps lbl">Lema / eslogan</div><input class="filtro" id="mLema" placeholder="Est. 1987"></div>
+        <div><div class="caps lbl">Logo</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <img id="mLogoPrev" alt="" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:1px solid var(--linea2);display:none">
+            <button class="btn-sec" onclick="subirLogo()">Subir logo</button>
+            <button class="btn-mini" id="mLogoQuitar" onclick="quitarLogo()" style="display:none">Quitar</button>
+          </div>
+        </div>
+        <div><div class="caps lbl">Color primario (acento)</div><input type="color" id="mAcento" class="color-inp" value="#E4593B"></div>
+        <div><div class="caps lbl">Color secundario (detalles)</div><input type="color" id="mSecundario" class="color-inp" value="#C9A227"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+        <button class="btn-sec" onclick="guardarMarca()">Guardar identidad</button>
+        <button class="btn-mini" onclick="coloresDelTema()">Usar colores del tema</button>
+      </div>
+    </div>
+    <div class="vista-titulo" style="margin-top:36px"><h1 style="font-size:24px">Temas</h1><span class="caps">La base visual que ve el comensal</span></div>
     <div class="temas-grid" id="temasGrid"></div>
-    <div class="nota-pie">Al aplicar un tema, la app del comensal cambia al instante (pruébalo con las dos ventanas abiertas lado a lado). En el producto real también se configuran logotipo, tipografía y fotos propias del restaurante.</div>
+    <div class="nota-pie">Al aplicar un tema o guardar la identidad, la app del comensal cambia al instante (pruébalo con las dos ventanas lado a lado). Los colores corporativos se aplican encima del tema elegido.</div>
   </div>
 
   <!-- QR POR MESA -->
@@ -344,7 +373,8 @@
 
 <!-- Candado de acceso (nivel piloto) -->
 <div id="candado" style="position:fixed;inset:0;z-index:400;background:var(--esp);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px">
-  <div class="marca" style="text-align:center">Bella Vita<small>PANEL DEL RESTAURANTE</small></div>
+  <img id="logoCandado" alt="" style="display:none;width:64px;height:64px;border-radius:50%;object-fit:cover;border:1px solid var(--linea2)">
+  <div class="marca" id="marcaCandado" style="text-align:center">Bella Vita<small>PANEL DEL RESTAURANTE</small></div>
   <div class="caps" style="color:var(--humo)">PIN DE ACCESO</div>
   <input id="pinInp" type="password" inputmode="numeric" maxlength="6" class="filtro" style="width:140px;text-align:center;font-size:22px;letter-spacing:8px;padding:14px">
   <button class="btn-sec" onclick="probarPin()">Entrar</button>
@@ -386,7 +416,7 @@ async function cargar(){
     if(cfgs && cfgs[0]) cfgCache = cfgs[0].data || cfgCache;
     const filas = await api(`menusbot_ordenes?restaurante_id=eq.${RID}&order=creada.desc&limit=500&select=*`);
     ordenesCache = (filas || []).map(f => ({
-      dbId: f.id, folio: 'BV-' + (1000 + f.id), mesa: f.mesa, items: f.items || [], total: +f.total,
+      dbId: f.id, folio: iniciales(marcaDe().nombre) + '-' + (1000 + f.id), mesa: f.mesa, items: f.items || [], total: +f.total,
       estado: f.estado, creada: Date.parse(f.creada),
       entregada_at: f.entregada_at ? Date.parse(f.entregada_at) : null, entregada_por: f.entregada_por,
     }));
@@ -396,6 +426,7 @@ async function cargar(){
   }catch(e){ enLinea = false; }
   const chip = document.getElementById('chipVivo');
   if(chip){ chip.style.color = enLinea ? 'var(--basilico)' : 'var(--pomodoro)'; chip.lastChild.textContent = enLinea ? ' EN VIVO' : ' SIN CONEXIÓN'; }
+  aplicarMarcaPanel();
   render();
 }
 async function configEscribir(mut){
@@ -405,6 +436,99 @@ async function configEscribir(mut){
   catch(e){ toast('Sin conexión — el cambio se reintentará'); }
 }
 const dbEscribir = configEscribir; // los escritores de carta / temas / equipo mutan el documento de configuración
+
+/* ---------- Identidad de marca (aplica a carta del comensal y a este panel) ---------- */
+const MARCA_DEF = { prefijo:'Trattoria', nombre:'Bella Vita', lema:'Est. 1987', logo:'', acento:'', secundario:'' };
+const marcaDe = () => Object.assign({}, MARCA_DEF, (cfgCache.config && cfgCache.config.marca) || {});
+const iniciales = n => (n || 'BV').split(/\s+/).filter(Boolean).slice(0,2).map(w => w[0].toUpperCase()).join('') || 'BV';
+let marcaPanelHash = '', marcaFormHash = '';
+function aplicarMarcaPanel(){
+  const m = marcaDe();
+  const hash = JSON.stringify(m);
+  if(hash !== marcaPanelHash){
+    marcaPanelHash = hash;
+    document.title = `${m.nombre} · Panel del Restaurante — MenusBot`;
+    $('#marcaHead').innerHTML = `${m.nombre}<small>PANEL DEL RESTAURANTE · MENUSBOT</small>`;
+    $('#marcaCandado').innerHTML = `${m.nombre}<small>PANEL DEL RESTAURANTE</small>`;
+    ['logoHead','logoCandado'].forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      if(m.logo){ el.src = m.logo; el.style.display = 'block'; } else el.style.display = 'none';
+    });
+    document.documentElement.style.setProperty('--pomodoro', m.acento || '#E4593B');
+    document.documentElement.style.setProperty('--oro', m.secundario || '#C9A227');
+  }
+  llenarFormMarca(false);
+}
+function llenarFormMarca(forzar){
+  const zona = document.getElementById('marcaZona');
+  if(!zona || !document.getElementById('mNombre')) return;
+  const m = marcaDe();
+  const hash = JSON.stringify(m);
+  if(!forzar && (hash === marcaFormHash || zona.contains(document.activeElement))) return;
+  marcaFormHash = hash;
+  $('#mPrefijo').value = m.prefijo; $('#mNombre').value = m.nombre; $('#mLema').value = m.lema;
+  $('#mAcento').value = m.acento || '#E4593B'; $('#mSecundario').value = m.secundario || '#C9A227';
+  const prev = $('#mLogoPrev'), q = $('#mLogoQuitar');
+  if(m.logo){ prev.src = m.logo; prev.style.display = 'block'; q.style.display = 'inline-block'; }
+  else{ prev.style.display = 'none'; q.style.display = 'none'; }
+}
+function guardarMarca(){
+  configEscribir(d => {
+    d.config.marca = { ...marcaDe(),
+      prefijo: $('#mPrefijo').value.trim(),
+      nombre: $('#mNombre').value.trim() || 'Bella Vita',
+      lema: $('#mLema').value.trim(),
+      acento: $('#mAcento').value,
+      secundario: $('#mSecundario').value };
+  });
+  aplicarMarcaPanel(); llenarFormMarca(true);
+  toast('Identidad guardada — la carta del comensal y el panel ya la usan');
+}
+function coloresDelTema(){
+  configEscribir(d => { d.config.marca = { ...marcaDe(), acento:'', secundario:'' }; });
+  aplicarMarcaPanel(); llenarFormMarca(true);
+  toast('Colores corporativos restablecidos a los del tema');
+}
+function subirLogo(){
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.onchange = () => {
+    const f = inp.files[0];
+    if(!f) return;
+    const img = new Image();
+    img.onload = () => {
+      const lado = Math.min(img.width, img.height, 480);
+      const cv = document.createElement('canvas');
+      cv.width = lado; cv.height = lado;
+      // recorte centrado cuadrado
+      const s = Math.min(img.width, img.height);
+      cv.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, lado, lado);
+      cv.toBlob(async blob => {
+        const rutaF = `fotos/logo_${Date.now()}.png`;
+        try{
+          const r = await fetch(`${SUPA_URL}/storage/v1/object/menusbot-demo/${rutaF}`, {
+            method:'POST',
+            headers:{ 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type':'image/png', 'x-upsert':'true' },
+            body: blob,
+          });
+          if(!r.ok) throw new Error(await r.text());
+          configEscribir(d => { d.config.marca = { ...marcaDe(), logo: `${SUPA_URL}/storage/v1/object/public/menusbot-demo/${rutaF}` }; });
+          aplicarMarcaPanel(); llenarFormMarca(true);
+          toast('Logo publicado — carta y panel actualizados');
+        }catch(e){ toast('No se pudo subir el logo — revisa tu conexión'); }
+      }, 'image/png');
+    };
+    img.src = URL.createObjectURL(f);
+  };
+  inp.click();
+}
+function quitarLogo(){
+  configEscribir(d => { d.config.marca = { ...marcaDe(), logo:'' }; });
+  aplicarMarcaPanel(); llenarFormMarca(true);
+  toast('Logo retirado — se muestra el sello tipográfico');
+}
 setInterval(cargar, 4000);
 setInterval(() => {
   cfgCache.adminVisto = Date.now();
@@ -577,7 +701,7 @@ function render(){
     $('#temasGrid').innerHTML = Object.entries(TEMAS).map(([k,t]) => `
       <div class="tema-card ${d.config.tema===k?'activo':''}">
         <div class="tc-preview" style="background:${t.fondo};color:${t.texto}">
-          <div class="p-marca">Bella Vita</div>
+          <div class="p-marca">${marcaDe().nombre}</div>
           <div class="p-linea" style="background:${t.texto};opacity:.25"></div>
           <div class="p-linea corta" style="background:${t.texto};opacity:.15"></div>
           <div class="p-boton" style="background:${t.acento};color:${t.papel}">AGREGAR</div>
@@ -821,7 +945,7 @@ function imprimirCorte(){
   const vendido = os.reduce((s,o) => s + (+o.total||0), 0);
   const titulo = dias === 1 ? 'Corte del día' : `Reporte — últimos ${dias} días`;
   const w = window.open('', '_blank');
-  w.document.write(`<html><head><title>${titulo} · Bella Vita</title><style>
+  w.document.write(`<html><head><title>${titulo} · ${marcaDe().nombre}</title><style>
     body{font-family:Georgia,serif;max-width:640px;margin:30px auto;color:#241F18;padding:0 20px}
     h1{font-style:italic;font-weight:500} .caps{font-family:Arial;font-size:10px;letter-spacing:2px;color:#777}
     table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}
@@ -829,7 +953,7 @@ function imprimirCorte(){
     td{border-bottom:1px dotted #bbb;padding:7px 6px;vertical-align:top}
     .tot{font-size:18px;margin-top:18px;border-top:2px solid #241F18;padding-top:10px;display:flex;justify-content:space-between}
   </style></head><body>
-    <div class="caps">TRATTORIA BELLA VITA · MENUSBOT</div>
+    <div class="caps">${((marcaDe().prefijo ? marcaDe().prefijo + ' ' : '') + marcaDe().nombre).toUpperCase()} · MENUSBOT</div>
     <h1>${titulo}</h1>
     <div class="caps">${new Date().toLocaleString('es-MX')} · ${os.length} comandas</div>
     <table><tr><th>FOLIO</th><th>HORA</th><th>MESA</th><th>ARTÍCULOS</th><th>ENTREGÓ</th><th style="text-align:right">TOTAL</th></tr>
@@ -907,7 +1031,7 @@ function imprimirQRs(){
     return `<div style="display:inline-block;text-align:center;margin:14px;padding:16px;border:1px solid #999"><img src="${src}" style="width:150px"><div style="font-family:Georgia;font-style:italic;margin-top:8px">Tavolo ${String(i+1).padStart(2,'0')}</div><div style="font-family:Arial;font-size:8px;letter-spacing:2px;color:#777;margin-top:3px">ESCANEA PARA VER LA CARTA Y ORDENAR</div></div>`;
   }).join('');
   const w = window.open('', '_blank');
-  w.document.write(`<html><head><title>QRs · Bella Vita</title></head><body style="text-align:center;font-family:Georgia"><h2 style="font-style:italic">Trattoria Bella Vita</h2>${imgs}</body></html>`);
+  w.document.write(`<html><head><title>QRs · ${marcaDe().nombre}</title></head><body style="text-align:center;font-family:Georgia"><h2 style="font-style:italic">${(marcaDe().prefijo ? marcaDe().prefijo + ' ' : '') + marcaDe().nombre}</h2>${imgs}</body></html>`);
   w.document.close();
   setTimeout(() => { try{ w.print(); }catch(e){} }, 500);
 }
