@@ -247,6 +247,16 @@
   .alerg{display:flex;gap:10px;flex-wrap:wrap}
   .alerg span{font-family:var(--grot);font-size:9px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--pomodoro);border:1px solid rgba(228,89,59,.4);padding:7px 12px;border-radius:2px}
   .nota-vino{border-left:2px solid var(--oro);padding:4px 0 4px 14px;font-family:var(--serif);font-style:italic;font-size:14px;line-height:1.6;color:var(--crema)}
+  .sug-cards{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin-top:2px}
+  .sug-cards::-webkit-scrollbar{display:none}
+  .sug-card{flex:0 0 auto;display:flex;align-items:center;gap:10px;border:1px solid var(--linea2);border-radius:3px;padding:8px 10px 8px 8px;min-width:196px;background:transparent}
+  .sug-card .sug-img{width:46px;height:54px;border-radius:999px 999px 3px 3px;overflow:hidden;flex-shrink:0}
+  .sug-card .sug-img img,.sug-card .sug-img svg{width:100%;height:100%;object-fit:cover;display:block}
+  .sug-card .sug-info{min-width:0}
+  .sug-card .sug-nom{font-family:var(--serif);font-style:italic;font-size:13px;line-height:1.25;color:var(--crema);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
+  .sug-card .sug-precio{font-family:var(--grot);font-size:10.5px;font-weight:700;letter-spacing:1px;color:var(--pomodoro);margin-top:3px}
+  .sug-card .sug-mas{margin-left:auto;width:30px;height:30px;border:1px solid var(--linea2);border-radius:2px;background:transparent;color:var(--crema);font-size:15px;cursor:pointer;font-family:var(--grot);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.15s}
+  .sug-card .sug-mas:active{background:var(--pomodoro);border-color:var(--pomodoro);color:#fff}
   .notas-inp{width:100%;border:1px solid var(--linea2);background:transparent;border-radius:2px;padding:13px 15px;font-size:12.5px;outline:none;font-family:var(--grot);color:var(--crema);letter-spacing:.4px}
   .notas-inp::placeholder{color:var(--humo2)}
   .notas-inp:focus{border-color:var(--pomodoro)}
@@ -483,79 +493,79 @@ let PLATILLOS = [
   descLarga:'Rebanadas de pan campesino horneado en casa, frotadas con ajo y coronadas con jitomate saladet marinado, albahaca fresca del huerto y un hilo de aceite de oliva toscano. Ligera, fresca y perfecta para compartir.',
   ingredientes:['Pan campesino','Jitomate saladet','Albahaca fresca','Ajo','Aceite de oliva extra virgen','Sal de mar'],
   alergenos:['Gluten'], tags:['vegetariano','ligero'], claves:['bruschetta','brusqueta','pan tostado'],
-  maridaje:'Un Prosecco frío o nuestra Limonada al Basilico.'},
+  maridaje:'Nuestra Limonada al Basilico es su pareja perfecta.', sugiere:['limonada','carbonara','margherita']},
  {id:'carpaccio', cat:'entradas', nombre:'Carpaccio di Manzo', precio:165, kcal:310, prot:24, carb:4, grasa:21, tiempo:'12 min', porcion:'120 g',
   desc:'Láminas finas de res con arúgula, lajas de parmesano y limón amarillo.',
   descLarga:'Finísimas láminas de filete de res curado al momento, servidas con arúgula baby, lajas de Parmigiano Reggiano añejado 24 meses, alcaparras fritas y una emulsión de limón amarillo y oliva.',
   ingredientes:['Filete de res','Arúgula','Parmigiano Reggiano','Alcaparras','Limón amarillo','Aceite de oliva','Pimienta negra'],
   alergenos:['Lácteos'], tags:['sin gluten'], claves:['carpaccio','carne cruda'],
-  maridaje:'Copa de vino tinto ligero, un Chianti joven.'},
+  maridaje:'Una copa de nuestro Vino Tinto de la Casa lo realza.', sugiere:['vino','ossobuco']},
  {id:'carbonara', cat:'pastas', nombre:'Spaghetti alla Carbonara', precio:185, kcal:680, prot:28, carb:74, grasa:29, tiempo:'18 min', porcion:'320 g',
   desc:'La receta romana: guanciale, yema, pecorino y pimienta. Sin crema, como debe ser.',
   descLarga:'Nuestra pasta más pedida. Spaghetti al dente envuelto en una emulsión sedosa de yema de huevo y Pecorino Romano, con guanciale dorado y pimienta negra recién molida. Fiel a la receta romana: aquí no entra la crema.',
   ingredientes:['Spaghetti','Guanciale (papada de cerdo curada)','Yema de huevo','Pecorino Romano','Pimienta negra'],
   alergenos:['Gluten','Huevo','Lácteos'], tags:['popular'], claves:['carbonara','espagueti','spaghetti'],
-  maridaje:'Vino blanco seco — Frascati o Pinot Grigio.'},
+  maridaje:'Copa de Vino Tinto de la Casa, o Limonada al Basilico si prefieres sin alcohol.', sugiere:['vino','bruschetta','tiramisu']},
  {id:'lasagna', cat:'pastas', nombre:'Lasagna alla Bolognese', precio:195, kcal:720, prot:34, carb:58, grasa:38, tiempo:'25 min', porcion:'380 g',
   desc:'Capas de pasta fresca, ragú de res cocido 6 horas y bechamel gratinada.',
   descLarga:'Ocho capas de pasta fresca hecha en casa, ragú bolognese de res y cerdo cocido a fuego lento durante seis horas, bechamel cremosa y gratín de mozzarella y parmesano. Sale burbujeando del horno.',
   ingredientes:['Pasta fresca de huevo','Res molida','Cerdo molido','Jitomate','Bechamel','Mozzarella','Parmesano','Vino tinto','Zanahoria y apio'],
   alergenos:['Gluten','Huevo','Lácteos'], tags:['popular'], claves:['lasagna','lasana','lasaña'],
-  maridaje:'Un Sangiovese o Montepulciano de cuerpo medio.'},
+  maridaje:'Copa de Vino Tinto de la Casa — Sangiovese, ideal con el ragú.', sugiere:['vino','bruschetta','tiramisu']},
  {id:'ravioli', cat:'pastas', nombre:'Ravioli di Spinaci e Ricotta', precio:175, kcal:540, prot:19, carb:52, grasa:26, tiempo:'16 min', porcion:'9 piezas',
   desc:'Ravioles rellenos de espinaca y ricotta en mantequilla de salvia.',
   descLarga:'Ravioles de masa fina rellenos de espinaca salteada y ricotta cremosa, terminados en mantequilla dorada con hojas de salvia crujiente y parmesano. Vegetariano y reconfortante.',
   ingredientes:['Pasta fresca de huevo','Espinaca','Ricotta','Mantequilla','Salvia','Parmesano','Nuez moscada'],
   alergenos:['Gluten','Huevo','Lácteos'], tags:['vegetariano'], claves:['ravioli','ravioles','raviol'],
-  maridaje:'Chardonnay sin barrica o agua mineral con limón.'},
+  maridaje:'Limonada al Basilico, fresca contra la mantequilla de salvia.', sugiere:['limonada','pannacotta']},
  {id:'margherita', cat:'pizzas', nombre:'Pizza Margherita', precio:160, kcal:850, prot:32, carb:98, grasa:35, tiempo:'15 min', porcion:'30 cm · 8 rebanadas',
   desc:'San Marzano, mozzarella fior di latte y albahaca. Horno de leña a 400 °C.',
   descLarga:'La reina de Nápoles: masa madre fermentada 48 horas, salsa de jitomate San Marzano, mozzarella fior di latte y albahaca fresca. Horneada 90 segundos en horno de leña a 400 °C. Los valores nutricionales son de la pizza completa.',
   ingredientes:['Masa madre','Jitomate San Marzano','Mozzarella fior di latte','Albahaca','Aceite de oliva'],
   alergenos:['Gluten','Lácteos'], tags:['vegetariano','popular','niños'], claves:['margherita','margarita'],
-  maridaje:'Cerveza lager italiana o Lambrusco.'},
+  maridaje:'Limonada al Basilico o una copa de Vino Tinto de la Casa.', sugiere:['limonada','bruschetta','tiramisu']},
  {id:'quattro', cat:'pizzas', nombre:'Pizza Quattro Formaggi', precio:190, kcal:980, prot:41, carb:92, grasa:48, tiempo:'15 min', porcion:'30 cm · 8 rebanadas',
   desc:'Mozzarella, gorgonzola, parmesano y provolone sobre base blanca.',
   descLarga:'Para los amantes del queso: base blanca (sin jitomate) con mozzarella, gorgonzola dulce, parmesano añejo y provolone ahumado, terminada con miel de la casa opcional. Valores de la pizza completa.',
   ingredientes:['Masa madre','Mozzarella','Gorgonzola','Parmesano','Provolone','Miel (opcional)'],
   alergenos:['Gluten','Lácteos'], tags:['vegetariano'], claves:['quattro','cuatro quesos','formaggi'],
-  maridaje:'Vino blanco con cuerpo o sidra seca.'},
+  maridaje:'Copa de Vino Tinto de la Casa para balancear los quesos.', sugiere:['vino','pannacotta']},
  {id:'ossobuco', cat:'principales', nombre:'Ossobuco alla Milanese', precio:265, kcal:610, prot:46, carb:28, grasa:33, tiempo:'25 min', porcion:'350 g',
   desc:'Chambarete de ternera braseado 8 horas con gremolata y risotto azafranado.',
   descLarga:'Chambarete de ternera braseado ocho horas en vino blanco y caldo de tuétano hasta desprenderse del hueso, servido sobre risotto al azafrán y coronado con gremolata de limón y perejil. Nuestro platillo insignia.',
   ingredientes:['Chambarete de ternera','Vino blanco','Arroz arborio','Azafrán','Mantequilla','Parmesano','Limón','Perejil'],
   alergenos:['Lácteos'], tags:['popular','sin gluten'], claves:['ossobuco','osobuco','ternera'],
-  maridaje:'Barolo o Nebbiolo — un tinto con estructura.'},
+  maridaje:'Copa de Vino Tinto de la Casa, imprescindible con nuestro platillo insignia.', sugiere:['vino','carpaccio','tiramisu']},
  {id:'salmone', cat:'principales', nombre:'Salmone alla Griglia', precio:245, kcal:480, prot:38, carb:12, grasa:30, tiempo:'20 min', porcion:'220 g',
   desc:'Salmón a la parrilla con espárragos, limón y aceite de romero.',
   descLarga:'Filete de salmón del Atlántico a la parrilla, con piel crujiente, espárragos salteados, limón asado y aceite de romero. Alto en proteína y omega-3; la opción más ligera de nuestros principales.',
   ingredientes:['Salmón del Atlántico','Espárragos','Limón','Romero','Aceite de oliva','Sal de mar'],
   alergenos:['Pescado'], tags:['sin gluten','ligero','saludable'], claves:['salmon','salmón','salmone','pescado'],
-  maridaje:'Sauvignon Blanc o Vermentino frío.'},
+  maridaje:'Limonada al Basilico, tan fresca y ligera como el platillo.', sugiere:['limonada','pannacotta']},
  {id:'tiramisu', cat:'postres', nombre:'Tiramisù della Casa', precio:110, kcal:450, prot:8, carb:42, grasa:27, tiempo:'5 min', porcion:'160 g',
   desc:'Receta de la nonna: mascarpone, café expreso y cacao amargo.',
   descLarga:'La receta de la nonna Rosa desde 1987: soletas bañadas en café expreso, crema de mascarpone batida a mano y cacao amargo espolvoreado al momento. Contiene un toque de licor Marsala.',
   ingredientes:['Mascarpone','Soletas','Café expreso','Huevo','Azúcar','Cacao amargo','Licor Marsala'],
   alergenos:['Gluten','Huevo','Lácteos'], tags:['vegetariano','popular'], claves:['tiramisu','tiramisú'],
-  maridaje:'Un espresso o una copa de Vin Santo.'},
+  maridaje:'El final perfecto después de cualquier pasta della casa.', sugiere:['vino','pannacotta']},
  {id:'pannacotta', cat:'postres', nombre:'Panna Cotta ai Frutti di Bosco', precio:95, kcal:320, prot:5, carb:34, grasa:18, tiempo:'5 min', porcion:'140 g',
   desc:'Crema sedosa de vainilla con salsa tibia de frutos rojos.',
   descLarga:'Crema de vainilla de Madagascar apenas cuajada, servida con salsa tibia de frutos rojos y menta fresca. Naturalmente sin gluten y el postre más ligero de la carta.',
   ingredientes:['Crema','Leche','Vainilla de Madagascar','Grenetina','Frutos rojos','Azúcar','Menta'],
   alergenos:['Lácteos'], tags:['vegetariano','sin gluten','ligero'], claves:['panna cotta','pannacotta','pana cota'],
-  maridaje:'Moscato d’Asti o té de frutos rojos.'},
+  maridaje:'Ligera y fresca — ideal tras el salmone o cualquier pizza.', sugiere:['limonada','tiramisu']},
  {id:'limonada', cat:'bebidas', nombre:'Limonada al Basilico', precio:55, kcal:90, prot:0, carb:23, grasa:0, tiempo:'5 min', porcion:'400 ml',
   desc:'Limón amarillo, albahaca fresca y agua mineral. Sin conservadores.',
   descLarga:'Limonada de limón amarillo con hojas de albahaca macerada, endulzada con jarabe natural de la casa y agua mineral. Refrescante, vegana y sin gluten.',
   ingredientes:['Limón amarillo','Albahaca','Jarabe natural','Agua mineral','Hielo'],
   alergenos:[], tags:['vegetariano','vegano','sin gluten','ligero'], claves:['limonada','basilico'],
-  maridaje:'Va con todo el menú, especialmente entradas.'},
+  maridaje:'Va con todo el menú, especialmente entradas y pizzas.', sugiere:['bruschetta','margherita']},
  {id:'vino', cat:'bebidas', nombre:'Vino Tinto de la Casa', precio:85, kcal:125, prot:0, carb:4, grasa:0, tiempo:'2 min', porcion:'150 ml',
   desc:'Sangiovese toscano de nuestra bodega. Notas de cereza y especias.',
   descLarga:'Sangiovese de una bodega familiar en la Toscana con la que trabajamos desde hace 15 años. Notas de cereza madura, especias dulces y un final suave. Ideal con pastas y carnes.',
   ingredientes:['Uva Sangiovese'],
   alergenos:['Sulfitos'], tags:['sin gluten','vegano'], claves:['vino','tinto','sangiovese','copa'],
-  maridaje:'Perfecto con la lasagna, el ossobuco o la carbonara.'},
+  maridaje:'Perfecto con la lasagna, el ossobuco o la carbonara.', sugiere:['lasagna','ossobuco','carbonara']},
 ];
 
 /* Respaldo SVG si la foto no carga */
@@ -852,6 +862,59 @@ function pintarLista(){
   $('#lista').innerHTML = html;
 }
 
+/* ============ SUGERENCIA DELLA CASA (venta cruzada con productos del menú) ============ */
+function sugerenciasDe(d, n, excluir){
+  n = n || 3;
+  const fuera = new Set([d.id].concat(excluir || []));
+  const lista = [];
+  (d.sugiere || []).forEach(id => {
+    const p = PLATILLOS.find(x => x.id === id);
+    if(p && !p.oculto && !fuera.has(p.id)){ lista.push(p); fuera.add(p.id); }
+  });
+  if(lista.length < n){
+    const orden = ({entradas:['pastas','bebidas'], pastas:['bebidas','postres'], pizzas:['bebidas','postres'],
+      principales:['bebidas','postres'], postres:['bebidas'], bebidas:['entradas','postres']})[d.cat] || ['bebidas','postres'];
+    for(const cat of orden){
+      for(const p of PLATILLOS.filter(x => x.cat === cat && !x.oculto)){
+        if(lista.length >= n) break;
+        if(!fuera.has(p.id)){ lista.push(p); fuera.add(p.id); }
+      }
+    }
+  }
+  return lista.slice(0, n);
+}
+function sugerenciasComanda(n){
+  n = n || 3;
+  const visto = new Set(pedido.map(i => i.id));
+  const cats = new Set(pedido.map(i => (PLATILLOS.find(x => x.id === i.id) || {}).cat));
+  const out = [];
+  pedido.forEach(i => {
+    const d = PLATILLOS.find(x => x.id === i.id);
+    ((d && d.sugiere) || []).forEach(id => {
+      const p = PLATILLOS.find(x => x.id === id);
+      if(p && !p.oculto && !visto.has(p.id)){ out.push(p); visto.add(p.id); }
+    });
+  });
+  const faltan = ['bebidas','postres','entradas'].filter(c => !cats.has(c));
+  const prio = out.filter(p => faltan.includes(p.cat)).concat(out.filter(p => !faltan.includes(p.cat)));
+  faltan.forEach(c => {
+    if(prio.length < n){
+      const p = PLATILLOS.find(x => x.cat === c && !x.oculto && !visto.has(x.id));
+      if(p){ prio.push(p); visto.add(p.id); }
+    }
+  });
+  return prio.slice(0, n);
+}
+function sugCardsHTML(items){
+  if(!items.length) return '';
+  return `<div class="sug-cards">` + items.map(p => `
+    <div class="sug-card">
+      <div class="sug-img">${foto(p.id)}</div>
+      <div class="sug-info"><div class="sug-nom">${p.nombre}</div><div class="sug-precio">${fmt(p.precio)}</div></div>
+      <button class="sug-mas" onclick="agregarRapido('${p.id}')" aria-label="Agregar ${p.nombre}">+</button>
+    </div>`).join('') + `</div>`;
+}
+
 /* ============ FICHA + VISOR ============ */
 let cantModal = 1;
 function abrirPlatillo(id){
@@ -890,7 +953,8 @@ function abrirPlatillo(id){
         ${d.alergenos.length ? `<div class="alerg">${d.alergenos.map(a => `<span>${a}</span>`).join('')}</div>` : '<div style="font-size:11px;color:var(--humo2);letter-spacing:1px">SIN ALÉRGENOS COMUNES</div>'}
       </div>
       <div class="bloque"><div class="b-cab"><span class="caps">Sugerencia della casa</span><i></i></div>
-        <div class="nota-vino">${d.maridaje}</div>
+        <div class="nota-vino" style="margin-bottom:12px">${d.maridaje}</div>
+        ${sugCardsHTML(sugerenciasDe(d, 3, pedido.map(i => i.id)))}
       </div>
       <div class="bloque"><div class="b-cab"><span class="caps">Nota para cocina</span><i></i></div>
         <input class="notas-inp" id="notasPlatillo" placeholder="Ej. sin cebolla, término medio, para compartir…">
@@ -905,6 +969,7 @@ function abrirPlatillo(id){
     </div>`;
   $('#velo').classList.add('abierto');
   $('#hoja').classList.add('abierta');
+  document.querySelectorAll('#hoja .sug-cards').forEach(arrastrable);
   window._platilloAbierto = d;
 }
 function cambiarCant(dif){
@@ -980,12 +1045,15 @@ function pintarVistaOrden(){
   html += `<div class="t-tot"><span class="caps">Totale</span><span class="leader"></span><b>${fmt(totalPedido())} ${RESTAURANTE.moneda}</b></div>
     <div class="t-bar"></div>
     <div class="t-folio">MESA ${String(mesa).padStart(2,'0')} · ${cuentaPedido()} ART · 15–25 MIN</div>
-  </div></div>
-  <div class="acciones-orden">
+  </div></div>`;
+  const sugs = sugerenciasComanda(3);
+  if(sugs.length) html += `<div class="bloque" style="margin-top:20px;padding:0 18px"><div class="b-cab"><span class="caps">La casa sugiere</span><i></i></div>${sugCardsHTML(sugs)}</div>`;
+  html += `<div class="acciones-orden">
     <button class="btn-primario" onclick="enviarOrden()">Enviar a cocina — Tavolo ${String(mesa).padStart(2,'0')}</button>
     <button class="btn-fantasma" onclick="mostrarVista('menu')">Seguir explorando la carta</button>
   </div>`;
   v.innerHTML = html;
+  v.querySelectorAll('.sug-cards').forEach(arrastrable);
 }
 function progresoHTML(o){
   const dot = i => o.estado > i ? 'hecho' : o.estado === i ? (i === 3 ? 'hecho' : 'activo') : '';
