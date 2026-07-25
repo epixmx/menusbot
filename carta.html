@@ -73,7 +73,9 @@
   .titulo-zona h1{font-family:var(--serif);font-weight:500;font-size:44px;line-height:.95;letter-spacing:-1.2px}
   .titulo-zona h1 em{font-style:italic;color:var(--pomodoro)}
   .titulo-zona .sello{position:absolute;right:-4px;top:-14px;width:84px;height:84px;animation:gira 28s linear infinite;opacity:.9}
-  .titulo-zona .sello-logo{position:absolute;right:-4px;top:-14px;width:84px;height:84px;border-radius:50%;object-fit:cover;border:1px solid var(--linea2);background:var(--esp2)}
+  .titulo-zona .sello-logo{display:none !important}
+  #logoPrincipal{max-height:84px;max-width:240px;object-fit:contain;display:block}
+  .lema-cab{margin-top:9px;font-family:var(--grot);font-size:9px;font-weight:700;letter-spacing:2.8px;text-transform:uppercase;color:var(--humo)}
   @keyframes gira{to{transform:rotate(360deg)}}
   .sello text{font-family:var(--grot);font-size:10.5px;letter-spacing:2px;fill:var(--humo);font-weight:600}
   .sello .centro{font-family:var(--serif);font-style:italic;font-size:20px;fill:var(--pomodoro)}
@@ -318,6 +320,12 @@
   .g-nota{margin-top:20px;border-left:2px solid var(--oro);padding:2px 0 2px 12px;font-family:var(--serif);font-style:italic;font-size:13.5px;line-height:1.55}
   .guia .btn-primario{margin-top:22px;width:100%}
   /* ---------- Affordance de detalle ---------- */
+  .banner-estado{display:flex;align-items:center;gap:14px;margin:0 18px 18px;border:1px solid var(--ce);border-left:6px solid var(--ce);border-radius:3px;padding:15px 16px;background:color-mix(in srgb, var(--ce) 12%, transparent);animation:sube .3s}
+  .banner-estado .be-dot{width:12px;height:12px;border-radius:50%;background:var(--ce);flex-shrink:0;animation:parp 1.4s infinite}
+  .banner-estado b{font-family:var(--grot);font-size:14px;letter-spacing:1.6px;color:var(--ce);display:block}
+  .banner-estado small{display:block;font-family:var(--grot);font-size:10px;letter-spacing:.6px;color:var(--humo);margin-top:4px}
+  .chip-estado{display:flex;align-items:center;gap:7px;font-family:var(--grot);font-size:9px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--ce);border:1px solid var(--ce);padding:6px 10px;border-radius:2px}
+  .chip-estado i{width:7px;height:7px;border-radius:50%;background:var(--ce)}
   .mini-tag.detalle{color:var(--pomodoro);border:1px solid rgba(228,89,59,.5);font-size:9.5px;padding:4px 8px;border-radius:2px}
   .tag-ver{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(18,15,12,.78);color:#F5EDDE;font-family:var(--grot);font-size:9.5px;font-weight:700;letter-spacing:1.6px;padding:7px 11px;border-radius:2px;backdrop-filter:blur(4px);white-space:nowrap}
 </style>
@@ -328,7 +336,7 @@
   <!-- Splash -->
   <div class="splash" id="splash">
     <div class="splash-caja">
-      <div class="sobre">CUCINA ITALIANA ARTIGIANALE</div>
+      <div class="sobre">ORDENA DESDE TU CELULAR</div>
       <h1 id="splashMarca"><span>TRATTORIA</span>Bella Vita</h1>
       <div class="orn"><i></i>✳<i></i></div>
       <div class="pregunta">¿EN QUÉ MESA TE ENCUENTRAS?</div>
@@ -341,11 +349,15 @@
   <div class="vista activa" id="vistaMenu">
     <div class="cab">
       <div class="fila-top">
-        <span class="marca-mini">MENUSBOT — DEMO</span>
-        <button class="mesa-pill" onclick="cambiarMesa()">TAVOLO <b id="mesaNum">–</b></button>
+        <span class="marca-mini" id="marcaMini">MENUSBOT — DEMO</span>
+        <button class="mesa-pill" onclick="cambiarMesa()">MESA <b id="mesaNum">–</b></button>
       </div>
       <div class="titulo-zona">
-        <h1>La nostra<br><em>cucina</em></h1>
+        <div id="cabPrincipal">
+          <h1 id="cabTitulo">Trattoria<br><em>Bella Vita</em></h1>
+          <img id="logoPrincipal" alt="" style="display:none">
+          <div class="lema-cab" id="lemaCab"></div>
+        </div>
         <svg class="sello" id="selloSvg" viewBox="0 0 100 100">
           <defs><path id="circ" d="M 50,50 m -36,0 a 36,36 0 1,1 72,0 a 36,36 0 1,1 -72,0"/></defs>
           <text><textPath id="selloTexto" href="#circ">TRATTORIA BELLA VITA · EST. 1987 · </textPath></text>
@@ -372,7 +384,7 @@
     </div>
 
     <div class="destacados" id="zonaDestacados">
-      <div class="dest-titulo"><span class="num">✳</span><h2>I favoriti della casa</h2><i></i></div>
+      <div class="dest-titulo"><span class="num">✳</span><h2>Los favoritos de la casa</h2><i></i></div>
       <div class="dest-scroll" id="destScroll"></div>
     </div>
 
@@ -403,9 +415,9 @@
         <svg class="ico" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>
         Cuenta
       </button>
-      <button class="nav-item" id="navMesa" onclick="cambiarMesa()">
-        <svg class="ico" viewBox="0 0 24 24"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
-        Mesa
+      <button class="nav-item" id="navMesa" onclick="abrirAyuda()">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9z"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+        Mesero
       </button>
     </div>
   </div>
@@ -435,6 +447,17 @@
 <div class="velo" id="velo"></div>
 <div class="hoja" id="hoja"></div>
 <div class="hoja" id="hojaConf"></div>
+<div class="hoja" id="hojaAyuda">
+  <div class="confirmacion" style="text-align:left">
+    <div class="vista-head" style="padding:0 0 6px"><div class="caps" style="color:var(--humo)">¿Necesitas algo?</div><h2 style="font-family:var(--serif);font-style:italic;font-weight:500;font-size:30px">Estamos para servirte</h2></div>
+    <div class="acciones-orden" style="padding:16px 0 0">
+      <button class="btn-primario" onclick="cerrarSheets();llamarMesero()">Llamar al mesero a mi mesa</button>
+      <button class="btn-fantasma" onclick="cerrarSheets();pedirCuenta()">Pedir la cuenta para pagar</button>
+      <button class="btn-fantasma" onclick="cerrarSheets();mostrarGuia(true)">¿Cómo funciona esta carta?</button>
+      <button class="btn-fantasma" onclick="cerrarSheets();cambiarMesa()">Cambiar de mesa</button>
+    </div>
+  </div>
+</div>
 
 <!-- Visor -->
 <div class="visor" id="visor" onclick="cerrarVisor()">
@@ -453,12 +476,12 @@ const IMG_BASE = 'https://xwcgqhlsubyfmpdjabjt.supabase.co/storage/v1/object/pub
 const IMG = id => IMG_BASE + id + '.jpg';
 
 const CATEGORIAS = [
-  {id:'entradas', nombre:'Antipasti', num:'01'},
-  {id:'pastas', nombre:'Paste', num:'02'},
-  {id:'pizzas', nombre:'Pizze', num:'03'},
-  {id:'principales', nombre:'Secondi', num:'04'},
-  {id:'postres', nombre:'Dolci', num:'05'},
-  {id:'bebidas', nombre:'Da bere', num:'06'},
+  {id:'entradas', nombre:'Entradas', num:'01'},
+  {id:'pastas', nombre:'Pastas', num:'02'},
+  {id:'pizzas', nombre:'Pizzas', num:'03'},
+  {id:'principales', nombre:'Platos fuertes', num:'04'},
+  {id:'postres', nombre:'Postres', num:'05'},
+  {id:'bebidas', nombre:'Bebidas', num:'06'},
 ];
 let PLATILLOS = [
  {id:'bruschetta', cat:'entradas', nombre:'Bruschetta al Pomodoro', precio:95, kcal:220, prot:6, carb:32, grasa:8, tiempo:'10 min', porcion:'4 piezas',
@@ -663,6 +686,8 @@ let MARCA = { prefijo:'Trattoria', nombre:'Bella Vita', lema:'Est. 1987', logo:'
 let marcaAplicada = '';
 const iniciales = n => (n || 'BV').split(/\s+/).filter(Boolean).slice(0,2).map(w => w[0].toUpperCase()).join('') || 'BV';
 function aplicarMarca(){
+  const mm = $('#marcaMini');
+  if(mm && SUC) mm.textContent = 'SUCURSAL ' + SUC.toUpperCase();
   const m = Object.assign({}, MARCA, (dbCache.config && dbCache.config.marca) || {});
   const hash = JSON.stringify(m) + temaActual;
   if(hash === marcaAplicada) return;
@@ -677,10 +702,15 @@ function aplicarMarca(){
   if(anillo) anillo.textContent = `${completo.toUpperCase()} · ${(m.lema || 'MENÚ DIGITAL').toUpperCase()} · `;
   const centro = $('#selloCentro');
   if(centro) centro.textContent = iniciales(m.nombre).split('').join('.') + '.';
-  const svgSello = $('#selloSvg'), logoImg = $('#selloLogo');
-  if(svgSello && logoImg){
-    if(m.logo){ logoImg.src = m.logo; logoImg.style.display = 'block'; svgSello.style.display = 'none'; }
-    else{ logoImg.style.display = 'none'; svgSello.style.display = 'block'; }
+  const titulo = $('#cabTitulo'), logoP = $('#logoPrincipal'), lemaEl = $('#lemaCab');
+  if(titulo && logoP){
+    if(m.logo){
+      logoP.src = m.logo; logoP.style.display = 'block'; titulo.style.display = 'none';
+    } else {
+      logoP.style.display = 'none'; titulo.style.display = 'block';
+      titulo.innerHTML = (m.prefijo ? m.prefijo + '<br>' : '') + `<em>${m.nombre}</em>`;
+    }
+    if(lemaEl) lemaEl.textContent = m.lema || '';
   }
   const base = TEMAS[temaActual] || TEMAS.editoriale;
   document.documentElement.style.setProperty('--pomodoro', m.acento || base.pomodoro);
@@ -724,17 +754,21 @@ async function sincronizar(){
       if(vistaActual === 'orden') pintarVistaOrden();
     }
     if(misIds.length){
-      const filas = await api(`menusbot_ordenes?id=in.(${misIds.join(',')})&select=id,estado,entregada_por,entregada_at`);
+      const filas = await api(`menusbot_ordenes?id=in.(${misIds.join(',')})&select=id,estado,entregada_por,entregada_at,cerrada`);
       for(const o of ordenes){
         const rem = (filas || []).find(x => x.id === o.dbId);
         if(rem && rem.estado !== o.estado){
           o.estado = rem.estado;
           o.entregada_por = rem.entregada_por;
           o.entregada_at = rem.entregada_at ? Date.parse(rem.entregada_at) : null;
-          const avisos = ['recibida en cocina','en preparación','va en camino a tu mesa','entregada — buon appetito'];
-          toast(`Comanda ${o.folio} — ${avisos[o.estado]}`);
+          const avisos = ['recibida en cocina','en preparación','va en camino a tu mesa','entregada — ¡provecho!'];
+          toast(`Orden ${o.folio} — ${avisos[o.estado]}`);
           refrescarEstadoUI();
         }
+      }
+      // El restaurante cobró y cerró la mesa → visita terminada
+      if(filas && filas.length && filas.every(x => x.cerrada)){
+        cerrarVisita();
       }
     }
   }catch(e){
@@ -743,20 +777,62 @@ async function sincronizar(){
 }
 setInterval(sincronizar, 4000);
 
+/* ---------- Sesión persistente (sobrevive back/recarga del navegador) ---------- */
+const SUC = new URLSearchParams(location.search).get('suc') || '';
+function guardarSesion(){
+  try{
+    if(!pedido.length && !ordenes.length && !cuentaPedida){ localStorage.removeItem('mb_sesion_v1'); return; }
+    localStorage.setItem('mb_sesion_v1', JSON.stringify({ mesa, suc: SUC, pedido, ordenes, misIds, cuentaPedida, ts: Date.now() }));
+  }catch(e){}
+}
+function restaurarSesion(mesaURL){
+  try{
+    const g = JSON.parse(localStorage.getItem('mb_sesion_v1') || 'null');
+    if(!g || Date.now() - (g.ts || 0) > 6*3600*1000) return false;
+    if(mesaURL != null && g.mesa !== mesaURL){ localStorage.removeItem('mb_sesion_v1'); return false; }
+    pedido = g.pedido || [];
+    ordenes = g.ordenes || [];
+    misIds = g.misIds || [];
+    cuentaPedida = !!g.cuentaPedida;
+    if(mesaURL == null && g.mesa != null){ asignarMesa(g.mesa, true); }
+    return true;
+  }catch(e){ return false; }
+}
 function iniciarMesa(){
+  if(SUC) $('#marcaMini').textContent = 'SUCURSAL ' + SUC.toUpperCase();
   const p = new URLSearchParams(location.search).get('mesa');
-  if(p && +p >= 1 && +p <= 40){ asignarMesa(+p, true); return; }
+  if(p && +p >= 1 && +p <= 40){
+    asignarMesa(+p, true);
+    restaurarSesion(+p);
+    pintarIndicadores();
+    return;
+  }
+  if(restaurarSesion(null)){ pintarIndicadores(); if(mesa != null) return; }
   $('#gridMesas').innerHTML = [1,2,3,4,5,6,7,8,9,10,11,12].map(n =>
-    `<button class="mesa-btn" onclick="asignarMesa(${n})">${n}<small>TAVOLO</small></button>`).join('');
+    `<button class="mesa-btn" onclick="asignarMesa(${n})">${n}<small>MESA</small></button>`).join('');
 }
 function asignarMesa(n, silencioso){
   mesa = n;
   $('#mesaNum').textContent = String(n).padStart(2,'0');
   $('#splash').classList.add('oculto');
-  if(!silencioso) toast(`Benvenuto — tavolo ${String(n).padStart(2,'0')}`);
+  if(!silencioso) toast(`Bienvenido — mesa ${String(n).padStart(2,'0')}`);
   mostrarGuia();
 }
 function cambiarMesa(){ $('#splash').classList.remove('oculto'); }
+
+/* Historial: el botón back navega entre vistas / cierra fichas en vez de salir */
+let navHistoria = false;
+history.replaceState({ v: 'menu' }, '');
+window.addEventListener('popstate', e => {
+  if(document.querySelector('.hoja.abierta') || $('#visor').classList.contains('abierto') || $('#guia').classList.contains('visible')){
+    cerrarSheets(); cerrarVisor(); $('#guia').classList.remove('visible');
+    history.pushState({ v: vistaActual }, '');
+    return;
+  }
+  navHistoria = true;
+  mostrarVista((e.state && e.state.v) || 'menu');
+  navHistoria = false;
+});
 
 let toastTimer = null;
 function toast(txt){
@@ -768,6 +844,7 @@ function toast(txt){
 }
 
 function mostrarVista(v){
+  if(!navHistoria && v !== vistaActual) history.pushState({ v }, '');
   vistaActual = v;
   cerrarSheets();
   document.querySelectorAll('.vista').forEach(x => x.classList.remove('activa'));
@@ -780,7 +857,9 @@ function mostrarVista(v){
 }
 
 const ESTADOS_TXT = ['Recibida en cocina','En preparación','En camino a tu mesa','Entregada en tu mesa'];
+const ESTADOS_COLOR = ['#C9A227','#D96C2F','#3E8ED0','#5FA05A'];
 function pintarIndicadores(){
+  guardarSesion();
   const n = pedido.reduce((s,i) => s + i.qty, 0);
   const b = $('#navBadge');
   b.textContent = n;
@@ -796,11 +875,20 @@ function pintarIndicadores(){
       barra.classList.toggle('visible', vistaActual !== 'orden');
     } else if(ordenes.length && vistaActual === 'menu'){
       // Modo estatus: órdenes en curso y carrito vacío
-      const o = ordenes[ordenes.length - 1];
+      const act = ordenes.filter(o => o.estado < 3);
       barra.classList.add('modo-estado');
-      $('#boNum').innerHTML = '<i></i>';
       const cortos = ['recibida','preparando','en camino','entregada'];
-      $('#boTxt').innerHTML = `Nº ${o.num} — <b>${cortos[o.estado]}</b>`;
+      if(cuentaPedida){
+        $('#boNum').innerHTML = '<i></i>';
+        $('#boTxt').innerHTML = '<b>Cuenta solicitada</b> — mesero en camino';
+      } else if(act.length > 1){
+        $('#boNum').textContent = act.length;
+        $('#boTxt').innerHTML = `<b>${act.length} órdenes en curso</b>`;
+      } else {
+        const o = act[0] || ordenes[ordenes.length - 1];
+        $('#boNum').innerHTML = '<i></i>';
+        $('#boTxt').innerHTML = `Nº ${o.num} — <b>${cortos[o.estado]}</b>`;
+      }
       $('#boTotal').textContent = 'VER';
       barra.classList.add('visible');
     } else {
@@ -812,29 +900,29 @@ function pintarIndicadores(){
   if(ordenes.length){
     const o = ordenes[ordenes.length - 1];
     pill.classList.add('visible');
-    $('#pillEstadoTxt').innerHTML = `<b>COMANDA Nº ${o.num} — ${ESTADOS_TXT[o.estado].toUpperCase()}</b><small>${ordenes.length} orden(es) en curso · toca para ver tu cuenta</small>`;
+    $('#pillEstadoTxt').innerHTML = `<b>ORDEN Nº ${o.num} — ${ESTADOS_TXT[o.estado].toUpperCase()}</b><small>${ordenes.length} orden(es) en curso · toca para ver tu cuenta</small>`;
   } else pill.classList.remove('visible');
 }
 
 /* Marquee */
 function pintarMarquee(){
   const lema = (MARCA.lema || 'EST. 1987').toUpperCase();
-  const items = ['FORNO A LEGNA','PASTA FRESCA QUOTIDIANA', lema, 'RICETTE DELLA NONNA','SLOW FOOD'];
+  const items = ['HORNO DE LEÑA','PASTA FRESCA DEL DÍA', lema, 'RECETAS DE LA CASA','COCINA ITALIANA'];
   const mitad = items.map(t => `<span>${t}</span>`).join('');
   $('#tiraMarquee').innerHTML = mitad + mitad;
 }
 
 /* Filtros + listado */
 const FILTROS = [
-  {id:'todo', nombre:'Tutto'},
+  {id:'todo', nombre:'Todo'},
   {id:'vegetariano', nombre:'Vegetariano'},
   {id:'sin gluten', nombre:'Sin gluten'},
   {id:'ligero', nombre:'Ligero'},
-  {id:'popular', nombre:'Favoriti'},
+  {id:'popular', nombre:'Favoritos'},
 ];
 function pintarControles(){
   $('#filtros').innerHTML = FILTROS.map(f => `<button class="chip ${filtroActivo===f.id?'activo':''}" data-f="${f.id}">${f.nombre}</button>`).join('');
-  $('#tabs').innerHTML = `<button class="tab ${catActiva==='todas'?'activo':''}" data-c="todas">Tutte</button>` +
+  $('#tabs').innerHTML = `<button class="tab ${catActiva==='todas'?'activo':''}" data-c="todas">Todas</button>` +
     CATEGORIAS.map(c => `<button class="tab ${catActiva===c.id?'activo':''}" data-c="${c.id}"><sup>${c.num}</sup>${c.nombre}</button>`).join('');
   document.querySelectorAll('#filtros .chip').forEach(b => b.onclick = () => { filtroActivo = b.dataset.f; pintarControles(); pintarLista(); });
   document.querySelectorAll('#tabs .tab').forEach(b => b.onclick = () => { catActiva = b.dataset.c; pintarControles(); pintarLista(); });
@@ -985,7 +1073,7 @@ function abrirPlatillo(id){
       <div class="bloque"><div class="b-cab"><span class="caps">Alérgenos</span><i></i></div>
         ${d.alergenos.length ? `<div class="alerg">${d.alergenos.map(a => `<span>${a}</span>`).join('')}</div>` : '<div style="font-size:11px;color:var(--humo2);letter-spacing:1px">SIN ALÉRGENOS COMUNES</div>'}
       </div>
-      <div class="bloque"><div class="b-cab"><span class="caps">Sugerencia della casa</span><i></i></div>
+      <div class="bloque"><div class="b-cab"><span class="caps">Sugerencia de la casa</span><i></i></div>
         <div class="nota-vino" style="margin-bottom:12px">${d.maridaje}</div>
         ${sugCardsHTML(sugerenciasDe(d, 3, pedido.map(i => i.id)))}
       </div>
@@ -999,6 +1087,7 @@ function abrirPlatillo(id){
     </div>`;
   $('#velo').classList.add('abierto');
   $('#hoja').classList.add('abierta');
+  history.pushState({ v: vistaActual, capa: 'ficha' }, '');
   document.querySelectorAll('#hoja .sug-cards').forEach(arrastrable);
   window._platilloAbierto = d;
 }
@@ -1019,6 +1108,13 @@ function cerrarSheets(){
   $('#velo').classList.remove('abierto');
   $('#hoja').classList.remove('abierta');
   $('#hojaConf').classList.remove('abierta');
+  $('#hojaAyuda').classList.remove('abierta');
+}
+function abrirAyuda(){
+  cerrarSheets();
+  $('#velo').classList.add('abierto');
+  $('#hojaAyuda').classList.add('abierta');
+  history.pushState({ v: vistaActual, capa: 'ayuda' }, '');
 }
 $('#velo').onclick = cerrarSheets;
 
@@ -1040,7 +1136,7 @@ function agregarDesdeModal(id){
   const notas = $('#notasPlatillo').value.trim();
   agregarAlPedido(id, cantModal, notas);
   cerrarSheets();
-  toast(`${cantModal} × ${d.nombre} en tu comanda`);
+  toast(`${cantModal} × ${d.nombre} en tu orden`);
 }
 const totalPedido = () => pedido.reduce((s,i) => s + PLATILLOS.find(d=>d.id===i.id).precio * i.qty, 0);
 const cuentaPedido = () => pedido.reduce((s,i) => s + i.qty, 0);
@@ -1052,7 +1148,7 @@ function cambiarQtyItem(idx, dif){
 }
 function pintarVistaOrden(){
   const v = $('#vistaOrden');
-  let html = `<div class="vista-head"><div class="caps">Tavolo ${mesa ? String(mesa).padStart(2,'0') : '—'} · por enviar</div><h2>La comanda</h2></div>`;
+  let html = `<div class="vista-head"><div class="caps">Mesa ${mesa ? String(mesa).padStart(2,'0') : '—'} · por enviar</div><h2>Tu orden</h2></div>`;
   if(!pedido.length){
     if(ordenes.length){
       html += `<div class="vacio">Tu orden ya está en cocina.<br><br>Puedes seguir su avance en tu cuenta<br>o agregar algo más de la carta.</div>
@@ -1061,13 +1157,13 @@ function pintarVistaOrden(){
           <button class="btn-fantasma" onclick="mostrarVista('menu')">Ordenar algo más</button>
         </div>`;
     } else {
-      html += `<div class="vacio">Tu comanda está vacía.<br><br>Ve a la carta, toca un platillo<br>y agrégalo con el botón <b style="color:var(--pomodoro)">+</b>.</div>
+      html += `<div class="vacio">Tu orden está vacía.<br><br>Ve a la carta, toca un platillo<br>y agrégalo con el botón <b style="color:var(--pomodoro)">+</b>.</div>
         <div class="acciones-orden"><button class="btn-fantasma" onclick="mostrarVista('menu')">Volver a la carta</button></div>`;
     }
     v.innerHTML = html; return;
   }
   html += `<div class="ticket"><div class="t-int">
-    <div class="t-cab"><div class="t-marca">${MARCA.nombre}</div><div class="caps">Comanda · Tavolo ${String(mesa).padStart(2,'0')}</div></div>`;
+    <div class="t-cab"><div class="t-marca">${MARCA.nombre}</div><div class="caps">Orden · Mesa ${String(mesa).padStart(2,'0')}</div></div>`;
   html += pedido.map((i,idx) => {
     const d = PLATILLOS.find(x => x.id === i.id);
     return `<div class="t-item">
@@ -1078,14 +1174,14 @@ function pintarVistaOrden(){
       <span class="t-stepper"><button onclick="cambiarQtyItem(${idx},-1)">−</button><span>${i.qty}</span><button onclick="cambiarQtyItem(${idx},1)">+</button></span>
     </div>`;
   }).join('');
-  html += `<div class="t-tot"><span class="caps">Totale</span><span class="leader"></span><b>${fmt(totalPedido())} ${RESTAURANTE.moneda}</b></div>
+  html += `<div class="t-tot"><span class="caps">Total</span><span class="leader"></span><b>${fmt(totalPedido())} ${RESTAURANTE.moneda}</b></div>
     <div class="t-bar"></div>
     <div class="t-folio">MESA ${String(mesa).padStart(2,'0')} · ${cuentaPedido()} ART · 15–25 MIN</div>
   </div></div>`;
   const sugs = sugerenciasComanda(3);
   if(sugs.length) html += `<div class="bloque" style="margin-top:20px;padding:0 18px"><div class="b-cab"><span class="caps">La casa sugiere</span><i></i></div>${sugCardsHTML(sugs)}</div>`;
   html += `<div class="acciones-orden">
-    <button class="btn-primario" onclick="enviarOrden()">Enviar a cocina — Tavolo ${String(mesa).padStart(2,'0')}</button>
+    <button class="btn-primario" onclick="enviarOrden()">Enviar a cocina — Mesa ${String(mesa).padStart(2,'0')}</button>
     <button class="btn-fantasma" onclick="mostrarVista('menu')">Seguir explorando la carta</button>
   </div>`;
   v.innerHTML = html;
@@ -1111,8 +1207,15 @@ function progresoHTML(o){
 }
 function pintarVistaCuenta(){
   const v = $('#vistaCuenta');
-  let html = `<div class="vista-head"><div class="caps">Tavolo ${mesa ? String(mesa).padStart(2,'0') : '—'} · seguimiento en vivo</div><h2>Il conto</h2>
+  let html = `<div class="vista-head"><div class="caps">Mesa ${mesa ? String(mesa).padStart(2,'0') : '—'}${SUC ? ' · ' + SUC : ''} · seguimiento en vivo</div><h2>Tu cuenta</h2>
     <div class="nota-pie" style="margin-top:10px">Aquí vive la cuenta de tu mesa: cada orden que envíes se suma y su estado se actualiza solo. <b style="color:var(--crema)">Todo se paga junto al final.</b></div></div>`;
+  const activas = ordenes.filter(o => o.estado < 3);
+  if(cuentaPedida){
+    html += `<div class="banner-estado" style="--ce:#5FA05A"><span class="be-dot"></span><div><b>CUENTA SOLICITADA</b><small>El mesero viene a tu mesa a cobrar · Total ${fmt(ordenes.reduce((s,o)=>s+o.total,0))} ${RESTAURANTE.moneda}</small></div></div>`;
+  } else if(activas.length){
+    const u = activas[activas.length - 1];
+    html += `<div class="banner-estado" style="--ce:${ESTADOS_COLOR[u.estado]}"><span class="be-dot"></span><div><b>${ESTADOS_TXT[u.estado].toUpperCase()}</b><small>Orden Nº ${u.num}${activas.length > 1 ? ` · ${activas.length} órdenes en curso` : ''}</small></div></div>`;
+  }
   if(!ordenes.length){
     html += `<div class="vacio">Aún no has enviado órdenes a cocina.<br><br>Cuando envíes una, aquí verás su avance<br>en todo momento.</div>
       <div class="acciones-orden"><button class="btn-fantasma" onclick="mostrarVista('menu')">Volver a la carta</button></div>`;
@@ -1120,7 +1223,7 @@ function pintarVistaCuenta(){
   }
   for(const o of [...ordenes].reverse()){
     html += `<div class="ticket"><div class="t-int">
-      <div class="t-cab"><div class="t-marca">Nº ${o.num}</div><div class="caps">${ESTADOS_TXT[o.estado]}</div></div>
+      <div class="t-cab"><div class="t-marca">Nº ${o.num}</div><div class="chip-estado" style="--ce:${ESTADOS_COLOR[o.estado]}"><i></i>${ESTADOS_TXT[o.estado]}</div></div>
       ${o.items.map(i => {
         const d = PLATILLOS.find(x => x.id === i.id);
         return `<div class="t-item"><span class="t-qty">${i.qty}×</span><span class="t-nom">${d.nombre}</span><span class="leader"></span><span class="t-precio">${fmt(d.precio*i.qty)}</span></div>`;
@@ -1131,9 +1234,9 @@ function pintarVistaCuenta(){
   }
   const granTotal = ordenes.reduce((s,o) => s + o.total, 0);
   html += `<div class="ticket"><div class="t-int">
-      <div class="t-tot" style="padding-top:0"><span class="caps">Totale complessivo</span><span class="leader"></span><b>${fmt(granTotal)} ${RESTAURANTE.moneda}</b></div>
+      <div class="t-tot" style="padding-top:0"><span class="caps">Total de la mesa</span><span class="leader"></span><b>${fmt(granTotal)} ${RESTAURANTE.moneda}</b></div>
       <div class="t-bar"></div>
-      <div class="t-folio">${ordenes.length} COMANDA(S) · TAVOLO ${String(mesa).padStart(2,'0')}</div>
+      <div class="t-folio">${ordenes.length} ORDEN(ES) · MESA ${String(mesa).padStart(2,'0')}</div>
     </div></div>
     <div class="acciones-orden">
       <button class="btn-fantasma" onclick="mostrarVista('menu')" style="border-color:var(--pomodoro);color:var(--pomodoro)">Ordenar algo más</button>
@@ -1151,7 +1254,7 @@ async function enviarOrden(){
   try{
     const filas = await api('menusbot_ordenes', {
       method:'POST', headers:{ 'Prefer':'return=representation' },
-      body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, items, total }),
+      body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, items, total, sucursal: SUC }),
     });
     fila = filas[0];
   }catch(e){
@@ -1186,9 +1289,9 @@ function mostrarConfirmacion(o){
   $('#toast').classList.remove('visible');
   $('#hojaConf').innerHTML = `
     <div class="confirmacion">
-      <div class="conf-sello"><div class="interior"><b>RICEVUTO</b><span>in cucina</span></div></div>
-      <h2>Comanda enviada</h2>
-      <div class="folio">Nº <b>${o.num}</b> · Tavolo ${String(o.mesa).padStart(2,'0')} · ${fmt(o.total)} ${RESTAURANTE.moneda}</div>
+      <div class="conf-sello"><div class="interior"><b>RECIBIDO</b><span>en cocina</span></div></div>
+      <h2>¡Orden enviada!</h2>
+      <div class="folio">Nº <b>${o.num}</b> · Mesa ${String(o.mesa).padStart(2,'0')} · ${fmt(o.total)} ${RESTAURANTE.moneda}</div>
       <div class="nota-pie" style="margin:22px 0 0;text-align:left">Sigue su avance en cualquier momento desde la pestaña <b style="color:var(--crema)">Cuenta</b> — recibida, preparando, en camino.<br><br>¿Se te antoja algo más después? Puedes ordenar las veces que quieras: todo se va sumando a tu cuenta y <b style="color:var(--crema)">se paga junto al final</b>.</div>
       <div class="acciones-orden" style="padding:22px 0 0">
         <button class="btn-primario" onclick="cerrarSheets();mostrarVista('cuenta')">Ver el estado de mi orden</button>
@@ -1199,19 +1302,43 @@ function mostrarConfirmacion(o){
   $('#hojaConf').classList.add('abierta');
 }
 let ultimaLlamada = 0;
+let cuentaPedida = false;
 function llamarMesero(){
   if(Date.now() - ultimaLlamada < 30000){ toast('Ya avisamos a tu mesero — está en camino'); return; }
   ultimaLlamada = Date.now();
-  api('menusbot_llamadas', { method:'POST', body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, motivo:'mesero' }) })
-    .then(() => toast(`Listo — un mesero viene al tavolo ${String(mesa).padStart(2,'0')}`))
+  api('menusbot_llamadas', { method:'POST', body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, motivo:'mesero', sucursal: SUC }) })
+    .then(() => toast(`Listo — un mesero viene a tu mesa ${String(mesa).padStart(2,'0')}`))
     .catch(() => toast('Sin conexión — inténtalo de nuevo'));
 }
 function pedirCuenta(){
   if(Date.now() - ultimaLlamada < 30000){ toast('Ya avisamos — tu mesero está en camino'); return; }
   ultimaLlamada = Date.now();
-  api('menusbot_llamadas', { method:'POST', body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, motivo:'cuenta' }) })
-    .then(() => toast('Pedimos tu cuenta — en un momento la llevan a tu mesa'))
+  api('menusbot_llamadas', { method:'POST', body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, motivo:'cuenta', sucursal: SUC }) })
+    .then(() => {
+      cuentaPedida = true;
+      guardarSesion();
+      if(vistaActual === 'cuenta') pintarVistaCuenta();
+      pintarIndicadores();
+      toast('Pedimos tu cuenta — el mesero viene a cobrar a tu mesa');
+    })
     .catch(() => toast('Sin conexión — inténtalo de nuevo'));
+}
+function cerrarVisita(){
+  ordenes = []; misIds = []; pedido = []; cuentaPedida = false;
+  try{ localStorage.removeItem('mb_sesion_v1'); }catch(e){}
+  pintarIndicadores();
+  $('#hojaConf').innerHTML = `
+    <div class="confirmacion">
+      <div class="conf-sello"><div class="interior"><b>GRACIAS</b><span>por tu visita</span></div></div>
+      <h2>Cuenta pagada</h2>
+      <div class="nota-pie" style="margin:18px 0 0;text-align:left">Tu cuenta quedó cerrada. Si ordenas de nuevo, empezará una cuenta nueva para tu mesa. ¡Hasta pronto!</div>
+      <div class="acciones-orden" style="padding:22px 0 0">
+        <button class="btn-primario" onclick="cerrarSheets();mostrarVista('menu')">Volver a la carta</button>
+      </div>
+    </div>`;
+  $('#velo').classList.add('abierto');
+  $('#hojaConf').classList.add('abierta');
+  if(vistaActual === 'cuenta') pintarVistaCuenta();
 }
 
 /* ---------- Utilidades de texto ---------- */
@@ -1222,8 +1349,8 @@ function clickBarra(){
 }
 
 /* ---------- Guía de bienvenida ---------- */
-function mostrarGuia(){
-  if(localStorage.getItem('mb_guia_v1')) return;
+function mostrarGuia(forzar){
+  if(!forzar && localStorage.getItem('mb_guia_v1')) return;
   $('#guia').classList.add('visible');
 }
 function cerrarGuia(){

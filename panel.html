@@ -262,6 +262,7 @@
           <option value="7">Últimos 7 días</option>
           <option value="30">Últimos 30 días</option>
         </select>
+        <select class="filtro" id="sucFiltro" style="display:none"><option value="todas">Todas las sucursales</option></select>
         <button class="btn-sec" onclick="imprimirCorte()">Imprimir corte</button>
         <button class="btn-sec" onclick="exportarCSV()">Exportar CSV</button>
       </div>
@@ -340,6 +341,7 @@
         <div><div class="caps lbl">Tipo / prefijo</div><input class="filtro" id="mPrefijo" placeholder="Trattoria, Taquería, Restaurante…"></div>
         <div><div class="caps lbl">Nombre del restaurante</div><input class="filtro" id="mNombre" placeholder="Bella Vita"></div>
         <div><div class="caps lbl">Lema / eslogan</div><input class="filtro" id="mLema" placeholder="Est. 1987"></div>
+        <div><div class="caps lbl">Sucursales (separadas por coma)</div><input class="filtro" id="mSucursales" placeholder="Centro, Zona Río, Otay — vacío si solo hay una"></div>
         <div><div class="caps lbl">Logo</div>
           <div style="display:flex;align-items:center;gap:10px">
             <img id="mLogoPrev" alt="" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:1px solid var(--linea2);display:none">
@@ -363,7 +365,10 @@
   <!-- QR POR MESA -->
   <div class="vista" id="v-qr">
     <div class="vista-titulo"><h1>Códigos QR por mesa</h1><span class="caps">Imprime y coloca uno en cada mesa</span>
-      <button class="btn-sec" style="margin-left:auto" onclick="imprimirQRs()">Imprimir hoja de QRs</button>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <select class="filtro" id="sucQR" style="display:none" onchange="qrListos=0;render()"><option value="">Sin sucursal</option></select>
+        <button class="btn-sec" onclick="imprimirQRs()">Imprimir hoja de QRs</button>
+      </div>
     </div>
     <div class="temas-grid" id="qrGrid" style="grid-template-columns:repeat(4,1fr)"></div>
     <div class="nota-pie">Cada QR abre la carta con la mesa ya asignada (…/carta.html?mesa=N). El comensal escanea, ordena y su comanda llega aquí con su número de mesa.</div>
@@ -417,11 +422,11 @@ async function cargar(){
     const filas = await api(`menusbot_ordenes?restaurante_id=eq.${RID}&order=creada.desc&limit=500&select=*`);
     ordenesCache = (filas || []).map(f => ({
       dbId: f.id, folio: iniciales(marcaDe().nombre) + '-' + (1000 + f.id), mesa: f.mesa, items: f.items || [], total: +f.total,
-      estado: f.estado, creada: Date.parse(f.creada),
+      estado: f.estado, creada: Date.parse(f.creada), sucursal: f.sucursal || '', cerrada: !!f.cerrada,
       entregada_at: f.entregada_at ? Date.parse(f.entregada_at) : null, entregada_por: f.entregada_por,
     }));
     const lls = await api(`menusbot_llamadas?restaurante_id=eq.${RID}&atendida=eq.false&order=ts.desc&limit=20&select=*`);
-    llamadasCache = (lls || []).map(l => ({ dbId: l.id, mesa: l.mesa, ts: Date.parse(l.ts), motivo: l.motivo || '', atendida: false }));
+    llamadasCache = (lls || []).map(l => ({ dbId: l.id, mesa: l.mesa, ts: Date.parse(l.ts), motivo: l.motivo || '', sucursal: l.sucursal || '', atendida: false }));
     enLinea = true;
   }catch(e){ enLinea = false; }
   const chip = document.getElementById('chipVivo');
@@ -468,6 +473,7 @@ function llenarFormMarca(forzar){
   if(!forzar && (hash === marcaFormHash || zona.contains(document.activeElement))) return;
   marcaFormHash = hash;
   $('#mPrefijo').value = m.prefijo; $('#mNombre').value = m.nombre; $('#mLema').value = m.lema;
+  $('#mSucursales').value = ((cfgCache.config && cfgCache.config.sucursales) || []).join(', ');
   $('#mAcento').value = m.acento || '#E4593B'; $('#mSecundario').value = m.secundario || '#C9A227';
   const prev = $('#mLogoPrev'), q = $('#mLogoQuitar');
   if(m.logo){ prev.src = m.logo; prev.style.display = 'block'; q.style.display = 'inline-block'; }
@@ -481,6 +487,7 @@ function guardarMarca(){
       lema: $('#mLema').value.trim(),
       acento: $('#mAcento').value,
       secundario: $('#mSecundario').value };
+    d.config.sucursales = $('#mSucursales').value.split(',').map(x => x.trim()).filter(Boolean);
   });
   aplicarMarcaPanel(); llenarFormMarca(true);
   toast('Identidad guardada — la carta del comensal y el panel ya la usan');
@@ -536,19 +543,19 @@ setInterval(() => {
 }, 10000);
 
 const CARTA = [
- {id:'bruschetta', nombre:'Bruschetta al Pomodoro', cat:'Antipasti', precio:95},
- {id:'carpaccio', nombre:'Carpaccio di Manzo', cat:'Antipasti', precio:165},
- {id:'carbonara', nombre:'Spaghetti alla Carbonara', cat:'Paste', precio:185},
- {id:'lasagna', nombre:'Lasagna alla Bolognese', cat:'Paste', precio:195},
- {id:'ravioli', nombre:'Ravioli di Spinaci e Ricotta', cat:'Paste', precio:175},
- {id:'margherita', nombre:'Pizza Margherita', cat:'Pizze', precio:160},
- {id:'quattro', nombre:'Pizza Quattro Formaggi', cat:'Pizze', precio:190},
- {id:'ossobuco', nombre:'Ossobuco alla Milanese', cat:'Secondi', precio:265},
- {id:'salmone', nombre:'Salmone alla Griglia', cat:'Secondi', precio:245},
- {id:'tiramisu', nombre:'Tiramisù della Casa', cat:'Dolci', precio:110},
- {id:'pannacotta', nombre:'Panna Cotta ai Frutti di Bosco', cat:'Dolci', precio:95},
- {id:'limonada', nombre:'Limonada al Basilico', cat:'Da bere', precio:55},
- {id:'vino', nombre:'Vino Tinto de la Casa', cat:'Da bere', precio:85},
+ {id:'bruschetta', nombre:'Bruschetta al Pomodoro', cat:'Entradas', precio:95},
+ {id:'carpaccio', nombre:'Carpaccio di Manzo', cat:'Entradas', precio:165},
+ {id:'carbonara', nombre:'Spaghetti alla Carbonara', cat:'Pastas', precio:185},
+ {id:'lasagna', nombre:'Lasagna alla Bolognese', cat:'Pastas', precio:195},
+ {id:'ravioli', nombre:'Ravioli di Spinaci e Ricotta', cat:'Pastas', precio:175},
+ {id:'margherita', nombre:'Pizza Margherita', cat:'Pizzas', precio:160},
+ {id:'quattro', nombre:'Pizza Quattro Formaggi', cat:'Pizzas', precio:190},
+ {id:'ossobuco', nombre:'Ossobuco alla Milanese', cat:'Platos fuertes', precio:265},
+ {id:'salmone', nombre:'Salmone alla Griglia', cat:'Platos fuertes', precio:245},
+ {id:'tiramisu', nombre:'Tiramisù della Casa', cat:'Postres', precio:110},
+ {id:'pannacotta', nombre:'Panna Cotta ai Frutti di Bosco', cat:'Postres', precio:95},
+ {id:'limonada', nombre:'Limonada al Basilico', cat:'Bebidas', precio:55},
+ {id:'vino', nombre:'Vino Tinto de la Casa', cat:'Bebidas', precio:85},
 ];
 const TEMAS = {
   editoriale:{ nombre:'Editoriale', fondo:'#151210', texto:'#EFE7D8', acento:'#E4593B', papel:'#F2EBDD' },
@@ -605,7 +612,7 @@ function tarjetaComanda(o, d){
     <div class="quien"><span class="caps">¿Quién la entregó en la mesa?</span>
     <div class="meseros">${(d.config.meseros||[]).map(m => `<button class="btn-mesero" onclick="entregar('${o.folio}','${m}')">${m}</button>`).join('')}</div></div>`;
   return `<div class="comanda">
-    <div class="c-top"><span class="c-folio">${o.folio}</span><span class="c-mesa">Tavolo ${String(o.mesa).padStart(2,'0')}</span>
+    <div class="c-top"><span class="c-folio">${o.folio}</span><span class="c-mesa">Mesa ${String(o.mesa).padStart(2,'0')}${o.sucursal ? ' · ' + o.sucursal : ''}</span>
       <span class="c-tiempo ${tarde?'tarde':''}">${hora(o.creada)} · ${mm(transcurrido)}</span></div>
     <div class="c-items">${o.items.map(i => `<div class="c-item"><b>${i.qty}×</b><span>${i.nombre}${i.notas?`<small>— ${i.notas}</small>`:''}</span></div>`).join('')}</div>
     ${acciones}
@@ -620,12 +627,18 @@ function render(){
 
   if(vista === 'comandas'){
     const llamadas = (d.llamadas || []).filter(l => !l.atendida && Date.now() - l.ts < 30*60000);
-    $('#llamadasZona').innerHTML = llamadas.map(l => `
+    $('#llamadasZona').innerHTML = llamadas.map(l => {
+      const pendiente = d.ordenes.filter(o => o.mesa === l.mesa && !o.cerrada).reduce((sum,o) => sum + (+o.total||0), 0);
+      const esCuenta = l.motivo === 'cuenta';
+      return `
       <div class="llamada">
-        <span class="l-txt">El tavolo ${String(l.mesa).padStart(2,'0')} ${l.motivo === 'cuenta' ? '<b style="color:var(--pomodoro)">pide la cuenta</b>' : 'llama al mesero'}</span>
+        <span class="l-txt">La mesa ${String(l.mesa).padStart(2,'0')}${l.sucursal ? ' · ' + l.sucursal : ''} ${esCuenta ? `<b style="color:var(--pomodoro)">pide la cuenta</b> — <b>${fmt(pendiente)}</b> por cobrar` : 'llama al mesero'}</span>
         <span class="l-hace">hace ${mm(Date.now() - l.ts)}</span>
-        <button class="btn-sec" onclick="atenderLlamada(${l.ts})">Atendida</button>
-      </div>`).join('');
+        ${esCuenta
+          ? `<button class="btn-avanza" style="margin-left:auto" onclick="cobrarMesa(${l.mesa}, ${l.ts})">Cobrada — cerrar mesa</button>`
+          : `<button class="btn-sec" onclick="atenderLlamada(${l.ts})">Atendida</button>`}
+      </div>`;
+    }).join('');
     for(const e of [0,1,2]){
       const del = d.ordenes.filter(o => o.estado === e).sort((a,b) => a.creada - b.creada);
       $('#n'+e).textContent = del.length;
@@ -637,7 +650,7 @@ function render(){
     $('#resumenHoy').textContent = `${deHoy.length} comandas hoy · ${entregadasHoy.length} entregadas`;
     const conEntrega = d.ordenes.filter(o => o.estado === 3 && o.entregada_at).sort((a,b) => a.entregada_at - b.entregada_at);
     $('#ultimasEntregas').textContent = conEntrega.length
-      ? conEntrega.slice(-3).reverse().map(o => `${o.folio} → Tavolo ${o.mesa} (${o.entregada_por}, ${hora(o.entregada_at)})`).join('  ·  ')
+      ? conEntrega.slice(-3).reverse().map(o => `${o.folio} → Mesa ${o.mesa} (${o.entregada_por}, ${hora(o.entregada_at)})`).join('  ·  ')
       : 'Aún no hay entregas en este servicio';
   }
 
@@ -653,7 +666,7 @@ function render(){
     $('#tablaRegistro').innerHTML = filas.length ? filas.map(o => `<tr>
       <td class="serif">${o.folio}</td>
       <td>${hora(o.creada)}</td>
-      <td>Tavolo ${String(o.mesa).padStart(2,'0')}</td>
+      <td>Mesa ${String(o.mesa).padStart(2,'0')}${o.sucursal ? '<br><small>' + o.sucursal + '</small>' : ''}</td>
       <td>${o.items.map(i => `${i.qty}× ${i.nombre}`).join('<br>')}${o.items.some(i=>i.notas) ? '<br><small>'+o.items.filter(i=>i.notas).map(i=>'— '+i.notas).join(' · ')+'</small>' : ''}</td>
       <td><b>${fmt(o.total)}</b></td>
       <td><span class="pill-est e${o.estado}">${ESTADOS_TXT[o.estado]}</span></td>
@@ -663,7 +676,7 @@ function render(){
   }
 
   if(vista === 'carta'){
-    const CAT_NOMBRE = { entradas:'Antipasti', pastas:'Paste', pizzas:'Pizze', principales:'Secondi', postres:'Dolci', bebidas:'Da bere' };
+    const CAT_NOMBRE = { entradas:'Entradas', pastas:'Pastas', pizzas:'Pizzas', principales:'Platos fuertes', postres:'Postres', bebidas:'Bebidas' };
     const todos = [
       ...CARTA.map(p => ({...p, extra:false})),
       ...(d.platillos || []).map(p => ({ id:p.id, nombre:p.nombre, cat:(CAT_NOMBRE[p.cat] || p.cat) + ' · importado con AI', precio:p.precio, extra:true })),
@@ -778,7 +791,7 @@ $('#archivoMenu').addEventListener('change', async e => {
   e.target.value = '';
 });
 function pintarBorrador(){
-  const CATS = [['entradas','Antipasti'],['pastas','Paste'],['pizzas','Pizze'],['principales','Secondi'],['postres','Dolci'],['bebidas','Da bere']];
+  const CATS = [['entradas','Entradas'],['pastas','Pastas'],['pizzas','Pizzas'],['principales','Platos fuertes'],['postres','Postres'],['bebidas','Bebidas']];
   $('#borradorLista').innerHTML = borrador.map((b, i) => `
     <div class="borrador-fila">
       <input value="${b.nombre.replace(/"/g,'&quot;')}" onchange="borrador[${i}].nombre=this.value">
@@ -876,6 +889,17 @@ function quitarMesero(n){
 }
 
 /* ---------- Llamadas de mesa ---------- */
+async function cobrarMesa(mesaN, ts){
+  const l = llamadasCache.find(x => x.ts === ts);
+  llamadasCache = llamadasCache.filter(x => x !== l);
+  ordenesCache.forEach(o => { if(o.mesa === mesaN) o.cerrada = true; });
+  render();
+  try{
+    await api(`menusbot_ordenes?restaurante_id=eq.${RID}&mesa=eq.${mesaN}&cerrada=eq.false`, { method:'PATCH', body: JSON.stringify({ cerrada: true }) });
+    if(l && l.dbId) await api(`menusbot_llamadas?id=eq.${l.dbId}`, { method:'PATCH', body: JSON.stringify({ atendida: true }) });
+    toast(`Mesa ${String(mesaN).padStart(2,'0')} cobrada y cerrada — el comensal ya ve su cuenta pagada`);
+  }catch(e){ toast('Sin conexión — inténtalo de nuevo'); }
+}
 async function atenderLlamada(ts){
   const l = llamadasCache.find(x => x.ts === ts);
   if(!l) return;
@@ -887,9 +911,20 @@ async function atenderLlamada(ts){
 /* ---------- Reportes y corte ---------- */
 function ordenesPeriodo(d, dias){
   const desde = dias === 1 ? new Date().setHours(0,0,0,0) : Date.now() - dias * 86400000;
-  return d.ordenes.filter(o => o.creada >= desde);
+  const sf = (document.getElementById('sucFiltro') || {}).value || 'todas';
+  return d.ordenes.filter(o => o.creada >= desde && (sf === 'todas' || (o.sucursal || '') === sf));
+}
+function pintarSucFiltro(d){
+  const sel = document.getElementById('sucFiltro');
+  if(!sel) return;
+  const sucs = (d.config.sucursales || []).filter(Boolean);
+  sel.style.display = sucs.length ? 'block' : 'none';
+  const actual = sel.value;
+  const quiere = '<option value="todas">Todas las sucursales</option>' + sucs.map(x => `<option value="${x}">${x}</option>`).join('');
+  if(sel.dataset.opts !== quiere){ sel.dataset.opts = quiere; sel.innerHTML = quiere; sel.value = actual && [...sel.options].some(o => o.value === actual) ? actual : 'todas'; }
 }
 function renderReportes(d){
+  pintarSucFiltro(d);
   const dias = +$('#periodo').value;
   const os = ordenesPeriodo(d, dias);
   const vendido = os.reduce((s,o) => s + (+o.total||0), 0);
@@ -1009,18 +1044,27 @@ $('#periodo').onchange = render;
 let qrListos = -1;
 function renderQRs(d){
   const n = (d.config && d.config.mesas) || 12;
+  const selQ = document.getElementById('sucQR');
+  const sucs = (d.config.sucursales || []).filter(Boolean);
+  if(selQ){
+    selQ.style.display = sucs.length ? 'block' : 'none';
+    const quiere = '<option value="">' + (sucs.length ? 'Elige sucursal…' : 'Sin sucursal') + '</option>' + sucs.map(x => `<option value="${x}">${x}</option>`).join('');
+    if(selQ.dataset.opts !== quiere){ const a = selQ.value; selQ.dataset.opts = quiere; selQ.innerHTML = quiere; selQ.value = a && [...selQ.options].some(o => o.value === a) ? a : ''; }
+  }
+  const suc = selQ ? selQ.value : '';
   if(typeof QRCode === 'undefined'){ $('#qrGrid').innerHTML = '<div class="caps" style="color:var(--humo2)">CARGANDO GENERADOR DE QR…</div>'; return; }
-  if(qrListos === n) return;
-  qrListos = n;
+  const clave = n + '|' + suc;
+  if(qrListos === clave) return;
+  qrListos = clave;
   const base = new URL('carta.html', location.href).href;
   $('#qrGrid').innerHTML = '';
   for(let i = 1; i <= n; i++){
     const celda = document.createElement('div');
     celda.className = 'tema-card';
     celda.innerHTML = `<div class="tc-preview qr-celda" style="background:#fff;align-items:center;justify-content:center;display:flex"></div>
-      <div class="tc-info"><span class="nombre-t">Tavolo ${String(i).padStart(2,'0')}</span></div>`;
+      <div class="tc-info"><span class="nombre-t">Mesa ${String(i).padStart(2,'0')}</span></div>`;
     $('#qrGrid').appendChild(celda);
-    new QRCode(celda.querySelector('.qr-celda'), { text: base + '?mesa=' + i, width: 108, height: 108, correctLevel: QRCode.CorrectLevel.M });
+    new QRCode(celda.querySelector('.qr-celda'), { text: base + '?mesa=' + i + (suc ? '&suc=' + encodeURIComponent(suc) : ''), width: 108, height: 108, correctLevel: QRCode.CorrectLevel.M });
   }
 }
 function imprimirQRs(){
@@ -1028,10 +1072,10 @@ function imprimirQRs(){
     const cv = el.querySelector('canvas');
     const im = el.querySelector('img');
     const src = cv ? cv.toDataURL() : (im ? im.src : '');
-    return `<div style="display:inline-block;text-align:center;margin:14px;padding:16px;border:1px solid #999"><img src="${src}" style="width:150px"><div style="font-family:Georgia;font-style:italic;margin-top:8px">Tavolo ${String(i+1).padStart(2,'0')}</div><div style="font-family:Arial;font-size:8px;letter-spacing:2px;color:#777;margin-top:3px">ESCANEA PARA VER LA CARTA Y ORDENAR</div></div>`;
+    return `<div style="display:inline-block;text-align:center;margin:14px;padding:16px;border:1px solid #999"><img src="${src}" style="width:150px"><div style="font-family:Georgia;font-style:italic;margin-top:8px">Mesa ${String(i+1).padStart(2,'0')}</div><div style="font-family:Arial;font-size:8px;letter-spacing:2px;color:#777;margin-top:3px">ESCANEA PARA VER LA CARTA Y ORDENAR</div></div>`;
   }).join('');
   const w = window.open('', '_blank');
-  w.document.write(`<html><head><title>QRs · ${marcaDe().nombre}</title></head><body style="text-align:center;font-family:Georgia"><h2 style="font-style:italic">${(marcaDe().prefijo ? marcaDe().prefijo + ' ' : '') + marcaDe().nombre}</h2>${imgs}</body></html>`);
+  w.document.write(`<html><head><title>QRs · ${marcaDe().nombre}</title></head><body style="text-align:center;font-family:Georgia"><h2 style="font-style:italic">${(marcaDe().prefijo ? marcaDe().prefijo + ' ' : '') + marcaDe().nombre}${(document.getElementById('sucQR')||{}).value ? ' — ' + document.getElementById('sucQR').value : ''}</h2>${imgs}</body></html>`);
   w.document.close();
   setTimeout(() => { try{ w.print(); }catch(e){} }, 500);
 }
