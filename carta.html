@@ -94,7 +94,7 @@
   @keyframes parp{0%,100%{opacity:1}50%{opacity:.25}}
 
   /* ---------- Controles ---------- */
-  .controles{padding:18px 20px 0;position:sticky;top:0;background:linear-gradient(180deg,var(--esp) 82%,transparent);z-index:30}
+  .controles{padding:18px 20px 0;position:sticky;top:0;background:var(--esp);box-shadow:0 14px 14px -14px rgba(0,0,0,.5);z-index:30}
   .buscador{display:flex;align-items:center;gap:10px;border:1px solid var(--linea2);padding:12px 14px;background:var(--esp)}
   .buscador input{border:none;outline:none;flex:1;font-size:13px;background:transparent;color:var(--crema);font-family:var(--grot);letter-spacing:.4px}
   .buscador input::placeholder{color:var(--humo2);letter-spacing:1px}
@@ -166,10 +166,6 @@
   .nav-item .badge.visible{display:flex}
   .nav-item .dot-estado{position:absolute;top:9px;right:calc(50% - 15px);width:7px;height:7px;border-radius:50%;background:var(--pomodoro);display:none;animation:parp 1.4s infinite}
   .nav-item .dot-estado.visible{display:block}
-  .nav-sofia{flex:0 0 auto;width:56px;height:56px;margin:-20px 8px 0;border-radius:50%;border:1px solid var(--linea2);background:var(--papel);color:var(--esp);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(0,0,0,.55);transition:transform .18s}
-  .nav-sofia:active{transform:scale(.92)}
-  .nav-sofia .mono{font-family:var(--serif);font-style:italic;font-size:23px;font-weight:500;line-height:1}
-  .nav-sofia small{font-family:var(--grot);font-size:6.5px;letter-spacing:1.6px;font-weight:700;margin-top:1px;color:var(--pomodoro)}
 
   /* ---------- Vistas orden/cuenta: ticket ---------- */
   .vista-head{padding:26px 20px 8px}
@@ -215,7 +211,7 @@
   .prog .p-etiq .on{color:var(--pomodoro)}
 
   /* ---------- Sheets ---------- */
-  .velo{position:fixed;inset:0;background:rgba(6,4,3,.78);z-index:80;opacity:0;pointer-events:none;transition:.25s}
+  .velo{position:fixed;inset:0;background:rgba(6,4,3,.9);z-index:80;opacity:0;pointer-events:none;transition:.25s}
   .velo.abierto{opacity:1;pointer-events:auto}
   .hoja{position:fixed;left:50%;transform:translate(-50%,105%);bottom:0;width:100%;max-width:480px;max-height:93vh;background:var(--esp);border-top:1px solid var(--linea2);z-index:90;transition:transform .38s cubic-bezier(.22,.9,.24,1);overflow-y:auto;overscroll-behavior:contain}
   .hoja.abierta{transform:translate(-50%,0)}
@@ -224,7 +220,9 @@
   .hero-plato .svg-fb svg{width:100%;height:110%}
   .hero-plato::after{content:'';position:absolute;left:0;right:0;bottom:0;height:130px;background:linear-gradient(180deg,transparent,var(--esp))}
   .cerrar{position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:50%;border:1px solid var(--linea2);background:rgba(21,18,16,.72);backdrop-filter:blur(6px);cursor:pointer;color:var(--crema);z-index:5;display:flex;align-items:center;justify-content:center}
-  .btn-full{position:absolute;top:16px;left:16px;display:flex;align-items:center;gap:8px;border:1px solid var(--linea2);background:rgba(21,18,16,.72);backdrop-filter:blur(6px);color:var(--crema);font-family:var(--grot);font-size:8.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:10px 13px;border-radius:2px;cursor:pointer;z-index:5}
+  .btn-full{position:absolute;top:16px;left:16px;display:flex;align-items:center;gap:9px;border:1px solid var(--linea2);background:rgba(21,18,16,.78);backdrop-filter:blur(6px);color:var(--crema);font-family:var(--grot);font-size:11px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;padding:14px 16px;border-radius:2px;cursor:pointer;z-index:5;min-height:44px}
+  .chip-lupa{position:absolute;right:14px;bottom:14px;width:42px;height:42px;border-radius:50%;background:rgba(18,15,12,.72);backdrop-filter:blur(5px);border:1px solid var(--linea2);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:4}
+  .chip-lupa .ico{width:17px;height:17px;color:#F5EDDE;stroke-width:2}
   .hoja .contenido{padding:0 24px 36px;margin-top:-44px;position:relative;z-index:2}
   .hoja .f-cat{font-family:var(--grot);font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--pomodoro)}
   .hoja h2{font-family:var(--serif);font-style:italic;font-weight:500;font-size:31px;line-height:1.05;margin-top:8px;letter-spacing:-.5px}
@@ -261,7 +259,7 @@
   .notas-inp{width:100%;border:1px solid var(--linea2);background:transparent;border-radius:2px;padding:13px 15px;font-size:12.5px;outline:none;font-family:var(--grot);color:var(--crema);letter-spacing:.4px}
   .notas-inp::placeholder{color:var(--humo2)}
   .notas-inp:focus{border-color:var(--pomodoro)}
-  .fila-agregar{display:flex;gap:12px;margin-top:24px;align-items:stretch}
+  .fila-agregar{display:flex;gap:12px;margin-top:24px;align-items:stretch;position:sticky;bottom:0;background:var(--esp);padding:14px 0 16px;box-shadow:0 -18px 18px -12px var(--esp);z-index:6}
   .stepper-g{display:flex;align-items:center;border:1px solid var(--linea2);border-radius:2px}
   .stepper-g button{width:40px;height:48px;border:none;background:transparent;font-size:18px;color:var(--crema);cursor:pointer;font-family:var(--grot)}
   .stepper-g span{min-width:24px;text-align:center;font-family:var(--grot);font-weight:700;font-size:15px}
@@ -294,53 +292,34 @@
   .confirmacion .folio b{color:var(--pomodoro)}
 
   /* ---------- Toast ---------- */
-  .toast{position:fixed;bottom:104px;left:50%;transform:translate(-50%,30px);background:var(--papel);color:var(--ink);font-family:var(--grot);font-size:11px;font-weight:600;letter-spacing:.6px;padding:13px 20px;border-radius:2px;z-index:150;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 16px 44px rgba(0,0,0,.55);max-width:86%;text-align:center}
+  .toast{position:fixed;bottom:calc(146px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,30px);background:var(--papel);color:var(--ink);font-family:var(--grot);font-size:11px;font-weight:600;letter-spacing:.6px;padding:13px 20px;border-radius:2px;z-index:150;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 16px 44px rgba(0,0,0,.55);max-width:86%;text-align:center}
   .toast.visible{opacity:1;transform:translate(-50%,0)}
 
-  /* ---------- Chat ---------- */
-  .panel-chat{position:fixed;left:50%;transform:translate(-50%,105%);bottom:0;width:100%;max-width:480px;height:90vh;background:var(--esp);border-top:1px solid var(--linea2);z-index:100;transition:transform .34s cubic-bezier(.22,.9,.24,1);display:flex;flex-direction:column;overflow:hidden}
-  .panel-chat.abierto{transform:translate(-50%,0)}
-  .chat-top{display:flex;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid var(--linea);flex-shrink:0}
-  .avatar{width:44px;height:44px;border-radius:50%;background:var(--papel);color:var(--esp);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
-  .avatar .mono{font-family:var(--serif);font-style:italic;font-size:19px;line-height:1}
-  .chat-top .quien{flex:1;min-width:0}
-  .chat-top .nombre{font-family:var(--serif);font-style:italic;font-size:19px;font-weight:500}
-  .chat-top .estado{font-family:var(--grot);font-size:8.5px;letter-spacing:1.8px;text-transform:uppercase;color:var(--humo);display:flex;align-items:center;gap:7px;margin-top:3px;font-weight:600}
-  .punto{width:6px;height:6px;border-radius:50%;background:var(--basilico);display:inline-block}
-  .btn-icono{width:38px;height:38px;border-radius:2px;border:1px solid var(--linea2);background:transparent;color:var(--crema);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .btn-icono.activo{background:var(--papel);color:var(--esp);border-color:var(--papel)}
-  .mensajes{flex:1;overflow-y:auto;padding:20px 18px;display:flex;flex-direction:column;gap:12px}
-  .msg{max-width:84%;padding:13px 16px;font-size:13px;line-height:1.65;white-space:pre-line;animation:sube .25s ease;letter-spacing:.2px}
-  .msg.bot{background:var(--papel);color:var(--ink);border-radius:3px 14px 14px 14px;align-self:flex-start;box-shadow:0 8px 24px rgba(0,0,0,.3)}
-  .msg.usuario{background:transparent;border:1px solid var(--linea2);color:var(--crema);border-radius:14px 3px 14px 14px;align-self:flex-end}
-  .cards-chat{display:flex;gap:12px;overflow-x:auto;align-self:stretch;padding:2px 2px 6px;scrollbar-width:none;animation:sube .3s ease}
-  .cards-chat::-webkit-scrollbar{display:none}
-  .card-chat{flex-shrink:0;width:148px;cursor:pointer}
-  .card-chat .cc-foto{height:120px;overflow:hidden;border-radius:74px 74px 3px 3px;background:var(--esp2)}
-  .card-chat .cc-foto img{width:100%;height:100%;object-fit:cover}
-  .card-chat .cc-foto .svg-fb svg{width:100%;height:100%}
-  .card-chat .cc-info{padding:9px 2px 0;text-align:center}
-  .card-chat h6{font-family:var(--serif);font-style:italic;font-weight:500;font-size:13.5px;line-height:1.2;height:33px;overflow:hidden}
-  .card-chat .cc-pie{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:6px}
-  .card-chat .cc-precio{font-family:var(--grot);font-weight:700;font-size:12px;color:var(--pomodoro)}
-  .card-chat .cc-mas{width:26px;height:26px;border-radius:2px;border:1px solid var(--linea2);background:transparent;color:var(--crema);font-size:14px;cursor:pointer;font-family:var(--grot)}
-  .acc-chat{display:flex;flex-wrap:wrap;gap:8px;align-self:flex-start;animation:sube .3s ease}
-  .acc-btn{border:1px solid var(--linea2);color:var(--crema);background:transparent;font-family:var(--grot);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:11px 15px;border-radius:2px;cursor:pointer}
-  .acc-btn.lleno{background:var(--pomodoro);color:var(--papel);border-color:var(--pomodoro)}
-  .escribiendo{display:flex;gap:4px;padding:15px 17px;background:var(--papel);border-radius:3px 14px 14px 14px;align-self:flex-start;width:64px}
-  .escribiendo i{width:6px;height:6px;border-radius:50%;background:#8A7D69;animation:rebote 1.2s infinite}
-  .escribiendo i:nth-child(2){animation-delay:.15s}.escribiendo i:nth-child(3){animation-delay:.3s}
-  @keyframes rebote{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
-  .sugerencias{display:flex;gap:8px;overflow-x:auto;padding:8px 18px;scrollbar-width:none;flex-shrink:0}
-  .sugerencias::-webkit-scrollbar{display:none}
-  .sug{flex-shrink:0;font-family:var(--grot);font-size:9px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;background:transparent;border:1px solid var(--linea);color:var(--humo);border-radius:2px;padding:10px 13px;cursor:pointer}
-  .entrada-chat{display:flex;gap:8px;padding:12px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--linea);flex-shrink:0;align-items:center}
-  .entrada-chat input{flex:1;border:1px solid var(--linea2);background:transparent;border-radius:2px;padding:13px 15px;font-size:13px;outline:none;min-width:0;font-family:var(--grot);color:var(--crema);letter-spacing:.3px}
-  .entrada-chat input::placeholder{color:var(--humo2)}
-  .entrada-chat input:focus{border-color:var(--pomodoro)}
-  .btn-mic,.btn-enviar{width:46px;height:46px;border-radius:2px;border:1px solid var(--linea2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:transparent;color:var(--crema)}
-  .btn-mic.grabando{background:var(--pomodoro);border-color:var(--pomodoro);color:var(--papel);animation:parp 1.2s infinite}
-  .btn-enviar{background:var(--papel);color:var(--esp);border-color:var(--papel)}
+  /* ---------- Barra fija de orden (enviar a cocina) ---------- */
+  .barra-orden{position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,20px);width:calc(100% - 28px);max-width:452px;display:flex;align-items:center;gap:12px;background:var(--pomodoro);color:#FFF7EE;border:none;border-radius:3px;padding:15px 16px;z-index:74;cursor:pointer;box-shadow:0 14px 40px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:.25s;font-family:var(--grot);text-align:left}
+  .barra-orden.visible{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+  .barra-orden .bo-num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+  .barra-orden .bo-txt{flex:1;min-width:0;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .barra-orden .bo-txt b{font-weight:700}
+  .barra-orden .bo-total{font-size:14px;font-weight:700;letter-spacing:.5px}
+  .barra-orden .ico{width:15px;height:15px;stroke-width:2}
+  .barra-orden.modo-estado{background:var(--esp2);border:1px solid var(--linea2);color:var(--crema)}
+  .barra-orden.modo-estado .bo-num{background:transparent;border:1.5px solid var(--pomodoro)}
+  .barra-orden.modo-estado .bo-num i{width:8px;height:8px;border-radius:50%;background:var(--pomodoro);display:block;animation:parp 1.4s infinite}
+  .barra-orden.modo-estado .bo-total{color:var(--pomodoro)}
+  /* ---------- Guía de bienvenida ---------- */
+  .guia{position:fixed;inset:0;z-index:300;background:rgba(12,10,8,.78);backdrop-filter:blur(6px);display:none;align-items:flex-end;justify-content:center}
+  .guia.visible{display:flex}
+  .guia-caja{width:100%;max-width:480px;background:var(--papel);color:var(--ink);padding:30px 26px calc(26px + env(safe-area-inset-bottom));border-radius:14px 14px 0 0;animation:sube .35s}
+  .g-paso{display:flex;gap:14px;margin-top:18px;align-items:flex-start}
+  .g-paso b{width:26px;height:26px;border-radius:50%;background:var(--pomodoro);color:#FFF7EE;display:flex;align-items:center;justify-content:center;font-family:var(--grot);font-size:12px;flex-shrink:0}
+  .g-paso h4{font-family:var(--serif);font-style:italic;font-weight:500;font-size:16.5px;line-height:1.2}
+  .g-paso p{font-family:var(--grot);font-size:11.5px;line-height:1.6;color:#6E6557;margin-top:3px}
+  .g-nota{margin-top:20px;border-left:2px solid var(--oro);padding:2px 0 2px 12px;font-family:var(--serif);font-style:italic;font-size:13.5px;line-height:1.55}
+  .guia .btn-primario{margin-top:22px;width:100%}
+  /* ---------- Affordance de detalle ---------- */
+  .mini-tag.detalle{color:var(--pomodoro);border:1px solid rgba(228,89,59,.5);font-size:9.5px;padding:4px 8px;border-radius:2px}
+  .tag-ver{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(18,15,12,.78);color:#F5EDDE;font-family:var(--grot);font-size:9.5px;font-weight:700;letter-spacing:1.6px;padding:7px 11px;border-radius:2px;backdrop-filter:blur(4px);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -419,9 +398,6 @@
         <svg class="ico" viewBox="0 0 24 24"><path d="M6 7h12l1.2 13H4.8L6 7z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/></svg>
         Orden
       </button>
-      <button class="nav-sofia" onclick="abrirChat()" title="Habla con Sofía">
-        <span class="mono">S.</span><small>SOFÍA</small>
-      </button>
       <button class="nav-item" id="navCuenta" onclick="mostrarVista('cuenta')">
         <span class="dot-estado" id="navDot"></span>
         <svg class="ico" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>
@@ -431,6 +407,24 @@
         <svg class="ico" viewBox="0 0 24 24"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
         Mesa
       </button>
+    </div>
+  </div>
+
+  <button class="barra-orden" id="barraOrden" onclick="clickBarra()">
+    <span class="bo-num" id="boNum">1</span>
+    <span class="bo-txt" id="boTxt"><b>Enviar a cocina</b></span>
+    <span class="bo-total" id="boTotal">$0</span>
+    <svg class="ico" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+  </button>
+
+  <div class="guia" id="guia">
+    <div class="guia-caja">
+      <div class="caps" style="color:var(--pomodoro);letter-spacing:3px;font-family:var(--grot);font-weight:700;font-size:10px">CÓMO ORDENAR DESDE TU CELULAR</div>
+      <div class="g-paso"><b>1</b><div><h4>Toca cualquier platillo</h4><p>Verás su foto en grande, ingredientes, calorías y alérgenos.</p></div></div>
+      <div class="g-paso"><b>2</b><div><h4>Agrégalo con el botón +</h4><p>Suma todo lo que se te antoje; puedes ajustar cantidades después.</p></div></div>
+      <div class="g-paso"><b>3</b><div><h4>Envía tu orden a cocina</h4><p>Con la barra roja de abajo. Luego sigue su avance en la pestaña «Cuenta».</p></div></div>
+      <div class="g-nota">Ordena las veces que quieras durante tu visita — todo se va sumando y se paga junto al final.</div>
+      <button class="btn-primario" onclick="cerrarGuia()">Empezar a ordenar</button>
     </div>
   </div>
 
@@ -451,29 +445,6 @@
   <div class="v-pista">Toca en cualquier lugar para cerrar</div>
 </div>
 
-<!-- Chat -->
-<div class="panel-chat" id="panelChat">
-  <div class="chat-top">
-    <div class="avatar"><span class="mono">S.</span></div>
-    <div class="quien">
-      <div class="nombre">Sofía</div>
-      <div class="estado"><span class="punto"></span> Mesera virtual · toma tu orden</div>
-    </div>
-    <button class="btn-icono" id="btnVoz" title="Leer respuestas en voz alta">
-      <svg class="ico" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z" stroke-linejoin="round"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>
-    </button>
-    <button class="btn-icono" id="cerrarChat"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  </div>
-  <div class="mensajes" id="mensajes"></div>
-  <div class="sugerencias" id="sugerencias"></div>
-  <div class="entrada-chat">
-    <button class="btn-mic" id="btnMic" title="Hablar">
-      <svg class="ico" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
-    </button>
-    <input id="entrada" type="text" placeholder="Escribe o dicta — “quiero 2 carbonaras”" autocomplete="off">
-    <button class="btn-enviar" id="btnEnviar"><svg class="ico" viewBox="0 0 24 24"><path d="M4 12h14M13 6l7 6-7 6"/></svg></button>
-  </div>
-</div>
 
 <script>
 /* MENUSBOT v4 — datos que en producto real viven en la nube (Supabase) */
@@ -741,7 +712,7 @@ async function sincronizar(){
           desc: np.desc || (np.ingredientes || []).slice(0,4).join(', '),
           descLarga: np.descLarga || np.desc || 'Platillo de la casa, preparado al momento con ingredientes frescos.',
           ingredientes: np.ingredientes || [], alergenos: np.alergenos || [],
-          tags: np.tags || [], claves: [norm(np.nombre)], maridaje: np.maridaje || 'Pregúntale a Sofía por el maridaje ideal.',
+          tags: np.tags || [], claves: [norm(np.nombre)], maridaje: np.maridaje || 'Combina perfecto con nuestras bebidas de la casa.',
           extra: true,
         });
       }
@@ -783,6 +754,7 @@ function asignarMesa(n, silencioso){
   $('#mesaNum').textContent = String(n).padStart(2,'0');
   $('#splash').classList.add('oculto');
   if(!silencioso) toast(`Benvenuto — tavolo ${String(n).padStart(2,'0')}`);
+  mostrarGuia();
 }
 function cambiarMesa(){ $('#splash').classList.remove('oculto'); }
 
@@ -803,6 +775,7 @@ function mostrarVista(v){
   if(v === 'menu'){ $('#vistaMenu').classList.add('activa'); $('#navMenu').classList.add('activo'); }
   if(v === 'orden'){ pintarVistaOrden(); $('#vistaOrden').classList.add('activa'); $('#navOrden').classList.add('activo'); }
   if(v === 'cuenta'){ pintarVistaCuenta(); $('#vistaCuenta').classList.add('activa'); $('#navCuenta').classList.add('activo'); }
+  pintarIndicadores();
   window.scrollTo({top:0});
 }
 
@@ -812,6 +785,28 @@ function pintarIndicadores(){
   const b = $('#navBadge');
   b.textContent = n;
   b.classList.toggle('visible', n > 0);
+  const barra = $('#barraOrden');
+  if(barra){
+    if(n > 0){
+      // Modo CTA: hay artículos por enviar
+      barra.classList.remove('modo-estado');
+      $('#boNum').textContent = n;
+      $('#boTxt').innerHTML = '<b>Enviar a cocina</b>';
+      $('#boTotal').textContent = fmt(totalPedido());
+      barra.classList.toggle('visible', vistaActual !== 'orden');
+    } else if(ordenes.length && vistaActual === 'menu'){
+      // Modo estatus: órdenes en curso y carrito vacío
+      const o = ordenes[ordenes.length - 1];
+      barra.classList.add('modo-estado');
+      $('#boNum').innerHTML = '<i></i>';
+      const cortos = ['recibida','preparando','en camino','entregada'];
+      $('#boTxt').innerHTML = `Nº ${o.num} — <b>${cortos[o.estado]}</b>`;
+      $('#boTotal').textContent = 'VER';
+      barra.classList.add('visible');
+    } else {
+      barra.classList.remove('visible');
+    }
+  }
   $('#navDot').classList.toggle('visible', ordenes.length > 0);
   const pill = $('#pillEstado');
   if(ordenes.length){
@@ -859,7 +854,7 @@ function pintarDestacados(){
   const pops = PLATILLOS.filter(d => d.tags.includes('popular') && !d.oculto);
   $('#destScroll').innerHTML = pops.map(d => `
     <div class="dest-card" onclick="abrirPlatillo('${d.id}')">
-      <div class="arco">${foto(d.id)}<span class="tag-fav">FAVORITO</span></div>
+      <div class="arco">${foto(d.id)}<span class="tag-fav">FAVORITO</span><span class="tag-ver">TOCA PARA VER</span></div>
       <div class="dc-info">
         <h3>${d.nombre}</h3>
         <div class="dc-linea"><span class="dc-precio">${fmt(d.precio)}</span><span class="leader"></span><span class="dc-kcal">${d.kcal} KCAL</span></div>
@@ -873,6 +868,7 @@ function filaPlatillo(d){
       <div class="fp-nombre"><h3>${d.nombre}</h3><span class="leader"></span><span class="fp-precio">${fmt(d.precio)}</span></div>
       <p>${d.desc}</p>
       <div class="fp-meta">
+        <span class="mini-tag detalle">Ver detalle</span>
         <span class="mini-tag kcal">${ICO.flama} ${d.kcal} kcal</span>
         ${d.tags.includes('popular') ? '<span class="mini-tag pop">Favorito</span>' : ''}
         ${d.tags.includes('vegetariano') ? '<span class="mini-tag veg">Vegetariano</span>' : ''}
@@ -887,7 +883,7 @@ function pintarLista(){
   const hayFiltro = filtroActivo !== 'todo' || catActiva !== 'todas' || q;
   $('#zonaDestacados').style.display = hayFiltro ? 'none' : 'block';
   const visibles = PLATILLOS.filter(pasaFiltro);
-  if(!visibles.length){ $('#lista').innerHTML = '<div class="vacio">No encontramos platillos con esos criterios.<br>Prueba otro filtro o pregúntale a Sofía.</div>'; return; }
+  if(!visibles.length){ $('#lista').innerHTML = '<div class="vacio">No encontramos platillos con esos criterios.<br>Prueba con otro filtro o busca por nombre.</div>'; return; }
   let html = '';
   for(const c of CATEGORIAS){
     const del = visibles.filter(d => d.cat === c.id);
@@ -959,9 +955,10 @@ function abrirPlatillo(id){
   cantModal = 1;
   const cat = CATEGORIAS.find(c => c.id === d.cat);
   $('#hoja').innerHTML = `
-    <div class="hero-plato">${foto(d.id)}
-      <button class="btn-full" onclick="abrirVisor('${d.id}')"><svg class="ico" style="width:13px;height:13px" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg> Ver en grande</button>
-      <button class="cerrar" onclick="cerrarSheets()"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <div class="hero-plato" onclick="abrirVisor('${d.id}')" style="cursor:zoom-in">${foto(d.id)}
+      <button class="btn-full" onclick="event.stopPropagation();abrirVisor('${d.id}')"><svg class="ico" style="width:13px;height:13px" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg> Ver foto en grande</button>
+      <button class="cerrar" onclick="event.stopPropagation();cerrarSheets()"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <span class="chip-lupa"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5M11 8v6M8 11h6"/></svg></span>
     </div>
     <div class="contenido">
       <div class="f-cat">${cat.num} — ${cat.nombre}</div>
@@ -999,9 +996,6 @@ function abrirPlatillo(id){
         <div class="stepper-g"><button onclick="cambiarCant(-1)">−</button><span id="cantModal">1</span><button onclick="cambiarCant(1)">+</button></div>
         <button class="btn-agregar" onclick="agregarDesdeModal('${d.id}')"><span>Agregar</span><b id="precioModal">${fmt(d.precio)}</b></button>
       </div>
-      <div style="margin-top:14px">
-        <button class="btn-fantasma" onclick="preguntarSobre('${d.id}')">Preguntarle a Sofía sobre este platillo</button>
-      </div>
     </div>`;
   $('#velo').classList.add('abierto');
   $('#hoja').classList.add('abierta');
@@ -1025,8 +1019,6 @@ function cerrarSheets(){
   $('#velo').classList.remove('abierto');
   $('#hoja').classList.remove('abierta');
   $('#hojaConf').classList.remove('abierta');
-  $('#panelChat').classList.remove('abierto');
-  if(window.speechSynthesis) speechSynthesis.cancel();
 }
 $('#velo').onclick = cerrarSheets;
 
@@ -1062,8 +1054,16 @@ function pintarVistaOrden(){
   const v = $('#vistaOrden');
   let html = `<div class="vista-head"><div class="caps">Tavolo ${mesa ? String(mesa).padStart(2,'0') : '—'} · por enviar</div><h2>La comanda</h2></div>`;
   if(!pedido.length){
-    html += `<div class="vacio">Tu comanda está vacía.<br><br>Explora la carta o dile a Sofía<br>«quiero una carbonara».</div>
-      <div class="acciones-orden"><button class="btn-fantasma" onclick="mostrarVista('menu')">Volver a la carta</button></div>`;
+    if(ordenes.length){
+      html += `<div class="vacio">Tu orden ya está en cocina.<br><br>Puedes seguir su avance en tu cuenta<br>o agregar algo más de la carta.</div>
+        <div class="acciones-orden">
+          <button class="btn-primario" onclick="mostrarVista('cuenta')">Ver el estado de mi orden</button>
+          <button class="btn-fantasma" onclick="mostrarVista('menu')">Ordenar algo más</button>
+        </div>`;
+    } else {
+      html += `<div class="vacio">Tu comanda está vacía.<br><br>Ve a la carta, toca un platillo<br>y agrégalo con el botón <b style="color:var(--pomodoro)">+</b>.</div>
+        <div class="acciones-orden"><button class="btn-fantasma" onclick="mostrarVista('menu')">Volver a la carta</button></div>`;
+    }
     v.innerHTML = html; return;
   }
   html += `<div class="ticket"><div class="t-int">
@@ -1111,9 +1111,10 @@ function progresoHTML(o){
 }
 function pintarVistaCuenta(){
   const v = $('#vistaCuenta');
-  let html = `<div class="vista-head"><div class="caps">Tavolo ${mesa ? String(mesa).padStart(2,'0') : '—'} · seguimiento en vivo</div><h2>Il conto</h2></div>`;
+  let html = `<div class="vista-head"><div class="caps">Tavolo ${mesa ? String(mesa).padStart(2,'0') : '—'} · seguimiento en vivo</div><h2>Il conto</h2>
+    <div class="nota-pie" style="margin-top:10px">Aquí vive la cuenta de tu mesa: cada orden que envíes se suma y su estado se actualiza solo. <b style="color:var(--crema)">Todo se paga junto al final.</b></div></div>`;
   if(!ordenes.length){
-    html += `<div class="vacio">Aún no has enviado comandas a cocina.<br><br>Cuando envíes una, aquí verás su avance<br>en todo momento.</div>
+    html += `<div class="vacio">Aún no has enviado órdenes a cocina.<br><br>Cuando envíes una, aquí verás su avance<br>en todo momento.</div>
       <div class="acciones-orden"><button class="btn-fantasma" onclick="mostrarVista('menu')">Volver a la carta</button></div>`;
     v.innerHTML = html; return;
   }
@@ -1135,9 +1136,9 @@ function pintarVistaCuenta(){
       <div class="t-folio">${ordenes.length} COMANDA(S) · TAVOLO ${String(mesa).padStart(2,'0')}</div>
     </div></div>
     <div class="acciones-orden">
-      <button class="btn-primario" onclick="pedirCuenta()">Pedir la cuenta</button>
+      <button class="btn-fantasma" onclick="mostrarVista('menu')" style="border-color:var(--pomodoro);color:var(--pomodoro)">Ordenar algo más</button>
+      <button class="btn-primario" onclick="pedirCuenta()">Pedir la cuenta para pagar</button>
       <button class="btn-fantasma" onclick="llamarMesero()">Llamar al mesero a mi mesa</button>
-      <button class="btn-fantasma" onclick="mostrarVista('menu')">Seguir explorando la carta</button>
     </div>
     <div class="nota-pie">En el producto real, este estado se actualiza en vivo desde el panel de cocina vía la nube (Supabase Realtime). Aquí el avance está simulado.</div>`;
   v.innerHTML = html;
@@ -1181,15 +1182,17 @@ function refrescarEstadoUI(){
   if(vistaActual === 'cuenta') pintarVistaCuenta();
 }
 function mostrarConfirmacion(o){
+  clearTimeout(toastTimer);
+  $('#toast').classList.remove('visible');
   $('#hojaConf').innerHTML = `
     <div class="confirmacion">
       <div class="conf-sello"><div class="interior"><b>RICEVUTO</b><span>in cucina</span></div></div>
       <h2>Comanda enviada</h2>
       <div class="folio">Nº <b>${o.num}</b> · Tavolo ${String(o.mesa).padStart(2,'0')} · ${fmt(o.total)} ${RESTAURANTE.moneda}</div>
-      <div class="nota-pie" style="margin:22px 0 0;text-align:left">Sigue su avance en cualquier momento desde la pestaña <b style="color:var(--crema)">Cuenta</b> — recibida, preparando, en camino. Te iremos avisando.</div>
+      <div class="nota-pie" style="margin:22px 0 0;text-align:left">Sigue su avance en cualquier momento desde la pestaña <b style="color:var(--crema)">Cuenta</b> — recibida, preparando, en camino.<br><br>¿Se te antoja algo más después? Puedes ordenar las veces que quieras: todo se va sumando a tu cuenta y <b style="color:var(--crema)">se paga junto al final</b>.</div>
       <div class="acciones-orden" style="padding:22px 0 0">
-        <button class="btn-primario" onclick="cerrarSheets();mostrarVista('cuenta')">Ver estado de mi comanda</button>
-        <button class="btn-fantasma" onclick="cerrarSheets();mostrarVista('menu')">Seguir explorando la carta</button>
+        <button class="btn-primario" onclick="cerrarSheets();mostrarVista('cuenta')">Ver el estado de mi orden</button>
+        <button class="btn-fantasma" onclick="cerrarSheets();mostrarVista('menu')">Ordenar algo más</button>
       </div>
     </div>`;
   $('#velo').classList.add('abierto');
@@ -1199,285 +1202,34 @@ let ultimaLlamada = 0;
 function llamarMesero(){
   if(Date.now() - ultimaLlamada < 30000){ toast('Ya avisamos a tu mesero — está en camino'); return; }
   ultimaLlamada = Date.now();
-  api('menusbot_llamadas', { method:'POST', body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0 }) })
+  api('menusbot_llamadas', { method:'POST', body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, motivo:'mesero' }) })
     .then(() => toast(`Listo — un mesero viene al tavolo ${String(mesa).padStart(2,'0')}`))
     .catch(() => toast('Sin conexión — inténtalo de nuevo'));
 }
 function pedirCuenta(){
-  abrirChat();
-  setTimeout(() => burbujeaBot({msj:`Claro — en un momento llevan la cuenta a tu mesa ${mesa}. Son ${fmt(ordenes.reduce((s,o)=>s+o.total,0))} ${RESTAURANTE.moneda} en total. ¿Todo estuvo delicioso?`}), 400);
-}
-function preguntarSobre(id){
-  const d = PLATILLOS.find(x => x.id === id);
-  cerrarSheets();
-  abrirChat();
-  setTimeout(() => enviar('¿Qué lleva ' + d.nombre + '?'), 350);
+  if(Date.now() - ultimaLlamada < 30000){ toast('Ya avisamos — tu mesero está en camino'); return; }
+  ultimaLlamada = Date.now();
+  api('menusbot_llamadas', { method:'POST', body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, motivo:'cuenta' }) })
+    .then(() => toast('Pedimos tu cuenta — en un momento la llevan a tu mesa'))
+    .catch(() => toast('Sin conexión — inténtalo de nuevo'));
 }
 
-/* ============ SOFÍA ============ */
+/* ---------- Utilidades de texto ---------- */
 const norm = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-function buscaPlatillo(t){
-  for(const d of PLATILLOS){
-    if(d.claves.some(k => t.includes(norm(k)))) return d;
-    if(t.includes(norm(d.nombre))) return d;
-  }
-  return null;
-}
-function extraeCantidad(t){
-  const m = t.match(/\b(\d+)\b/);
-  if(m) return Math.min(9, Math.max(1, +m[1]));
-  const palabras = {'un ':1,'una ':1,'dos ':2,'tres ':3,'cuatro ':4,'cinco ':5};
-  for(const [p,n] of Object.entries(palabras)) if(t.includes(p)) return n;
-  return 1;
-}
-const listaCorta = ds => ds.map(d => `— ${d.nombre} · ${fmt(d.precio)} · ${d.kcal} kcal`).join('\n');
 
-function responder(texto){
-  const t = norm(texto);
-  const d = buscaPlatillo(t);
-  const R = (msj, refs=[], acciones=[]) => ({msj, refs, acciones});
-
-  if(/(quiero|traeme|trae|pideme|pide|ordena|agrega|anade|me das|ponme|encarga|se me antoja|antojo de)/.test(t) && d){
-    const qty = extraeCantidad(t);
-    agregarAlPedido(d.id, qty, '');
-    return R(`Excelente elección. Agregué ${qty} × ${d.nombre} a tu comanda del tavolo ${mesa}.\n\nLlevas ${cuentaPedido()} artículo(s), total ${fmt(totalPedido())}. ¿Algo más?`,
-      [], [{txt:'Ver mi comanda', fn:'verOrden'},{txt:'Enviar a cocina', fn:'enviarChat', lleno:true}]);
-  }
-  if(/(quitar|elimina|borra|ya no quiero|cancela)/.test(t) && d){
-    const idx = pedido.findIndex(i => i.id === d.id);
-    if(idx >= 0){ pedido.splice(idx,1); pintarIndicadores(); return R(`Listo, quité ${d.nombre}. Quedan ${cuentaPedido()} artículo(s) · ${fmt(totalPedido())}.`); }
-    return R(`${d.nombre} no está en tu comanda actual. ¿Quieres ver lo que llevas?`, [], [{txt:'Ver mi comanda', fn:'verOrden'}]);
-  }
-  if(/(estado|como va|avance|ya casi|ya merito|tarda mi)/.test(t) && ordenes.length){
-    const o = ordenes[ordenes.length-1];
-    return R(`Tu comanda Nº ${o.num} está: ${ESTADOS_TXT[o.estado].toLowerCase()}${o.estado===2?' — ya casi llega.':'.'}`, [], [{txt:'Ver seguimiento', fn:'verCuenta'}]);
-  }
-  if(/(mi orden|mi comanda|que llevo|carrito|mi pedido|lo que pedi)/.test(t)){
-    if(!pedido.length && !ordenes.length) return R('Aún no llevas nada. Dime «quiero una carbonara» y la agrego al instante.');
-    let m = '';
-    if(pedido.length) m += 'Por enviar:\n' + pedido.map(i => `— ${i.qty} × ${PLATILLOS.find(x=>x.id===i.id).nombre}${i.notas?' ('+i.notas+')':''}`).join('\n') + `\nTotal: ${fmt(totalPedido())}`;
-    if(ordenes.length) m += (m?'\n\n':'') + 'En cocina: ' + ordenes.map(o => `Nº ${o.num} (${ESTADOS_TXT[o.estado].toLowerCase()})`).join(', ');
-    return R(m, [], pedido.length ? [{txt:'Enviar a cocina', fn:'enviarChat', lleno:true},{txt:'Ver detalle', fn:'verOrden'}] : [{txt:'Ver mi cuenta', fn:'verCuenta'}]);
-  }
-  if(/(enviar|manda|confirmar|a cocina|ordenar ya)/.test(t) && (pedido.length || /orden|comanda/.test(t))){
-    if(!pedido.length) return R('No tienes artículos nuevos por enviar. ¿Te muestro los favoritos de la casa?');
-    const tot = fmt(totalPedido());
-    enviarOrden();
-    return R(`Enviada. Tu comanda ya va a cocina, asignada al tavolo ${mesa}. Total ${tot}.\n\nSigue su avance cuando quieras en la pestaña Cuenta.`, [], [{txt:'Ver estado', fn:'verCuenta', lleno:true}]);
-  }
-  if(/(la cuenta|pagar|cobrar|cuanto llevo)/.test(t)){
-    if(!ordenes.length) return R('Aún no has enviado ninguna comanda, así que no hay cuenta pendiente. ¿Te ayudo a elegir algo?');
-    return R(`Llevas ${ordenes.length} comanda(s), ${fmt(ordenes.reduce((s,o)=>s+o.total,0))} ${RESTAURANTE.moneda} en total. ¿Pido que te lleven la cuenta al tavolo ${mesa}?`, [], [{txt:'Sí, pedir la cuenta', fn:'cuentaChat', lleno:true},{txt:'Ver detalle', fn:'verCuenta'}]);
-  }
-  if(/^(hola|buenas|buenos dias|buen dia|hey|ciao|que tal)/.test(t))
-    return R(`Ciao. Soy Sofía, tu mesera virtual del tavolo ${mesa ?? '—'}. Puedo recomendarte, contarte ingredientes y calorías, cuidar tus alergias y tomar tu comanda — dime «quiero…» y lo agrego. ¿Qué se te antoja?`);
-  if(/(gracias|perfecto|excelente|muy amable)/.test(t)) return R('Con muchísimo gusto. Buon appetito.');
-  if(/(adios|hasta luego|bye|nos vemos)/.test(t)) return R(`Arrivederci. Que disfrutes tu visita a ${MARCA.nombre}.`);
-  if(/alerg/.test(t)){
-    if(/(gluten|celiac)/.test(t)){
-      const ok = PLATILLOS.filter(x => !x.alergenos.includes('Gluten'));
-      return R('Entendido, evitemos el gluten. Todo esto es seguro para ti:\n\n' + listaCorta(ok) + '\n\nAvisaré a cocina para evitar contaminación cruzada.', ok);
-    }
-    if(/(lactosa|lacteo|leche|queso)/.test(t)){
-      const ok = PLATILLOS.filter(x => !x.alergenos.includes('Lácteos'));
-      return R('Claro, estas opciones no llevan lácteos:\n\n' + listaCorta(ok), ok);
-    }
-    if(/huevo/.test(t)){
-      const ok = PLATILLOS.filter(x => !x.alergenos.includes('Huevo'));
-      return R('Sin problema, estas opciones no contienen huevo:\n\n' + listaCorta(ok), ok);
-    }
-    if(/(pescado|marisco)/.test(t)){
-      const ok = PLATILLOS.filter(x => !x.alergenos.includes('Pescado')).slice(0,6);
-      return R('Anotado. Solo el Salmone contiene pescado; lo demás está libre:\n\n' + listaCorta(ok), ok);
-    }
-    if(/(nuez|nueces|frutos secos|cacahuate|mani)/.test(t))
-      return R('Buena noticia: ningún platillo contiene nueces ni frutos secos. Aun así avisaré a cocina para extremar cuidados.');
-    return R('Cuéntame a qué eres alérgico(a) — gluten, lácteos, huevo, pescado, frutos secos — y te muestro lo que sí puedes pedir con confianza.');
-  }
-  if(d && /(lleva|ingrediente|contiene|que tiene|de que esta|como se prepara|preparan)/.test(t)){
-    const al = d.alergenos.length ? '\n\nAlérgenos: ' + d.alergenos.join(', ') + '.' : '\n\nSin alérgenos comunes.';
-    return R(`${d.nombre} lleva: ${d.ingredientes.join(', ')}.${al}\n\n${d.descLarga}`, [d]);
-  }
-  if(/(caloria|kcal|engorda|nutricion)/.test(t)){
-    if(d) return R(`${d.nombre} aporta ${d.kcal} kcal por porción (${d.porcion}): ${d.prot} g proteína, ${d.carb} g carbohidratos, ${d.grasa} g grasas.`, [d]);
-    const ligeros = [...PLATILLOS].sort((a,b) => a.kcal - b.kcal).slice(0,4);
-    return R('Lo más ligero de la carta:\n\n' + listaCorta(ligeros), ligeros);
-  }
-  if(/(liger|dieta|saludable|fit|bajo en calorias|pocas calorias|sano)/.test(t)){
-    const ligeros = PLATILLOS.filter(x => x.kcal < 500 && x.cat !== 'bebidas');
-    return R('Para algo ligero y rico:\n\n' + listaCorta(ligeros) + '\n\nEl Salmone es mi favorito: alto en proteína y sin gluten.', ligeros);
-  }
-  if(/vegan/.test(t)){
-    const ok = PLATILLOS.filter(x => x.tags.includes('vegano'));
-    return R('Opciones 100% veganas hoy:\n\n' + listaCorta(ok) + '\n\nLa Bruschetta también puede prepararse vegana.', ok);
-  }
-  if(/vegetari/.test(t)){
-    const ok = PLATILLOS.filter(x => x.tags.includes('vegetariano') && x.cat !== 'bebidas');
-    return R('Opciones vegetarianas deliciosas:\n\n' + listaCorta(ok) + '\n\n¿Te antojo alguna? Dime «quiero…» y la agrego.', ok);
-  }
-  if(/(gluten|celiac)/.test(t)){
-    const ok = PLATILLOS.filter(x => x.tags.includes('sin gluten'));
-    return R('Libres de gluten:\n\n' + listaCorta(ok), ok);
-  }
-  if(/(picante|picoso|chile)/.test(t))
-    return R('La carta no tiene platillos picosos, pero con gusto te llevamos peperoncino y aceite de chile a la mesa. ¿Te lo mando?');
-  if(/(barat|economic|cuesta|cuanto|presupuesto|precio)/.test(t)){
-    if(d) return R(`${d.nombre} cuesta ${fmt(d.precio)} (${d.porcion}). ¿Lo agrego a tu comanda?`, [d]);
-    const baratos = [...PLATILLOS].filter(x => x.cat !== 'bebidas').sort((a,b) => a.precio - b.precio).slice(0,4);
-    return R('Las opciones más accesibles:\n\n' + listaCorta(baratos), baratos);
-  }
-  if(/(vino|maridaje|acompanar|tomar con|beber)/.test(t)){
-    if(d) return R(`Para acompañar ${d.nombre}: ${d.maridaje}`, [d]);
-    return R('Nuestro Vino Tinto de la Casa (Sangiovese toscano) va perfecto con pastas y carnes. Dime qué pedirás y te doy el maridaje exacto.', [PLATILLOS.find(x => x.id==='vino')]);
-  }
-  if(/(nino|ninos|infantil|hijo|hija|pequeno)/.test(t)){
-    const ok = PLATILLOS.filter(x => x.tags.includes('niños') || x.id === 'ravioli');
-    return R('Para los pequeños suele triunfar:\n\n' + listaCorta(ok) + '\n\nPodemos servir media porción de cualquier pasta.', ok);
-  }
-  if(/(popular|favorito|mas pedido|estrella|mejor|top)/.test(t)){
-    const ok = PLATILLOS.filter(x => x.tags.includes('popular'));
-    return R('I favoriti della casa:\n\n' + listaCorta(ok) + '\n\nLa Carbonara es la número uno desde hace tres años.', ok);
-  }
-  if(/(recomien|recomend|sugier|que pido|que me das|sorprendeme)/.test(t)){
-    const ok = [PLATILLOS.find(x=>x.id==='carbonara'), PLATILLOS.find(x=>x.id==='ossobuco'), PLATILLOS.find(x=>x.id==='tiramisu')];
-    return R('Mi menú ideal para hoy:\n\n' + listaCorta(ok) + '\n\nDime «quiero la carbonara» y la agrego a tu comanda.', ok);
-  }
-  if(/(tarda|tiempo|demora|rapido|espera)/.test(t)){
-    if(d) return R(`${d.nombre} tarda aproximadamente ${d.tiempo} en salir de cocina.`, [d]);
-    return R('La mayoría de los platillos salen en 15–25 minutos; entradas y postres en menos de 12.');
-  }
-  if(/(entrada|para empezar|botana|antipasti)/.test(t)) return R('Para abrir el apetito:\n\n' + listaCorta(PLATILLOS.filter(x => x.cat==='entradas')), PLATILLOS.filter(x => x.cat==='entradas'));
-  if(/(pasta|espagueti|spaghetti)/.test(t)) return R('Nuestras pastas, con pasta fresca hecha en casa:\n\n' + listaCorta(PLATILLOS.filter(x => x.cat==='pastas')), PLATILLOS.filter(x => x.cat==='pastas'));
-  if(/pizza/.test(t)) return R('Pizzas al horno de leña, masa madre de 48 horas:\n\n' + listaCorta(PLATILLOS.filter(x => x.cat==='pizzas')), PLATILLOS.filter(x => x.cat==='pizzas'));
-  if(/(principal|plato fuerte|carne|fuerte|secondi)/.test(t)) return R('Nuestros platos fuertes:\n\n' + listaCorta(PLATILLOS.filter(x => x.cat==='principales')), PLATILLOS.filter(x => x.cat==='principales'));
-  if(/(postre|dulce|cafe|dolci)/.test(t)) return R('El final feliz:\n\n' + listaCorta(PLATILLOS.filter(x => x.cat==='postres')) + '\n\nEl Tiramisù es receta de la nonna Rosa desde 1987.', PLATILLOS.filter(x => x.cat==='postres'));
-  if(/(bebida|tomar|refresco|agua)/.test(t)) return R('Para acompañar:\n\n' + listaCorta(PLATILLOS.filter(x => x.cat==='bebidas')), PLATILLOS.filter(x => x.cat==='bebidas'));
-  if(d) return R(`${d.nombre} — ${fmt(d.precio)} · ${d.kcal} kcal\n\n${d.descLarga}\n\n¿Te digo sus ingredientes o lo agrego? Dime «quiero ${d.nombre}».`, [d]);
-  return R('Esa no me la sé todavía — soy un prototipo. Puedo ayudarte con recomendaciones, ingredientes, calorías, alergias, precios, maridajes… y tomar tu comanda: dime «quiero una carbonara». ¿Por dónde empezamos?');
+function clickBarra(){
+  mostrarVista(pedido.length ? 'orden' : 'cuenta');
 }
 
-/* ---------- Chat UI ---------- */
-const SUGERENCIAS = ['¿Qué me recomiendas?','Quiero una carbonara','Algo ligero','Soy alérgico al gluten','¿Cómo va mi orden?','La cuenta','Dolci'];
-let chatIniciado = false, vozActiva = false;
-const ACCIONES = {
-  verOrden(){ cerrarSheets(); setTimeout(() => mostrarVista('orden'), 200); },
-  verCuenta(){ cerrarSheets(); setTimeout(() => mostrarVista('cuenta'), 200); },
-  cuentaChat(){ burbujeaBot({msj:`Hecho. En un momento llevan la cuenta a tu tavolo ${mesa}. Grazie.`}); },
-  enviarChat(){ if(!pedido.length) return; enviarOrden(); $('#panelChat').classList.remove('abierto'); },
-};
-function abrirChat(){
-  $('#hoja').classList.remove('abierta');
-  $('#hojaConf').classList.remove('abierta');
-  $('#panelChat').classList.add('abierto');
-  $('#velo').classList.add('abierto');
-  if(!chatIniciado){ chatIniciado = true; setTimeout(() => burbujeaBot(responder('hola')), 400); }
+/* ---------- Guía de bienvenida ---------- */
+function mostrarGuia(){
+  if(localStorage.getItem('mb_guia_v1')) return;
+  $('#guia').classList.add('visible');
 }
-$('#cerrarChat').onclick = cerrarSheets;
-function agregaMsg(texto, quien){
-  const div = document.createElement('div');
-  div.className = 'msg ' + quien;
-  div.textContent = texto;
-  $('#mensajes').appendChild(div);
-  $('#mensajes').scrollTop = $('#mensajes').scrollHeight;
+function cerrarGuia(){
+  $('#guia').classList.remove('visible');
+  try{ localStorage.setItem('mb_guia_v1','1'); }catch(e){}
 }
-function agregaCards(refs){
-  if(!refs || !refs.length) return;
-  const cont = document.createElement('div');
-  cont.className = 'cards-chat';
-  arrastrable(cont);
-  refs.forEach(d => {
-    const c = document.createElement('div');
-    c.className = 'card-chat';
-    c.innerHTML = `<div class="cc-foto">${foto(d.id)}</div>
-      <div class="cc-info"><h6>${d.nombre}</h6>
-      <div class="cc-pie"><span class="cc-precio">${fmt(d.precio)}</span><button class="cc-mas" title="Agregar">+</button></div></div>`;
-    c.querySelector('.cc-mas').onclick = (e) => {
-      e.stopPropagation();
-      agregarAlPedido(d.id, 1, '');
-      burbujeaBot({msj:`Agregué 1 × ${d.nombre} a tu comanda. Llevas ${cuentaPedido()} artículo(s), total ${fmt(totalPedido())}.`, acciones:[{txt:'Ver mi comanda', fn:'verOrden'},{txt:'Enviar a cocina', fn:'enviarChat', lleno:true}]});
-    };
-    c.onclick = () => { cerrarSheets(); setTimeout(() => abrirPlatillo(d.id), 250); };
-    cont.appendChild(c);
-  });
-  $('#mensajes').appendChild(cont);
-  $('#mensajes').scrollTop = $('#mensajes').scrollHeight;
-}
-function agregaAcciones(acciones){
-  if(!acciones || !acciones.length) return;
-  const cont = document.createElement('div');
-  cont.className = 'acc-chat';
-  acciones.forEach(a => {
-    const b = document.createElement('button');
-    b.className = 'acc-btn' + (a.lleno ? ' lleno' : '');
-    b.textContent = a.txt;
-    b.onclick = () => ACCIONES[a.fn] && ACCIONES[a.fn]();
-    cont.appendChild(b);
-  });
-  $('#mensajes').appendChild(cont);
-  $('#mensajes').scrollTop = $('#mensajes').scrollHeight;
-}
-function hablar(texto){
-  if(!vozActiva || !window.speechSynthesis) return;
-  speechSynthesis.cancel();
-  const limpio = texto.replace(/[—«»]/g,' ').replace(/\n+/g,'. ');
-  const u = new SpeechSynthesisUtterance(limpio);
-  u.lang = 'es-MX'; u.rate = 1.04;
-  const voces = speechSynthesis.getVoices();
-  const vozEs = voces.find(v => /es[-_](MX|US|419)/i.test(v.lang)) || voces.find(v => v.lang.startsWith('es'));
-  if(vozEs) u.voice = vozEs;
-  speechSynthesis.speak(u);
-}
-function burbujeaBot(r){
-  const esc = document.createElement('div');
-  esc.className = 'escribiendo';
-  esc.innerHTML = '<i></i><i></i><i></i>';
-  $('#mensajes').appendChild(esc);
-  $('#mensajes').scrollTop = $('#mensajes').scrollHeight;
-  setTimeout(() => {
-    esc.remove();
-    agregaMsg(r.msj, 'bot');
-    agregaCards(r.refs);
-    agregaAcciones(r.acciones);
-    hablar(r.msj);
-  }, 600 + Math.random() * 500);
-}
-function enviar(texto){
-  const limpio = (texto ?? $('#entrada').value).trim();
-  if(!limpio) return;
-  $('#entrada').value = '';
-  agregaMsg(limpio, 'usuario');
-  burbujeaBot(responder(limpio));
-}
-$('#btnEnviar').onclick = () => enviar();
-$('#entrada').addEventListener('keydown', e => { if(e.key === 'Enter') enviar(); });
-function pintarSugerencias(){
-  $('#sugerencias').innerHTML = SUGERENCIAS.map(s => `<button class="sug">${s}</button>`).join('');
-  document.querySelectorAll('.sug').forEach(b => b.onclick = () => enviar(b.textContent));
-}
-
-/* ---------- Voz ---------- */
-const Reconocedor = window.SpeechRecognition || window.webkitSpeechRecognition;
-let rec = null, grabando = false;
-if(Reconocedor){
-  rec = new Reconocedor();
-  rec.lang = 'es-MX'; rec.interimResults = false; rec.maxAlternatives = 1;
-  rec.onresult = e => enviar(e.results[0][0].transcript);
-  rec.onend = () => { grabando = false; $('#btnMic').classList.remove('grabando'); };
-  rec.onerror = () => { grabando = false; $('#btnMic').classList.remove('grabando'); };
-}
-$('#btnMic').onclick = () => {
-  if(!rec){ agregaMsg('Tu navegador no soporta dictado por voz — prueba en Chrome o Edge. Mientras tanto escríbeme.','bot'); return; }
-  if(grabando){ rec.stop(); return; }
-  grabando = true;
-  $('#btnMic').classList.add('grabando');
-  try{ rec.start(); }catch(e){ grabando = false; $('#btnMic').classList.remove('grabando'); }
-};
-$('#btnVoz').onclick = () => {
-  vozActiva = !vozActiva;
-  $('#btnVoz').classList.toggle('activo', vozActiva);
-  if(vozActiva){ const u = new SpeechSynthesisUtterance('Voz activada. Leeré mis respuestas en voz alta.'); u.lang='es-MX'; speechSynthesis.speak(u); }
-  else speechSynthesis.cancel();
-};
 
 /* ---------- Arranque ---------- */
 $('#buscar').addEventListener('input', pintarLista);
@@ -1487,10 +1239,8 @@ pintarMarquee();
 pintarControles();
 pintarDestacados();
 pintarLista();
-pintarSugerencias();
 pintarIndicadores();
 activarArrastres();
-if(window.speechSynthesis) speechSynthesis.getVoices();
 </script>
 
 </body>

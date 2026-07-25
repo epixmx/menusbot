@@ -421,7 +421,7 @@ async function cargar(){
       entregada_at: f.entregada_at ? Date.parse(f.entregada_at) : null, entregada_por: f.entregada_por,
     }));
     const lls = await api(`menusbot_llamadas?restaurante_id=eq.${RID}&atendida=eq.false&order=ts.desc&limit=20&select=*`);
-    llamadasCache = (lls || []).map(l => ({ dbId: l.id, mesa: l.mesa, ts: Date.parse(l.ts), atendida: false }));
+    llamadasCache = (lls || []).map(l => ({ dbId: l.id, mesa: l.mesa, ts: Date.parse(l.ts), motivo: l.motivo || '', atendida: false }));
     enLinea = true;
   }catch(e){ enLinea = false; }
   const chip = document.getElementById('chipVivo');
@@ -622,7 +622,7 @@ function render(){
     const llamadas = (d.llamadas || []).filter(l => !l.atendida && Date.now() - l.ts < 30*60000);
     $('#llamadasZona').innerHTML = llamadas.map(l => `
       <div class="llamada">
-        <span class="l-txt">El tavolo ${String(l.mesa).padStart(2,'0')} llama al mesero</span>
+        <span class="l-txt">El tavolo ${String(l.mesa).padStart(2,'0')} ${l.motivo === 'cuenta' ? '<b style="color:var(--pomodoro)">pide la cuenta</b>' : 'llama al mesero'}</span>
         <span class="l-hace">hace ${mm(Date.now() - l.ts)}</span>
         <button class="btn-sec" onclick="atenderLlamada(${l.ts})">Atendida</button>
       </div>`).join('');
