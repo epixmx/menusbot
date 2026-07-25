@@ -69,17 +69,18 @@
   .marca-mini{font-family:var(--grot);font-size:9px;letter-spacing:3px;font-weight:700;color:var(--humo)}
   .mesa-pill{display:flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:10px;font-weight:600;letter-spacing:2px;padding:9px 14px;border-radius:2px;cursor:pointer}
   .mesa-pill b{color:var(--pomodoro);font-size:12px}
-  .titulo-zona{position:relative;margin-top:26px}
+  .titulo-zona{position:relative;margin-top:12px}
   .titulo-zona h1{font-family:var(--serif);font-weight:500;font-size:44px;line-height:.95;letter-spacing:-1.2px}
   .titulo-zona h1 em{font-style:italic;color:var(--pomodoro)}
   .titulo-zona .sello{position:absolute;right:-4px;top:-14px;width:84px;height:84px;animation:gira 28s linear infinite;opacity:.9}
   .titulo-zona .sello-logo{display:none !important}
-  #logoPrincipal{width:85%;max-width:310px;height:118px;object-fit:contain;object-position:left center;display:block;margin:2px 0 4px}
-  .lema-cab{margin-top:8px;font-family:var(--serif);font-style:italic;font-weight:500;font-size:17px;letter-spacing:.3px;color:var(--crema)}
+  #logoPrincipal{width:68%;max-width:230px;height:78px;object-fit:contain;object-position:left center;display:block;margin:0}
+  .lema-cab{margin-top:4px;font-family:var(--serif);font-style:italic;font-weight:500;font-size:15px;letter-spacing:.3px;color:var(--crema)}
+  @media (min-width:700px){ #logoPrincipal{width:85%;max-width:310px;height:112px} .lema-cab{font-size:17px;margin-top:8px} }
   @keyframes gira{to{transform:rotate(360deg)}}
   .sello text{font-family:var(--grot);font-size:10.5px;letter-spacing:2px;fill:var(--humo);font-weight:600}
   .sello .centro{font-family:var(--serif);font-style:italic;font-size:20px;fill:var(--pomodoro)}
-  .marquee{margin-top:22px;border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);overflow:hidden;padding:9px 0}
+  .marquee{margin-top:12px;border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);overflow:hidden;padding:9px 0}
   .marquee .tira{display:flex;gap:34px;white-space:nowrap;animation:desliza 26s linear infinite;width:max-content}
   @keyframes desliza{to{transform:translateX(-50%)}}
   .marquee span{font-family:var(--grot);font-size:9px;letter-spacing:3px;font-weight:600;color:var(--humo);display:flex;align-items:center;gap:34px}
@@ -221,8 +222,8 @@
   .hero-plato img{width:100%;height:100%;object-fit:cover;filter:saturate(.94) contrast(1.04)}
   .hero-plato .svg-fb svg{width:100%;height:110%}
   .hero-plato::after{content:'';position:absolute;left:0;right:0;bottom:0;height:130px;background:linear-gradient(180deg,transparent,var(--esp))}
-  .cerrar{position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:50%;border:1px solid var(--linea2);background:rgba(21,18,16,.72);backdrop-filter:blur(6px);cursor:pointer;color:var(--crema);z-index:5;display:flex;align-items:center;justify-content:center}
-  .btn-full{position:absolute;top:16px;left:16px;display:flex;align-items:center;gap:9px;border:1px solid var(--linea2);background:rgba(21,18,16,.78);backdrop-filter:blur(6px);color:var(--crema);font-family:var(--grot);font-size:11px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;padding:14px 16px;border-radius:2px;cursor:pointer;z-index:5;min-height:44px}
+  .cerrar{position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(245,237,222,.35);background:rgba(21,18,16,.72);backdrop-filter:blur(6px);cursor:pointer;color:#F5EDDE;z-index:5;display:flex;align-items:center;justify-content:center}
+  .btn-full{position:absolute;top:16px;left:16px;display:flex;align-items:center;gap:9px;border:1px solid rgba(245,237,222,.35);background:rgba(21,18,16,.78);backdrop-filter:blur(6px);color:#F5EDDE;font-family:var(--grot);font-size:11px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;padding:14px 16px;border-radius:2px;cursor:pointer;z-index:5;min-height:44px}
   .chip-lupa{position:absolute;right:14px;bottom:14px;width:42px;height:42px;border-radius:50%;background:rgba(18,15,12,.72);backdrop-filter:blur(5px);border:1px solid var(--linea2);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:4}
   .chip-lupa .ico{width:17px;height:17px;color:#F5EDDE;stroke-width:2}
   .hoja .contenido{padding:0 24px 36px;margin-top:-44px;position:relative;z-index:2}
@@ -349,7 +350,7 @@
   <div class="vista activa" id="vistaMenu">
     <div class="cab">
       <div class="fila-top">
-        <span class="marca-mini" id="marcaMini">MENUSBOT — DEMO</span>
+        <span class="marca-mini" id="marcaMini">MENÚ INTERACTIVO</span>
         <button class="mesa-pill" onclick="cambiarMesa()">MESA <b id="mesaNum">–</b></button>
       </div>
       <div class="titulo-zona">
@@ -686,8 +687,6 @@ let MARCA = { prefijo:'Trattoria', nombre:'Bella Vita', lema:'Est. 1987', logo:'
 let marcaAplicada = '';
 const iniciales = n => (n || 'BV').split(/\s+/).filter(Boolean).slice(0,2).map(w => w[0].toUpperCase()).join('') || 'BV';
 function aplicarMarca(){
-  const mm = $('#marcaMini');
-  if(mm && SUC) mm.textContent = 'SUCURSAL ' + SUC.toUpperCase();
   const m = Object.assign({}, MARCA, (dbCache.config && dbCache.config.marca) || {});
   const hash = JSON.stringify(m) + temaActual;
   if(hash === marcaAplicada) return;
@@ -710,7 +709,7 @@ function aplicarMarca(){
       logoP.style.display = 'none'; titulo.style.display = 'block';
       titulo.innerHTML = (m.prefijo ? m.prefijo + '<br>' : '') + `<em>${m.nombre}</em>`;
     }
-    if(lemaEl) lemaEl.textContent = m.lema || '';
+    if(lemaEl) lemaEl.textContent = SUC ? 'Sucursal ' + SUC : (m.lema || '');
   }
   const base = TEMAS[temaActual] || TEMAS.editoriale;
   document.documentElement.style.setProperty('--pomodoro', m.acento || base.pomodoro);
@@ -799,7 +798,6 @@ function restaurarSesion(mesaURL){
   }catch(e){ return false; }
 }
 function iniciarMesa(){
-  if(SUC) $('#marcaMini').textContent = 'SUCURSAL ' + SUC.toUpperCase();
   const p = new URLSearchParams(location.search).get('mesa');
   if(p && +p >= 1 && +p <= 40){
     asignarMesa(+p, true);
@@ -1246,8 +1244,30 @@ function pintarVistaCuenta(){
     <div class="nota-pie">En el producto real, este estado se actualiza en vivo desde el panel de cocina vía la nube (Supabase Realtime). Aquí el avance está simulado.</div>`;
   v.innerHTML = html;
 }
+let sinBebidasOk = false;
+function mostrarSugerenciaBebidas(){
+  const bebidas = PLATILLOS.filter(p => p.cat === 'bebidas' && !p.oculto).slice(0, 3);
+  if(!bebidas.length){ sinBebidasOk = true; enviarOrden(); return; }
+  $('#hojaConf').innerHTML = `
+    <div class="confirmacion" style="text-align:left">
+      <div class="caps" style="color:var(--pomodoro);letter-spacing:2.6px">ANTES DE ENVIAR</div>
+      <h2 style="text-align:left;margin-top:8px">¿Algo de tomar?</h2>
+      <div class="nota-pie" style="margin:10px 0 16px">Tu orden aún no lleva bebidas. Agrega una con el botón <b style="color:var(--pomodoro)">+</b> o envíala así.</div>
+      ${sugCardsHTML(bebidas)}
+      <div class="acciones-orden" style="padding:20px 0 0">
+        <button class="btn-primario" onclick="cerrarSheets();enviarOrden()">Enviar a cocina</button>
+        <button class="btn-fantasma" onclick="sinBebidasOk=true;cerrarSheets();enviarOrden()">Enviar sin bebidas</button>
+      </div>
+    </div>`;
+  $('#velo').classList.add('abierto');
+  $('#hojaConf').classList.add('abierta');
+  document.querySelectorAll('#hojaConf .sug-cards').forEach(arrastrable);
+}
 async function enviarOrden(){
   if(!pedido.length) return;
+  const hayBebida = pedido.some(i => { const p = PLATILLOS.find(x => x.id === i.id); return p && p.cat === 'bebidas'; });
+  if(!hayBebida && !sinBebidasOk){ mostrarSugerenciaBebidas(); return; }
+  sinBebidasOk = false;
   const items = pedido.map(i => { const p = PLATILLOS.find(x => x.id === i.id); return { id:i.id, qty:i.qty, notas:i.notas, nombre:p.nombre, precio:p.precio }; });
   const total = totalPedido();
   let fila;
