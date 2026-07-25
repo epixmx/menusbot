@@ -69,6 +69,27 @@
   .btn-mesero{border:1px solid rgba(36,31,24,.35);background:transparent;color:var(--ink);font-family:var(--grot);font-size:10.5px;font-weight:700;letter-spacing:1px;padding:9px 13px;border-radius:2px;cursor:pointer}
   .btn-mesero:hover{background:var(--pomodoro);border-color:var(--pomodoro);color:var(--papel)}
   .col-vacia{text-align:center;color:var(--humo2);font-size:11px;letter-spacing:1.4px;text-transform:uppercase;padding:34px 10px}
+  /* entrega por partidas */
+  .p-btn{margin-left:auto;border:1px solid rgba(36,31,24,.35);background:transparent;color:var(--ink);font-family:var(--grot);font-size:8.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:6px 10px;border-radius:2px;cursor:pointer;flex-shrink:0;align-self:center}
+  .p-btn:hover{background:var(--pomodoro);border-color:var(--pomodoro);color:var(--papel)}
+  .p-ok{margin-left:auto;color:#3E7A39;font-family:var(--grot);font-size:9.5px;font-weight:700;letter-spacing:.8px;white-space:nowrap;flex-shrink:0;align-self:center;text-transform:uppercase}
+  /* mesas abiertas (seguridad) */
+  .mesas-abiertas{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:1px solid var(--linea);border-radius:3px;background:var(--esp2);padding:12px 16px;margin-bottom:16px}
+  .mesas-abiertas .caps{color:var(--humo);margin-right:6px}
+  .chip-mesa{width:38px;height:38px;border:1px solid var(--linea2);border-radius:2px;background:transparent;color:var(--humo2);font-family:var(--grot);font-weight:700;font-size:12px;cursor:pointer;transition:.15s}
+  .chip-mesa:hover{border-color:var(--basilico);color:var(--basilico)}
+  .chip-mesa.abierta{background:var(--basilico);border-color:var(--basilico);color:var(--esp)}
+  .mesas-abiertas .hint{font-size:8.5px;letter-spacing:1.6px;color:var(--humo2);text-transform:uppercase;font-weight:700;margin-left:auto}
+  /* órdenes por confirmar (mesa sin abrir) */
+  .por-confirmar{border:1px solid rgba(201,162,39,.6);border-left:3px solid var(--oro);border-radius:3px;background:rgba(201,162,39,.08);padding:14px 16px;margin-bottom:16px;animation:llega .3s}
+  .pc-fila{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0;border-bottom:1px dotted var(--linea)}
+  .pc-fila:last-child{border-bottom:none}
+  .pc-fila .pc-folio{font-family:var(--grot);font-weight:700;font-size:12px;color:var(--oro);letter-spacing:1px}
+  .pc-fila .pc-mesa{font-family:var(--serif);font-style:italic;font-size:15px}
+  .pc-fila .pc-items{flex:1;min-width:200px;font-size:12px;color:var(--crema)}
+  .pc-fila .pc-total{font-family:var(--grot);font-weight:700;font-size:13px}
+  .chip-mesero{display:inline-flex;align-items:center;gap:12px;border:1px solid var(--linea2);border-radius:2px;background:var(--esp2);padding:9px 14px;margin-bottom:16px}
+  .chip-mesero b{font-family:var(--serif);font-style:italic;font-weight:500;font-size:16px;color:var(--oro)}
   .entregas-hoy{margin-top:20px;border:1px solid var(--linea);border-radius:3px;padding:14px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
   .entregas-hoy .caps{color:var(--humo)}
   .entregas-hoy .lista{font-size:12px;color:var(--crema);font-family:var(--serif)}
@@ -207,6 +228,9 @@
   <div class="vista activa" id="v-comandas">
     <div class="vista-titulo"><h1>Comandas en vivo</h1><span class="caps" id="resumenHoy"></span></div>
     <div id="llamadasZona"></div>
+    <div id="porConfirmarZona"></div>
+    <div id="mesasAbiertasZona"></div>
+    <div id="chipMeseroZona"></div>
     <div class="tablero">
       <div class="columna">
         <div class="col-cab"><span class="caps">01 · Recibidas</span><span class="cuenta-col" id="n0">0</span></div>
@@ -217,7 +241,7 @@
         <div class="col-cuerpo" id="col1"></div>
       </div>
       <div class="columna">
-        <div class="col-cab"><span class="caps">03 · En camino — confirmar entrega</span><span class="cuenta-col" id="n2">0</span></div>
+        <div class="col-cab"><span class="caps">03 · En servicio — entrega por partidas</span><span class="cuenta-col" id="n2">0</span></div>
         <div class="col-cuerpo" id="col2"></div>
       </div>
     </div>
@@ -238,7 +262,7 @@
         <option value="todas">Todos los estados</option>
         <option value="0">Recibidas</option>
         <option value="1">En preparación</option>
-        <option value="2">En camino</option>
+        <option value="2">En servicio</option>
         <option value="3">Entregadas</option>
       </select>
       <button class="btn-sec" onclick="exportarCSV()">Exportar CSV (Excel)</button>
@@ -262,7 +286,7 @@
           <option value="7">Últimos 7 días</option>
           <option value="30">Últimos 30 días</option>
         </select>
-        <select class="filtro" id="sucFiltro" style="display:none"><option value="todas">Todas las sucursales</option></select>
+        <select class="filtro" id="sucFiltro" style="display:none" onchange="render()"><option value="todas">Todas las sucursales</option></select>
         <button class="btn-sec" onclick="imprimirCorte()">Imprimir corte</button>
         <button class="btn-sec" onclick="exportarCSV()">Exportar CSV</button>
       </div>
@@ -409,11 +433,13 @@ async function api(ruta, opc = {}){
   return tx ? JSON.parse(tx) : null;
 }
 let cfgCache = { config:{ tema:'editoriale', meseros:['Marco','Lucía','Giovanni'], pin:'1987', mesas:12 }, precios:{}, ocultos:[], platillos:[], fotos:{}, adminVisto:0 };
-let ordenesCache = [], llamadasCache = [];
+let ordenesCache = [], llamadasCache = [], mesasAbiertasCache = [];
 let enLinea = false;
+const sucursalActivaPanel = ''; // sin selector de sucursal en el panel (demo)
 
 function dbLeer(){
-  return { ...cfgCache, config: cfgCache.config, ordenes: ordenesCache, llamadas: llamadasCache };
+  // Las órdenes rechazadas quedan fuera de tablero, KPIs y reportes
+  return { ...cfgCache, config: cfgCache.config, ordenes: ordenesCache.filter(o => o.verificacion !== 'rechazada'), llamadas: llamadasCache };
 }
 async function cargar(){
   try{
@@ -424,9 +450,12 @@ async function cargar(){
       dbId: f.id, folio: iniciales(marcaDe().nombre) + '-' + (1000 + f.id), mesa: f.mesa, items: f.items || [], total: +f.total,
       estado: f.estado, creada: Date.parse(f.creada), sucursal: f.sucursal || '', cerrada: !!f.cerrada,
       entregada_at: f.entregada_at ? Date.parse(f.entregada_at) : null, entregada_por: f.entregada_por,
+      verificacion: f.verificacion || 'ok', cliente_id: f.cliente_id != null ? f.cliente_id : null,
     }));
     const lls = await api(`menusbot_llamadas?restaurante_id=eq.${RID}&atendida=eq.false&order=ts.desc&limit=20&select=*`);
     llamadasCache = (lls || []).map(l => ({ dbId: l.id, mesa: l.mesa, ts: Date.parse(l.ts), motivo: l.motivo || '', sucursal: l.sucursal || '', atendida: false }));
+    const ma = await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&select=mesa,sucursal`);
+    mesasAbiertasCache = (ma || []).map(x => ({ mesa: x.mesa, sucursal: x.sucursal || '' }));
     enLinea = true;
   }catch(e){ enLinea = false; }
   const chip = document.getElementById('chipVivo');
@@ -469,7 +498,7 @@ function llenarFormMarca(forzar){
   const zona = document.getElementById('marcaZona');
   if(!zona || !document.getElementById('mNombre')) return;
   const m = marcaDe();
-  const hash = JSON.stringify(m);
+  const hash = JSON.stringify([m, (cfgCache.config && cfgCache.config.sucursales) || []]);
   if(!forzar && (hash === marcaFormHash || zona.contains(document.activeElement))) return;
   marcaFormHash = hash;
   $('#mPrefijo').value = m.prefijo; $('#mNombre').value = m.nombre; $('#mLema').value = m.lema;
@@ -587,7 +616,7 @@ const TEMAS = {
   giorno:{ nombre:'Giorno', fondo:'#F5EFE4', texto:'#2A241C', acento:'#C94A2F', papel:'#FFFFFF' },
   mare:{ nombre:'Mare', fondo:'#0D1B22', texto:'#EAF3F1', acento:'#43AEC5', papel:'#EEF5F2' },
 };
-const ESTADOS_TXT = ['Recibida','En preparación','En camino','Entregada'];
+const ESTADOS_TXT = ['Recibida','En preparación','En servicio','Entregada'];
 
 /* ---------- vistas ---------- */
 let vista = 'comandas';
@@ -626,19 +655,67 @@ async function entregar(folio, mesero){
   try{ await api(`menusbot_ordenes?id=eq.${o.dbId}`, { method:'PATCH', body: JSON.stringify({ estado: 3, entregada_por: mesero, entregada_at: new Date().toISOString() }) }); }catch(e){ toast('Sin conexión — reintenta'); }
   toast(`Comanda ${folio} entregada — confirmó ${mesero}`);
 }
+
+/* ---------- Entrega por partidas (tiempos de servicio) ---------- */
+let meseroActivo = null;          // se recuerda durante la sesión del panel
+let pidiendoMesero = null;        // { folio, idx } mientras se elige quién entrega
+function marcarItem(folio, idx){
+  if(!meseroActivo){ pidiendoMesero = { folio, idx }; render(); return; }
+  confirmarPartida(folio, idx, meseroActivo);
+}
+function elegirMeseroYMarcar(m){
+  meseroActivo = m;
+  const p = pidiendoMesero;
+  pidiendoMesero = null;
+  if(p) confirmarPartida(p.folio, p.idx, m); else render();
+}
+function cambiarMeseroActivo(){
+  meseroActivo = null; pidiendoMesero = null;
+  render();
+  toast('Al marcar la siguiente partida se preguntará quién la entrega');
+}
+async function confirmarPartida(folio, idx, mesero){
+  const o = ordenesCache.find(x => x.folio === folio);
+  if(!o || !o.items[idx] || o.items[idx].entregado) return;
+  const ahora = new Date().toISOString();
+  o.items[idx] = { ...o.items[idx], entregado: true, entregado_por: mesero, entregado_at: ahora };
+  const todos = o.items.every(i => i.entregado);
+  const cuerpo = { items: o.items };
+  if(todos){
+    cuerpo.estado = 3; cuerpo.entregada_por = mesero; cuerpo.entregada_at = ahora;
+    o.estado = 3; o.entregada_por = mesero; o.entregada_at = Date.now();
+  } else if(o.estado === 1){
+    cuerpo.estado = 2; // con la primera partida servida, la comanda pasa a "En servicio"
+    o.estado = 2;
+  }
+  render();
+  toast(todos ? `Comanda ${folio} entregada completa — confirmó ${mesero}` : `Partida entregada — ${mesero} · ${folio}`);
+  try{ await api(`menusbot_ordenes?id=eq.${o.dbId}`, { method:'PATCH', body: JSON.stringify(cuerpo) }); }
+  catch(e){ toast('Sin conexión — reintenta'); }
+}
 function tarjetaComanda(o, d){
   const transcurrido = Date.now() - o.creada;
   const tarde = transcurrido > 20*60000;
+  const conPartidas = o.estado === 1 || o.estado === 2;
   let acciones = '';
   if(o.estado === 0) acciones = `<div class="c-pie"><span class="c-total">${fmt(o.total)}</span><button class="btn-avanza" onclick="avanzar('${o.folio}')">Empezar preparación</button></div>`;
   if(o.estado === 1) acciones = `<div class="c-pie"><span class="c-total">${fmt(o.total)}</span><button class="btn-avanza" onclick="avanzar('${o.folio}')">Sale a la mesa</button></div>`;
-  if(o.estado === 2) acciones = `<div class="c-pie"><span class="c-total">${fmt(o.total)}</span></div>
-    <div class="quien"><span class="caps">¿Quién la entregó en la mesa?</span>
-    <div class="meseros">${(d.config.meseros||[]).map(m => `<button class="btn-mesero" onclick="entregar('${o.folio}','${m}')">${m}</button>`).join('')}</div></div>`;
+  if(o.estado === 2) acciones = `<div class="c-pie"><span class="c-total">${fmt(o.total)}</span></div>`;
+  if(conPartidas && pidiendoMesero && pidiendoMesero.folio === o.folio){
+    acciones += `<div class="quien"><span class="caps">¿Quién entrega esta partida?</span>
+    <div class="meseros">${(d.config.meseros||[]).map(m => `<button class="btn-mesero" onclick="elegirMeseroYMarcar('${m.replace(/'/g,"\\'")}')">${m}</button>`).join('')}
+    <button class="btn-mesero" style="opacity:.55" onclick="pidiendoMesero=null;render()">Cancelar</button></div></div>`;
+  }
+  const items = o.items.map((i, ix) => {
+    const marca = !conPartidas ? '' : (i.entregado
+      ? `<span class="p-ok">✓ ${i.entregado_por || 'Entregado'}</span>`
+      : `<button class="p-btn" onclick="marcarItem('${o.folio}',${ix})">Entregar</button>`);
+    return `<div class="c-item"><b>${i.qty}×</b><span>${i.nombre}${i.notas?`<small>— ${i.notas}</small>`:''}</span>${marca}</div>`;
+  }).join('');
   return `<div class="comanda">
     <div class="c-top"><span class="c-folio">${o.folio}</span><span class="c-mesa">Mesa ${String(o.mesa).padStart(2,'0')}${o.sucursal ? ' · ' + o.sucursal : ''}</span>
       <span class="c-tiempo ${tarde?'tarde':''}">${hora(o.creada)} · ${mm(transcurrido)}</span></div>
-    <div class="c-items">${o.items.map(i => `<div class="c-item"><b>${i.qty}×</b><span>${i.nombre}${i.notas?`<small>— ${i.notas}</small>`:''}</span></div>`).join('')}</div>
+    <div class="c-items">${items}</div>
     ${acciones}
   </div>`;
 }
@@ -654,17 +731,42 @@ function render(){
     $('#llamadasZona').innerHTML = llamadas.map(l => {
       const pendiente = d.ordenes.filter(o => o.mesa === l.mesa && !o.cerrada).reduce((sum,o) => sum + (+o.total||0), 0);
       const esCuenta = l.motivo === 'cuenta';
+      const esTiempo = l.motivo === 'tiempo';
       return `
       <div class="llamada">
-        <span class="l-txt">La mesa ${String(l.mesa).padStart(2,'0')}${l.sucursal ? ' · ' + l.sucursal : ''} ${esCuenta ? `<b style="color:var(--pomodoro)">pide la cuenta</b> — <b>${fmt(pendiente)}</b> por cobrar` : 'llama al mesero'}</span>
+        <span class="l-txt">La mesa ${String(l.mesa).padStart(2,'0')}${l.sucursal ? ' · ' + l.sucursal : ''} ${esCuenta ? `<b style="color:var(--pomodoro)">pide la cuenta</b> — <b>${fmt(pendiente)}</b> por cobrar` : esTiempo ? `<b style="color:var(--oro)">pide su siguiente tiempo</b>` : 'llama al mesero'}</span>
         <span class="l-hace">hace ${mm(Date.now() - l.ts)}</span>
         ${esCuenta
           ? `<button class="btn-avanza" style="margin-left:auto" onclick="cobrarMesa(${l.mesa}, ${l.ts})">Cobrada — cerrar mesa</button>`
           : `<button class="btn-sec" onclick="atenderLlamada(${l.ts})">Atendida</button>`}
       </div>`;
     }).join('');
+    $('#chipMeseroZona').innerHTML = meseroActivo ? `
+      <div class="chip-mesero"><span class="caps" style="color:var(--humo)">Mesero activo</span><b>${meseroActivo}</b>
+        <button class="btn-sec" style="padding:7px 11px;font-size:8.5px" onclick="cambiarMeseroActivo()">Cambiar</button></div>` : '';
+    // Órdenes por confirmar: llegaron de una mesa que no está abierta
+    const porConf = d.ordenes.filter(o => o.verificacion === 'pendiente' && !o.cerrada);
+    $('#porConfirmarZona').innerHTML = porConf.length ? `<div class="por-confirmar">
+      <div class="caps" style="color:var(--oro)">Por confirmar — mesa sin abrir</div>
+      ${porConf.map(o => `<div class="pc-fila">
+        <span class="pc-folio">${o.folio}</span>
+        <span class="pc-mesa">Mesa ${String(o.mesa).padStart(2,'0')}${o.sucursal ? ' · ' + o.sucursal : ''}</span>
+        <span class="pc-items">${o.items.map(i => `${i.qty}× ${i.nombre}`).join(' · ')}</span>
+        <span class="pc-total">${fmt(o.total)}</span>
+        <button class="btn-avanza" onclick="aceptarOrden(${o.dbId})">Aceptar</button>
+        <button class="btn-sec rojo" onclick="rechazarOrden(${o.dbId})">Rechazar</button>
+      </div>`).join('')}
+    </div>` : '';
+    // Chips de mesas abiertas (seguridad: solo mesas abiertas ordenan directo)
+    const nMesas = (d.config && d.config.mesas) || 12;
+    let chipsMesas = '';
+    for(let i = 1; i <= nMesas; i++){
+      const ab = mesasAbiertasCache.some(x => x.mesa === i && (x.sucursal || '') === sucursalActivaPanel);
+      chipsMesas += `<button class="chip-mesa ${ab ? 'abierta' : ''}" onclick="alternarMesaAbierta(${i})" title="${ab ? 'Mesa abierta — clic para cerrarla' : 'Mesa cerrada — clic para abrirla'}">${i}</button>`;
+    }
+    $('#mesasAbiertasZona').innerHTML = `<div class="mesas-abiertas"><span class="caps">Mesas abiertas</span>${chipsMesas}<span class="hint">Verde = con comensales · sus órdenes entran directo</span></div>`;
     for(const e of [0,1,2]){
-      const del = d.ordenes.filter(o => o.estado === e).sort((a,b) => a.creada - b.creada);
+      const del = d.ordenes.filter(o => o.estado === e && o.verificacion !== 'pendiente').sort((a,b) => a.creada - b.creada);
       $('#n'+e).textContent = del.length;
       $('#col'+e).innerHTML = del.length ? del.map(o => tarjetaComanda(o,d)).join('') : '<div class="col-vacia">Sin comandas</div>';
     }
@@ -912,16 +1014,78 @@ function quitarMesero(n){
   dbEscribir(d => { d.config.meseros = d.config.meseros.filter(x => x !== n); });
 }
 
+/* ---------- Mesas abiertas (seguridad) ---------- */
+async function alternarMesaAbierta(n){
+  const suc = sucursalActivaPanel;
+  const abierta = mesasAbiertasCache.some(x => x.mesa === n && (x.sucursal || '') === suc);
+  if(abierta){
+    mesasAbiertasCache = mesasAbiertasCache.filter(x => !(x.mesa === n && (x.sucursal || '') === suc));
+    render();
+    try{
+      await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${n}&sucursal=eq.${encodeURIComponent(suc)}`, { method:'DELETE' });
+      toast(`Mesa ${String(n).padStart(2,'0')} cerrada — sus órdenes pedirán confirmación`);
+    }catch(e){ toast('Sin conexión — inténtalo de nuevo'); }
+  } else {
+    mesasAbiertasCache.push({ mesa: n, sucursal: suc });
+    render();
+    try{
+      await api(`menusbot_mesas_abiertas?on_conflict=restaurante_id,sucursal,mesa`, {
+        method:'POST', headers:{ 'Prefer':'resolution=merge-duplicates' },
+        body: JSON.stringify({ restaurante_id: RID, sucursal: suc, mesa: n }),
+      });
+      toast(`Mesa ${String(n).padStart(2,'0')} abierta — sus órdenes entran directo a cocina`);
+    }catch(e){ toast('Sin conexión — inténtalo de nuevo'); }
+  }
+}
+
+/* ---------- Órdenes por confirmar ---------- */
+async function aceptarOrden(dbId){
+  const o = ordenesCache.find(x => x.dbId === dbId);
+  if(o) o.verificacion = 'ok';
+  render();
+  try{
+    await api(`menusbot_ordenes?id=eq.${dbId}`, { method:'PATCH', body: JSON.stringify({ verificacion: 'ok' }) });
+    toast(`Comanda ${o ? o.folio : ''} aceptada — pasa a Recibidas`);
+  }catch(e){ toast('Sin conexión — reintenta'); }
+}
+async function rechazarOrden(dbId){
+  const o = ordenesCache.find(x => x.dbId === dbId);
+  if(o){ o.verificacion = 'rechazada'; o.estado = 3; o.cerrada = true; }
+  render();
+  try{
+    await api(`menusbot_ordenes?id=eq.${dbId}`, { method:'PATCH', body: JSON.stringify({ verificacion: 'rechazada', estado: 3, cerrada: true }) });
+    toast(`Comanda ${o ? o.folio : ''} rechazada — no cuenta en reportes`);
+  }catch(e){ toast('Sin conexión — reintenta'); }
+}
+
 /* ---------- Llamadas de mesa ---------- */
 async function cobrarMesa(mesaN, ts){
   const l = llamadasCache.find(x => x.ts === ts);
   llamadasCache = llamadasCache.filter(x => x !== l);
-  ordenesCache.forEach(o => { if(o.mesa === mesaN) o.cerrada = true; });
+  const sucM = (l && l.sucursal) || '';
+  // Consumo por cliente registrado (antes de marcar cerradas): 1 punto por cada $10
+  const abiertasMesa = ordenesCache.filter(o => o.mesa === mesaN && (o.sucursal || '') === sucM && !o.cerrada && o.verificacion !== 'rechazada');
+  const porCliente = {};
+  for(const o of abiertasMesa){
+    if(o.cliente_id != null) porCliente[o.cliente_id] = (porCliente[o.cliente_id] || 0) + (+o.total || 0);
+  }
+  ordenesCache.forEach(o => { if(o.mesa === mesaN && (o.sucursal || '') === sucM) o.cerrada = true; });
+  mesasAbiertasCache = mesasAbiertasCache.filter(x => !(x.mesa === mesaN && (x.sucursal || '') === sucM));
   render();
   try{
-    await api(`menusbot_ordenes?restaurante_id=eq.${RID}&mesa=eq.${mesaN}&cerrada=eq.false`, { method:'PATCH', body: JSON.stringify({ cerrada: true }) });
+    let puntosDados = 0;
+    for(const [cid, suma] of Object.entries(porCliente)){
+      const pts = Math.floor(suma / 10);
+      if(!pts) continue;
+      const cf = await api(`menusbot_clientes?id=eq.${cid}&select=puntos`);
+      const actuales = (cf && cf[0] && +cf[0].puntos) || 0;
+      await api(`menusbot_clientes?id=eq.${cid}`, { method:'PATCH', body: JSON.stringify({ puntos: actuales + pts }) });
+      puntosDados += pts;
+    }
+    await api(`menusbot_ordenes?restaurante_id=eq.${RID}&mesa=eq.${mesaN}&sucursal=eq.${encodeURIComponent(sucM)}&cerrada=eq.false`, { method:'PATCH', body: JSON.stringify({ cerrada: true }) });
+    await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${mesaN}&sucursal=eq.${encodeURIComponent(sucM)}`, { method:'DELETE' });
     if(l && l.dbId) await api(`menusbot_llamadas?id=eq.${l.dbId}`, { method:'PATCH', body: JSON.stringify({ atendida: true }) });
-    toast(`Mesa ${String(mesaN).padStart(2,'0')} cobrada y cerrada — el comensal ya ve su cuenta pagada`);
+    toast(`Mesa ${String(mesaN).padStart(2,'0')} cobrada y cerrada${puntosDados ? ` — ${puntosDados} punto(s) abonados al cliente` : ''} — el comensal ya ve su cuenta pagada`);
   }catch(e){ toast('Sin conexión — inténtalo de nuevo'); }
 }
 async function atenderLlamada(ts){

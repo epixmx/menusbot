@@ -187,6 +187,11 @@
   .ticket .t-item .t-nom{font-family:var(--serif);font-size:14.5px}
   .ticket .t-item .t-nom small{display:block;font-family:var(--grot);font-size:9.5px;color:#8A7D69;letter-spacing:.6px;margin-top:2px}
   .ticket .t-item .leader{border-color:rgba(36,31,24,.3)}
+  .ticket .t-item .part{display:block;font-family:var(--grot);font-size:8.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-top:3px}
+  .ticket .t-item .part.ok{color:#3E7A39}
+  .ticket .t-item .part.ok em{font-style:normal;font-weight:600;color:#6E6252;letter-spacing:.6px}
+  .ticket .t-item .part.pend{color:#A79A85}
+  .ticket .t-item .part.pend i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#C4B7A0;margin-right:5px;vertical-align:1px}
   .ticket .t-item .t-precio{font-family:var(--grot);font-weight:700;font-size:12.5px}
   .ticket .t-stepper{display:flex;align-items:center;gap:0;border:1px solid rgba(36,31,24,.3);border-radius:2px;margin-left:6px}
   .ticket .t-stepper button{width:26px;height:26px;border:none;background:transparent;color:var(--ink);font-size:14px;cursor:pointer;font-family:var(--grot)}
@@ -329,6 +334,33 @@
   .chip-estado i{width:7px;height:7px;border-radius:50%;background:var(--ce)}
   .mini-tag.detalle{color:var(--pomodoro);border:1px solid rgba(228,89,59,.5);font-size:9.5px;padding:4px 8px;border-radius:2px}
   .tag-ver{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(18,15,12,.78);color:#F5EDDE;font-family:var(--grot);font-size:9.5px;font-weight:700;letter-spacing:1.6px;padding:7px 11px;border-radius:2px;backdrop-filter:blur(4px);white-space:nowrap}
+
+  /* ---------- Responsive: tablet (≥700px) y escritorio (≥1100px) ---------- */
+  @media(min-width:700px){
+    .telefono{max-width:720px}
+    .nav{max-width:720px}
+    .barra-orden{max-width:692px}
+    .toast{max-width:480px}
+    /* Lista de platillos en 2 columnas; encabezados de sección a todo lo ancho */
+    #lista{display:grid;grid-template-columns:1fr 1fr;column-gap:40px;align-items:stretch}
+    #lista .seccion-cab,#lista .vacio{grid-column:1/-1}
+    /* Ficha de platillo: panel lateral derecho en lugar de hoja inferior */
+    #hoja{left:auto;right:0;top:0;bottom:auto;height:100vh;max-height:100vh;width:480px;max-width:480px;transform:translateX(105%);border-top:none;border-left:1px solid var(--linea2);box-shadow:-24px 0 60px rgba(0,0,0,.55)}
+    #hoja.abierta{transform:translateX(0)}
+    /* Vistas Orden y Cuenta: ticket y bloques limitados y centrados */
+    #vistaOrden .ticket,#vistaCuenta .ticket{max-width:560px;margin-left:auto;margin-right:auto}
+    #vistaOrden .vista-head,#vistaCuenta .vista-head,
+    #vistaOrden .acciones-orden,#vistaCuenta .acciones-orden,
+    #vistaOrden .nota-pie,#vistaCuenta .nota-pie,
+    #vistaOrden .bloque,#vistaCuenta .banner-estado{max-width:600px;margin-left:auto;margin-right:auto}
+  }
+  @media(min-width:1100px){
+    .telefono{max-width:1040px}
+    .nav{max-width:1040px}
+    .barra-orden{max-width:1012px}
+    /* 3 columnas en escritorio */
+    #lista{grid-template-columns:repeat(3,1fr)}
+  }
 </style>
 </head>
 <body>
@@ -454,11 +486,13 @@
     <div class="acciones-orden" style="padding:16px 0 0">
       <button class="btn-primario" onclick="cerrarSheets();llamarMesero()">Llamar al mesero a mi mesa</button>
       <button class="btn-fantasma" onclick="cerrarSheets();pedirCuenta()">Pedir la cuenta para pagar</button>
+      <button class="btn-fantasma" onclick="abrirHojaCliente()">Mi cuenta de puntos</button>
       <button class="btn-fantasma" onclick="cerrarSheets();mostrarGuia(true)">¿Cómo funciona esta carta?</button>
       <button class="btn-fantasma" onclick="cerrarSheets();cambiarMesa()">Cambiar de mesa</button>
     </div>
   </div>
 </div>
+<div class="hoja" id="hojaCliente"></div>
 
 <!-- Visor -->
 <div class="visor" id="visor" onclick="cerrarVisor()">
@@ -632,6 +666,10 @@ const $ = s => document.querySelector(s);
 const fmt = n => '$' + n;
 let filtroActivo = 'todo', catActiva = 'todas';
 let mesa = null, pedido = [], ordenes = [], vistaActual = 'menu';
+/* Cuenta de puntos (100% opcional) */
+let cliente = null;
+try{ cliente = JSON.parse(localStorage.getItem('mb_cliente') || 'null'); }catch(e){}
+let puntosOfrecido = false;
 
 /* ================================================================
    "NUBE" DEMO — capa de datos compartida entre el comensal y el
@@ -720,6 +758,9 @@ function aplicarMarca(){
 
 /* ---------- Sincronización con la nube ---------- */
 let hashCarta = '';
+let hashMesa = '';
+let mesaOtras = [];        // órdenes de esta mesa enviadas desde otros teléfonos/sesiones
+let totalMesaSrv = null;   // total real de la mesa según el servidor (= "por cobrar" del panel)
 let misIds = [];
 async function sincronizar(){
   try{
@@ -753,9 +794,31 @@ async function sincronizar(){
       if(vistaActual === 'orden') pintarVistaOrden();
     }
     if(misIds.length){
-      const filas = await api(`menusbot_ordenes?id=in.(${misIds.join(',')})&select=id,estado,entregada_por,entregada_at,cerrada`);
+      const filas = await api(`menusbot_ordenes?id=in.(${misIds.join(',')})&select=id,estado,entregada_por,entregada_at,cerrada,items,verificacion`);
       for(const o of ordenes){
         const rem = (filas || []).find(x => x.id === o.dbId);
+        if(!rem) continue;
+        // Verificación de mesa: el restaurante puede confirmar o rechazar la orden
+        const verRem = rem.verificacion || 'ok';
+        if(verRem === 'rechazada'){
+          ordenes = ordenes.filter(x => x !== o);
+          misIds = misIds.filter(id => id !== o.dbId);
+          toast(`Orden ${o.folio} no fue aceptada — un mesero te atiende en tu mesa`);
+          guardarSesion();
+          refrescarEstadoUI();
+          continue;
+        }
+        if((o.verificacion || 'ok') === 'pendiente' && verRem === 'ok'){
+          o.verificacion = 'ok';
+          toast(`Orden ${o.folio} — confirmada por el restaurante`);
+          guardarSesion();
+        }
+        // Entrega por partidas: el estado de cada platillo vive en el jsonb items
+        if(rem.items && JSON.stringify(rem.items) !== JSON.stringify(o.items)){
+          o.items = rem.items;
+          guardarSesion();
+          if(vistaActual === 'cuenta') pintarVistaCuenta();
+        }
         if(rem && rem.estado !== o.estado){
           o.estado = rem.estado;
           o.entregada_por = rem.entregada_por;
@@ -766,9 +829,35 @@ async function sincronizar(){
         }
       }
       // El restaurante cobró y cerró la mesa → visita terminada
-      if(filas && filas.length && filas.every(x => x.cerrada)){
+      const vivas = (filas || []).filter(x => (x.verificacion || 'ok') !== 'rechazada');
+      if(vivas.length && vivas.every(x => x.cerrada)){
         cerrarVisita();
       }
+    }
+    // Cuenta de la MESA: todas las órdenes no cobradas de esta mesa (de cualquier teléfono),
+    // para que el total del comensal sea el mismo que el "por cobrar" del panel.
+    if(mesa != null){
+      const om = await api(`menusbot_ordenes?restaurante_id=eq.${RID}&mesa=eq.${mesa}&sucursal=eq.${encodeURIComponent(SUC)}&cerrada=eq.false&verificacion=neq.rechazada&select=id,total,estado,creada&order=creada.asc`);
+      const otras = (om || []).filter(x => !misIds.includes(x.id));
+      const totalSrv = (om || []).reduce((s, x) => s + (+x.total || 0), 0);
+      const hM = JSON.stringify([otras.map(x => [x.id, x.estado]), totalSrv]);
+      if(hM !== hashMesa){
+        hashMesa = hM;
+        mesaOtras = otras;
+        totalMesaSrv = (om || []).length ? totalSrv : null;
+        if(vistaActual === 'cuenta') pintarVistaCuenta();
+      }
+    }
+    // Refrescar puntos del cliente mientras mira su cuenta
+    if(cliente && cliente.id != null && vistaActual === 'cuenta'){
+      try{
+        const cf = await api(`menusbot_clientes?id=eq.${cliente.id}&select=puntos`);
+        if(cf && cf[0] && +cf[0].puntos !== +(cliente.puntos || 0)){
+          cliente.puntos = +cf[0].puntos;
+          try{ localStorage.setItem('mb_cliente', JSON.stringify(cliente)); }catch(e){}
+          pintarVistaCuenta();
+        }
+      }catch(e){}
     }
   }catch(e){
     if(!sinConexion){ sinConexion = true; }
@@ -854,7 +943,7 @@ function mostrarVista(v){
   window.scrollTo({top:0});
 }
 
-const ESTADOS_TXT = ['Recibida en cocina','En preparación','En camino a tu mesa','Entregada en tu mesa'];
+const ESTADOS_TXT = ['Recibida en cocina','En preparación','En servicio en tu mesa','Entregada en tu mesa'];
 const ESTADOS_COLOR = ['#C9A227','#D96C2F','#3E8ED0','#5FA05A'];
 function pintarIndicadores(){
   guardarSesion();
@@ -875,7 +964,7 @@ function pintarIndicadores(){
       // Modo estatus: órdenes en curso y carrito vacío
       const act = ordenes.filter(o => o.estado < 3);
       barra.classList.add('modo-estado');
-      const cortos = ['recibida','preparando','en camino','entregada'];
+      const cortos = ['recibida','preparando','en servicio','entregada'];
       if(cuentaPedida){
         $('#boNum').innerHTML = '<i></i>';
         $('#boTxt').innerHTML = '<b>Cuenta solicitada</b> — mesero en camino';
@@ -1107,6 +1196,7 @@ function cerrarSheets(){
   $('#hoja').classList.remove('abierta');
   $('#hojaConf').classList.remove('abierta');
   $('#hojaAyuda').classList.remove('abierta');
+  $('#hojaCliente').classList.remove('abierta');
 }
 function abrirAyuda(){
   cerrarSheets();
@@ -1198,7 +1288,7 @@ function progresoHTML(o){
     <div class="p-etiq">
       <span class="${o.estado>=0?'on':''}">Recibida</span>
       <span class="${o.estado>=1?'on':''}">Preparando</span>
-      <span class="${o.estado>=2?'on':''}">En camino</span>
+      <span class="${o.estado>=2?'on':''}">En servicio</span>
       <span class="${o.estado>=3?'on':''}">Entregada</span>
     </div></div>
     ${o.estado===3 && o.entregada_por ? `<div style="margin-top:10px;font-family:var(--grot);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:#8A7D69">Confirmada por ${o.entregada_por} · ${o.entregada_at ? new Date(o.entregada_at).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : ''}</div>` : ''}`;
@@ -1206,15 +1296,17 @@ function progresoHTML(o){
 function pintarVistaCuenta(){
   const v = $('#vistaCuenta');
   let html = `<div class="vista-head"><div class="caps">Mesa ${mesa ? String(mesa).padStart(2,'0') : '—'}${SUC ? ' · ' + SUC : ''} · seguimiento en vivo</div><h2>Tu cuenta</h2>
+    ${cliente ? `<div style="margin-top:10px;font-family:var(--grot);font-size:9.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--oro);cursor:pointer" onclick="abrirHojaCliente()">★ ${cliente.nombre || cliente.telefono} · ${cliente.puntos || 0} puntos</div>` : ''}
     <div class="nota-pie" style="margin-top:10px">Aquí vive la cuenta de tu mesa: cada orden que envíes se suma y su estado se actualiza solo. <b style="color:var(--crema)">Todo se paga junto al final.</b></div></div>`;
   const activas = ordenes.filter(o => o.estado < 3);
+  const totalMesa = totalMesaSrv != null ? totalMesaSrv : ordenes.reduce((s,o) => s + o.total, 0) + mesaOtras.reduce((s,x) => s + (+x.total || 0), 0);
   if(cuentaPedida){
-    html += `<div class="banner-estado" style="--ce:#5FA05A"><span class="be-dot"></span><div><b>CUENTA SOLICITADA</b><small>El mesero viene a tu mesa a cobrar · Total ${fmt(ordenes.reduce((s,o)=>s+o.total,0))} ${RESTAURANTE.moneda}</small></div></div>`;
+    html += `<div class="banner-estado" style="--ce:#5FA05A"><span class="be-dot"></span><div><b>CUENTA SOLICITADA</b><small>El mesero viene a tu mesa a cobrar · Total ${fmt(totalMesa)} ${RESTAURANTE.moneda}</small></div></div>`;
   } else if(activas.length){
     const u = activas[activas.length - 1];
     html += `<div class="banner-estado" style="--ce:${ESTADOS_COLOR[u.estado]}"><span class="be-dot"></span><div><b>${ESTADOS_TXT[u.estado].toUpperCase()}</b><small>Orden Nº ${u.num}${activas.length > 1 ? ` · ${activas.length} órdenes en curso` : ''}</small></div></div>`;
   }
-  if(!ordenes.length){
+  if(!ordenes.length && !mesaOtras.length){
     html += `<div class="vacio">Aún no has enviado órdenes a cocina.<br><br>Cuando envíes una, aquí verás su avance<br>en todo momento.</div>
       <div class="acciones-orden"><button class="btn-fantasma" onclick="mostrarVista('menu')">Volver a la carta</button></div>`;
     v.innerHTML = html; return;
@@ -1224,19 +1316,37 @@ function pintarVistaCuenta(){
       <div class="t-cab"><div class="t-marca">Nº ${o.num}</div><div class="chip-estado" style="--ce:${ESTADOS_COLOR[o.estado]}"><i></i>${ESTADOS_TXT[o.estado]}</div></div>
       ${o.items.map(i => {
         const d = PLATILLOS.find(x => x.id === i.id);
-        return `<div class="t-item"><span class="t-qty">${i.qty}×</span><span class="t-nom">${d.nombre}</span><span class="leader"></span><span class="t-precio">${fmt(d.precio*i.qty)}</span></div>`;
+        const nombre = d ? d.nombre : (i.nombre || '');
+        const precio = d ? d.precio : (+i.precio || 0);
+        const servido = i.entregado || o.estado === 3;
+        const quien = i.entregado_por || o.entregada_por || '';
+        const part = servido
+          ? `<small class="part ok">✓ Entregado${quien ? ` <em>· ${quien}</em>` : ''}</small>`
+          : `<small class="part pend"><i></i>Pendiente</small>`;
+        return `<div class="t-item"><span class="t-qty">${i.qty}×</span><span class="t-nom">${nombre}${part}</span><span class="leader"></span><span class="t-precio">${fmt(precio*i.qty)}</span></div>`;
       }).join('')}
-      <div class="t-tot"><span class="caps">Subtotale</span><span class="leader"></span><b>${fmt(o.total)}</b></div>
+      <div class="t-tot"><span class="caps">Subtotal</span><span class="leader"></span><b>${fmt(o.total)}</b></div>
       ${progresoHTML(o)}
     </div></div>`;
   }
-  const granTotal = ordenes.reduce((s,o) => s + o.total, 0);
+  if(mesaOtras.length){
+    html += `<div class="bloque" style="padding:0 18px;margin:6px 0 14px"><div class="b-cab"><span class="caps">Otras órdenes de tu mesa</span><i></i></div>
+      ${mesaOtras.map(x => `<div class="t-item" style="padding:8px 0">
+        <span class="t-nom" style="font-family:var(--grot);font-size:11.5px;letter-spacing:.5px">Nº ${iniciales(MARCA.nombre)}-${1000 + x.id}</span>
+        <span class="chip-estado" style="--ce:${ESTADOS_COLOR[x.estado] || ESTADOS_COLOR[0]};margin-left:10px"><i></i>${ESTADOS_TXT[x.estado] || ''}</span>
+        <span class="leader"></span><span class="t-precio" style="font-family:var(--grot)">${fmt(+x.total || 0)}</span>
+      </div>`).join('')}
+      <div class="nota-pie" style="margin-top:8px">Pedidas desde otro teléfono en tu misma mesa — también entran en el total.</div>
+    </div>`;
+  }
   html += `<div class="ticket"><div class="t-int">
-      <div class="t-tot" style="padding-top:0"><span class="caps">Total de la mesa</span><span class="leader"></span><b>${fmt(granTotal)} ${RESTAURANTE.moneda}</b></div>
+      <div class="t-tot" style="padding-top:0"><span class="caps">Total de la mesa</span><span class="leader"></span><b>${fmt(totalMesa)} ${RESTAURANTE.moneda}</b></div>
       <div class="t-bar"></div>
-      <div class="t-folio">${ordenes.length} ORDEN(ES) · MESA ${String(mesa).padStart(2,'0')}</div>
+      <div class="t-folio">${ordenes.length + mesaOtras.length} ORDEN(ES) · MESA ${String(mesa).padStart(2,'0')}</div>
     </div></div>
     <div class="acciones-orden">
+      ${ordenes.some(o => o.estado < 3 && (o.items || []).some(i => i.entregado) && (o.items || []).some(i => !i.entregado))
+        ? `<button class="btn-primario" style="background:var(--oro)" onclick="pedirSiguienteTiempo()">Traer mi siguiente tiempo</button>` : ''}
       <button class="btn-fantasma" onclick="mostrarVista('menu')" style="border-color:var(--pomodoro);color:var(--pomodoro)">Ordenar algo más</button>
       <button class="btn-primario" onclick="pedirCuenta()">Pedir la cuenta para pagar</button>
       <button class="btn-fantasma" onclick="llamarMesero()">Llamar al mesero a mi mesa</button>
@@ -1270,11 +1380,17 @@ async function enviarOrden(){
   sinBebidasOk = false;
   const items = pedido.map(i => { const p = PLATILLOS.find(x => x.id === i.id); return { id:i.id, qty:i.qty, notas:i.notas, nombre:p.nombre, precio:p.precio }; });
   const total = totalPedido();
+  // Seguridad: ¿la mesa está abierta en el restaurante? Si no, la orden queda "por confirmar".
+  let verificacion = 'ok';
+  try{
+    const abiertas = await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${mesa ?? 0}&sucursal=eq.${encodeURIComponent(SUC)}&select=mesa`);
+    if(!abiertas || !abiertas.length) verificacion = 'pendiente';
+  }catch(e){ /* sin red: se trata como mesa abierta para no bloquear el demo local */ }
   let fila;
   try{
     const filas = await api('menusbot_ordenes', {
       method:'POST', headers:{ 'Prefer':'return=representation' },
-      body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, items, total, sucursal: SUC }),
+      body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, items, total, sucursal: SUC, verificacion, cliente_id: (cliente && cliente.id != null) ? cliente.id : null }),
     });
     fila = filas[0];
   }catch(e){
@@ -1282,7 +1398,7 @@ async function enviarOrden(){
     return;
   }
   const folioN = iniciales(MARCA.nombre) + '-' + (1000 + fila.id);
-  const o = { num: folioN, folio: folioN, dbId: fila.id, items: pedido.slice(), total, estado: 0, mesa: mesa ?? '–' };
+  const o = { num: folioN, folio: folioN, dbId: fila.id, items: pedido.slice(), total, estado: 0, mesa: mesa ?? '–', verificacion };
   misIds.push(fila.id);
   ordenes.push(o);
   pedido = [];
@@ -1307,12 +1423,14 @@ function refrescarEstadoUI(){
 function mostrarConfirmacion(o){
   clearTimeout(toastTimer);
   $('#toast').classList.remove('visible');
+  const pend = o.verificacion === 'pendiente';
   $('#hojaConf').innerHTML = `
     <div class="confirmacion">
-      <div class="conf-sello"><div class="interior"><b>RECIBIDO</b><span>en cocina</span></div></div>
+      <div class="conf-sello"><div class="interior">${pend ? '<b>ENVIADA</b><span>por confirmar</span>' : '<b>RECIBIDO</b><span>en cocina</span>'}</div></div>
       <h2>¡Orden enviada!</h2>
       <div class="folio">Nº <b>${o.num}</b> · Mesa ${String(o.mesa).padStart(2,'0')} · ${fmt(o.total)} ${RESTAURANTE.moneda}</div>
-      <div class="nota-pie" style="margin:22px 0 0;text-align:left">Sigue su avance en cualquier momento desde la pestaña <b style="color:var(--crema)">Cuenta</b> — recibida, preparando, en camino.<br><br>¿Se te antoja algo más después? Puedes ordenar las veces que quieras: todo se va sumando a tu cuenta y <b style="color:var(--crema)">se paga junto al final</b>.</div>
+      ${pend ? `<div class="nota-pie" style="margin:18px 0 0;text-align:left;border-left-color:var(--oro)">Tu orden llegó al restaurante — <b style="color:var(--crema)">un mesero la confirmará en un momento</b>. En cuanto la acepte, pasa directo a cocina.</div>` : ''}
+      <div class="nota-pie" style="margin:${pend ? '12px' : '22px'} 0 0;text-align:left">Sigue su avance en cualquier momento desde la pestaña <b style="color:var(--crema)">Cuenta</b> — recibida, preparando, en camino.<br><br>¿Se te antoja algo más después? Puedes ordenar las veces que quieras: todo se va sumando a tu cuenta y <b style="color:var(--crema)">se paga junto al final</b>.</div>
       <div class="acciones-orden" style="padding:22px 0 0">
         <button class="btn-primario" onclick="cerrarSheets();mostrarVista('cuenta')">Ver el estado de mi orden</button>
         <button class="btn-fantasma" onclick="cerrarSheets();mostrarVista('menu')">Ordenar algo más</button>
@@ -1330,6 +1448,13 @@ function llamarMesero(){
     .then(() => toast(`Listo — un mesero viene a tu mesa ${String(mesa).padStart(2,'0')}`))
     .catch(() => toast('Sin conexión — inténtalo de nuevo'));
 }
+function pedirSiguienteTiempo(){
+  if(Date.now() - ultimaLlamada < 30000){ toast('Ya avisamos en cocina — tu siguiente tiempo va en camino'); return; }
+  ultimaLlamada = Date.now();
+  api('menusbot_llamadas', { method:'POST', body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, motivo:'tiempo', sucursal: SUC }) })
+    .then(() => toast('Avisamos a cocina — tu siguiente tiempo sale a tu mesa'))
+    .catch(() => toast('Sin conexión — inténtalo de nuevo'));
+}
 function pedirCuenta(){
   if(Date.now() - ultimaLlamada < 30000){ toast('Ya avisamos — tu mesero está en camino'); return; }
   ultimaLlamada = Date.now();
@@ -1345,6 +1470,7 @@ function pedirCuenta(){
 }
 function cerrarVisita(){
   ordenes = []; misIds = []; pedido = []; cuentaPedida = false;
+  mesaOtras = []; totalMesaSrv = null; hashMesa = '';
   try{ localStorage.removeItem('mb_sesion_v1'); }catch(e){}
   pintarIndicadores();
   $('#hojaConf').innerHTML = `
@@ -1370,12 +1496,86 @@ function clickBarra(){
 
 /* ---------- Guía de bienvenida ---------- */
 function mostrarGuia(forzar){
-  if(!forzar && localStorage.getItem('mb_guia_v1')) return;
+  if(!forzar && localStorage.getItem('mb_guia_v1')){ ofrecerCuentaPuntos(); return; }
   $('#guia').classList.add('visible');
 }
 function cerrarGuia(){
   $('#guia').classList.remove('visible');
   try{ localStorage.setItem('mb_guia_v1','1'); }catch(e){}
+  ofrecerCuentaPuntos();
+}
+
+/* ---------- Cuenta de puntos (opcional, sin fricción) ---------- */
+function pintarHojaCliente(){
+  const h = $('#hojaCliente');
+  if(cliente){
+    h.innerHTML = `
+    <div class="confirmacion" style="text-align:left">
+      <div class="caps" style="color:var(--oro);letter-spacing:2.6px">TU CUENTA DE PUNTOS</div>
+      <h2 style="text-align:left;margin-top:8px">★ ${cliente.nombre || cliente.telefono}</h2>
+      <div class="folio" style="text-align:left">Tel. ${cliente.telefono} · <b>${cliente.puntos || 0} puntos</b></div>
+      <div class="nota-pie" style="margin:16px 0 0;text-align:left">Ganas <b style="color:var(--crema)">1 punto por cada $10</b> de consumo. Se abonan solos cuando el restaurante cobra tu mesa.</div>
+      <div class="acciones-orden" style="padding:20px 0 0">
+        <button class="btn-primario" onclick="cerrarSheets()">Seguir ordenando</button>
+        <button class="btn-fantasma" onclick="salirCliente()">Salir de mi cuenta</button>
+      </div>
+    </div>`;
+  } else {
+    h.innerHTML = `
+    <div class="confirmacion" style="text-align:left">
+      <div class="caps" style="color:var(--oro);letter-spacing:2.6px">PROGRAMA DE LEALTAD</div>
+      <h2 style="text-align:left;margin-top:8px">¿Quieres acumular puntos?</h2>
+      <div class="nota-pie" style="margin:10px 0 16px;text-align:left">Gana <b style="color:var(--crema)">1 punto por cada $10</b> de consumo. Solo tu teléfono — sin contraseñas ni correos.</div>
+      <input class="notas-inp" id="cliTel" type="tel" inputmode="tel" maxlength="10" placeholder="Teléfono a 10 dígitos">
+      <input class="notas-inp" id="cliNombre" placeholder="Tu nombre (opcional)" style="margin-top:10px">
+      <div class="acciones-orden" style="padding:18px 0 0">
+        <button class="btn-primario" onclick="registrarCliente()">Crear mi cuenta / Entrar</button>
+        <button class="btn-fantasma" onclick="continuarInvitado()">Continuar como invitado</button>
+      </div>
+    </div>`;
+  }
+}
+function abrirHojaCliente(){
+  pintarHojaCliente();
+  cerrarSheets();
+  $('#velo').classList.add('abierto');
+  $('#hojaCliente').classList.add('abierta');
+  history.pushState({ v: vistaActual, capa: 'cliente' }, '');
+}
+function ofrecerCuentaPuntos(){
+  if(puntosOfrecido || cliente) return;
+  try{ if(localStorage.getItem('mb_invitado') || localStorage.getItem('mb_puntos_visto')) return; }catch(e){}
+  puntosOfrecido = true;
+  try{ localStorage.setItem('mb_puntos_visto', '1'); }catch(e){}
+  abrirHojaCliente();
+}
+async function registrarCliente(){
+  const tel = ($('#cliTel').value || '').replace(/\D/g, '');
+  if(tel.length !== 10){ toast('Escribe tu teléfono a 10 dígitos'); return; }
+  const nombre = ($('#cliNombre').value || '').trim();
+  try{
+    const filas = await api('menusbot_clientes?on_conflict=restaurante_id,telefono', {
+      method:'POST', headers:{ 'Prefer':'resolution=merge-duplicates,return=representation' },
+      body: JSON.stringify({ restaurante_id: RID, telefono: tel, nombre }),
+    });
+    const f = (filas && filas[0]) || {};
+    cliente = { id: f.id, telefono: f.telefono || tel, nombre: (f.nombre != null && f.nombre !== '') ? f.nombre : nombre, puntos: +f.puntos || 0 };
+    try{ localStorage.setItem('mb_cliente', JSON.stringify(cliente)); localStorage.removeItem('mb_invitado'); }catch(e){}
+    cerrarSheets();
+    toast(`¡Listo${cliente.nombre ? ', ' + cliente.nombre : ''}! Tienes ${cliente.puntos} punto(s) acumulados`);
+    if(vistaActual === 'cuenta') pintarVistaCuenta();
+  }catch(e){ toast('Sin conexión — inténtalo de nuevo'); }
+}
+function continuarInvitado(){
+  try{ localStorage.setItem('mb_invitado', '1'); }catch(e){}
+  cerrarSheets();
+}
+function salirCliente(){
+  cliente = null;
+  try{ localStorage.removeItem('mb_cliente'); localStorage.setItem('mb_invitado', '1'); }catch(e){}
+  cerrarSheets();
+  toast('Saliste de tu cuenta de puntos');
+  if(vistaActual === 'cuenta') pintarVistaCuenta();
 }
 
 /* ---------- Arranque ---------- */
