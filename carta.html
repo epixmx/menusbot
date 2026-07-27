@@ -480,6 +480,7 @@
 <div class="velo" id="velo"></div>
 <div class="hoja" id="hoja"></div>
 <div class="hoja" id="hojaConf"></div>
+<div class="hoja" id="hojaSucursal"></div>
 <div class="hoja" id="hojaAyuda">
   <div class="confirmacion" style="text-align:left">
     <div class="vista-head" style="padding:0 0 6px"><div class="caps" style="color:var(--humo)">¿Necesitas algo?</div><h2 style="font-family:var(--serif);font-style:italic;font-weight:500;font-size:30px">Estamos para servirte</h2></div>
@@ -769,6 +770,7 @@ async function sincronizar(){
     sinConexion = false;
     aplicarTema((dbCache.config && dbCache.config.tema) || 'editoriale');
     aplicarMarca();
+    ofrecerSucursal();
     const h = JSON.stringify([dbCache.precios, dbCache.ocultos, dbCache.platillos || [], Object.keys(dbCache.fotos || {})]);
     if(h !== hashCarta){
       hashCarta = h;
@@ -866,7 +868,7 @@ async function sincronizar(){
 setInterval(sincronizar, 4000);
 
 /* ---------- Sesión persistente (sobrevive back/recarga del navegador) ---------- */
-const SUC = new URLSearchParams(location.search).get('suc') || '';
+let SUC = new URLSearchParams(location.search).get('suc') || '';
 function guardarSesion(){
   try{
     if(!pedido.length && !ordenes.length && !cuentaPedida){ localStorage.removeItem('mb_sesion_v1'); return; }
@@ -882,6 +884,7 @@ function restaurarSesion(mesaURL){
     ordenes = g.ordenes || [];
     misIds = g.misIds || [];
     cuentaPedida = !!g.cuentaPedida;
+    if(!SUC && g.suc){ SUC = g.suc; }
     if(mesaURL == null && g.mesa != null){ asignarMesa(g.mesa, true); }
     return true;
   }catch(e){ return false; }
@@ -1197,6 +1200,35 @@ function cerrarSheets(){
   $('#hojaConf').classList.remove('abierta');
   $('#hojaAyuda').classList.remove('abierta');
   $('#hojaCliente').classList.remove('abierta');
+  $('#hojaSucursal').classList.remove('abierta');
+}
+
+/* ---------- Selector de sucursal (cuando el QR no la trae) ---------- */
+let sucursalOfrecida = false;
+function ofrecerSucursal(){
+  if(SUC || sucursalOfrecida) return;
+  const sucs = ((dbCache.config && dbCache.config.sucursales) || []).filter(Boolean);
+  if(!sucs.length) return;
+  if(document.querySelector('.hoja.abierta') || $('#guia').classList.contains('visible')) return; // espera su turno
+  sucursalOfrecida = true;
+  $('#hojaSucursal').innerHTML = `
+    <div class="confirmacion" style="text-align:left">
+      <div class="caps" style="color:var(--pomodoro);letter-spacing:2.6px">¿EN QUÉ SUCURSAL ESTÁS?</div>
+      <div class="nota-pie" style="margin:10px 0 4px">Elige tu sucursal para que tu orden llegue a la cocina correcta.</div>
+      <div class="acciones-orden" style="padding:14px 0 0">
+        ${sucs.map(x => `<button class="btn-primario" onclick="elegirSucursal('${x.replace(/'/g, "\\'")}')">${x}</button>`).join('')}
+      </div>
+    </div>`;
+  $('#velo').classList.add('abierto');
+  $('#hojaSucursal').classList.add('abierta');
+}
+function elegirSucursal(x){
+  SUC = x;
+  marcaAplicada = '';
+  aplicarMarca();
+  guardarSesion();
+  cerrarSheets();
+  toast('Sucursal ' + x + ' — benvenuto');
 }
 function abrirAyuda(){
   cerrarSheets();
