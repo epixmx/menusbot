@@ -208,9 +208,9 @@
 
 <header>
   <div class="head-int">
-    <div style="display:flex;align-items:center;gap:12px">
-      <img id="logoHead" alt="" style="display:none;height:42px;width:auto;max-width:130px;object-fit:contain">
-      <div class="marca" id="marcaHead">Bella Vita<small>PANEL DEL RESTAURANTE · MENUSBOT</small></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-start;gap:3px">
+      <img id="logoHead" alt="" style="display:none;height:40px;width:auto;max-width:150px;object-fit:contain">
+      <div class="marca" id="marcaHead">Bella Vita<small>PANEL DEL RESTAURANTE</small></div>
     </div>
     <div class="vivo" id="chipVivo"><i></i> EN VIVO</div>
     <div class="tabs">
@@ -485,8 +485,10 @@ function aplicarMarcaPanel(){
   if(hash !== marcaPanelHash){
     marcaPanelHash = hash;
     document.title = `${m.nombre} · Panel del Restaurante — MenusBot`;
-    $('#marcaHead').innerHTML = `${m.nombre}<small>PANEL DEL RESTAURANTE · MENUSBOT</small>`;
-    $('#marcaCandado').innerHTML = `${m.nombre}<small>PANEL DEL RESTAURANTE</small>`;
+    // Logo O nombre — nunca los dos; la leyenda va debajo del que se muestre
+    const leyenda = '<small>PANEL DEL RESTAURANTE</small>';
+    $('#marcaHead').innerHTML = m.logo ? leyenda : `${m.nombre}${leyenda}`;
+    $('#marcaCandado').innerHTML = m.logo ? leyenda : `${m.nombre}${leyenda}`;
     ['logoHead','logoCandado'].forEach(id => {
       const el = document.getElementById(id);
       if(!el) return;
