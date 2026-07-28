@@ -277,9 +277,9 @@
   .btn-agregar b{font-size:14px;font-weight:700}
 
   /* ---------- Visor ---------- */
-  .visor{position:fixed;inset:0;z-index:400;background:rgba(8,6,5,.985);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:.3s}
+  .visor{position:fixed;inset:0;z-index:400;background:var(--esp);color:var(--crema);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:.3s}
   .visor.abierto{opacity:1;visibility:visible}
-  .visor .v-img{width:min(94vw,720px);max-height:70vh;overflow:hidden;border-radius:200px 200px 6px 6px;animation:v-in .4s cubic-bezier(.2,.85,.25,1)}
+  .visor .v-img{width:min(94vw,720px);max-height:70vh;overflow:hidden;border-radius:6px;box-shadow:0 24px 70px rgba(0,0,0,.25);animation:v-in .4s cubic-bezier(.2,.85,.25,1)}
   .visor .v-img img{width:100%;height:100%;object-fit:cover}
   .visor .v-img .svg-fb svg{width:100%;height:100%}
   @keyframes v-in{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}

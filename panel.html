@@ -13,6 +13,18 @@
     --linea:rgba(239,231,216,.14); --linea2:rgba(239,231,216,.28);
     --serif:'Fraunces',Georgia,serif; --grot:'Space Grotesk',system-ui,sans-serif;
   }
+  /* Tema claro (predeterminado). El oscuro es opcional desde el botón del encabezado. */
+  html.claro{
+    --esp:#F6F1E7; --esp2:#FFFFFF; --crema:#241F18; --humo:#6E6558; --humo2:#9C9081;
+    --basilico:#5F8A5B; --oro:#A8871D; --papel:#FBF7EE; --ink:#241F18;
+    --linea:rgba(36,31,24,.13); --linea2:rgba(36,31,24,.28);
+  }
+  html.claro header{background:rgba(246,241,231,.96)}
+  html.claro body::after{opacity:.03}
+  html.claro .comanda{box-shadow:0 10px 26px rgba(36,31,24,.12);border:1px solid rgba(36,31,24,.1)}
+  html.claro .toast{background:var(--ink);color:#FBF7EE;box-shadow:0 16px 44px rgba(36,31,24,.3)}
+  html.claro .chip-mesa.abierta,html.claro .pill-est.e3{color:#FBF7EE}
+  html.claro .switch.on i{background:#FBF7EE}
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:var(--grot);background:var(--esp);color:var(--crema);min-height:100vh}
   body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:250;opacity:.05;
@@ -203,6 +215,7 @@
   .toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,30px);background:var(--papel);color:var(--ink);font-family:var(--grot);font-size:11px;font-weight:600;letter-spacing:.6px;padding:13px 20px;border-radius:2px;z-index:300;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 16px 44px rgba(0,0,0,.55)}
   .toast.visible{opacity:1;transform:translate(-50%,0)}
 </style>
+<script>if((localStorage.getItem('mb_panel_tema')||'claro')==='claro')document.documentElement.classList.add('claro')</script>
 </head>
 <body>
 
@@ -213,6 +226,7 @@
       <div class="marca" id="marcaHead">Bella Vita<small>PANEL DEL RESTAURANTE</small></div>
     </div>
     <div class="vivo" id="chipVivo"><i></i> EN VIVO</div>
+    <button class="btn-sec" id="btnTema" onclick="alternarTemaPanel()" style="padding:9px 13px;font-size:8.5px" title="Cambiar tema del panel">TEMA OSCURO</button>
     <div class="tabs">
       <button class="tab activo" data-v="comandas">Comandas<span class="mini-badge" id="badgeNuevas">0</span></button>
       <button class="tab" data-v="registro">Registro</button>
@@ -420,6 +434,17 @@
    ================================================================ */
 const $ = s => document.querySelector(s);
 const fmt = n => '$' + (+n).toLocaleString('es-MX');
+/* Tema del panel: claro por defecto, oscuro opcional */
+function pintarBtnTema(){
+  const b = $('#btnTema'); if(!b) return;
+  b.textContent = document.documentElement.classList.contains('claro') ? 'TEMA OSCURO' : 'TEMA CLARO';
+}
+function alternarTemaPanel(){
+  const claro = document.documentElement.classList.toggle('claro');
+  try{ localStorage.setItem('mb_panel_tema', claro ? 'claro' : 'oscuro'); }catch(e){}
+  pintarBtnTema();
+}
+pintarBtnTema();
 /* ================================================================
    NUBE — Supabase (proyecto colecta, tablas menusbot_)
    ================================================================ */
