@@ -510,8 +510,18 @@
 const RESTAURANTE = { nombre:'Trattoria Bella Vita', moneda:'MXN' };
 const IMG_BASE = 'https://xwcgqhlsubyfmpdjabjt.supabase.co/storage/v1/object/public/menusbot-demo/';
 const IMG = id => IMG_BASE + id + '.jpg';
+/* Multi-restaurante: el QR trae &r=slug; sin él, se usa el restaurante demo */
+const RID = ((new URLSearchParams(location.search).get('r')) || 'bellavita').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'bellavita';
+/* Claves de almacenamiento separadas por restaurante (el demo conserva las suyas) */
+const LSK = k => RID === 'bellavita' ? k : k + '::' + RID;
+/* Para restaurantes propios, nada de marca del demo mientras carga su identidad */
+if(RID !== 'bellavita'){
+  const sm = document.getElementById('splashMarca'); if(sm) sm.innerHTML = '';
+  const ct = document.getElementById('cabTitulo'); if(ct) ct.innerHTML = '';
+  document.title = 'Menú digital';
+}
 
-const CATEGORIAS = [
+let CATEGORIAS = [
   {id:'entradas', nombre:'Entradas', num:'01'},
   {id:'pastas', nombre:'Pastas', num:'02'},
   {id:'pizzas', nombre:'Pizzas', num:'03'},
@@ -669,7 +679,7 @@ let filtroActivo = 'todo', catActiva = 'todas';
 let mesa = null, pedido = [], ordenes = [], vistaActual = 'menu';
 /* Cuenta de puntos (100% opcional) */
 let cliente = null;
-try{ cliente = JSON.parse(localStorage.getItem('mb_cliente') || 'null'); }catch(e){}
+try{ cliente = JSON.parse(localStorage.getItem(LSK('mb_cliente')) || 'null'); }catch(e){}
 let puntosOfrecido = false;
 
 /* ================================================================
@@ -682,7 +692,6 @@ let puntosOfrecido = false;
    ================================================================ */
 const SUPA_URL = 'https://xwcgqhlsubyfmpdjabjt.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3Y2dxaGxzdWJ5Zm1wZGphYmp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMTc5NjYsImV4cCI6MjA5Nzg5Mzk2Nn0.DK4oPmMcNA0xLwkAkxGigiudIZUobxB_UYFurrMCc9g';
-const RID = 'bellavita';
 async function api(ruta, opc = {}){
   const r = await fetch(SUPA_URL + '/rest/v1/' + ruta, {
     ...opc,
@@ -771,11 +780,17 @@ async function sincronizar(){
     aplicarTema((dbCache.config && dbCache.config.tema) || 'editoriale');
     aplicarMarca();
     ofrecerSucursal();
-    const h = JSON.stringify([dbCache.precios, dbCache.ocultos, dbCache.platillos || [], Object.keys(dbCache.fotos || {})]);
+    const h = JSON.stringify([dbCache.precios, dbCache.ocultos, dbCache.platillos || [], Object.keys(dbCache.fotos || {}), dbCache.config && dbCache.config.categorias, dbCache.config && dbCache.config.menuPropio]);
     if(h !== hashCarta){
       hashCarta = h;
       FOTOS = dbCache.fotos || {};
-      PLATILLOS = PLATILLOS.filter(p => !p.extra);
+      /* Categorías propias del restaurante (los nuevos las definen al darse de alta) */
+      if(dbCache.config && Array.isArray(dbCache.config.categorias) && dbCache.config.categorias.length){
+        CATEGORIAS = dbCache.config.categorias.map((c, i) => ({ id: c.id, nombre: c.nombre, num: c.num || String(i+1).padStart(2,'0') }));
+      }
+      /* menuPropio: el restaurante usa SOLO sus platillos (el menú italiano base es del demo) */
+      if(!window._basePlatillos) window._basePlatillos = PLATILLOS.filter(p => !p.extra);
+      PLATILLOS = (dbCache.config && dbCache.config.menuPropio) ? [] : window._basePlatillos.slice();
       for(const np of (dbCache.platillos || [])){
         PLATILLOS.push({
           id: np.id, cat: np.cat || 'principales', nombre: np.nombre, precio: +np.precio || 0,
@@ -792,7 +807,7 @@ async function sincronizar(){
         if(dbCache.precios && dbCache.precios[p.id] != null) p.precio = +dbCache.precios[p.id];
         p.oculto = (dbCache.ocultos || []).includes(p.id);
       }
-      pintarDestacados(); pintarLista();
+      pintarControles(); pintarDestacados(); pintarLista();
       if(vistaActual === 'orden') pintarVistaOrden();
     }
     if(misIds.length){
@@ -856,7 +871,7 @@ async function sincronizar(){
         const cf = await api(`menusbot_clientes?id=eq.${cliente.id}&select=puntos`);
         if(cf && cf[0] && +cf[0].puntos !== +(cliente.puntos || 0)){
           cliente.puntos = +cf[0].puntos;
-          try{ localStorage.setItem('mb_cliente', JSON.stringify(cliente)); }catch(e){}
+          try{ localStorage.setItem(LSK('mb_cliente'), JSON.stringify(cliente)); }catch(e){}
           pintarVistaCuenta();
         }
       }catch(e){}
@@ -871,15 +886,15 @@ setInterval(sincronizar, 4000);
 let SUC = new URLSearchParams(location.search).get('suc') || '';
 function guardarSesion(){
   try{
-    if(!pedido.length && !ordenes.length && !cuentaPedida){ localStorage.removeItem('mb_sesion_v1'); return; }
-    localStorage.setItem('mb_sesion_v1', JSON.stringify({ mesa, suc: SUC, pedido, ordenes, misIds, cuentaPedida, ts: Date.now() }));
+    if(!pedido.length && !ordenes.length && !cuentaPedida){ localStorage.removeItem(LSK('mb_sesion_v1')); return; }
+    localStorage.setItem(LSK('mb_sesion_v1'), JSON.stringify({ mesa, suc: SUC, pedido, ordenes, misIds, cuentaPedida, ts: Date.now() }));
   }catch(e){}
 }
 function restaurarSesion(mesaURL){
   try{
-    const g = JSON.parse(localStorage.getItem('mb_sesion_v1') || 'null');
+    const g = JSON.parse(localStorage.getItem(LSK('mb_sesion_v1')) || 'null');
     if(!g || Date.now() - (g.ts || 0) > 6*3600*1000) return false;
-    if(mesaURL != null && g.mesa !== mesaURL){ localStorage.removeItem('mb_sesion_v1'); return false; }
+    if(mesaURL != null && g.mesa !== mesaURL){ localStorage.removeItem(LSK('mb_sesion_v1')); return false; }
     pedido = g.pedido || [];
     ordenes = g.ordenes || [];
     misIds = g.misIds || [];
@@ -994,10 +1009,13 @@ function pintarIndicadores(){
   } else pill.classList.remove('visible');
 }
 
-/* Marquee */
+/* Marquee — frases del demo italiano solo para el demo; genéricas para cada restaurante */
 function pintarMarquee(){
-  const lema = (MARCA.lema || 'EST. 1987').toUpperCase();
-  const items = ['HORNO DE LEÑA','PASTA FRESCA DEL DÍA', lema, 'RECETAS DE LA CASA','COCINA ITALIANA'];
+  const propio = dbCache.config && dbCache.config.menuPropio;
+  const lema = (MARCA.lema || (propio ? 'HECHO AL MOMENTO' : 'EST. 1987')).toUpperCase();
+  const items = propio
+    ? ['INGREDIENTES FRESCOS', lema, 'ORDENA DESDE TU MESA', 'RECETAS DE LA CASA']
+    : ['HORNO DE LEÑA','PASTA FRESCA DEL DÍA', lema, 'RECETAS DE LA CASA','COCINA ITALIANA'];
   const mitad = items.map(t => `<span>${t}</span>`).join('');
   $('#tiraMarquee').innerHTML = mitad + mitad;
 }
@@ -1503,7 +1521,7 @@ function pedirCuenta(){
 function cerrarVisita(){
   ordenes = []; misIds = []; pedido = []; cuentaPedida = false;
   mesaOtras = []; totalMesaSrv = null; hashMesa = '';
-  try{ localStorage.removeItem('mb_sesion_v1'); }catch(e){}
+  try{ localStorage.removeItem(LSK('mb_sesion_v1')); }catch(e){}
   pintarIndicadores();
   $('#hojaConf').innerHTML = `
     <div class="confirmacion">
@@ -1528,12 +1546,12 @@ function clickBarra(){
 
 /* ---------- Guía de bienvenida ---------- */
 function mostrarGuia(forzar){
-  if(!forzar && localStorage.getItem('mb_guia_v1')){ ofrecerCuentaPuntos(); return; }
+  if(!forzar && localStorage.getItem(LSK('mb_guia_v1'))){ ofrecerCuentaPuntos(); return; }
   $('#guia').classList.add('visible');
 }
 function cerrarGuia(){
   $('#guia').classList.remove('visible');
-  try{ localStorage.setItem('mb_guia_v1','1'); }catch(e){}
+  try{ localStorage.setItem(LSK('mb_guia_v1'),'1'); }catch(e){}
   ofrecerCuentaPuntos();
 }
 
@@ -1576,9 +1594,9 @@ function abrirHojaCliente(){
 }
 function ofrecerCuentaPuntos(){
   if(puntosOfrecido || cliente) return;
-  try{ if(localStorage.getItem('mb_invitado') || localStorage.getItem('mb_puntos_visto')) return; }catch(e){}
+  try{ if(localStorage.getItem(LSK('mb_invitado')) || localStorage.getItem(LSK('mb_puntos_visto'))) return; }catch(e){}
   puntosOfrecido = true;
-  try{ localStorage.setItem('mb_puntos_visto', '1'); }catch(e){}
+  try{ localStorage.setItem(LSK('mb_puntos_visto'), '1'); }catch(e){}
   abrirHojaCliente();
 }
 async function registrarCliente(){
@@ -1592,19 +1610,19 @@ async function registrarCliente(){
     });
     const f = (filas && filas[0]) || {};
     cliente = { id: f.id, telefono: f.telefono || tel, nombre: (f.nombre != null && f.nombre !== '') ? f.nombre : nombre, puntos: +f.puntos || 0 };
-    try{ localStorage.setItem('mb_cliente', JSON.stringify(cliente)); localStorage.removeItem('mb_invitado'); }catch(e){}
+    try{ localStorage.setItem(LSK('mb_cliente'), JSON.stringify(cliente)); localStorage.removeItem(LSK('mb_invitado')); }catch(e){}
     cerrarSheets();
     toast(`¡Listo${cliente.nombre ? ', ' + cliente.nombre : ''}! Tienes ${cliente.puntos} punto(s) acumulados`);
     if(vistaActual === 'cuenta') pintarVistaCuenta();
   }catch(e){ toast('Sin conexión — inténtalo de nuevo'); }
 }
 function continuarInvitado(){
-  try{ localStorage.setItem('mb_invitado', '1'); }catch(e){}
+  try{ localStorage.setItem(LSK('mb_invitado'), '1'); }catch(e){}
   cerrarSheets();
 }
 function salirCliente(){
   cliente = null;
-  try{ localStorage.removeItem('mb_cliente'); localStorage.setItem('mb_invitado', '1'); }catch(e){}
+  try{ localStorage.removeItem(LSK('mb_cliente')); localStorage.setItem(LSK('mb_invitado'), '1'); }catch(e){}
   cerrarSheets();
   toast('Saliste de tu cuenta de puntos');
   if(vistaActual === 'cuenta') pintarVistaCuenta();

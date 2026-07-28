@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crea el menú digital de tu restaurante · Alta gratis</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400;1,9..144,500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--esp:#151210;--esp2:#1D1915;--crema:#EFE7D8;--humo:#A79D8C;--humo2:#6E665A;--pomodoro:#E4593B;--basilico:#8FAE8B;--oro:#C9A227;--papel:#F2EBDD;--ink:#241F18;--linea:rgba(239,231,216,.14);--linea2:rgba(239,231,216,.28);--serif:'Fraunces',Georgia,serif;--grot:'Space Grotesk',system-ui,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--grot);background:var(--esp);color:var(--crema);min-height:100vh}
+  .caps{font-size:9.5px;font-weight:700;letter-spacing:2.6px;text-transform:uppercase}
+  .cont{max-width:960px;margin:0 auto;padding:0 22px}
+  header{padding:20px 0;border-bottom:1px solid var(--linea)}
+  header .cont{display:flex;align-items:center;gap:16px}
+  header .caps{color:var(--humo)}
+  header a{margin-left:auto;color:var(--crema);text-decoration:none;font-size:11px;letter-spacing:1.6px;font-weight:700;text-transform:uppercase;border:1px solid var(--linea2);padding:10px 16px;border-radius:2px}
+  header a:hover{border-color:var(--pomodoro);color:var(--pomodoro)}
+  .hero{padding:64px 0 40px;text-align:center}
+  h1{font-family:var(--serif);font-style:italic;font-weight:500;font-size:clamp(34px,6vw,54px);line-height:1.12;letter-spacing:-.5px}
+  h1 em{color:var(--pomodoro)}
+  .hero p{color:var(--humo);font-size:14px;line-height:1.9;max-width:560px;margin:18px auto 0}
+  .pasos{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:34px 0 10px}
+  @media(max-width:700px){.pasos{grid-template-columns:1fr}}
+  .paso{border:1px solid var(--linea);border-radius:3px;padding:20px;text-align:left;background:var(--esp2)}
+  .paso .num{font-family:var(--serif);font-style:italic;font-size:26px;color:var(--pomodoro)}
+  .paso b{display:block;font-family:var(--serif);font-style:italic;font-weight:500;font-size:17px;margin:8px 0 6px}
+  .paso span{font-size:12px;color:var(--humo);line-height:1.7}
+  .zona-form{display:grid;grid-template-columns:1.1fr .9fr;gap:26px;padding:40px 0 70px;align-items:start}
+  @media(max-width:820px){.zona-form{grid-template-columns:1fr}}
+  .form{border:1px solid var(--linea);border-radius:3px;background:var(--esp2);padding:26px}
+  .form h2{font-family:var(--serif);font-style:italic;font-weight:500;font-size:24px;margin-bottom:4px}
+  .form .sub{font-size:11.5px;color:var(--humo);margin-bottom:20px;line-height:1.7}
+  .campo{margin-bottom:14px}
+  .campo label{display:block;margin-bottom:7px;color:var(--humo)}
+  input,select{width:100%;background:var(--esp);border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:13px;padding:13px;border-radius:2px;outline:none}
+  input:focus,select:focus{border-color:var(--pomodoro)}
+  input::placeholder{color:var(--humo2)}
+  .btn{width:100%;border:none;background:var(--pomodoro);color:#FFF6EC;font-family:var(--grot);font-size:11px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase;padding:16px;border-radius:2px;cursor:pointer;margin-top:6px}
+  .btn:active{transform:scale(.99)}
+  .btn[disabled]{opacity:.55;cursor:wait}
+  .error{color:var(--pomodoro);font-size:11px;letter-spacing:1px;font-weight:700;text-transform:uppercase;margin-top:12px;line-height:1.8;display:none;text-align:center}
+  .nota{margin-top:16px;font-size:10.5px;color:var(--humo2);line-height:1.8;text-align:center}
+  .nota a{color:var(--humo)}
+  .lado b{display:block;font-family:var(--serif);font-style:italic;font-weight:500;font-size:20px;margin-bottom:12px}
+  .lado ul{list-style:none}
+  .lado li{font-size:12.5px;color:var(--humo);line-height:1.8;padding:9px 0 9px 22px;border-bottom:1px dotted var(--linea);position:relative}
+  .lado li::before{content:'✓';position:absolute;left:0;color:var(--basilico);font-weight:700}
+  footer{border-top:1px solid var(--linea);padding:22px 0;text-align:center}
+  footer .caps{color:var(--humo2)}
+</style>
+</head>
+<body>
+
+<header><div class="cont">
+  <div class="caps">Menú digital para restaurantes</div>
+  <a href="panel.html">Ya tengo cuenta — Iniciar sesión</a>
+</div></header>
+
+<div class="cont">
+  <div class="hero">
+    <div class="caps" style="color:var(--pomodoro);margin-bottom:14px">Alta gratis · Sin tarjeta</div>
+    <h1>Tu restaurante con menú digital <em>hoy mismo</em></h1>
+    <p>QR por mesa, órdenes desde el teléfono del comensal, comandas en vivo para tu cocina, reportes y cuenta por mesa. Da de alta tu restaurante y en dos minutos ya tienes tu panel con un menú de ejemplo listo para editar.</p>
+  </div>
+
+  <div class="pasos">
+    <div class="paso"><div class="num">01</div><b>Registra tu restaurante</b><span>Nombre, tipo de cocina, tu correo y una contraseña. Nada más.</span></div>
+    <div class="paso"><div class="num">02</div><b>Ajusta tu menú y tu marca</b><span>Arrancas con un menú de ejemplo según tu cocina: cambia platillos, precios, fotos, logo y colores desde tu panel.</span></div>
+    <div class="paso"><div class="num">03</div><b>Imprime tus QRs y opera</b><span>Cada mesa tiene su QR. Las órdenes llegan a tu panel en tiempo real, con cuenta y reportes por sucursal.</span></div>
+  </div>
+
+  <div class="zona-form">
+    <div class="form">
+      <h2>Crea tu cuenta</h2>
+      <div class="sub">Tu panel queda listo al instante, con un menú de ejemplo según tu tipo de cocina.</div>
+      <div class="campo"><label class="caps" for="rNombre">Nombre del restaurante</label><input id="rNombre" placeholder="Ej. La Cabaña del Mar" maxlength="40"></div>
+      <div class="campo"><label class="caps" for="rCocina">Tipo de cocina</label>
+        <select id="rCocina">
+          <option value="mexicana">Mexicana</option>
+          <option value="italiana">Italiana</option>
+          <option value="china">China / asiática</option>
+          <option value="general">Otra — menú general</option>
+        </select>
+      </div>
+      <div class="campo"><label class="caps" for="rEmail">Correo electrónico</label><input id="rEmail" type="email" autocomplete="username" placeholder="tucorreo@restaurante.com"></div>
+      <div class="campo"><label class="caps" for="rPass">Contraseña</label><input id="rPass" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres"></div>
+      <button class="btn" id="btnAlta" onclick="crearCuenta()">Crear mi cuenta gratis</button>
+      <div class="error" id="altaError"></div>
+      <div class="nota">Al crearla entras directo a tu panel. ¿Ya tienes cuenta? <a href="panel.html">Inicia sesión aquí</a>.</div>
+    </div>
+    <div class="lado">
+      <b>Lo que incluye tu cuenta</b>
+      <ul>
+        <li>Carta digital con fotos, filtros y ficha por platillo</li>
+        <li>QR por mesa — el comensal ordena sin instalar nada</li>
+        <li>Comandas en vivo con entrega por tiempos (partidas)</li>
+        <li>Cuenta por mesa idéntica en el teléfono y en tu panel</li>
+        <li>Sucursales: QRs, órdenes y reportes separados</li>
+        <li>Tu logo, tus colores y 4 temas visuales</li>
+        <li>Reportes de ventas, top de platillos y desempeño de meseros</li>
+        <li>Clientes frecuentes con puntos (opcional)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<footer><div class="caps">Sistema en la nube · Órdenes por mesa en tiempo real</div></footer>
+
+<script>
+const SUPA_URL = 'https://xwcgqhlsubyfmpdjabjt.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3Y2dxaGxzdWJ5Zm1wZGphYmp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMTc5NjYsImV4cCI6MjA5Nzg5Mzk2Nn0.DK4oPmMcNA0xLwkAkxGigiudIZUobxB_UYFurrMCc9g';
+async function api(ruta, opc = {}){
+  const r = await fetch(SUPA_URL + '/rest/v1/' + ruta, {
+    ...opc,
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation', ...(opc.headers || {}) },
+  });
+  if(!r.ok) throw new Error(await r.text());
+  const tx = await r.text();
+  return tx ? JSON.parse(tx) : null;
+}
+async function sha256(t){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
+}
+const slugify = s => s.toLowerCase()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+  .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,30) || 'restaurante';
+
+/* ================= MENÚS DE EJEMPLO POR COCINA ================= */
+const SEMILLAS = {
+  mexicana: {
+    categorias: [
+      {id:'entradas', nombre:'Para compartir'}, {id:'tacos', nombre:'Tacos y antojitos'},
+      {id:'principales', nombre:'Platos fuertes'}, {id:'postres', nombre:'Postres'}, {id:'bebidas', nombre:'Bebidas'},
+    ],
+    platillos: [
+      {id:'guacamole', cat:'entradas', nombre:'Guacamole tradicional', precio:95, kcal:230, prot:3, carb:12, grasa:19, tiempo:'8 min', porcion:'Para 2-3', desc:'Aguacate machacado al momento con jitomate, cebolla, cilantro y totopos.', ingredientes:['Aguacate','Jitomate','Cebolla','Cilantro','Limón','Totopos'], tags:['vegetariano','popular']},
+      {id:'queso-fundido', cat:'entradas', nombre:'Queso fundido con chorizo', precio:115, kcal:420, prot:22, carb:6, grasa:34, tiempo:'12 min', porcion:'Para 2', desc:'Queso Chihuahua gratinado con chorizo de la casa y tortillas recién hechas.', ingredientes:['Queso Chihuahua','Chorizo','Tortillas de harina']},
+      {id:'tacos-pastor', cat:'tacos', nombre:'Tacos al pastor (orden de 3)', precio:85, kcal:480, prot:26, carb:42, grasa:22, tiempo:'10 min', porcion:'3 piezas', desc:'Del trompo, con piña, cebolla y cilantro en tortilla de maíz.', ingredientes:['Cerdo adobado','Piña','Cebolla','Cilantro','Tortilla de maíz'], tags:['popular']},
+      {id:'tacos-bistec', cat:'tacos', nombre:'Tacos de bistec (orden de 3)', precio:95, kcal:460, prot:30, carb:40, grasa:20, tiempo:'10 min', porcion:'3 piezas', desc:'Bistec de res a la plancha con guacamole y salsa tatemada.', ingredientes:['Res','Guacamole','Salsa tatemada','Tortilla de maíz']},
+      {id:'quesabirrias', cat:'tacos', nombre:'Quesabirrias con consomé', precio:110, kcal:560, prot:28, carb:44, grasa:30, tiempo:'14 min', porcion:'3 piezas', desc:'Doraditas de birria con queso, acompañadas de su consomé.', ingredientes:['Birria de res','Queso','Tortilla de maíz','Consomé'], tags:['popular']},
+      {id:'enchiladas-verdes', cat:'principales', nombre:'Enchiladas verdes de pollo', precio:125, kcal:520, prot:32, carb:48, grasa:22, tiempo:'15 min', porcion:'3 piezas', desc:'Bañadas en salsa verde, con crema, queso fresco y frijoles refritos.', ingredientes:['Pollo','Salsa verde','Crema','Queso fresco','Frijoles']},
+      {id:'pozole-rojo', cat:'principales', nombre:'Pozole rojo', precio:130, kcal:480, prot:28, carb:52, grasa:16, tiempo:'12 min', porcion:'Plato hondo', desc:'De maíz cacahuazintle con cerdo, y su plato de lechuga, rábano y orégano.', ingredientes:['Maíz cacahuazintle','Cerdo','Chile guajillo','Lechuga','Rábano']},
+      {id:'mole-poblano', cat:'principales', nombre:'Mole poblano con pollo', precio:145, kcal:610, prot:34, carb:46, grasa:32, tiempo:'18 min', porcion:'Pieza con arroz', desc:'Receta de la casa, con arroz rojo y tortillas hechas a mano.', ingredientes:['Pollo','Mole poblano','Arroz rojo','Ajonjolí']},
+      {id:'arrachera', cat:'principales', nombre:'Arrachera a la parrilla', precio:235, kcal:680, prot:46, carb:24, grasa:42, tiempo:'22 min', porcion:'250 g', desc:'Con cebollitas, nopal asado, frijoles charros y guacamole.', ingredientes:['Arrachera de res','Cebollitas','Nopal','Frijoles charros']},
+      {id:'flan', cat:'postres', nombre:'Flan napolitano', precio:65, kcal:320, prot:8, carb:44, grasa:12, tiempo:'5 min', porcion:'Rebanada', desc:'Cremoso, con caramelo de la casa.', ingredientes:['Huevo','Leche condensada','Vainilla','Caramelo'], tags:['vegetariano']},
+      {id:'churros', cat:'postres', nombre:'Churros con cajeta', precio:70, kcal:380, prot:5, carb:52, grasa:17, tiempo:'10 min', porcion:'5 piezas', desc:'Recién hechos, azúcar con canela y cajeta para remojar.', ingredientes:['Harina','Azúcar','Canela','Cajeta'], tags:['vegetariano']},
+      {id:'horchata', cat:'bebidas', nombre:'Agua de horchata', precio:40, kcal:180, prot:2, carb:38, grasa:2, tiempo:'2 min', porcion:'Vaso 500 ml', desc:'De arroz con canela, hecha en casa.', ingredientes:['Arroz','Canela','Leche'], tags:['vegetariano']},
+      {id:'cerveza', cat:'bebidas', nombre:'Cerveza artesanal', precio:75, kcal:190, prot:2, carb:16, grasa:0, tiempo:'2 min', porcion:'355 ml', desc:'Selección local de barril o botella.', ingredientes:['Malta','Lúpulo']},
+    ],
+  },
+  italiana: {
+    categorias: [
+      {id:'entradas', nombre:'Entradas'}, {id:'pastas', nombre:'Pastas'}, {id:'pizzas', nombre:'Pizzas'},
+      {id:'principales', nombre:'Platos fuertes'}, {id:'postres', nombre:'Postres'}, {id:'bebidas', nombre:'Bebidas'},
+    ],
+    platillos: [
+      {id:'bruschetta-alta', cat:'entradas', nombre:'Bruschetta de jitomate', precio:95, kcal:220, prot:6, carb:32, grasa:8, tiempo:'10 min', porcion:'4 piezas', desc:'Pan tostado con jitomate fresco, albahaca y aceite de oliva.', ingredientes:['Pan campesino','Jitomate','Albahaca','Aceite de oliva'], tags:['vegetariano','ligero']},
+      {id:'caprese', cat:'entradas', nombre:'Ensalada caprese', precio:120, kcal:280, prot:14, carb:8, grasa:22, tiempo:'8 min', porcion:'Plato mediano', desc:'Mozzarella fresca, jitomate y albahaca con reducción de balsámico.', ingredientes:['Mozzarella','Jitomate','Albahaca','Balsámico'], tags:['vegetariano','sin gluten']},
+      {id:'spaghetti-pomodoro', cat:'pastas', nombre:'Spaghetti al pomodoro', precio:145, kcal:520, prot:16, carb:78, grasa:14, tiempo:'15 min', porcion:'300 g', desc:'Salsa de jitomate y albahaca, parmesano rallado al momento.', ingredientes:['Spaghetti','Jitomate','Albahaca','Parmesano'], tags:['vegetariano','popular']},
+      {id:'fettuccine-alfredo', cat:'pastas', nombre:'Fettuccine Alfredo', precio:165, kcal:640, prot:22, carb:66, grasa:32, tiempo:'16 min', porcion:'320 g', desc:'Cremosos, con mantequilla y parmesano; agrega pollo si quieres.', ingredientes:['Fettuccine','Crema','Mantequilla','Parmesano']},
+      {id:'lasagna-alta', cat:'pastas', nombre:'Lasagna de la casa', precio:195, kcal:720, prot:34, carb:58, grasa:38, tiempo:'25 min', porcion:'380 g', desc:'Capas de pasta fresca, ragú de res y bechamel gratinada.', ingredientes:['Pasta fresca','Res','Bechamel','Mozzarella'], tags:['popular']},
+      {id:'pizza-margherita-alta', cat:'pizzas', nombre:'Pizza Margherita', precio:160, kcal:840, prot:32, carb:98, grasa:34, tiempo:'18 min', porcion:'30 cm', desc:'Salsa de jitomate, mozzarella y albahaca. Al horno de piedra.', ingredientes:['Masa madre','Jitomate','Mozzarella','Albahaca'], tags:['vegetariano']},
+      {id:'pizza-pepperoni', cat:'pizzas', nombre:'Pizza de pepperoni', precio:180, kcal:960, prot:38, carb:96, grasa:46, tiempo:'18 min', porcion:'30 cm', desc:'Generosa de pepperoni con mozzarella y orégano.', ingredientes:['Masa madre','Pepperoni','Mozzarella','Orégano'], tags:['popular']},
+      {id:'pollo-parmigiana', cat:'principales', nombre:'Pollo alla parmigiana', precio:210, kcal:680, prot:48, carb:38, grasa:36, tiempo:'22 min', porcion:'280 g', desc:'Milanesa de pollo gratinada con jitomate y mozzarella, con pasta.', ingredientes:['Pollo','Jitomate','Mozzarella','Pasta']},
+      {id:'salmon-parrilla', cat:'principales', nombre:'Salmón a la parrilla', precio:245, kcal:520, prot:42, carb:12, grasa:32, tiempo:'20 min', porcion:'220 g', desc:'Con verduras rostizadas y mantequilla de limón.', ingredientes:['Salmón','Verduras','Limón','Mantequilla'], tags:['sin gluten']},
+      {id:'tiramisu-alta', cat:'postres', nombre:'Tiramisú', precio:110, kcal:450, prot:9, carb:42, grasa:26, tiempo:'5 min', porcion:'Porción', desc:'Clásico: café, mascarpone y cocoa.', ingredientes:['Mascarpone','Café','Soletas','Cocoa'], tags:['vegetariano']},
+      {id:'panna-cotta-alta', cat:'postres', nombre:'Panna cotta de frutos rojos', precio:95, kcal:340, prot:6, carb:36, grasa:19, tiempo:'5 min', porcion:'Porción', desc:'Sedosa, con salsa de frutos rojos.', ingredientes:['Crema','Vainilla','Frutos rojos'], tags:['vegetariano','sin gluten']},
+      {id:'limonada-alta', cat:'bebidas', nombre:'Limonada de la casa', precio:55, kcal:120, prot:0, carb:30, grasa:0, tiempo:'3 min', porcion:'Vaso 500 ml', desc:'Con hierbabuena fresca.', ingredientes:['Limón','Hierbabuena','Azúcar'], tags:['vegetariano','ligero']},
+      {id:'vino-copa', cat:'bebidas', nombre:'Copa de vino tinto', precio:85, kcal:125, prot:0, carb:4, grasa:0, tiempo:'2 min', porcion:'150 ml', desc:'Selección de la casa.', ingredientes:['Uva tinta']},
+    ],
+  },
+  china: {
+    categorias: [
+      {id:'entradas', nombre:'Entradas'}, {id:'arroz-tallarines', nombre:'Arroz y tallarines'},
+      {id:'principales', nombre:'Platos fuertes'}, {id:'postres', nombre:'Postres'}, {id:'bebidas', nombre:'Bebidas'},
+    ],
+    platillos: [
+      {id:'rollos-primavera', cat:'entradas', nombre:'Rollos primavera (4)', precio:75, kcal:320, prot:8, carb:38, grasa:15, tiempo:'10 min', porcion:'4 piezas', desc:'Crujientes, rellenos de verdura, con salsa agridulce.', ingredientes:['Col','Zanahoria','Pasta de rollo','Salsa agridulce'], tags:['vegetariano','popular']},
+      {id:'dumplings', cat:'entradas', nombre:'Dumplings de cerdo (6)', precio:95, kcal:380, prot:18, carb:42, grasa:16, tiempo:'12 min', porcion:'6 piezas', desc:'Al vapor o a la plancha, con salsa de soya y jengibre.', ingredientes:['Cerdo','Jengibre','Cebollín','Masa de trigo'], tags:['popular']},
+      {id:'wonton-frito', cat:'entradas', nombre:'Wonton frito (6)', precio:70, kcal:340, prot:12, carb:36, grasa:17, tiempo:'10 min', porcion:'6 piezas', desc:'Rellenos de camarón y cerdo, dorados y crujientes.', ingredientes:['Camarón','Cerdo','Masa wonton']},
+      {id:'arroz-frito', cat:'arroz-tallarines', nombre:'Arroz frito especial', precio:120, kcal:560, prot:22, carb:74, grasa:20, tiempo:'14 min', porcion:'Plato grande', desc:'Con camarón, cerdo asado, huevo y verduras.', ingredientes:['Arroz','Camarón','Cerdo asado','Huevo','Verduras'], tags:['popular']},
+      {id:'chow-mein', cat:'arroz-tallarines', nombre:'Chow mein de pollo', precio:125, kcal:540, prot:26, carb:64, grasa:20, tiempo:'14 min', porcion:'Plato grande', desc:'Tallarines salteados al wok con pollo y verduras.', ingredientes:['Tallarín','Pollo','Verduras','Soya']},
+      {id:'pollo-agridulce', cat:'principales', nombre:'Pollo agridulce', precio:140, kcal:620, prot:30, carb:68, grasa:24, tiempo:'16 min', porcion:'Con arroz al vapor', desc:'Trozos de pollo crujiente con piña y pimiento.', ingredientes:['Pollo','Piña','Pimiento','Salsa agridulce']},
+      {id:'res-brocoli', cat:'principales', nombre:'Res con brócoli', precio:155, kcal:520, prot:36, carb:32, grasa:26, tiempo:'16 min', porcion:'Con arroz al vapor', desc:'Salteado al wok con salsa de ostión.', ingredientes:['Res','Brócoli','Salsa de ostión','Ajo']},
+      {id:'camarones-kungpao', cat:'principales', nombre:'Camarones kung pao', precio:175, kcal:560, prot:32, carb:38, grasa:28, tiempo:'16 min', porcion:'Con arroz al vapor', desc:'Picantes, con cacahuate y chile seco.', ingredientes:['Camarón','Cacahuate','Chile seco','Ajo'], tags:['popular']},
+      {id:'pato-laqueado', cat:'principales', nombre:'Pato laqueado (media pieza)', precio:265, kcal:780, prot:52, carb:34, grasa:48, tiempo:'25 min', porcion:'Media pieza', desc:'Piel crujiente, con crepas, cebollín y salsa hoisin.', ingredientes:['Pato','Crepas','Cebollín','Hoisin']},
+      {id:'helado-frito', cat:'postres', nombre:'Helado frito', precio:70, kcal:420, prot:7, carb:52, grasa:20, tiempo:'8 min', porcion:'1 bola', desc:'Empanizado crujiente por fuera, helado por dentro.', ingredientes:['Helado de vainilla','Empanizado','Miel'], tags:['vegetariano']},
+      {id:'te-jazmin', cat:'bebidas', nombre:'Té de jazmín', precio:35, kcal:5, prot:0, carb:1, grasa:0, tiempo:'4 min', porcion:'Tetera', desc:'Caliente, para acompañar toda la comida.', ingredientes:['Té de jazmín'], tags:['vegetariano','ligero']},
+      {id:'limonada-lichi', cat:'bebidas', nombre:'Limonada de lichi', precio:55, kcal:150, prot:0, carb:36, grasa:0, tiempo:'3 min', porcion:'Vaso 500 ml', desc:'Dulce y fresca, con lichis naturales.', ingredientes:['Limón','Lichi','Azúcar'], tags:['vegetariano']},
+    ],
+  },
+  general: {
+    categorias: [
+      {id:'entradas', nombre:'Entradas'}, {id:'principales', nombre:'Platos fuertes'},
+      {id:'postres', nombre:'Postres'}, {id:'bebidas', nombre:'Bebidas'},
+    ],
+    platillos: [
+      {id:'ensalada-casa', cat:'entradas', nombre:'Ensalada de la casa', precio:95, kcal:260, prot:8, carb:18, grasa:16, tiempo:'8 min', porcion:'Plato mediano', desc:'Mezcla de lechugas, jitomate cherry, queso y aderezo de la casa.', ingredientes:['Lechugas','Jitomate cherry','Queso','Aderezo'], tags:['vegetariano','ligero']},
+      {id:'sopa-dia', cat:'entradas', nombre:'Sopa del día', precio:75, kcal:220, prot:10, carb:26, grasa:8, tiempo:'6 min', porcion:'Plato hondo', desc:'Pregunta por la sopa de hoy, hecha en casa.', ingredientes:['Receta del día']},
+      {id:'hamburguesa', cat:'principales', nombre:'Hamburguesa de la casa', precio:145, kcal:780, prot:38, carb:52, grasa:44, tiempo:'18 min', porcion:'Con papas', desc:'Carne de res 180 g, queso, tocino y papas de la casa.', ingredientes:['Res','Queso','Tocino','Pan brioche','Papas'], tags:['popular']},
+      {id:'pechuga-plancha', cat:'principales', nombre:'Pechuga a la plancha', precio:155, kcal:420, prot:44, carb:18, grasa:18, tiempo:'16 min', porcion:'250 g', desc:'Con verduras salteadas y puré de papa.', ingredientes:['Pollo','Verduras','Papa'], tags:['ligero','sin gluten']},
+      {id:'pasta-corta', cat:'principales', nombre:'Pasta corta al gusto', precio:135, kcal:560, prot:18, carb:72, grasa:20, tiempo:'15 min', porcion:'300 g', desc:'En salsa de jitomate, crema o mantequilla con ajo.', ingredientes:['Pasta','Salsa a elegir','Parmesano'], tags:['vegetariano']},
+      {id:'corte-res', cat:'principales', nombre:'Corte de res (250 g)', precio:265, kcal:720, prot:48, carb:22, grasa:48, tiempo:'25 min', porcion:'250 g', desc:'A la parrilla, con guarniciones del día.', ingredientes:['Res','Guarniciones'], tags:['popular','sin gluten']},
+      {id:'pastel-chocolate', cat:'postres', nombre:'Pastel de chocolate', precio:80, kcal:430, prot:6, carb:54, grasa:22, tiempo:'5 min', porcion:'Rebanada', desc:'Húmedo, con ganache de chocolate semiamargo.', ingredientes:['Chocolate','Harina','Huevo','Crema'], tags:['vegetariano']},
+      {id:'limonada-gen', cat:'bebidas', nombre:'Limonada natural', precio:45, kcal:110, prot:0, carb:28, grasa:0, tiempo:'3 min', porcion:'Vaso 500 ml', desc:'Natural o mineral.', ingredientes:['Limón','Azúcar'], tags:['vegetariano','ligero']},
+      {id:'refresco', cat:'bebidas', nombre:'Refresco', precio:35, kcal:140, prot:0, carb:37, grasa:0, tiempo:'2 min', porcion:'355 ml', desc:'Pregunta por los sabores disponibles.', ingredientes:['Refresco embotellado']},
+      {id:'cafe', cat:'bebidas', nombre:'Café de olla', precio:40, kcal:60, prot:0, carb:14, grasa:0, tiempo:'4 min', porcion:'Taza', desc:'Con piloncillo y canela.', ingredientes:['Café','Piloncillo','Canela'], tags:['vegetariano']},
+    ],
+  },
+};
+
+function configSemilla(nombre, cocina){
+  const s = SEMILLAS[cocina] || SEMILLAS.general;
+  return {
+    config: {
+      tema: 'editoriale',
+      meseros: [],
+      pin: '1987',
+      mesas: 8,
+      menuPropio: true,
+      categorias: s.categorias,
+      marca: { prefijo:'', nombre: nombre, lema:'', logo:'', acento:'', secundario:'' },
+      sucursales: [],
+    },
+    precios: {}, ocultos: [],
+    platillos: s.platillos.map(p => ({...p})),
+    fotos: {}, adminVisto: 0,
+  };
+}
+
+/* ================= ALTA ================= */
+async function crearCuenta(){
+  const nombre = document.getElementById('rNombre').value.trim();
+  const cocina = document.getElementById('rCocina').value;
+  const email = document.getElementById('rEmail').value.trim().toLowerCase();
+  const pass = document.getElementById('rPass').value;
+  const err = document.getElementById('altaError');
+  const btn = document.getElementById('btnAlta');
+  err.style.display = 'none';
+  const falla = m => { err.textContent = m; err.style.display = 'block'; btn.disabled = false; btn.textContent = 'CREAR MI CUENTA GRATIS'; };
+  if(nombre.length < 2) return falla('Escribe el nombre de tu restaurante');
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return falla('Escribe un correo válido');
+  if(pass.length < 6) return falla('La contraseña necesita al menos 6 caracteres');
+  btn.disabled = true; btn.textContent = 'CREANDO TU PANEL…';
+  try{
+    // correo único
+    const ya = await api(`menusbot_restaurantes?email=eq.${encodeURIComponent(email)}&select=id`);
+    if(ya && ya.length) return falla('Ese correo ya tiene una cuenta — inicia sesión');
+    // slug único
+    let slug = slugify(nombre);
+    const usados = await api(`menusbot_restaurantes?slug=like.${encodeURIComponent(slug)}*&select=slug`);
+    const setU = new Set((usados || []).map(x => x.slug));
+    if(setU.has(slug)){
+      let n = 2;
+      while(setU.has(slug + '-' + n)) n++;
+      slug = slug + '-' + n;
+    }
+    const hash = await sha256(email + ':' + pass);
+    await api('menusbot_restaurantes', { method:'POST', body: JSON.stringify({ slug, nombre, email, pass_hash: hash, cocina, plan:'demo' }) });
+    await api('menusbot_config', { method:'POST', body: JSON.stringify({ id: slug, data: configSemilla(nombre, cocina) }) });
+    try{ localStorage.setItem('mb_panel_sesion', JSON.stringify({ slug, nombre, email })); }catch(e){}
+    location.href = 'panel.html';
+  }catch(e){
+    if(/duplicate|23505/.test(String(e))) return falla('Ese correo o nombre ya está registrado — inicia sesión');
+    falla('Sin conexión — intenta de nuevo en un momento');
+  }
+}
+document.getElementById('rPass').addEventListener('keydown', e => { if(e.key === 'Enter') crearCuenta(); });
+</script>
+</body>
+</html>

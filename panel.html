@@ -227,6 +227,7 @@
     </div>
     <div class="vivo" id="chipVivo"><i></i> EN VIVO</div>
     <button class="btn-sec" id="btnTema" onclick="alternarTemaPanel()" style="padding:9px 13px;font-size:8.5px" title="Cambiar tema del panel">TEMA OSCURO</button>
+    <button class="btn-sec" id="btnSalir" onclick="salirPanel()" style="padding:9px 13px;font-size:8.5px;display:none" title="Cerrar sesión">SALIR</button>
     <div class="tabs">
       <button class="tab activo" data-v="comandas">Comandas<span class="mini-badge" id="badgeNuevas">0</span></button>
       <button class="tab" data-v="registro">Registro</button>
@@ -417,14 +418,24 @@
 </div>
 <div class="toast" id="toast"></div>
 
-<!-- Candado de acceso (nivel piloto) -->
+<!-- Acceso: PIN (demo) o inicio de sesión por restaurante -->
 <div id="candado" style="position:fixed;inset:0;z-index:400;background:var(--esp);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px">
   <img id="logoCandado" alt="" style="display:none;height:72px;width:auto;max-width:220px;object-fit:contain">
   <div class="marca" id="marcaCandado" style="text-align:center">Bella Vita<small>PANEL DEL RESTAURANTE</small></div>
-  <div class="caps" style="color:var(--humo)">PIN DE ACCESO</div>
-  <input id="pinInp" type="password" inputmode="numeric" maxlength="6" class="filtro" style="width:140px;text-align:center;font-size:22px;letter-spacing:8px;padding:14px">
-  <button class="btn-sec" onclick="probarPin()">Entrar</button>
-  <div class="caps" id="pinError" style="color:var(--pomodoro);visibility:hidden">PIN INCORRECTO</div>
+  <div id="accesoDemo" style="display:none;flex-direction:column;align-items:center;gap:16px">
+    <div class="caps" style="color:var(--humo)">PIN DE ACCESO</div>
+    <input id="pinInp" type="password" inputmode="numeric" maxlength="6" class="filtro" style="width:140px;text-align:center;font-size:22px;letter-spacing:8px;padding:14px">
+    <button class="btn-sec" onclick="probarPin()">Entrar</button>
+    <div class="caps" id="pinError" style="color:var(--pomodoro);visibility:hidden">PIN INCORRECTO</div>
+  </div>
+  <div id="accesoLogin" style="display:none;flex-direction:column;align-items:stretch;gap:12px;width:min(320px,86vw)">
+    <div class="caps" style="color:var(--humo);text-align:center">INICIA SESIÓN CON TU CUENTA</div>
+    <input id="logEmail" type="email" autocomplete="username" placeholder="Correo del restaurante" class="filtro" style="padding:13px">
+    <input id="logPass" type="password" autocomplete="current-password" placeholder="Contraseña" class="filtro" style="padding:13px">
+    <button class="btn-sec" style="padding:13px;border-color:var(--pomodoro);color:var(--pomodoro)" onclick="entrarPanel()">Entrar a mi panel</button>
+    <div class="caps" id="logError" style="color:var(--pomodoro);visibility:hidden;text-align:center;line-height:1.8">ERROR</div>
+    <a href="alta.html" class="caps" style="color:var(--humo);text-align:center;text-decoration:none;margin-top:4px">¿AÚN NO TIENES CUENTA? <span style="color:var(--pomodoro)">REGÍSTRATE GRATIS</span></a>
+  </div>
 </div>
 
 <script>
@@ -450,7 +461,17 @@ pintarBtnTema();
    ================================================================ */
 const SUPA_URL = 'https://xwcgqhlsubyfmpdjabjt.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3Y2dxaGxzdWJ5Zm1wZGphYmp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMTc5NjYsImV4cCI6MjA5Nzg5Mzk2Nn0.DK4oPmMcNA0xLwkAkxGigiudIZUobxB_UYFurrMCc9g';
-const RID = 'bellavita';
+/* ---------- Multi-restaurante: sesión propia o modo demo ---------- */
+const PARAMS = new URLSearchParams(location.search);
+const MODO_DEMO = PARAMS.has('demo') || PARAMS.get('r') === 'bellavita';
+let SESION = null;
+try{ SESION = JSON.parse(localStorage.getItem('mb_panel_sesion') || 'null'); }catch(e){}
+let RID = MODO_DEMO ? 'bellavita' : ((SESION && SESION.slug) || null);
+let accesoOk = false;
+async function sha256(t){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
+}
 async function api(ruta, opc = {}){
   const r = await fetch(SUPA_URL + '/rest/v1/' + ruta, {
     ...opc,
@@ -619,8 +640,9 @@ function quitarLogo(){
   aplicarMarcaPanel(); llenarFormMarca(true);
   toast('Logo retirado — se muestra el sello tipográfico');
 }
-setInterval(cargar, 4000);
+setInterval(() => { if(accesoOk) cargar(); }, 4000);
 setInterval(() => {
+  if(!accesoOk) return;
   cfgCache.adminVisto = Date.now();
   api(`menusbot_config?id=eq.${RID}`, { method:'PATCH', body: JSON.stringify({ data: cfgCache }) }).catch(() => {});
 }, 10000);
@@ -832,10 +854,11 @@ function render(){
   }
 
   if(vista === 'carta'){
-    const CAT_NOMBRE = { entradas:'Entradas', pastas:'Pastas', pizzas:'Pizzas', principales:'Platos fuertes', postres:'Postres', bebidas:'Bebidas' };
+    const CAT_NOMBRE = catNombres();
+    const menuPropio = !!(d.config && d.config.menuPropio);
     const todos = [
-      ...CARTA.map(p => ({...p, extra:false})),
-      ...(d.platillos || []).map(p => ({ id:p.id, nombre:p.nombre, cat:(CAT_NOMBRE[p.cat] || p.cat) + ' · importado con AI', precio:p.precio, extra:true })),
+      ...(menuPropio ? [] : CARTA.map(p => ({...p, extra:false}))),
+      ...(d.platillos || []).map(p => ({ id:p.id, nombre:p.nombre, cat:(CAT_NOMBRE[p.cat] || p.cat) + (p.origen === 'ai' ? ' · importado con AI' : ''), precio:p.precio, extra:true })),
     ];
     $('#cartaLista').innerHTML = todos.map(p => {
       const precio = d.precios[p.id] != null ? d.precios[p.id] : p.precio;
@@ -935,7 +958,7 @@ $('#archivoMenu').addEventListener('change', async e => {
     const texto = await f.text();
     for(const linea of texto.split(/\r?\n/)){
       const m = linea.match(/^(.*?)[\s.,;|-]*\$?\s?(\d{2,4})\s*$/);
-      if(m && m[1].trim().length > 2) extraidos.push({ nombre: m[1].trim(), precio: +m[2], cat: 'principales', ingredientes: '' });
+      if(m && m[1].trim().length > 2) extraidos.push({ nombre: m[1].trim(), precio: +m[2], cat: (catsPanel().find(c => c[0] === 'principales') ? 'principales' : catsPanel()[0][0]), ingredientes: '' });
     }
   }
   if(!extraidos.length) extraidos = EJEMPLO_EXTRACCION.map(x => ({...x}));
@@ -946,8 +969,15 @@ $('#archivoMenu').addEventListener('change', async e => {
   toast(`AI extrajo ${borrador.length} platillo(s) — revisa el borrador`);
   e.target.value = '';
 });
+/* Categorías: las propias del restaurante si existen; si no, las del demo */
+function catsPanel(){
+  const c = cfgCache.config && cfgCache.config.categorias;
+  if(Array.isArray(c) && c.length) return c.map(x => [x.id, x.nombre]);
+  return [['entradas','Entradas'],['pastas','Pastas'],['pizzas','Pizzas'],['principales','Platos fuertes'],['postres','Postres'],['bebidas','Bebidas']];
+}
+function catNombres(){ return Object.fromEntries(catsPanel()); }
 function pintarBorrador(){
-  const CATS = [['entradas','Entradas'],['pastas','Pastas'],['pizzas','Pizzas'],['principales','Platos fuertes'],['postres','Postres'],['bebidas','Bebidas']];
+  const CATS = catsPanel();
   $('#borradorLista').innerHTML = borrador.map((b, i) => `
     <div class="borrador-fila">
       <input value="${b.nombre.replace(/"/g,'&quot;')}" onchange="borrador[${i}].nombre=this.value">
@@ -981,6 +1011,7 @@ function publicarBorrador(){
         ingredientes: b.ingredientes.split(',').map(s => s.trim()).filter(Boolean),
         kcal: b.nutri?.kcal || 0, prot: b.nutri?.prot || 0, carb: b.nutri?.carb || 0, grasa: b.nutri?.grasa || 0,
         desc: b.ingredientes ? b.ingredientes.split(',').slice(0,4).join(', ') : 'Platillo de la casa.',
+        origen: 'ai',
       });
     }
   });
@@ -1282,7 +1313,7 @@ function renderQRs(d){
     celda.innerHTML = `<div class="tc-preview qr-celda" style="background:#fff;align-items:center;justify-content:center;display:flex"></div>
       <div class="tc-info"><span class="nombre-t">Mesa ${String(i).padStart(2,'0')}</span></div>`;
     $('#qrGrid').appendChild(celda);
-    new QRCode(celda.querySelector('.qr-celda'), { text: base + '?mesa=' + i + (suc ? '&suc=' + encodeURIComponent(suc) : ''), width: 108, height: 108, correctLevel: QRCode.CorrectLevel.M });
+    new QRCode(celda.querySelector('.qr-celda'), { text: base + '?mesa=' + i + '&r=' + encodeURIComponent(RID) + (suc ? '&suc=' + encodeURIComponent(suc) : ''), width: 108, height: 108, correctLevel: QRCode.CorrectLevel.M });
   }
 }
 function imprimirQRs(){
@@ -1298,22 +1329,60 @@ function imprimirQRs(){
   setTimeout(() => { try{ w.print(); }catch(e){} }, 500);
 }
 
-/* ---------- Candado PIN (nivel piloto) ---------- */
+/* ---------- Acceso: PIN en modo demo, email + contraseña para cada restaurante ---------- */
+function abrirPanel(){
+  accesoOk = true;
+  $('#candado').style.display = 'none';
+  cargar();
+}
 function probarPin(){
   const pin = (cfgCache.config && cfgCache.config.pin) || '1987';
   if($('#pinInp').value === pin){
     sessionStorage.setItem('menusbot_pin_ok','1');
-    $('#candado').style.display = 'none';
+    abrirPanel();
   } else {
     $('#pinError').style.visibility = 'visible';
     $('#pinInp').value = '';
   }
 }
+async function entrarPanel(){
+  const email = $('#logEmail').value.trim().toLowerCase();
+  const pass = $('#logPass').value;
+  const err = $('#logError');
+  err.style.visibility = 'hidden';
+  if(!email || !pass){ err.textContent = 'ESCRIBE TU CORREO Y CONTRASEÑA'; err.style.visibility = 'visible'; return; }
+  try{
+    const filas = await api(`menusbot_restaurantes?email=eq.${encodeURIComponent(email)}&select=slug,nombre,email,pass_hash,activo`);
+    const r = filas && filas[0];
+    const hash = await sha256(email + ':' + pass);
+    if(!r || r.pass_hash !== hash){ err.textContent = 'CORREO O CONTRASEÑA INCORRECTOS'; err.style.visibility = 'visible'; return; }
+    if(r.activo === false){ err.textContent = 'CUENTA DESACTIVADA'; err.style.visibility = 'visible'; return; }
+    SESION = { slug: r.slug, nombre: r.nombre, email: r.email };
+    try{ localStorage.setItem('mb_panel_sesion', JSON.stringify(SESION)); }catch(e){}
+    RID = r.slug;
+    abrirPanel();
+  }catch(e){ err.textContent = 'SIN CONEXIÓN — INTENTA DE NUEVO'; err.style.visibility = 'visible'; }
+}
+function salirPanel(){
+  try{ localStorage.removeItem('mb_panel_sesion'); }catch(e){}
+  location.href = 'panel.html';
+}
 document.getElementById('pinInp').addEventListener('keydown', e => { if(e.key === 'Enter') probarPin(); });
-if(sessionStorage.getItem('menusbot_pin_ok')) document.getElementById('candado').style.display = 'none';
+document.getElementById('logPass').addEventListener('keydown', e => { if(e.key === 'Enter') entrarPanel(); });
 
 setInterval(render, 1000);
-cargar();
+if(MODO_DEMO){
+  $('#accesoDemo').style.display = 'flex';
+  cargar(); // el demo carga su marca aunque el candado esté puesto
+  if(sessionStorage.getItem('menusbot_pin_ok')) abrirPanel();
+}else if(RID && SESION){
+  $('#btnSalir').style.display = '';
+  abrirPanel();
+}else{
+  // login genérico: sin marca de un restaurante ajeno
+  $('#marcaCandado').innerHTML = 'Panel del restaurante<small>ACCESO PARA CUENTAS REGISTRADAS</small>';
+  $('#accesoLogin').style.display = 'flex';
+}
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </body>
