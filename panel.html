@@ -1171,7 +1171,10 @@ function parsearMenu(texto){
            mejor no fijar categoria y dejar que cada platillo se clasifique solo. */
         const columnas = cruda.split('\u0001').filter(x => x.trim());
         const bs = impBuckets(l);
-        catActual = (columnas.length === 1 && bs.length === 1) ? (impCatDestino(bs[0]) || catActual) : null;
+        /* Si el encabezado no corresponde a ninguna categoria del restaurante
+           (p. ej. "TACOS" en un italiano) se limpia: arrastrar la categoria
+           anterior mandaria los tacos a "entradas". */
+        catActual = (columnas.length === 1 && bs.length === 1) ? impCatDestino(bs[0]) : null;
         continue;
       }
       /* Linea descriptiva: sirve como ingredientes del ultimo platillo */
@@ -1291,7 +1294,7 @@ var NUTRI_BASE = [
   [/agua fresca|agua de |jamaica|limonada|naranjada|agua de tamarindo|horchata de agua/, {kcal:70, p:0, c:17, g:0}],
   [/horchata|licuado|malteada|smoothie|batido|frapp/, {kcal:170, p:3, c:30, g:4}],
   [/jugo|zumo|n[eé]ctar/, {kcal:110, p:1, c:26, g:0}],
-  [/caf[eé]|expreso|espresso|americano|capuchino|latte|\bt[eé]\b|infusi[oó]n|matcha/, {kcal:10, p:0, c:2, g:0}],
+  [/caf[eé]|expreso|espresso|americano|capuchino|latte|\bte\b|\bté(?![a-záéíóúñ])|infusi[oó]n|matcha/, {kcal:10, p:0, c:2, g:0}],
   [/agua natural|agua mineral|agua purificada|\bhielo\b|sin az[uú]car/, {kcal:0, p:0, c:0, g:0}],
 
   /* ---------- POSTRES Y DULCES ---------- */
@@ -1307,9 +1310,9 @@ var NUTRI_BASE = [
 
 /* Método de cocción: multiplicadores aplicados al final (se acumulan) */
 var COCCION = [
-  [/\bfrit[oa]s?\b|fritura|capeado|empanizado|empanado|rebozado|tempura|chicharr[oó]n|a la francesa|crujiente|dorado en aceite/, {kcalX:1.45, gX:1.70}],
-  [/\bwok\b|salteado|salteada|sofrito|salteadas/, {kcalX:1.08, gX:1.20}],
-  [/asado|asada|a la plancha|al vapor|horneado|al horno|a la parrilla|parrilla|brasas|grillado|hervido|a la talla|rostizado/, {kcalX:0.92, gX:0.85}]
+  [/\bfrit[oa]s?\b|fritura|capead[oa]s?|empaniz|empanad[oa]s?|rebozad[oa]s?|tempura|a la francesa|crujiente|dorad[oa]s? en aceite|al ajillo/, {kcalX:1.45, gX:1.70}],
+  [/\bwok\b|salte[ao]d[oa]s?|sofrit[oa]s?|a la mantequilla/, {kcalX:1.08, gX:1.20}],
+  [/asad[oa]s?|a la plancha|al vapor|horne[ao]d[oa]s?|al horno|a la parrilla|parrilla|brasas|grillad[oa]s?|hervid[oa]s?|a la talla|rostizad[oa]s?|al carb[oó]n|a la le[nñ]a/, {kcalX:0.92, gX:0.85}]
 ];
 
 /* Tamaño de porción: se usa el PRIMER patrón que coincida */
@@ -1319,36 +1322,55 @@ var PORCION = [
 ];
 
 /* Inferencia de ingredientes a partir del NOMBRE del platillo.
-   Se devuelve la PRIMERA coincidencia, por eso el orden importa
-   (lo específico va antes que lo genérico). */
+   Cada regla es [regex, 'ingredientes', rol]. El rol es opcional:
+     'p' (por defecto) = plato principal. El PRIMERO que coincida aporta
+         todos sus ingredientes; los demás principales no se acumulan
+         (evita sumar dos proteínas por el mismo platillo).
+     'g' = guarnición o acompañamiento. Se suma SIEMPRE, después de la
+         proteína principal y con un máximo de 3 ingredientes, para que
+         el plato fuerte pese más que la guarnición.
+     'x' = exclusivo (bebidas y postres). Si coincide, manda solo.
+   El orden importa: lo específico va antes que lo genérico. */
 var INFERENCIA = [
-  /* --- Mexicana --- */
+  /* --- Mexicana: antojitos y guisos --- */
   [/pastor|adobada|trompo/, 'tortilla de maíz, cerdo al pastor, piña, cebolla, cilantro, salsa roja'],
   [/carnitas/, 'tortilla de maíz, carnitas de cerdo, cebolla, cilantro, salsa verde'],
-  [/birria|barbacoa|suadero/, 'tortilla de maíz, birria de res, consomé, cebolla, cilantro, limón'],
+  [/barbacoa/, 'tortilla de maíz, barbacoa de borrego, consomé, cebolla, cilantro, salsa verde'],
+  [/birria|suadero/, 'tortilla de maíz, birria, consomé, cebolla, cilantro, limón'],
   [/cochinita|pibil/, 'tortilla de maíz, cochinita pibil, cebolla morada, chile habanero'],
   [/pozole/, 'maíz pozolero, cerdo, chile guajillo, lechuga, cebolla, orégano'],
   [/chiles? en nogada/, 'chile poblano, carne de res y cerdo, fruta, nuez, crema, granada'],
-  [/chile relleno/, 'chile poblano, queso, huevo capeado, salsa de jitomate, arroz'],
-  [/guacamole/, 'aguacate, jitomate, cebolla, cilantro, limón, totopos, entrada'],
+  [/chiles? rellenos?/, 'chile poblano, queso, huevo, capeado, salsa de jitomate'],
+  [/rajas con crema|rajas poblanas/, 'chile poblano, crema, elote, queso, tortilla de maíz'],
   [/\bmole\b|\bmoles\b|pipi[aá]n/, 'mole poblano, pollo, ajonjolí, arroz'],
-  [/enchilada|entomatada|enmolada/, 'tortilla de maíz, pollo, salsa de chile, queso, crema, cebolla'],
+  [/enchilada|entomatada|enmolada|enfrijolada/, 'tortilla de maíz, pollo, salsa de chile, queso, crema, cebolla'],
   [/chilaquil/, 'totopos de maíz, salsa verde, pollo, crema, queso fresco, cebolla'],
   [/quesadilla/, 'tortilla de maíz, queso oaxaca, salsa verde'],
+  [/sincronizada/, 'tortilla de trigo, jamón, queso oaxaca, salsa verde'],
   [/sope|huarache|gordita|tlacoyo/, 'masa de maíz, frijol, carne de res, queso fresco, crema, salsa roja'],
   [/tostada/, 'tostada de maíz, frijol, pollo, lechuga, crema, queso fresco'],
   [/\btorta\b|\btortas\b/, 'pan telera, milanesa de res, frijol, aguacate, jitomate, crema'],
   [/tamal/, 'masa de maíz, manteca, pollo, salsa verde'],
+  [/mollete/, 'bolillo, frijol refrito, queso gratinado, pico de gallo'],
+  [/tinga/, 'pollo deshebrado, chile chipotle, jitomate, cebolla, tostada de maíz, crema'],
+  [/alb[oó]ndiga/, 'carne de res molida, arroz, salsa de jitomate, chile chipotle'],
+  [/chicharr[oó]n en salsa|chicharr[oó]n prensado|chicharr[oó]n guisado/, 'chicharrón, salsa verde, frijol, tortilla de maíz'],
   [/sopa de tortilla|sopa azteca/, 'caldo de jitomate, totopos de maíz, aguacate, queso fresco, chile pasilla'],
   [/sopa de fideo/, 'fideo, caldo de jitomate, queso fresco'],
+  [/consom[eé]/, 'caldo de pollo, verduras, cebolla, cilantro'],
   [/caldo de pollo|caldo tlalpe|sopa de pollo/, 'caldo de pollo, verduras, arroz, aguacate, chile chipotle'],
-  [/menudo|pancita/, 'pancita de res, maíz pozolero, chile guajillo, cebolla, orégano'],
-  [/nopal/, 'nopal asado, queso fresco, cebolla, salsa verde'],
+  [/caldo de res|puchero|mole de olla/, 'caldo de res, verduras, elote, garbanzo, cilantro'],
+  [/crema de (champi|elote|br[oó]coli|calabaza|zanahoria|espinaca|hongo)|sopa de verdura/, 'caldo, verduras, crema, mantequilla'],
+  [/menudo|pancita/, 'pancita, maíz pozolero, chile guajillo, cebolla, orégano'],
   [/molcajete|parrillada/, 'arrachera, pollo, chorizo, queso asado, nopal, salsa roja, tortilla de maíz'],
-  [/huevos? (ranchero|divorciado|a la mexicana|revuelto|estrellado)/, 'huevo, tortilla de maíz, salsa de jitomate, frijol'],
-  [/elote|esquite/, 'elote, mayonesa, queso cotija, chile en polvo, limón'],
+  [/huevos? (ranchero|divorciado|a la mexicana|revuelt|estrellad|con chorizo|con jam[oó]n|con tocino|motule|alba[nñ]il)/, 'huevo, tortilla de maíz, salsa de jitomate, frijol, queso fresco'],
+  [/omelette|omelet/, 'huevo, queso, verduras, mantequilla'],
   [/burrito|gringa/, 'tortilla de trigo, frijol, arroz, carne de res, queso'],
   [/fajita/, 'arrachera a la plancha, pimiento, cebolla, tortilla de trigo, guacamole'],
+  [/alambre/, 'arrachera, tocino, pimiento, cebolla, queso oaxaca, tortilla de maíz'],
+  [/tacos? de pescado/, 'tortilla de maíz, pescado, col, chile chipotle, mayonesa, limón'],
+  [/tacos? de camar[oó]n|tacos? gobernador/, 'tortilla de maíz, camarón, col, chile chipotle, mayonesa'],
+  [/tacos? dorados|flauta/, 'tortilla de maíz, pollo, frito, lechuga, crema, queso fresco'],
   [/\btaco/, 'tortilla de maíz, carne de res, cebolla, cilantro, salsa verde'],
 
   /* --- Italiana --- */
@@ -1360,7 +1382,7 @@ var INFERENCIA = [
   [/pesto/, 'pasta, albahaca, piñón, aceite de oliva, queso parmesano'],
   [/risotto/, 'arroz, mantequilla, queso parmesano, caldo, champiñón'],
   [/ravioli|gnocchi|ñoqui/, 'pasta rellena, queso ricotta, salsa de jitomate, mantequilla'],
-  [/tiramis/, 'queso mascarpone, café, bizcocho'],
+  [/tiramis/, 'queso mascarpone, café, bizcocho', 'x'],
   [/bruschetta|focaccia/, 'pan, jitomate, albahaca, aceite de oliva, ajo, entrada'],
 
   /* --- China / asiática --- */
@@ -1373,68 +1395,144 @@ var INFERENCIA = [
   [/teriyaki/, 'pollo, salsa teriyaki, arroz, ajonjolí, verduras'],
   [/curry/, 'curry, leche de coco, pollo, arroz, verduras'],
   [/tempura/, 'camarón, verduras, tempura, aceite'],
-  [/ramen|udon/, 'fideo, caldo, cerdo, huevo, alga nori, cebollín'],
+  [/ramen|udon|pho\b/, 'fideo, caldo, cerdo, huevo, alga nori, cebollín'],
   [/tofu|mapo/, 'tofu, salsa de soya, chile, verduras, arroz'],
-  [/sushi|maki|nigiri|california|sashimi|hand ?roll/, 'arroz, alga nori, pescado, aguacate, pepino'],
+  [/sushi|maki|nigiri|california|sashimi|hand ?roll|uramaki|temaki/, 'arroz, alga nori, pescado, aguacate, pepino'],
   [/pad ?thai/, 'fideo, camarón, cacahuate, huevo, germinado, salsa de tamarindo dulce'],
 
   /* --- Mariscos --- */
   [/aguachile/, 'camarón, limón, chile serrano, pepino, cebolla morada'],
   [/ceviche/, 'pescado, limón, jitomate, cebolla, cilantro, aguacate, tostada'],
   [/c[oó]ctel de camar|campechana/, 'camarón, jugo de tomate, cebolla, cilantro, aguacate'],
-  [/pulpo/, 'pulpo, aceite de oliva, papa, ajo, chile guajillo'],
+  [/pulpo/, 'pulpo, aceite de oliva, papa, ajo, chile guajillo, limón'],
   [/mojarra|tilapia|pescado frito/, 'mojarra, frito, limón, arroz, ensalada'],
   [/camar[oó]n/, 'camarón, ajo, mantequilla, chile, arroz, ensalada'],
-  [/salm[oó]n|at[uú]n|marlin/, 'salmón a la plancha, verduras, limón, aceite de oliva'],
-  [/pescado|filete de|robalo|róbalo|huachinango/, 'pescado a la plancha, arroz, verduras, limón, aceite de oliva'],
+  [/salm[oó]n|at[uú]n|marlin/, 'salmón a la plancha, verduras, arroz, limón, aceite de oliva'],
+  [/pescado|filete de pescado|r[oó]balo|huachinango|bacalao/, 'pescado a la plancha, arroz, verduras, limón, aceite de oliva'],
 
-  /* --- Parrilla / americana --- */
-  [/hamburguesa|burger/, 'pan de hamburguesa, carne de res, queso, tocino, lechuga, jitomate, cebolla, catsup'],
-  [/papas? (a la francesa|fritas|gajo)/, 'papa, frito, sal, catsup'],
-  [/arrachera|carne asada|t-bone|rib ?eye|sirloin|new york/, 'arrachera de res a la parrilla, cebolla asada, nopal, frijol, tortilla de maíz'],
+  /* --- Parrilla / carnes / americana --- */
+  [/arrachera|carne asada|t-bone|rib ?eye|sirloin|new york|tampique[nñ]a/, 'arrachera de res a la parrilla, cebolla asada, nopal, frijol, tortilla de maíz'],
+  [/bistec|bisteck|\bsteak\b/, 'bistec de res, cebolla, jitomate, chile serrano, frijol, tortilla de maíz'],
+  [/cecina|tasajo|machaca/, 'cecina, nopal asado, frijol, queso fresco, tortilla de maíz'],
+  [/milanesa de pollo|milanesa de pechuga/, 'pechuga de pollo, empanizado, papa, ensalada, limón'],
+  [/milanesa/, 'milanesa de res, empanizado, papa, ensalada, limón'],
+  [/chuleta/, 'chuleta de cerdo, papa, ensalada, limón'],
+  [/filete de res|filete mi[gñ]?n[oó]n|mignon|lomo de cerdo|lomo relleno|medall[oó]n/, 'filete de res, papa, verduras, mantequilla'],
   [/costilla|\bribs\b/, 'costilla de res, salsa bbq, papa, ensalada'],
+  [/pollo empanizad|pollo frito|fried chicken|pollo capead/, 'pollo, empanizado, papa, ensalada'],
+  [/pollo (a la parrilla|a la plancha|asad|rostizad|al carb[oó]n|a las brasas)|pechuga|rostizad|pollo a la le[nñ]a/, 'pechuga de pollo, aceite de oliva, verduras, arroz, ensalada'],
   [/alitas|boneless|nuggets/, 'pollo, empanizado, salsa bbq, apio, aderezo'],
+  [/hamburguesa|burger/, 'pan de hamburguesa, carne de res, queso, tocino, lechuga, jitomate, cebolla, catsup'],
   [/s[aá]ndwich|sandwich|club house/, 'pan de caja, pollo, tocino, queso, lechuga, jitomate, mayonesa'],
+  [/wrap\b/, 'tortilla de trigo, pollo, lechuga, jitomate, aderezo'],
   [/hot ?dog|jocho/, 'pan, salchicha de cerdo, tocino, catsup, mostaza, cebolla'],
   [/nachos/, 'totopos de maíz, queso, frijol, jalapeño, guacamole'],
 
+  /* --- Guarniciones y acompañamientos (se suman al plato fuerte) --- */
+  [/nopal/, 'nopal asado, cebolla, salsa verde, queso fresco', 'g'],
+  [/elote|esquite/, 'elote, mayonesa, queso cotija, chile en polvo, limón', 'g'],
+  [/guacamole/, 'aguacate, jitomate, cebolla, cilantro, limón, totopos, entrada', 'g'],
+  [/papas? (a la francesa|fritas?|gajo)/, 'papa, frito, sal, catsup', 'g'],
+  [/frijoles? charros?|frijoles? puercos?/, 'frijol, tocino, cebolla, chile', 'g'],
+  [/frijoles? (refritos?|de la olla|negros)/, 'frijol, manteca, queso fresco', 'g'],
+  [/verduras? (asad|saltead|al vapor|a la mantequilla|a la parrilla)|vegetales asados/, 'verduras, aceite de oliva', 'g'],
+  [/\barroz\b/, 'arroz', 'g'],
+
   /* --- Ensaladas y vegetariano --- */
+  [/ensalada de fruta|c[oó]ctel de fruta/, 'fruta, yogur, granola, miel', 'x'],
   [/ensalada c[eé]sar/, 'lechuga romana, aderezo césar, queso parmesano, crutones, pollo a la plancha'],
   [/ensalada/, 'lechuga, jitomate, pepino, zanahoria, aderezo, queso panela'],
   [/vegetarian|vegan|vegetal|buddha bowl/, 'verduras, tofu, quinoa, aguacate, aceite de oliva'],
 
+  /* --- Genéricos: solo entran si ninguna regla específica coincidió --- */
+  [/\bpollo\b|\bpavo\b/, 'pollo, arroz, verduras, aceite de oliva'],
+  [/\bres\b|\bcarne\b|\bcerdo\b|\bpuerco\b|\bternera\b/, 'carne de res, cebolla, chile, arroz, frijol'],
+  [/pasta|espagueti|spaghetti|penne|macarr|tallarin|tallarín/, 'pasta, salsa de jitomate, queso parmesano, aceite de oliva'],
+
   /* --- Postres --- */
-  [/flan/, 'huevo, leche, azúcar, caramelo, vainilla'],
-  [/churro|bu[nñ]uelo/, 'churro, azúcar, canela'],
-  [/pastel|tarta|cheesecake|tres leches|brownie/, 'pastel, chocolate'],
-  [/\bpay\b|\bpie de\b/, 'pay, fruta, azúcar'],
-  [/helado|nieve/, 'helado, fruta'],
-  [/arroz con leche/, 'arroz, leche, azúcar, canela'],
-  [/crepa|crep[ae]s/, 'crepa, huevo, leche, cajeta'],
+  [/flan/, 'huevo, leche, azúcar, caramelo, vainilla', 'x'],
+  [/churro|bu[nñ]uelo/, 'churro, azúcar, canela', 'x'],
+  [/pastel|tarta|cheesecake|tres leches|brownie|panqu[eé]|carlota/, 'pastel, chocolate', 'x'],
+  [/\bpay\b|\bpie de\b/, 'pay, fruta, azúcar', 'x'],
+  [/helado|nieve|sundae|banana split/, 'helado, fruta', 'x'],
+  [/arroz con leche/, 'arroz, leche, azúcar, canela', 'x'],
+  [/gelatina/, 'gelatina, azúcar, fruta', 'x'],
+  [/rollo de canela|cinnamon roll/, 'pan, azúcar, canela, mantequilla', 'x'],
+  [/crepa|crep[ae]s/, 'crepa, huevo, leche, cajeta', 'x'],
 
   /* --- Bebidas --- */
-  [/horchata/, 'horchata'],
-  [/agua de|agua fresca|jamaica|limonada|naranjada/, 'agua fresca de jamaica'],
-  [/refresco|coca ?cola|sprite|manzanita|\bsoda\b/, 'refresco'],
-  [/michelada|chelada/, 'cerveza, limón, salsa inglesa, chile en polvo'],
-  [/cerveza|caguama|lager/, 'cerveza'],
-  [/margarita|paloma|mojito|c[oó]ctel|coctel/, 'tequila, limón, jarabe, hielo'],
-  [/tequila|mezcal|whisky|vodka|\bron\b/, 'tequila, hielo'],
-  [/vino|sangr[ií]a|copa de/, 'vino tinto'],
-  [/malteada|licuado|smoothie|frapp/, 'leche, fruta, azúcar, helado'],
-  [/jugo|zumo/, 'jugo natural'],
-  [/caf[eé]|espresso|expreso|capuchino|latte|americano/, 'café'],
-  [/\bt[eé]\b|infusi[oó]n|manzanilla/, 'té']
+  [/horchata/, 'horchata', 'x'],
+  [/agua de|agua fresca|jamaica|limonada|naranjada/, 'agua fresca de jamaica', 'x'],
+  [/refresco|coca ?cola|sprite|manzanita|\bsoda\b/, 'refresco', 'x'],
+  [/michelada|chelada/, 'cerveza, limón, salsa inglesa, chile en polvo', 'x'],
+  [/cerveza|caguama|lager/, 'cerveza', 'x'],
+  [/margarita|paloma|mojito|c[oó]ctel|coctel/, 'tequila, limón, jarabe, hielo', 'x'],
+  [/tequila|mezcal|whisky|vodka|\bron\b/, 'tequila, hielo', 'x'],
+  [/vino|sangr[ií]a|copa de/, 'vino tinto', 'x'],
+  [/malteada|licuado|smoothie|frapp/, 'leche, fruta, azúcar, helado', 'x'],
+  [/jugo de|jugo natural|\bzumo\b|n[eé]ctar de/, 'jugo natural', 'x'],
+  [/caf[eé]|espresso|expreso|capuchino|latte|americano/, 'café', 'x'],
+  [/\bt[eé]\b|infusi[oó]n|manzanilla/, 'té', 'x']
 ];
 
-/* Devuelve el string de ingredientes inferido a partir del nombre, o '' */
+/* Tope de ingredientes inferidos y de aporte por guarnición */
+var INFER_MAX_ING = 8;
+var INFER_MAX_GUARNICION = 3;
+
+/* Parte un string de ingredientes en piezas limpias */
+function partirIngredientes(txt) {
+  var out = [], p = String(txt == null ? '' : txt).split(',');
+  for (var i = 0; i < p.length; i++) {
+    var s = p[i].replace(/\s+/g, ' ').trim();
+    if (s) out.push(s);
+  }
+  return out;
+}
+
+/* ¿Todas las palabras de a están dentro de b? */
+function palabrasContenidas(a, b) {
+  for (var i = 0; i < a.length; i++) if (b.indexOf(a[i]) === -1) return false;
+  return true;
+}
+
+/* Agrega ingredientes a la lista sin repetir. Si el nuevo ingrediente es
+   más específico que uno ya presente ('nopal' -> 'nopal asado') lo sustituye
+   en su lugar; si es menos específico se descarta. limite = 0 -> sin límite. */
+function sumarIngredientes(lista, texto, limite) {
+  var partes = partirIngredientes(texto);
+  for (var i = 0; i < partes.length; i++) {
+    if (lista.length >= INFER_MAX_ING) return;
+    if (limite && i >= limite) return;
+    var item = partes[i], w = item.toLowerCase().split(' '), rep = false;
+    for (var j = 0; j < lista.length; j++) {
+      var wj = lista[j].toLowerCase().split(' ');
+      if (palabrasContenidas(w, wj)) { rep = true; break; }
+      if (palabrasContenidas(wj, w)) { lista[j] = item; rep = true; break; }
+    }
+    if (!rep) lista.push(item);
+  }
+}
+
+/* Devuelve el string de ingredientes inferido a partir del nombre, o ''.
+   Es ADITIVO: junta el plato fuerte con todas sus guarniciones. */
 function inferirIngredientes(nombre) {
   var t = String(nombre == null ? '' : nombre).toLowerCase();
   if (!t) return '';
-  for (var i = 0; i < INFERENCIA.length; i++) {
-    if (INFERENCIA[i][0].test(t)) return INFERENCIA[i][1];
+  var principal = '', guarniciones = [], i, rol;
+  for (i = 0; i < INFERENCIA.length; i++) {
+    if (!INFERENCIA[i][0].test(t)) continue;
+    rol = INFERENCIA[i][2] || 'p';
+    if (rol === 'x') { if (!principal) return INFERENCIA[i][1]; continue; }
+    if (rol === 'g') { guarniciones.push(INFERENCIA[i][1]); continue; }
+    if (!principal) principal = INFERENCIA[i][1];
   }
-  return '';
+  if (!principal && !guarniciones.length) return '';
+  var lista = [];
+  if (principal) sumarIngredientes(lista, principal, 0);
+  for (i = 0; i < guarniciones.length; i++) {
+    sumarIngredientes(lista, guarniciones[i], (!principal && i === 0) ? 0 : INFER_MAX_GUARNICION);
+  }
+  return lista.join(', ');
 }
 
 /* Acota un número a un rango */
