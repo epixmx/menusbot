@@ -228,6 +228,11 @@
     <div class="vivo" id="chipVivo"><i></i> EN VIVO</div>
     <button class="btn-sec" id="btnTema" onclick="alternarTemaPanel()" style="padding:9px 13px;font-size:8.5px" title="Cambiar tema del panel">TEMA OSCURO</button>
     <button class="btn-sec" id="btnSalir" onclick="salirPanel()" style="padding:9px 13px;font-size:8.5px;display:none" title="Cerrar sesión">SALIR</button>
+    <div id="urlPublica" style="display:none;align-items:center;gap:8px;flex-basis:100%;padding-top:2px">
+      <span class="caps" style="color:var(--humo2)">TU CARTA PÚBLICA</span>
+      <a id="urlPublicaLink" href="#" target="_blank" style="color:var(--pomodoro);font-size:11.5px;font-weight:600;text-decoration:none;word-break:break-all"></a>
+      <button class="btn-sec" onclick="copiarUrlPublica()" style="padding:6px 10px;font-size:8px">COPIAR</button>
+    </div>
     <div class="tabs">
       <button class="tab activo" data-v="comandas">Comandas<span class="mini-badge" id="badgeNuevas">0</span></button>
       <button class="tab" data-v="registro">Registro</button>
@@ -413,7 +418,7 @@
       </div>
     </div>
     <div class="temas-grid" id="qrGrid" style="grid-template-columns:repeat(4,1fr)"></div>
-    <div class="nota-pie">Cada QR abre la carta con la mesa ya asignada (…/carta.html?mesa=N). El comensal escanea, ordena y su comanda llega aquí con su número de mesa.</div>
+    <div class="nota-pie">Cada QR abre la carta de TU restaurante con la mesa ya asignada (…/carta.html?mesa=N&amp;r=tu-restaurante). El comensal escanea, ordena y su comanda llega aquí con su número de mesa. La URL pública general de tu carta aparece arriba en el encabezado.</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1333,7 +1338,24 @@ function imprimirQRs(){
 function abrirPanel(){
   accesoOk = true;
   $('#candado').style.display = 'none';
+  pintarUrlPublica();
   cargar();
+}
+/* URL pública de la carta del restaurante (asignada por el sistema) */
+function urlPublicaCarta(){ return new URL('carta.html', location.href).href + '?r=' + encodeURIComponent(RID); }
+function pintarUrlPublica(){
+  if(!RID) return;
+  const z = $('#urlPublica');
+  z.style.display = 'flex';
+  const a = $('#urlPublicaLink');
+  a.href = urlPublicaCarta();
+  a.textContent = urlPublicaCarta().replace(/^https?:\/\//,'');
+}
+function copiarUrlPublica(){
+  const u = urlPublicaCarta();
+  (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject())
+    .then(() => toast('URL pública copiada — compártela donde quieras'))
+    .catch(() => { prompt('Copia la URL de tu carta:', u); });
 }
 function probarPin(){
   const pin = (cfgCache.config && cfgCache.config.pin) || '1987';
