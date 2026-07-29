@@ -1129,8 +1129,18 @@ function impLimpiarNombre(s){
   s = String(s || '');
   s = s.replace(/^[\s\d]{0,4}[).\-•·*»–—]\s*/, '');
   s = s.replace(/\.{2,}|·{2,}|_{2,}|-{3,}/g, ' ');
+  /* Los puntos guia ("Platillo ....... $95") salen del OCR como basura:
+     «, —, ~, letras repetidas. Se corta desde el primer sintoma hasta el final. */
+  const ruido = s.search(/[«»~…]|\s[·—–_]|\s\.{2,}/);
+  if(ruido > 3) s = s.slice(0, ruido);
   s = s.replace(/[\s.·•_\-–—|]+$/, '');
   s = s.replace(/\s{2,}/g, ' ').trim();
+  /* Restos tipicos del OCR de una linea de puntos: "men", "ee", "nen"… */
+  for(let i = 0; i < 3; i++){
+    const t = s.replace(/\s+(?:m?e{2,}n?s?|m[ei]n|n[ei]n|[emn]{3,}|[a-z]?e{2,}[a-z]?)\s*$/i, '');
+    if(t === s) break;
+    s = t;
+  }
   s = s.replace(/\b(chica|mediana|grande|chico|individual|orden|media orden|c\/u|pza|pzas)\s*$/i, '').trim();
   s = s.replace(/[\s.·•_\-–—|]+$/, '');
   if(/[A-ZÁÉÍÓÚÑÜ]/.test(s) && s === s.toUpperCase()) s = impTitulo(s);
