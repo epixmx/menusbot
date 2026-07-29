@@ -776,6 +776,17 @@ async function sincronizar(){
   try{
     const cfgs = await api(`menusbot_config?id=eq.${RID}&select=data`);
     if(cfgs && cfgs[0]) dbCache = cfgs[0].data || dbCache;
+    /* Un slug que no existe (restaurante dado de baja) NO debe caer al menú demo */
+    if(RID !== 'bellavita' && (!cfgs || !cfgs.length)){
+      if(!window._rInexistente){
+        window._rInexistente = true;
+        document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:var(--esp);color:var(--crema);text-align:center;padding:30px;font-family:var(--grot)">
+          <div style="font-family:var(--serif);font-style:italic;font-size:30px">Este menú ya no está disponible</div>
+          <div style="font-size:12px;color:var(--humo);line-height:1.8;max-width:340px">El código QR que escaneaste no corresponde a un restaurante activo. Pide ayuda al personal del restaurante.</div>
+        </div>`;
+      }
+      return;
+    }
     sinConexion = false;
     aplicarTema((dbCache.config && dbCache.config.tema) || 'editoriale');
     aplicarMarca();

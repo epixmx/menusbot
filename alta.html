@@ -258,8 +258,14 @@ async function crearCuenta(){
       slug = slug + '-' + n;
     }
     const hash = await sha256(email + ':' + pass);
-    await api('menusbot_restaurantes', { method:'POST', body: JSON.stringify({ slug, nombre, email, pass_hash: hash, cocina, plan:'demo' }) });
+    // primero el menú/configuración (si esto falla, no queda cuenta a medias)
     await api('menusbot_config', { method:'POST', body: JSON.stringify({ id: slug, data: configSemilla(nombre, cocina) }) });
+    try{
+      await api('menusbot_restaurantes', { method:'POST', body: JSON.stringify({ slug, nombre, email, pass_hash: hash, cocina, plan:'demo' }) });
+    }catch(e2){
+      await api(`menusbot_config?id=eq.${encodeURIComponent(slug)}`, { method:'DELETE' }).catch(() => {});
+      throw e2;
+    }
     try{ localStorage.setItem('mb_panel_sesion', JSON.stringify({ slug, nombre, email })); }catch(e){}
     location.href = 'panel.html';
   }catch(e){
