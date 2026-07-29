@@ -480,6 +480,7 @@
 <div class="velo" id="velo"></div>
 <div class="hoja" id="hoja"></div>
 <div class="hoja" id="hojaConf"></div>
+<div class="hoja" id="hojaResena"></div>
 <div class="hoja" id="hojaSucursal"></div>
 <div class="hoja" id="hojaAyuda">
   <div class="confirmacion" style="text-align:left">
@@ -706,6 +707,13 @@ async function api(ruta, opc = {}){
   return tx ? JSON.parse(tx) : null;
 }
 let dbCache = { config:{ tema:'editoriale', meseros:[] }, precios:{}, ocultos:[], platillos:[], fotos:{}, adminVisto:0 };
+/* `config` es la configuración que el restaurante guarda desde su panel. Va como getter y no como
+   copia porque cada sincronización REEMPLAZA dbCache completo: una copia quedaría apuntando a un
+   objeto viejo y el comensal vería ajustes de hace minutos. */
+Object.defineProperty(window, 'config', {
+  configurable: true,
+  get(){ if(!dbCache.config) dbCache.config = {}; return dbCache.config; },
+});
 let sinConexion = false;
 const adminActivo = () => (Date.now() - (dbCache.adminVisto || 0)) < 30000;
 
@@ -902,7 +910,7 @@ let SUC = new URLSearchParams(location.search).get('suc') || '';
 function guardarSesion(){
   try{
     if(!pedido.length && !ordenes.length && !cuentaPedida){ localStorage.removeItem(LSK('mb_sesion_v1')); return; }
-    localStorage.setItem(LSK('mb_sesion_v1'), JSON.stringify({ mesa, suc: SUC, pedido, ordenes, misIds, cuentaPedida, ts: Date.now() }));
+    localStorage.setItem(LSK('mb_sesion_v1'), JSON.stringify({ mesa, suc: SUC, pedido, ordenes, misIds, cuentaPedida, resenaOfrecida, ts: Date.now() }));
   }catch(e){}
 }
 function restaurarSesion(mesaURL){
@@ -914,6 +922,7 @@ function restaurarSesion(mesaURL){
     ordenes = g.ordenes || [];
     misIds = g.misIds || [];
     cuentaPedida = !!g.cuentaPedida;
+    resenaOfrecida = !!g.resenaOfrecida;
     if(!SUC && g.suc){ SUC = g.suc; }
     if(mesaURL == null && g.mesa != null){ asignarMesa(g.mesa, true); }
     return true;
@@ -1231,6 +1240,7 @@ function cerrarSheets(){
   $('#velo').classList.remove('abierto');
   $('#hoja').classList.remove('abierta');
   $('#hojaConf').classList.remove('abierta');
+  $('#hojaResena').classList.remove('abierta');
   $('#hojaAyuda').classList.remove('abierta');
   $('#hojaCliente').classList.remove('abierta');
   $('#hojaSucursal').classList.remove('abierta');
@@ -1367,6 +1377,8 @@ function pintarVistaCuenta(){
   const totalMesa = totalMesaSrv != null ? totalMesaSrv : ordenes.reduce((s,o) => s + o.total, 0) + mesaOtras.reduce((s,x) => s + (+x.total || 0), 0);
   if(cuentaPedida){
     html += `<div class="banner-estado" style="--ce:#5FA05A"><span class="be-dot"></span><div><b>CUENTA SOLICITADA</b><small>El mesero viene a tu mesa a cobrar · Total ${fmt(totalMesa)} ${RESTAURANTE.moneda}</small></div></div>`;
+    /* Mientras espera al mesero: si cerró la invitación sin querer, aquí la vuelve a encontrar */
+    if(resenasActivas()) html += `<div style="margin:-4px 20px 12px;font-family:var(--grot);font-size:9.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--oro);cursor:pointer" onclick="abrirHojaResena()">Dejar una reseña</div>`;
   } else if(activas.length){
     const u = activas[activas.length - 1];
     html += `<div class="banner-estado" style="--ce:${ESTADOS_COLOR[u.estado]}"><span class="be-dot"></span><div><b>${ESTADOS_TXT[u.estado].toUpperCase()}</b><small>Orden Nº ${u.num}${activas.length > 1 ? ` · ${activas.length} órdenes en curso` : ''}</small></div></div>`;
@@ -1506,6 +1518,9 @@ function mostrarConfirmacion(o){
 }
 let ultimaLlamada = 0;
 let cuentaPedida = false;
+/* Vive junto a cuentaPedida porque es una bandera de la MISMA visita: viaja en la sesión guardada
+   para que una recarga no vuelva a pedir la reseña, y muere con la visita al cerrarla. */
+let resenaOfrecida = false;
 function llamarMesero(){
   if(Date.now() - ultimaLlamada < 30000){ toast('Ya avisamos a tu mesero — está en camino'); return; }
   ultimaLlamada = Date.now();
@@ -1530,26 +1545,89 @@ function pedirCuenta(){
       if(vistaActual === 'cuenta') pintarVistaCuenta();
       pintarIndicadores();
       toast('Pedimos tu cuenta — el mesero viene a cobrar a tu mesa');
+      /* Con calma: primero que alcance a leer el aviso del mesero, luego pedimos la reseña */
+      setTimeout(mostrarHojaResena, 1200);
     })
     .catch(() => toast('Sin conexión — inténtalo de nuevo'));
 }
 function cerrarVisita(){
   ordenes = []; misIds = []; pedido = []; cuentaPedida = false;
+  /* Visita nueva, cortesía nueva: la siguiente mesa sí vuelve a ver la invitación a reseñar */
+  resenaOfrecida = false;
   mesaOtras = []; totalMesaSrv = null; hashMesa = '';
   try{ localStorage.removeItem(LSK('mb_sesion_v1')); }catch(e){}
   pintarIndicadores();
+  const pideResena = resenasActivas();
   $('#hojaConf').innerHTML = `
     <div class="confirmacion">
       <div class="conf-sello"><div class="interior"><b>GRACIAS</b><span>por tu visita</span></div></div>
       <h2>Cuenta pagada</h2>
       <div class="nota-pie" style="margin:18px 0 0;text-align:left">Tu cuenta quedó cerrada. Si ordenas de nuevo, empezará una cuenta nueva para tu mesa. ¡Hasta pronto!</div>
-      <div class="acciones-orden" style="padding:22px 0 0">
-        <button class="btn-primario" onclick="cerrarSheets();mostrarVista('menu')">Volver a la carta</button>
+      ${pideResena ? bloqueResenaHTML() : ''}
+      <div class="acciones-orden" style="padding:${pideResena ? '14px' : '22px'} 0 0">
+        <button class="${pideResena ? 'btn-fantasma' : 'btn-primario'}" onclick="cerrarSheets();mostrarVista('menu')">Volver a la carta</button>
       </div>
     </div>`;
   $('#velo').classList.add('abierto');
   $('#hojaConf').classList.add('abierta');
   if(vistaActual === 'cuenta') pintarVistaCuenta();
+}
+
+/* ---------- Invitación a reseñar en Google / Facebook (la enciende el restaurante) ---------- */
+const RESENA_TITULO_DEF = '¿Nos regalas una reseña?';
+const RESENA_TEXTO_DEF = 'Si te gustó tu visita, cuéntalo en un minuto. Nos ayuda muchísimo.';
+/* Los textos y los links los escribe a mano el restaurante en su panel, así que aquí se tratan
+   como datos ajenos: el texto se escapa y del link solo aceptamos http/https — un valor con otro
+   esquema (javascript:, data:) se ignora antes de tocar el DOM. */
+const escResena = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const linkResena = u => /^https?:\/\/\S+$/i.test(String(u || '').trim()) ? String(u).trim() : '';
+function resenasActivas(){
+  const r = (config && config.resenas) || {};
+  return r.activo === true && !!(linkResena(r.google) || linkResena(r.facebook));
+}
+/* Misma fila de botones en la hoja y en la pantalla de "Cuenta pagada": una sola verdad visual */
+function bloqueResenaHTML(){
+  const r = (config && config.resenas) || {};
+  const g = linkResena(r.google), f = linkResena(r.facebook);
+  const incentivo = escResena((r.incentivo || '').trim());
+  const btn = (href, txt, extra) => `<a href="${escResena(href)}" target="_blank" rel="noopener" class="btn-primario" style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;box-sizing:border-box;padding:16px 10px;letter-spacing:1.6px;line-height:1.45;${extra}">${txt}</a>`;
+  return `<div style="display:flex;gap:10px;margin-top:18px">
+      ${g ? btn(g, 'Reseñar en Google', '') : ''}
+      ${f ? btn(f, 'Reseñar en Facebook', 'background:var(--oro)') : ''}
+    </div>
+    ${incentivo ? `<div style="margin-top:11px;font-family:var(--grot);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--humo2);line-height:1.7;text-align:left">${incentivo}</div>` : ''}`;
+}
+function pintarHojaResena(){
+  const r = (config && config.resenas) || {};
+  const titulo = escResena((r.titulo || '').trim() || RESENA_TITULO_DEF);
+  const texto = escResena((r.texto || '').trim() || RESENA_TEXTO_DEF);
+  $('#hojaResena').innerHTML = `
+    <div class="confirmacion" style="text-align:left">
+      <div class="caps" style="color:var(--oro);letter-spacing:2.6px">GRACIAS POR TU VISITA</div>
+      <h2 style="text-align:left;margin-top:8px">${titulo}</h2>
+      <div class="nota-pie" style="margin:10px 0 0">${texto}</div>
+      ${bloqueResenaHTML()}
+      <div class="acciones-orden" style="padding:18px 0 0">
+        <button class="btn-fantasma" onclick="cerrarSheets()">Ahora no, gracias</button>
+      </div>
+    </div>`;
+}
+/* Automática al pedir la cuenta: una sola vez por visita y sin taparle otra hoja que ya esté viendo */
+function mostrarHojaResena(){
+  if(!resenasActivas() || resenaOfrecida) return;
+  if(document.querySelector('.hoja.abierta')) return;
+  resenaOfrecida = true;
+  guardarSesion();
+  abrirHojaResena();
+}
+/* A propósito, desde su cuenta: aquí la bandera de una-sola-vez no aplica — él la está pidiendo */
+function abrirHojaResena(){
+  if(!resenasActivas()) return;
+  pintarHojaResena();
+  cerrarSheets();
+  $('#velo').classList.add('abierto');
+  $('#hojaResena').classList.add('abierta');
+  history.pushState({ v: vistaActual, capa: 'resena' }, '');
 }
 
 /* ---------- Utilidades de texto ---------- */

@@ -147,6 +147,14 @@
   .switch i{position:absolute;top:3px;left:4px;width:16px;height:16px;border-radius:50%;background:var(--humo2);transition:.2s}
   .switch.on{background:var(--basilico);border-color:var(--basilico)}
   .switch.on i{left:24px;background:var(--esp)}
+  /* Switch de formulario: checkbox real (oculto) + palanca visual, para poder leerlo con .checked como cualquier input */
+  .switch-lbl{display:inline-flex;align-items:center;gap:12px;cursor:pointer}
+  .switch-lbl input{position:absolute;opacity:0;width:0;height:0}
+  .switch-lbl span.switch{display:inline-block}
+  .switch-lbl input:checked + span.switch{background:var(--basilico);border-color:var(--basilico)}
+  .switch-lbl input:checked + span.switch i{left:24px;background:var(--esp)}
+  html.claro .switch-lbl input:checked + span.switch i{background:#FBF7EE}
+  .switch-lbl input:focus-visible + span.switch{border-color:var(--pomodoro)}
   .agotado{opacity:.45}
 
   /* ---------- Temas ---------- */
@@ -409,6 +417,26 @@
         <button class="btn-mini" onclick="coloresDelTema()">Usar colores del tema</button>
       </div>
     </div>
+    <!-- RESEÑAS: el restaurante pega aquí sus links; el comensal los ve al pedir la cuenta -->
+    <div class="vista-titulo" style="margin-top:36px"><h1 style="font-size:24px">Reseñas al final de la visita</h1><span class="caps">Google y Facebook — se le ofrecen al comensal cuando pide la cuenta</span></div>
+    <div class="marca-zona" id="resenasZona">
+      <label class="switch-lbl" style="margin-bottom:18px">
+        <input type="checkbox" id="rActivo">
+        <span class="switch"><i></i></span>
+        <span class="caps" style="color:var(--humo);letter-spacing:1.6px">Invitar al comensal a dejar reseña cuando pida la cuenta</span>
+      </label>
+      <div class="marca-form">
+        <div><div class="caps lbl">Link de reseñas de Google</div><input class="filtro" type="url" id="rGoogle" placeholder="https://g.page/r/CXxxxxxxxxxxEBM/review"></div>
+        <div><div class="caps lbl">Link de la página de Facebook</div><input class="filtro" type="url" id="rFacebook" placeholder="https://www.facebook.com/tunegocio"></div>
+        <div><div class="caps lbl">Título (opcional)</div><input class="filtro" id="rTitulo" placeholder="¿Nos regalas una reseña?"></div>
+        <div><div class="caps lbl">Texto (opcional)</div><input class="filtro" id="rTexto" placeholder="Si te gustó tu visita, cuéntalo en un minuto. Nos ayuda muchísimo."></div>
+        <div><div class="caps lbl">Incentivo (opcional)</div><input class="filtro" id="rIncentivo" placeholder="Muéstrale tu reseña al mesero y te invitamos un café"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+        <button class="btn-sec" onclick="guardarResenas()">Guardar reseñas</button>
+      </div>
+      <div class="nota-pie">Para el link de Google entra a tu perfil de empresa desde Google Maps, busca el botón «Pedir reseñas» y copia el enlace corto que te da, del tipo https://g.page/r/… — es el que abre la ventana de calificación directo. El de Facebook es la URL de la página de tu negocio, la misma que usas para compartirla. Si dejas título, texto o incentivo vacíos, el comensal ve los textos de ejemplo que aparecen en gris arriba.</div>
+    </div>
     <div class="vista-titulo" style="margin-top:36px"><h1 style="font-size:24px">Temas</h1><span class="caps">La base visual que ve el comensal</span></div>
     <div class="temas-grid" id="temasGrid"></div>
     <div class="nota-pie">Al aplicar un tema o guardar la identidad, la app del comensal cambia al instante (pruébalo con las dos ventanas lado a lado). Los colores corporativos se aplican encima del tema elegido.</div>
@@ -424,6 +452,14 @@
     </div>
     <div class="temas-grid" id="qrGrid" style="grid-template-columns:repeat(4,1fr)"></div>
     <div class="nota-pie">Cada QR abre la carta de TU restaurante con la mesa ya asignada (…/carta.html?mesa=N&amp;r=tu-restaurante). El comensal escanea, ordena y su comanda llega aquí con su número de mesa. La URL pública general de tu carta aparece arriba en el encabezado.</div>
+
+    <!-- QR de reseñas: va más grande que el de mesas porque se pega en el ticket o en un tent de mesa -->
+    <div class="vista-titulo" style="margin-top:40px"><h1 style="font-size:24px">QR de reseñas</h1><span class="caps">Para el ticket o un tent de mesa</span>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn-sec" id="btnImpResenas" onclick="imprimirQRResenas()" style="display:none">Imprimir QR de reseñas</button>
+      </div>
+    </div>
+    <div class="temas-grid" id="qrResenasZona" style="grid-template-columns:repeat(2,1fr);max-width:520px"></div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -554,6 +590,7 @@ function aplicarMarcaPanel(){
     document.documentElement.style.setProperty('--oro', m.secundario || '#C9A227');
   }
   llenarFormMarca(false);
+  llenarFormResenas(false); /* mismo arranque que la identidad: el formulario de reseñas también vive en esta vista */
 }
 function llenarFormMarca(forzar){
   const zona = document.getElementById('marcaZona');
@@ -581,6 +618,49 @@ function guardarMarca(){
   });
   aplicarMarcaPanel(); llenarFormMarca(true);
   toast('Identidad guardada — la carta del comensal y el panel ya la usan');
+}
+/* ---------- Reseñas (Google / Facebook) ----------
+   La forma de config.resenas es un contrato con la pantalla del comensal: no cambies las llaves.
+   Los textos opcionales vacíos los resuelve el comensal con sus propios defaults, por eso aquí
+   guardamos la cadena vacía tal cual en vez de rellenarla. */
+const RESENAS_DEF = { activo:false, google:'', facebook:'', titulo:'', texto:'', incentivo:'' };
+const resenasDe = () => Object.assign({}, RESENAS_DEF, (cfgCache.config && cfgCache.config.resenas) || {});
+/* Mismos defaults que ve el comensal — se usan solo como leyenda del QR y como referencia visual */
+const RESENAS_TXT = { titulo:'¿Nos regalas una reseña?', texto:'Si te gustó tu visita, cuéntalo en un minuto. Nos ayuda muchísimo.' };
+let resenasFormHash = '';
+function llenarFormResenas(forzar){
+  const zona = document.getElementById('resenasZona');
+  if(!zona || !document.getElementById('rGoogle')) return;
+  const r = resenasDe();
+  const hash = JSON.stringify(r);
+  /* No pisamos lo que el usuario está escribiendo (mismo criterio que llenarFormMarca) */
+  if(!forzar && (hash === resenasFormHash || zona.contains(document.activeElement))) return;
+  resenasFormHash = hash;
+  $('#rActivo').checked = !!r.activo;
+  $('#rGoogle').value = r.google || ''; $('#rFacebook').value = r.facebook || '';
+  $('#rTitulo').value = r.titulo || ''; $('#rTexto').value = r.texto || ''; $('#rIncentivo').value = r.incentivo || '';
+}
+const urlValida = u => /^https?:\/\//i.test(u);
+function guardarResenas(){
+  const google = $('#rGoogle').value.trim(), facebook = $('#rFacebook').value.trim();
+  if(google && !urlValida(google)){ toast('El link de Google debe empezar con https://'); return; }
+  if(facebook && !urlValida(facebook)){ toast('El link de Facebook debe empezar con https://'); return; }
+  const activo = $('#rActivo').checked;
+  /* Decisión: si prende la invitación sin ningún link NO guardamos nada. Guardar con activo=false
+     silenciosamente dejaría el switch prendido en pantalla y apagado en la base — más confuso que un aviso. */
+  if(activo && !google && !facebook){ toast('Necesitas al menos un link, de Google o de Facebook, para invitar a reseñas'); return; }
+  configEscribir(d => {
+    d.config.resenas = {
+      activo: activo,
+      google: google,
+      facebook: facebook,
+      titulo: $('#rTitulo').value.trim(),
+      texto: $('#rTexto').value.trim(),
+      incentivo: $('#rIncentivo').value.trim() };
+  });
+  llenarFormResenas(true);
+  qrResenasListos = -1; renderQRResenas(); /* el QR imprimible apunta a estos links: se rehace al guardar */
+  toast(activo ? 'Reseñas guardadas — el comensal las verá al pedir la cuenta' : 'Reseñas guardadas — la invitación está apagada por ahora');
 }
 function coloresDelTema(){
   configEscribir(d => { d.config.marca = { ...marcaDe(), acento:'', secundario:'' }; });
@@ -887,7 +967,7 @@ function render(){
 
   if(vista === 'reportes') renderReportes(d);
 
-  if(vista === 'qr') renderQRs(d);
+  if(vista === 'qr'){ renderQRs(d); renderQRResenas(); }
 
   if(vista === 'equipo'){
     $('#equipoLista').innerHTML = (d.config.meseros || []).map(m => {
@@ -2028,6 +2108,88 @@ function renderQRs(d){
     new QRCode(celda.querySelector('.qr-celda'), { text: base + '?mesa=' + i + '&r=' + encodeURIComponent(RID) + (suc ? '&suc=' + encodeURIComponent(suc) : ''), width: 108, height: 108, correctLevel: QRCode.CorrectLevel.M });
   }
 }
+/* ---------- QR de reseñas (imprimible) ----------
+   Uno solo, grande, para el ticket o un tent de mesa. Si están los dos links Google va primero. */
+let qrResenasListos = -1;
+function resenasLinks(){
+  const r = resenasDe();
+  return [{ red:'Google', url:(r.google || '').trim() }, { red:'Facebook', url:(r.facebook || '').trim() }].filter(x => urlValida(x.url));
+}
+function renderQRResenas(){
+  const zona = document.getElementById('qrResenasZona');
+  if(!zona) return;
+  const links = resenasLinks();
+  const btn = document.getElementById('btnImpResenas');
+  if(btn) btn.style.display = links.length ? 'inline-block' : 'none';
+  if(!links.length){
+    qrResenasListos = -1;
+    zona.style.gridTemplateColumns = '1fr';
+    zona.innerHTML = '<div class="nota-pie" style="margin:0">Todavía no hay links de reseñas. Agrégalos en Identidad, en «Reseñas al final de la visita», y aquí aparece el QR listo para imprimir.</div>';
+    return;
+  }
+  /* Igual que renderQRs: si la librería del CDN no llegó, avisamos y salimos sin tocar QRCode */
+  if(typeof QRCode === 'undefined'){
+    qrResenasListos = -1;
+    zona.style.gridTemplateColumns = '1fr';
+    zona.innerHTML = '<div class="caps" style="color:var(--humo2)">CARGANDO GENERADOR DE QR…</div>';
+    return;
+  }
+  const m = marcaDe(), r = resenasDe();
+  const leyenda = (r.titulo || '').trim() || RESENAS_TXT.titulo;
+  const clave = JSON.stringify([links, leyenda, m.prefijo, m.nombre]);
+  if(qrResenasListos === clave) return;
+  qrResenasListos = clave;
+  zona.style.gridTemplateColumns = 'repeat(' + links.length + ',1fr)';
+  zona.innerHTML = '';
+  links.forEach(l => {
+    const celda = document.createElement('div');
+    celda.className = 'tema-card';
+    /* Armamos con nodos y textContent porque el título lo escribe el restaurante */
+    const caja = document.createElement('div');
+    caja.className = 'tc-preview qr-celda';
+    caja.style.cssText = 'background:#fff;height:auto;align-items:center;justify-content:center;display:flex;padding:18px';
+    const info = document.createElement('div');
+    info.className = 'tc-info';
+    info.style.flexDirection = 'column';
+    info.style.alignItems = 'flex-start';
+    info.style.gap = '4px';
+    const nom = document.createElement('span');
+    nom.className = 'nombre-t';
+    nom.textContent = (m.prefijo ? m.prefijo + ' ' : '') + m.nombre;
+    const ley = document.createElement('span');
+    ley.className = 'caps';
+    ley.style.color = 'var(--humo)';
+    ley.textContent = leyenda + ' · ' + l.red;
+    info.appendChild(nom); info.appendChild(ley);
+    celda.appendChild(caja); celda.appendChild(info);
+    zona.appendChild(celda);
+    new QRCode(caja, { text: l.url, width: 160, height: 160, correctLevel: QRCode.CorrectLevel.M });
+  });
+}
+function imprimirQRResenas(){
+  const links = resenasLinks();
+  if(!links.length){ toast('Primero agrega el link de Google o de Facebook en Identidad'); return; }
+  if(typeof QRCode === 'undefined'){ toast('El generador de QR aún no cargó — vuelve a intentar en un momento'); return; }
+  renderQRResenas();
+  const m = marcaDe(), r = resenasDe();
+  const leyenda = (r.titulo || '').trim() || RESENAS_TXT.titulo;
+  const texto = (r.texto || '').trim() || RESENAS_TXT.texto;
+  const incentivo = (r.incentivo || '').trim();
+  const celdas = [...document.querySelectorAll('#qrResenasZona .qr-celda')].map((el, i) => {
+    const cv = el.querySelector('canvas'), im = el.querySelector('img');
+    const src = cv ? cv.toDataURL() : (im ? im.src : '');
+    const red = (links[i] || {}).red || '';
+    return `<div style="display:inline-block;text-align:center;margin:16px;padding:22px;border:1px solid #999;max-width:300px"><img src="${src}" style="width:210px"><div style="font-family:Georgia;font-style:italic;font-size:19px;margin-top:12px">${escTxt(leyenda)}</div><div style="font-family:Arial;font-size:11px;color:#444;margin-top:8px;line-height:1.5">${escTxt(texto)}</div>${incentivo ? `<div style="font-family:Arial;font-size:10px;color:#666;margin-top:8px;font-style:italic">${escTxt(incentivo)}</div>` : ''}<div style="font-family:Arial;font-size:8px;letter-spacing:2px;color:#777;margin-top:10px">ESCANEA Y DÉJANOS TU RESEÑA EN ${escTxt(red).toUpperCase()}</div></div>`;
+  }).join('');
+  const w = window.open('', '_blank');
+  if(!w){ toast('El navegador bloqueó la ventana de impresión — permite las ventanas emergentes'); return; }
+  const titulo = escTxt((m.prefijo ? m.prefijo + ' ' : '') + m.nombre);
+  w.document.write(`<html><head><title>Reseñas · ${titulo}</title></head><body style="text-align:center;font-family:Georgia"><h2 style="font-style:italic">${titulo}</h2>${celdas}</body></html>`);
+  w.document.close();
+  setTimeout(() => { try{ w.print(); }catch(e){} }, 500);
+}
+/* Escape mínimo para el HTML de la ventana de impresión (los textos los escribe el restaurante) */
+function escTxt(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function imprimirQRs(){
   const imgs = [...document.querySelectorAll('#qrGrid .qr-celda')].map((el, i) => {
     const cv = el.querySelector('canvas');
