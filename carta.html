@@ -481,6 +481,7 @@
 <div class="hoja" id="hoja"></div>
 <div class="hoja" id="hojaConf"></div>
 <div class="hoja" id="hojaResena"></div>
+<div class="hoja" id="hojaMesa"></div>
 <div class="hoja" id="hojaSucursal"></div>
 <div class="hoja" id="hojaAyuda">
   <div class="confirmacion" style="text-align:left">
@@ -702,7 +703,9 @@ async function api(ruta, opc = {}){
     ...opc,
     headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', ...(opc.headers || {}) },
   });
-  if(!r.ok) throw new Error(await r.text());
+  /* El status viaja en el error: quien toma una mesa necesita distinguir un 409 del índice
+     único (otro dispositivo ganó la carrera) de una caída de red o un permiso negado. */
+  if(!r.ok){ const err = new Error(await r.text()); err.status = r.status; throw err; }
   const tx = await r.text();
   return tx ? JSON.parse(tx) : null;
 }
@@ -910,7 +913,9 @@ let SUC = new URLSearchParams(location.search).get('suc') || '';
 function guardarSesion(){
   try{
     if(!pedido.length && !ordenes.length && !cuentaPedida){ localStorage.removeItem(LSK('mb_sesion_v1')); return; }
-    localStorage.setItem(LSK('mb_sesion_v1'), JSON.stringify({ mesa, suc: SUC, pedido, ordenes, misIds, cuentaPedida, resenaOfrecida, ts: Date.now() }));
+    /* mesaFila viaja en la sesión para que una recarga no le esconda su código al dueño de
+       la mesa; el permiso real se vuelve a verificar contra la nube en cada envío. */
+    localStorage.setItem(LSK('mb_sesion_v1'), JSON.stringify({ mesa, suc: SUC, pedido, ordenes, misIds, cuentaPedida, resenaOfrecida, mesaFila, ts: Date.now() }));
   }catch(e){}
 }
 function restaurarSesion(mesaURL){
@@ -923,6 +928,9 @@ function restaurarSesion(mesaURL){
     misIds = g.misIds || [];
     cuentaPedida = !!g.cuentaPedida;
     resenaOfrecida = !!g.resenaOfrecida;
+    mesaFila = g.mesaFila || null;
+    mesaEsMia = !!(mesaFila && (mesaFila.dispositivo_id === DISP
+      || (Array.isArray(mesaFila.invitados) && mesaFila.invitados.includes(DISP))));
     if(!SUC && g.suc){ SUC = g.suc; }
     if(mesaURL == null && g.mesa != null){ asignarMesa(g.mesa, true); }
     return true;
@@ -948,6 +956,266 @@ function asignarMesa(n, silencioso){
   mostrarGuia();
 }
 function cambiarMesa(){ $('#splash').classList.remove('oculto'); }
+
+/* ================================================================
+   DUEÑO DE LA MESA — una mesa la ordena UN dispositivo
+   Antes, cualquier teléfono que escaneara el QR de la mesa 01 podía mandar comanda,
+   incluso con otra orden de esa misma mesa en preparación: cocina no tenía forma de
+   saber si la orden era real. Ahora la primera pantalla que ordena se queda la mesa y
+   los demás entran con su código de 4 dígitos o con ayuda del mesero.
+   ================================================================ */
+/* Una mesa sin señales de vida por este tiempo se considera abandonada y se puede
+   volver a tomar: sin este límite, un teléfono que se quedó sin batería (o un comensal
+   que se fue sin cerrar) dejaría la mesa trabada para siempre. */
+const MESA_ABANDONO_MIN = 120;
+/* Intentos de código por visita antes de que solo quede el mesero: suficiente para
+   quien se equivoca de dígito, corto para quien está probando a ciegas. */
+const MESA_MAX_INTENTOS = 5;
+/* Identidad del dispositivo. Llave GLOBAL a propósito (sin LSK): el mismo teléfono debe
+   ser el mismo dispositivo en cualquier restaurante — con una llave por restaurante, el
+   dueño de la mesa dejaría de reconocerse a sí mismo al cambiar de slug. */
+const DISP = (() => {
+  try{
+    let d = localStorage.getItem('mb_disp');
+    if(!d){
+      d = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+        : 'd-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+      localStorage.setItem('mb_disp', d);
+    }
+    return d;
+  }catch(e){
+    /* Navegación privada sin storage: id de una sola sesión, mejor que no tener ninguno */
+    return 'd-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+  }
+})();
+let mesaFila = null;    // última fila conocida de menusbot_mesas_abiertas de esta mesa
+let mesaEsMia = false;  // este dispositivo está autorizado a ordenar (dueño o invitado)
+let mesaIntentos = 0;   // códigos fallidos de esta visita (sobrevive a una recarga)
+try{ mesaIntentos = +localStorage.getItem(LSK('mb_mesa_intentos')) || 0; }catch(e){}
+function guardarIntentosMesa(){
+  try{ localStorage.setItem(LSK('mb_mesa_intentos'), String(mesaIntentos)); }catch(e){}
+}
+
+const MESA_SEL = 'select=id,dispositivo_id,codigo,invitados,autorizada,abierta_at,latido_at';
+/* El índice único es (restaurante_id, sucursal, mesa): los tres filtros identifican UNA fila */
+const rutaMesa = () => `menusbot_mesas_abiertas?restaurante_id=eq.${encodeURIComponent(RID)}`
+  + `&sucursal=eq.${encodeURIComponent(SUC)}&mesa=eq.${mesa ?? 0}`;
+const codigoMesa = () => String(Math.floor(1000 + Math.random() * 9000)); // 4 dígitos, nunca 0xxx
+/* PostgREST devuelve 409 cuando el índice único rechaza el POST: otro dispositivo tomó la
+   mesa en el mismo instante. No es un error de red, es una carrera que hay que reevaluar. */
+const esConflictoMesa = e => !!e && (e.status === 409
+  || /\b409\b|duplicate key|23505|conflict/i.test(String(e.message || '')));
+/* Sin fecha legible NO asumimos abandono: en la duda, la mesa sigue siendo de su dueño */
+function mesaAbandonada(f){
+  const t = Date.parse(f.latido_at || f.abierta_at || '') || 0;
+  return !!t && (Date.now() - t) > MESA_ABANDONO_MIN * 60000;
+}
+
+/* Único punto de verdad sobre "¿puedo ordenar en esta mesa?".
+   Devuelve { ok:true, fila } si este dispositivo está autorizado,
+   { ok:false, motivo:'bloqueada', fila } si la mesa es de alguien más y está viva,
+   { ok:false, motivo:'sinred' } si no se pudo verificar. En la duda NUNCA devuelve ok. */
+async function asegurarMesa(){
+  if(mesa == null) return { ok:false, motivo:'bloqueada' };
+  const ahora = () => new Date().toISOString();
+  /* Varias pasadas porque una carrera perdida (409 o PATCH de 0 filas) se resuelve
+     releyendo la fila y reevaluando; el tope evita quedarnos girando aquí. */
+  for(let pase = 0; pase < 4; pase++){
+    let f;
+    try{
+      const filas = await api(rutaMesa() + '&' + MESA_SEL);
+      f = (filas && filas[0]) || null;
+    }catch(e){ return { ok:false, motivo:'sinred' }; }
+
+    /* 1) Nadie la tiene registrada: la tomo. POST sin merge-duplicates a propósito — un
+       merge sobrescribiría al dueño legítimo; así el índice único arbitra la carrera. */
+    if(!f){
+      try{
+        const nuevas = await api('menusbot_mesas_abiertas', {
+          method:'POST', headers:{ 'Prefer':'return=representation' },
+          body: JSON.stringify({
+            restaurante_id: RID, sucursal: SUC, mesa: mesa, abierta_at: ahora(),
+            /* autorizada:false — tomarla por ordenar no verifica nada, eso lo decide
+               el restaurante desde su panel */
+            autorizada: false, dispositivo_id: DISP, codigo: codigoMesa(),
+            invitados: [], latido_at: ahora(),
+          }),
+        });
+        mesaFila = (nuevas && nuevas[0]) || null;
+        mesaEsMia = true;
+        guardarSesion();
+        return { ok:true, fila: mesaFila || { autorizada:false } };
+      }catch(e){
+        if(esConflictoMesa(e)) continue; // otro se le adelantó: releer y reevaluar
+        return { ok:false, motivo:'sinred' };
+      }
+    }
+
+    /* 2) Soy el dueño */
+    if(f.dispositivo_id === DISP){ mesaFila = f; mesaEsMia = true; guardarSesion(); return { ok:true, fila:f }; }
+
+    /* 3) Invitado que ya entró con el código */
+    if(Array.isArray(f.invitados) && f.invitados.includes(DISP)){
+      mesaFila = f; mesaEsMia = true; guardarSesion(); return { ok:true, fila:f };
+    }
+
+    /* 4) El restaurante la abrió desde el panel y nadie la ha tomado. El filtro
+       dispositivo_id=is.null hace atómica la toma: si otro ganó, el PATCH afecta 0 filas.
+       Ojo: NO se toca `autorizada` — ese valor es del restaurante, no nuestro. */
+    if(f.dispositivo_id == null){
+      let tomadas;
+      try{
+        tomadas = await api(rutaMesa() + '&dispositivo_id=is.null', {
+          method:'PATCH', headers:{ 'Prefer':'return=representation' },
+          body: JSON.stringify({
+            dispositivo_id: DISP, codigo: f.codigo || codigoMesa(),
+            invitados: [], latido_at: ahora(),
+          }),
+        });
+      }catch(e){ return { ok:false, motivo:'sinred' }; }
+      if(tomadas && tomadas.length){
+        mesaFila = tomadas[0]; mesaEsMia = true; guardarSesion();
+        return { ok:true, fila: mesaFila };
+      }
+      continue; // 0 filas: alguien la tomó primero, reevaluar
+    }
+
+    /* 5) Mesa abandonada: su dueño ya no da señales de vida, la toma el que llegó */
+    if(mesaAbandonada(f)){
+      let tomadas;
+      try{
+        tomadas = await api(rutaMesa() + `&dispositivo_id=eq.${encodeURIComponent(f.dispositivo_id)}`, {
+          method:'PATCH', headers:{ 'Prefer':'return=representation' },
+          body: JSON.stringify({
+            dispositivo_id: DISP, codigo: codigoMesa(),
+            /* visita nueva: los invitados de la anterior no heredan permiso */
+            invitados: [], latido_at: ahora(),
+          }),
+        });
+      }catch(e){ return { ok:false, motivo:'sinred' }; }
+      if(tomadas && tomadas.length){
+        mesaFila = tomadas[0]; mesaEsMia = true; guardarSesion();
+        return { ok:true, fila: mesaFila };
+      }
+      continue; // el dueño volvió a la vida entre el GET y el PATCH: reevaluar
+    }
+
+    /* 6) Es de alguien más y está viva */
+    mesaFila = f; mesaEsMia = false; guardarSesion();
+    return { ok:false, motivo:'bloqueada', fila:f };
+  }
+  /* Demasiadas carreras seguidas: preferimos no enviar que enviar a ciegas */
+  return { ok:false, motivo:'sinred' };
+}
+
+/* Latido: marca que la mesa sigue viva para que nadie la tome por abandono.
+   Sin setInterval a propósito — el archivo ya hace polling cada 4s y un latido propio
+   multiplicaría las escrituras; basta con latir en los momentos que de verdad importan
+   (una orden enviada, la cuenta pedida). Cualquier dispositivo autorizado cuenta. */
+function latirMesa(){
+  if(!mesaEsMia || !mesaFila || mesaFila.id == null) return;
+  api(`menusbot_mesas_abiertas?id=eq.${mesaFila.id}`, {
+    method:'PATCH', body: JSON.stringify({ latido_at: new Date().toISOString() }),
+  }).catch(() => {});
+}
+
+/* Línea discreta para que el dueño comparta su código con los de su mesa */
+function lineaCodigoMesa(){
+  if(!mesaEsMia || !mesaFila || mesaFila.dispositivo_id !== DISP) return '';
+  const cod = String(mesaFila.codigo || '').replace(/\D/g, '').slice(0, 4); // solo dígitos al DOM
+  if(cod.length !== 4) return '';
+  return `<div style="margin:0 20px 14px;font-family:var(--grot);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--humo2);line-height:1.8">Código de tu mesa: <b style="color:var(--oro)">${cod}</b> — dáselo a quien más quiera ordenar desde su propio teléfono</div>`;
+}
+
+/* ---------- Pantalla de bloqueo: la mesa ya es de otro dispositivo ---------- */
+function pintarHojaMesa(){
+  const n = mesa != null ? String(mesa).padStart(2, '0') : '—';
+  const agotado = mesaIntentos >= MESA_MAX_INTENTOS;
+  $('#hojaMesa').innerHTML = `
+    <div class="confirmacion" style="text-align:left">
+      <div class="caps" style="color:var(--oro);letter-spacing:2.6px">MESA ${n}</div>
+      <h2 style="text-align:left;margin-top:8px">Esta mesa ya está ordenando</h2>
+      <div class="nota-pie" style="margin:10px 0 0">Alguien más en la mesa ${n} ya abrió la cuenta desde su teléfono. Para no mandar la misma comanda dos veces a cocina, solo ese equipo envía las órdenes de la mesa.</div>
+      ${agotado
+        ? `<div class="nota-pie" style="margin:12px 0 0;border-left-color:var(--pomodoro)">Probamos varios códigos y ninguno coincidió. Lo más rápido ahora es que un mesero te ayude en tu mesa.</div>`
+        : `<div class="nota-pie" style="margin:12px 0 0">Si están juntos, pídele el <b style="color:var(--crema)">código de 4 dígitos</b> que aparece en su pantalla y escríbelo aquí para ordenar desde tu propio teléfono.</div>
+      <input class="notas-inp" id="mesaCodigo" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="Código de 4 dígitos" style="margin-top:12px;text-align:center;letter-spacing:4px;font-size:15px">
+      <div class="nota-pie" id="mesaError" style="margin:10px 0 0;border-left-color:var(--pomodoro);display:none"></div>`}
+      <div class="acciones-orden" style="padding:18px 0 0">
+        ${agotado ? '' : `<button class="btn-primario" onclick="unirmeAMesa()">Unirme a la mesa</button>`}
+        <button class="btn-fantasma" onclick="cerrarSheets();llamarMesero('mesa')">Que me ayude el mesero</button>
+      </div>
+    </div>`;
+}
+function abrirHojaMesa(){
+  pintarHojaMesa();
+  cerrarSheets();
+  $('#velo').classList.add('abierto');
+  $('#hojaMesa').classList.add('abierta');
+  history.pushState({ v: vistaActual, capa: 'mesa' }, '');
+}
+function errorMesa(txt){
+  const e = $('#mesaError');
+  if(!e){ toast(txt); return; }
+  e.textContent = txt;          // textContent: nada de este texto arma HTML
+  e.style.display = 'block';
+}
+/* Falla cerrada: si no pudimos verificar la mesa, la orden NO sale. Antes esto fallaba
+   ABIERTA (el catch trataba la mesa como abierta "para no bloquear el demo local"), así que
+   con la red caída cocina recibía comandas que nadie podía respaldar. */
+function avisarMesaNoConfirmada(){
+  $('#hojaMesa').innerHTML = `
+    <div class="confirmacion" style="text-align:left">
+      <div class="caps" style="color:var(--pomodoro);letter-spacing:2.6px">TU ORDEN NO SE ENVIÓ</div>
+      <h2 style="text-align:left;margin-top:8px">No pudimos confirmar tu mesa</h2>
+      <div class="nota-pie" style="margin:10px 0 0">Revisa tu internet o pídele al mesero que abra tu mesa. Tu orden se queda guardada aquí tal como la armaste — nada se pierde.</div>
+      <div class="acciones-orden" style="padding:18px 0 0">
+        <button class="btn-primario" onclick="cerrarSheets();enviarOrden()">Intentar de nuevo</button>
+        <button class="btn-fantasma" onclick="cerrarSheets();llamarMesero('mesa')">Que me ayude el mesero</button>
+      </div>
+    </div>`;
+  cerrarSheets();
+  $('#velo').classList.add('abierto');
+  $('#hojaMesa').classList.add('abierta');
+}
+/* Unirse con el código: queda como invitado autorizado y su orden sale sola */
+async function unirmeAMesa(){
+  if(mesaIntentos >= MESA_MAX_INTENTOS){ pintarHojaMesa(); return; }
+  const inp = $('#mesaCodigo');
+  const cod = ((inp && inp.value) || '').replace(/\D/g, '');
+  if(cod.length !== 4){ errorMesa('Escribe los 4 dígitos del código de tu mesa.'); return; }
+  let f;
+  try{
+    /* Fila fresca antes de escribir: los invitados los agrega cualquier teléfono de la
+       mesa, y un array leído hace rato borraría a los que entraron mientras tanto. */
+    const filas = await api(rutaMesa() + '&' + MESA_SEL);
+    f = (filas && filas[0]) || null;
+  }catch(e){ errorMesa('No pudimos confirmar tu mesa — revisa tu internet.'); return; }
+  /* La mesa se cerró mientras leía la pantalla: ahora la puede tomar él, reintentamos */
+  if(!f){ cerrarSheets(); enviarOrden(); return; }
+  if(String(f.codigo || '') !== cod){
+    mesaIntentos++;
+    guardarIntentosMesa();
+    if(mesaIntentos >= MESA_MAX_INTENTOS){ pintarHojaMesa(); return; }
+    const quedan = MESA_MAX_INTENTOS - mesaIntentos;
+    errorMesa(`Ese código no coincide. Te ${quedan === 1 ? 'queda 1 intento' : 'quedan ' + quedan + ' intentos'}.`);
+    return;
+  }
+  const invitados = Array.isArray(f.invitados) ? f.invitados.slice() : [];
+  if(!invitados.includes(DISP)) invitados.push(DISP);
+  try{
+    const r = await api(`menusbot_mesas_abiertas?id=eq.${f.id}`, {
+      method:'PATCH', headers:{ 'Prefer':'return=representation' },
+      body: JSON.stringify({ invitados }),
+    });
+    mesaFila = (r && r[0]) || Object.assign({}, f, { invitados });
+  }catch(e){ errorMesa('No pudimos confirmar tu mesa — revisa tu internet.'); return; }
+  mesaEsMia = true;
+  guardarSesion();
+  cerrarSheets();
+  toast('Listo — ya puedes ordenar desde tu teléfono');
+  enviarOrden();
+}
 
 /* Historial: el botón back navega entre vistas / cierra fichas en vez de salir */
 let navHistoria = false;
@@ -1241,6 +1509,7 @@ function cerrarSheets(){
   $('#hoja').classList.remove('abierta');
   $('#hojaConf').classList.remove('abierta');
   $('#hojaResena').classList.remove('abierta');
+  $('#hojaMesa').classList.remove('abierta');
   $('#hojaAyuda').classList.remove('abierta');
   $('#hojaCliente').classList.remove('abierta');
   $('#hojaSucursal').classList.remove('abierta');
@@ -1312,6 +1581,7 @@ function cambiarQtyItem(idx, dif){
 function pintarVistaOrden(){
   const v = $('#vistaOrden');
   let html = `<div class="vista-head"><div class="caps">Mesa ${mesa ? String(mesa).padStart(2,'0') : '—'} · por enviar</div><h2>Tu orden</h2></div>`;
+  html += lineaCodigoMesa();
   if(!pedido.length){
     if(ordenes.length){
       html += `<div class="vacio">Tu orden ya está en cocina.<br><br>Puedes seguir su avance en tu cuenta<br>o agregar algo más de la carta.</div>
@@ -1373,6 +1643,7 @@ function pintarVistaCuenta(){
   let html = `<div class="vista-head"><div class="caps">Mesa ${mesa ? String(mesa).padStart(2,'0') : '—'}${SUC ? ' · ' + SUC : ''} · seguimiento en vivo</div><h2>Tu cuenta</h2>
     ${cliente ? `<div style="margin-top:10px;font-family:var(--grot);font-size:9.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--oro);cursor:pointer" onclick="abrirHojaCliente()">★ ${cliente.nombre || cliente.telefono} · ${cliente.puntos || 0} puntos</div>` : ''}
     <div class="nota-pie" style="margin-top:10px">Aquí vive la cuenta de tu mesa: cada orden que envíes se suma y su estado se actualiza solo. <b style="color:var(--crema)">Todo se paga junto al final.</b></div></div>`;
+  html += lineaCodigoMesa();
   const activas = ordenes.filter(o => o.estado < 3);
   const totalMesa = totalMesaSrv != null ? totalMesaSrv : ordenes.reduce((s,o) => s + o.total, 0) + mesaOtras.reduce((s,x) => s + (+x.total || 0), 0);
   if(cuentaPedida){
@@ -1454,15 +1725,22 @@ async function enviarOrden(){
   if(!pedido.length) return;
   const hayBebida = pedido.some(i => { const p = PLATILLOS.find(x => x.id === i.id); return p && p.cat === 'bebidas'; });
   if(!hayBebida && !sinBebidasOk){ mostrarSugerenciaBebidas(); return; }
-  sinBebidasOk = false;
   const items = pedido.map(i => { const p = PLATILLOS.find(x => x.id === i.id); return { id:i.id, qty:i.qty, notas:i.notas, nombre:p.nombre, precio:p.precio }; });
   const total = totalPedido();
-  // Seguridad: ¿la mesa está abierta en el restaurante? Si no, la orden queda "por confirmar".
-  let verificacion = 'ok';
-  try{
-    const abiertas = await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${mesa ?? 0}&sucursal=eq.${encodeURIComponent(SUC)}&select=mesa`);
-    if(!abiertas || !abiertas.length) verificacion = 'pendiente';
-  }catch(e){ /* sin red: se trata como mesa abierta para no bloquear el demo local */ }
+  /* Seguridad: la mesa pertenece a UN dispositivo. Si no es suyo, no manda comanda; y si la
+     mesa no se puede verificar, tampoco. Antes esta comprobación fallaba ABIERTA (el catch
+     dejaba pasar la orden "para no bloquear el demo local") y ese era el hueco: con la red
+     caída, o con otro teléfono ya ordenando en la misma mesa, cocina recibía órdenes que
+     nadie podía respaldar. */
+  const permiso = await asegurarMesa();
+  if(!permiso.ok){
+    if(permiso.motivo === 'bloqueada'){ abrirHojaMesa(); }
+    else { avisarMesaNoConfirmada(); }
+    return;
+  }
+  /* Tomar la mesa por ordenar NO verifica la orden: 'ok' solo cuando el restaurante abrió la
+     mesa a propósito desde su panel (autorizada). Lo demás sigue pidiendo confirmación. */
+  const verificacion = (permiso.fila && permiso.fila.autorizada === true) ? 'ok' : 'pendiente';
   let fila;
   try{
     const filas = await api('menusbot_ordenes', {
@@ -1474,6 +1752,10 @@ async function enviarOrden(){
     toast('Sin conexión con cocina — revisa tu internet e intenta de nuevo');
     return;
   }
+  /* La bandera de bebidas se consume solo cuando la orden salió de verdad: si el envío se
+     frenó por la mesa, al reintentar no lo volvemos a interrogar sobre lo mismo. */
+  sinBebidasOk = false;
+  latirMesa(); // la mesa sigue viva: que nadie la tome por abandono
   const folioN = iniciales(MARCA.nombre) + '-' + (1000 + fila.id);
   const o = { num: folioN, folio: folioN, dbId: fila.id, items: pedido.slice(), total, estado: 0, mesa: mesa ?? '–', verificacion };
   misIds.push(fila.id);
@@ -1521,10 +1803,12 @@ let cuentaPedida = false;
 /* Vive junto a cuentaPedida porque es una bandera de la MISMA visita: viaja en la sesión guardada
    para que una recarga no vuelva a pedir la reseña, y muere con la visita al cerrarla. */
 let resenaOfrecida = false;
-function llamarMesero(){
+/* motivo opcional: 'mesa' cuando el comensal quedó fuera de la mesa y necesita que se la abran
+   (el panel muestra cualquier motivo desconocido como una llamada normal al mesero) */
+function llamarMesero(motivo){
   if(Date.now() - ultimaLlamada < 30000){ toast('Ya avisamos a tu mesero — está en camino'); return; }
   ultimaLlamada = Date.now();
-  api('menusbot_llamadas', { method:'POST', body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, motivo:'mesero', sucursal: SUC }) })
+  api('menusbot_llamadas', { method:'POST', body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, motivo: motivo || 'mesero', sucursal: SUC }) })
     .then(() => toast(`Listo — un mesero viene a tu mesa ${String(mesa).padStart(2,'0')}`))
     .catch(() => toast('Sin conexión — inténtalo de nuevo'));
 }
@@ -1541,6 +1825,7 @@ function pedirCuenta(){
   api('menusbot_llamadas', { method:'POST', body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, motivo:'cuenta', sucursal: SUC }) })
     .then(() => {
       cuentaPedida = true;
+      latirMesa(); // sigue habiendo gente en la mesa: la mantenemos viva hasta que se cierre
       guardarSesion();
       if(vistaActual === 'cuenta') pintarVistaCuenta();
       pintarIndicadores();
@@ -1555,7 +1840,9 @@ function cerrarVisita(){
   /* Visita nueva, cortesía nueva: la siguiente mesa sí vuelve a ver la invitación a reseñar */
   resenaOfrecida = false;
   mesaOtras = []; totalMesaSrv = null; hashMesa = '';
-  try{ localStorage.removeItem(LSK('mb_sesion_v1')); }catch(e){}
+  /* Visita nueva: esta pantalla ya no es dueña de nada y los intentos de código se reinician */
+  mesaFila = null; mesaEsMia = false; mesaIntentos = 0;
+  try{ localStorage.removeItem(LSK('mb_sesion_v1')); localStorage.removeItem(LSK('mb_mesa_intentos')); }catch(e){}
   pintarIndicadores();
   const pideResena = resenasActivas();
   $('#hojaConf').innerHTML = `

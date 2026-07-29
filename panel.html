@@ -92,6 +92,25 @@
   .chip-mesa:hover{border-color:var(--basilico);color:var(--basilico)}
   .chip-mesa.abierta{background:var(--basilico);border-color:var(--basilico);color:var(--esp)}
   .mesas-abiertas .hint{font-size:8.5px;letter-spacing:1.6px;color:var(--humo2);text-transform:uppercase;font-weight:700;margin-left:auto}
+  /* Amarre de mesa: una mesa la toma el primer dispositivo que ordena, el resto entra con código.
+     Borde punteado = la tomó el comensal (autorizada:false) y sus órdenes siguen pidiendo confirmación. */
+  .chip-mesa.tomada{border-style:dashed;border-color:var(--oro);color:var(--oro);background:transparent}
+  html.claro .chip-mesa.tomada{color:var(--oro)}
+  .mesas-detalle{border:1px solid var(--linea);border-radius:3px;background:var(--esp2);padding:12px 16px;margin-bottom:16px}
+  .mesas-detalle .caps{color:var(--humo);display:block;margin-bottom:10px}
+  .md-ayuda{font-size:11.5px;line-height:1.65;color:var(--humo);max-width:64ch;margin-bottom:12px}
+  .md-fila{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0;border-bottom:1px dotted var(--linea)}
+  .md-fila:last-child{border-bottom:none}
+  .md-mesa{font-family:var(--serif);font-style:italic;font-size:15px;min-width:78px}
+  .md-codigo{font-family:var(--grot);font-weight:700;font-size:20px;letter-spacing:5px;color:var(--basilico);background:rgba(143,174,139,.12);border:1px solid var(--basilico);border-radius:2px;padding:3px 8px 3px 13px}
+  .md-meta{font-size:10.5px;letter-spacing:.4px;color:var(--humo)}
+  .md-nota{font-size:11.5px;font-style:italic;color:var(--humo2);font-family:var(--serif)}
+  .md-tag{font-family:var(--grot);font-size:8px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:4px 8px;border-radius:2px;white-space:nowrap}
+  .md-tag.libre{color:var(--oro);border:1px solid var(--oro);background:rgba(201,162,39,.1)}
+  .md-tag.ida{color:var(--pomodoro);border:1px solid var(--pomodoro);background:rgba(228,89,59,.1)}
+  .md-fila .md-btn{margin-left:auto}
+  .md-btn.armado{background:var(--pomodoro);border-color:var(--pomodoro);color:var(--papel)}
+  .md-vacio{font-family:var(--serif);font-style:italic;font-size:12.5px;color:var(--humo2)}
   /* órdenes por confirmar (mesa sin abrir) */
   .por-confirmar{border:1px solid rgba(201,162,39,.6);border-left:3px solid var(--oro);border-radius:3px;background:rgba(201,162,39,.08);padding:14px 16px;margin-bottom:16px;animation:llega .3s}
   .pc-fila{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0;border-bottom:1px dotted var(--linea)}
@@ -549,8 +568,18 @@ async function cargar(){
     }));
     const lls = await api(`menusbot_llamadas?restaurante_id=eq.${RID}&atendida=eq.false&order=ts.desc&limit=20&select=*`);
     llamadasCache = (lls || []).map(l => ({ dbId: l.id, mesa: l.mesa, ts: Date.parse(l.ts), motivo: l.motivo || '', sucursal: l.sucursal || '', atendida: false }));
-    const ma = await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&select=mesa,sucursal`);
-    mesasAbiertasCache = (ma || []).map(x => ({ mesa: x.mesa, sucursal: x.sucursal || '' }));
+    // Traemos también el amarre: quién tiene la mesa, con qué código y desde cuándo, para que el mesero lo vea
+    const ma = await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&select=mesa,sucursal,autorizada,dispositivo_id,codigo,invitados,latido_at,abierta_at`);
+    mesasAbiertasCache = (ma || []).map(x => ({
+      mesa: x.mesa, sucursal: x.sucursal || '',
+      // autorizada:false = la tomó el comensal al ordenar, no el restaurante → sus órdenes piden confirmación
+      autorizada: x.autorizada !== false,
+      dispositivo_id: x.dispositivo_id || null,
+      codigo: x.codigo || null,
+      invitados: Array.isArray(x.invitados) ? x.invitados : [],
+      latido_at: x.latido_at ? Date.parse(x.latido_at) : null,
+      abierta_at: x.abierta_at ? Date.parse(x.abierta_at) : null,
+    }));
     enLinea = true;
   }catch(e){ enLinea = false; }
   const chip = document.getElementById('chipVivo');
@@ -781,6 +810,15 @@ function toast(txt){
 
 const mm = ms => { const m = Math.floor(ms/60000), s = Math.floor(ms%60000/1000); return (m? m+'m ':'') + String(s).padStart(2,'0') + 's'; };
 const hora = ts => new Date(ts).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+// mm() sirve para duraciones cortas de cocina (m/s); para el amarre de mesa el mesero piensa en minutos y horas
+function haceHumano(ts){
+  if(!ts) return '';
+  const min = Math.max(0, Math.floor((Date.now() - ts) / 60000));
+  if(min < 1) return 'hace un momento';
+  if(min < 60) return `hace ${min} min`;
+  const h = Math.floor(min / 60), r = min % 60;
+  return `hace ${h} h${r ? ` ${r} min` : ''}`;
+}
 
 async function avanzar(folio){
   const o = ordenesCache.find(x => x.folio === folio);
@@ -903,10 +941,14 @@ function render(){
     const nMesas = (d.config && d.config.mesas) || 12;
     let chipsMesas = '';
     for(let i = 1; i <= nMesas; i++){
-      const ab = mesasAbiertasCache.some(x => x.mesa === i && (x.sucursal || '') === sucursalActivaPanel);
-      chipsMesas += `<button class="chip-mesa ${ab ? 'abierta' : ''}" onclick="alternarMesaAbierta(${i})" title="${ab ? 'Mesa abierta — clic para cerrarla' : 'Mesa cerrada — clic para abrirla'}">${i}</button>`;
+      const fila = mesaAbiertaDe(i);
+      const ab = !!fila;
+      // Distinguimos la que tomó el comensal por su cuenta: sigue abierta, pero sus órdenes piden confirmación
+      const tomada = ab && !fila.autorizada;
+      chipsMesas += `<button class="chip-mesa ${ab ? 'abierta' : ''} ${tomada ? 'tomada' : ''}" onclick="alternarMesaAbierta(${i})" title="${ab ? (tomada ? 'La tomó un comensal — clic para cerrarla' : 'Mesa abierta — clic para cerrarla') : 'Mesa cerrada — clic para abrirla'}">${i}</button>`;
     }
-    $('#mesasAbiertasZona').innerHTML = `<div class="mesas-abiertas"><span class="caps">Mesas abiertas</span>${chipsMesas}<span class="hint">Verde = con comensales · sus órdenes entran directo</span></div>`;
+    $('#mesasAbiertasZona').innerHTML = `<div class="mesas-abiertas"><span class="caps">Mesas abiertas</span>${chipsMesas}<span class="hint">Verde = con comensales · sus órdenes entran directo</span></div>`
+      + pintarAmarresMesas();
     for(const e of [0,1,2]){
       const del = d.ordenes.filter(o => o.estado === e && o.verificacion !== 'pendiente').sort((a,b) => a.creada - b.creada);
       $('#n'+e).textContent = del.length;
@@ -1867,24 +1909,111 @@ function quitarMesero(n){
   dbEscribir(d => { d.config.meseros = d.config.meseros.filter(x => x !== n); });
 }
 
-/* ---------- Mesas abiertas (seguridad) ---------- */
+/* ---------- Mesas abiertas y amarre al dispositivo (seguridad) ---------- */
+// Una mesa la toma el primer dispositivo que ordena; el resto de la mesa entra con el código de 4 dígitos.
+const ABANDONO_MIN = 120; // sin latido en 2 h damos por hecho que el comensal ya se fue y el amarre expirará solo
+
+function mesaAbiertaDe(n){
+  return mesasAbiertasCache.find(x => x.mesa === n && (x.sucursal || '') === sucursalActivaPanel) || null;
+}
+
+// Mesa "armada" para liberar: el primer clic avisa, el segundo ejecuta.
+// No usamos confirm() nativo porque congela la página y el mesero trabaja con la cocina en vivo.
+let liberarArmada = null;
+let liberarArmadaTimer = null;
+
+function pintarAmarresMesas(){
+  const abiertas = mesasAbiertasCache
+    .filter(x => (x.sucursal || '') === sucursalActivaPanel)
+    .sort((a,b) => a.mesa - b.mesa);
+  const ayuda = `La primera pantalla que ordena se queda con la mesa y recibe un código de cuatro dígitos; cualquiera más que quiera ordenar desde su propio teléfono en esa misma mesa necesita que se lo dictes.
+    Si al comensal se le acabó la pila o se sentó un grupo nuevo, libera la mesa y el siguiente teléfono que ordene la tomará.`;
+  const filas = abiertas.map(m => {
+    const mesaTxt = `Mesa ${String(m.mesa).padStart(2,'0')}`;
+    const etiquetas = m.autorizada ? '' : `<span class="md-tag libre" title="La abrió el comensal, no el restaurante: sus órdenes pasan por Por confirmar">La tomó el comensal</span>`;
+    if(!m.dispositivo_id){
+      // Abierta desde el panel pero nadie ha ordenado: sigue disponible para el primer teléfono
+      return `<div class="md-fila">
+        <span class="md-mesa">${mesaTxt}</span>
+        <span class="md-nota">abierta, sin dispositivo todavía</span>
+        ${etiquetas}
+      </div>`;
+    }
+    const dispositivos = 1 + (m.invitados ? m.invitados.length : 0);
+    // El latido viejo delata una mesa abandonada; su amarre caduca solo, pero el mesero puede adelantarse
+    const abandonada = m.latido_at != null && (Date.now() - m.latido_at) > ABANDONO_MIN * 60000;
+    const desde = haceHumano(m.abierta_at);
+    const armada = liberarArmada === m.mesa;
+    // Del dispositivo_id (UUID) solo los últimos 4 caracteres: identifica sin ensuciar la pantalla
+    const cola = escTxt(String(m.dispositivo_id).slice(-4));
+    return `<div class="md-fila">
+      <span class="md-mesa">${mesaTxt}</span>
+      ${m.codigo ? `<span class="md-codigo" title="Díctale este código a quien quiera ordenar desde su teléfono en esta mesa">${escTxt(m.codigo)}</span>` : `<span class="md-nota">tomada, sin código</span>`}
+      <span class="md-meta">${dispositivos} dispositivo${dispositivos === 1 ? '' : 's'} · ···${cola}${desde ? ' · ' + desde : ''}</span>
+      ${etiquetas}
+      ${abandonada ? `<span class="md-tag ida" title="Sin señal de vida en más de ${ABANDONO_MIN} minutos">Posiblemente abandonada</span>` : ''}
+      <button class="btn-sec md-btn ${armada ? 'armado' : ''}" onclick="liberarMesa(${m.mesa})">${armada ? 'Confirmar liberar' : 'Liberar'}</button>
+    </div>`;
+  }).join('');
+  return `<div class="mesas-detalle">
+    <span class="caps">Quién tiene cada mesa</span>
+    <p class="md-ayuda">${ayuda}</p>
+    ${filas || '<div class="md-vacio">Ninguna mesa abierta en este momento.</div>'}
+  </div>`;
+}
+
+// Suelta el amarre sin cobrar y sin cerrar la mesa: la mesa sigue abierta y queda libre para el siguiente teléfono
+async function liberarMesa(n){
+  const m = mesaAbiertaDe(n);
+  if(!m || !m.dispositivo_id) return;
+  if(liberarArmada !== n){
+    // Primer clic: solo avisamos y armamos. Se desarma solo para no dejar el botón en rojo indefinidamente.
+    liberarArmada = n;
+    clearTimeout(liberarArmadaTimer);
+    liberarArmadaTimer = setTimeout(() => { liberarArmada = null; render(); }, 6000);
+    render();
+    toast(`¿Liberar la mesa ${String(n).padStart(2,'0')}? El código dejará de servir. Confirma para soltarla.`);
+    return;
+  }
+  liberarArmada = null;
+  clearTimeout(liberarArmadaTimer);
+  const suc = (m.sucursal || '');
+  const ahora = new Date().toISOString();
+  // Optimista: el mesero ve la mesa libre de inmediato
+  m.dispositivo_id = null; m.codigo = null; m.invitados = []; m.latido_at = Date.parse(ahora);
+  render();
+  try{
+    await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${n}&sucursal=eq.${encodeURIComponent(suc)}`, {
+      method:'PATCH',
+      body: JSON.stringify({ dispositivo_id: null, codigo: null, invitados: [], latido_at: ahora }),
+    });
+    toast(`Mesa ${String(n).padStart(2,'0')} liberada — sigue abierta y el siguiente teléfono que ordene ahí la tomará`);
+  }catch(e){ toast('Sin conexión — inténtalo de nuevo'); }
+}
+
 async function alternarMesaAbierta(n){
   const suc = sucursalActivaPanel;
   const abierta = mesasAbiertasCache.some(x => x.mesa === n && (x.sucursal || '') === suc);
   if(abierta){
     mesasAbiertasCache = mesasAbiertasCache.filter(x => !(x.mesa === n && (x.sucursal || '') === suc));
+    if(liberarArmada === n) liberarArmada = null; // la mesa ya no existe: no dejamos un "confirmar" colgado
     render();
     try{
       await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${n}&sucursal=eq.${encodeURIComponent(suc)}`, { method:'DELETE' });
       toast(`Mesa ${String(n).padStart(2,'0')} cerrada — sus órdenes pedirán confirmación`);
     }catch(e){ toast('Sin conexión — inténtalo de nuevo'); }
   } else {
-    mesasAbiertasCache.push({ mesa: n, sucursal: suc });
+    const previa = mesaAbiertaDe(n);
+    if(previa) previa.autorizada = true;
+    else mesasAbiertasCache.push({ mesa: n, sucursal: suc, autorizada: true, dispositivo_id: null, codigo: null, invitados: [], latido_at: null, abierta_at: Date.now() });
     render();
     try{
+      // autorizada:true es lo que hace que sus órdenes entren directo a cocina (el default de la columna es false).
+      // No mandamos dispositivo_id / codigo / invitados: con merge-duplicates los sobrescribiríamos y
+      // le tumbaríamos el amarre al comensal que ya tomó la mesa; aquí solo la autorizamos.
       await api(`menusbot_mesas_abiertas?on_conflict=restaurante_id,sucursal,mesa`, {
         method:'POST', headers:{ 'Prefer':'resolution=merge-duplicates' },
-        body: JSON.stringify({ restaurante_id: RID, sucursal: suc, mesa: n }),
+        body: JSON.stringify({ restaurante_id: RID, sucursal: suc, mesa: n, autorizada: true }),
       });
       toast(`Mesa ${String(n).padStart(2,'0')} abierta — sus órdenes entran directo a cocina`);
     }catch(e){ toast('Sin conexión — inténtalo de nuevo'); }
@@ -2224,7 +2353,8 @@ function copiarUrlPublica(){
   const u = urlPublicaCarta();
   (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject())
     .then(() => toast('URL pública copiada — compártela donde quieras'))
-    .catch(() => { prompt('Copia la URL de tu carta:', u); });
+    // Sin permiso de portapapeles no usamos prompt() nativo: dejamos la URL visible para copiarla a mano
+    .catch(() => { pintarUrlPublica(); toast('Copia la URL desde el enlace de abajo'); });
 }
 function probarPin(){
   const pin = (cfgCache.config && cfgCache.config.pin) || '1987';
