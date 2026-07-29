@@ -345,7 +345,7 @@
       <div class="imp-cab">
         <div>
           <div class="caps" style="color:var(--pomodoro)">Importar carta con AI</div>
-          <div class="imp-sub">Sube tu menú actual — PDF, foto o archivo de texto — y la AI lo convierte en borrador editable. Después define los ingredientes principales de cada platillo y la AI estima calorías y valores nutricionales.</div>
+          <div class="imp-sub">Sube tu menú actual y la AI lo convierte en borrador editable: lee el texto real del <b>PDF</b>, y si es una <b>foto</b> o un PDF escaneado usa reconocimiento óptico en español. Detecta nombre, precio y categoría, y estima calorías y macros de cada platillo — todo editable antes de publicar.</div>
         </div>
         <label class="btn-sec" style="cursor:pointer">Subir menú (PDF / foto / TXT)
           <input type="file" id="archivoMenu" accept=".pdf,.png,.jpg,.jpeg,.txt,.csv" style="display:none">
@@ -355,11 +355,16 @@
         <div class="imp-barra"><i id="impBarra"></i></div>
         <div class="caps" id="impTexto" style="color:var(--humo)">Leyendo el documento…</div>
       </div>
+      <div id="impError" style="display:none;margin-top:18px;padding:14px 16px;border:1px solid var(--linea2);border-left:3px solid var(--pomodoro);border-radius:2px;font-size:12px;line-height:1.7;color:var(--humo)"></div>
       <div id="borradorZona" style="display:none">
-        <div class="caps" style="margin:18px 0 10px;color:var(--crema)">Borrador extraído — revisa, ajusta y publica</div>
+        <div class="caps" style="margin:18px 0 4px;color:var(--crema)">Borrador extraído — revisa, ajusta y publica</div>
+        <div id="borradorResumen" style="font-size:11px;color:var(--humo2);margin-bottom:10px"></div>
         <div id="borradorLista"></div>
         <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
           <button class="btn-sec" style="border-color:var(--pomodoro);color:var(--pomodoro)" onclick="publicarBorrador()">Publicar en la carta</button>
+          <button class="btn-sec" onclick="estimarTodo()">Estimar nutrición faltante</button>
+          <button class="btn-sec" onclick="agregarFilaManual()">Agregar platillo</button>
+          <button class="btn-sec" onclick="verTextoLeido()">Ver texto leído</button>
           <button class="btn-sec" onclick="descartarBorrador()">Descartar</button>
         </div>
       </div>
@@ -910,122 +915,716 @@ function render(){
 }
 
 /* ================================================================
-   IMPORTADOR DE CARTA CON AI (demo local — en producción: LLM con
-   visión que lee el PDF/foto real del menú)
+   IMPORTADOR DE CARTA CON AI — extracción REAL
+   · PDF con texto  → pdf.js (capa de texto, respetando columnas)
+   · PDF escaneado  → pdf.js render + OCR
+   · Foto JPG/PNG   → OCR en español (Tesseract)
+   · TXT/CSV        → lectura directa
+   Nunca inventa platillos: si no reconoce nada, lo dice.
    ================================================================ */
-const EJEMPLO_EXTRACCION = [
-  { nombre:'Fettuccine ai Funghi', precio:170, cat:'pastas', ingredientes:'pasta, champiñones, crema, parmesano, ajo' },
-  { nombre:'Insalata Caprese', precio:120, cat:'entradas', ingredientes:'jitomate, mozzarella, albahaca, aceite de oliva' },
-  { nombre:'Gnocchi al Pesto', precio:165, cat:'pastas', ingredientes:'papa, harina, albahaca, piñones, parmesano, aceite de oliva' },
-  { nombre:'Affogato al Caffè', precio:75, cat:'postres', ingredientes:'helado de vainilla, café expreso' },
-];
+const IMP_CDN = {
+  pdf: ['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+        'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js'],
+  ocr: ['https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.0/tesseract.min.js'],
+};
 let borrador = [];
+let textoLeido = '';
 
-/* Estimador nutricional por ingredientes (heurística demo; en producción: LLM) */
-const NUTRI_BASE = [
-  [/pasta|spaghetti|fettuccine|harina|gnocchi|papa|pan|masa|arroz/, {kcal:280, p:8, c:56, g:2}],
-  [/queso|parmesano|mozzarella|gorgonzola|ricotta|provolone|mascarpone/, {kcal:120, p:8, c:1, g:9}],
-  [/crema|mantequilla|bechamel/, {kcal:110, p:1, c:2, g:11}],
-  [/res|ternera|cerdo|guanciale|tocino|carne/, {kcal:180, p:22, c:0, g:10}],
-  [/pollo/, {kcal:140, p:26, c:0, g:4}],
-  [/pescado|salmon|salmón|atun|camaron/, {kcal:150, p:22, c:0, g:7}],
-  [/huevo|yema/, {kcal:70, p:6, c:0, g:5}],
-  [/aceite|oliva|pinones|piñones|nuez|almendra/, {kcal:90, p:1, c:1, g:10}],
-  [/jitomate|tomate|verdura|espinaca|champinon|champiñon|albahaca|arugula|esparrago|ensalada|lechuga/, {kcal:25, p:1, c:4, g:0}],
-  [/azucar|azúcar|miel|chocolate|cacao|helado|dulce/, {kcal:150, p:2, c:24, g:6}],
-  [/cafe|café|expreso/, {kcal:5, p:0, c:1, g:0}],
-  [/limon|limón|fruta|frutos rojos|fresa/, {kcal:40, p:0, c:9, g:0}],
-];
-function estimarNutricion(ingredientesTxt){
-  const t = ingredientesTxt.toLowerCase();
-  let kcal = 60, p = 2, c = 4, g = 2, aciertos = 0; // base de preparación
-  for(const [re, n] of NUTRI_BASE){
-    if(re.test(t)){ kcal += n.kcal; p += n.p; c += n.c; g += n.g; aciertos++; }
-  }
-  if(!aciertos) return null;
-  return { kcal: Math.round(kcal), prot: Math.round(p), carb: Math.round(c), grasa: Math.round(g) };
-}
-
-$('#archivoMenu').addEventListener('change', async e => {
-  const f = e.target.files[0];
-  if(!f) return;
-  $('#impProceso').style.display = 'block';
-  $('#borradorZona').style.display = 'none';
-  const pasos = ['Leyendo el documento…','Detectando platillos y precios…','Clasificando por categoría…','Armando el borrador…'];
-  for(let i = 0; i < pasos.length; i++){
-    $('#impTexto').textContent = pasos[i];
-    $('#impBarra').style.width = ((i+1) / pasos.length * 100) + '%';
-    await new Promise(r => setTimeout(r, 650));
-  }
-  // TXT/CSV: extracción real línea por línea ("Nombre ... $precio"). PDF/foto: demo con ejemplo.
-  let extraidos = [];
-  if(/\.(txt|csv)$/i.test(f.name)){
-    const texto = await f.text();
-    for(const linea of texto.split(/\r?\n/)){
-      const m = linea.match(/^(.*?)[\s.,;|-]*\$?\s?(\d{2,4})\s*$/);
-      if(m && m[1].trim().length > 2) extraidos.push({ nombre: m[1].trim(), precio: +m[2], cat: (catsPanel().find(c => c[0] === 'principales') ? 'principales' : catsPanel()[0][0]), ingredientes: '' });
+/* Carga perezosa: sólo se descarga el motor cuando el restaurante sube un archivo */
+async function impCargar(urls, glob){
+  if(window[glob]) return window._impSrc && window._impSrc[glob];
+  for(const u of urls){
+    const ok = await new Promise(res => {
+      const s = document.createElement('script');
+      s.src = u; s.async = true;
+      s.onload = () => res(true); s.onerror = () => res(false);
+      document.head.appendChild(s);
+    });
+    if(ok && window[glob]){
+      window._impSrc = window._impSrc || {}; window._impSrc[glob] = u;
+      return u;
     }
   }
-  if(!extraidos.length) extraidos = EJEMPLO_EXTRACCION.map(x => ({...x}));
-  borrador = extraidos.map((x, i) => ({ ...x, id: 'ai_' + Date.now().toString(36) + '_' + i, nutri: null }));
-  $('#impProceso').style.display = 'none';
-  $('#borradorZona').style.display = 'block';
-  pintarBorrador();
-  toast(`AI extrajo ${borrador.length} platillo(s) — revisa el borrador`);
-  e.target.value = '';
-});
-/* Categorías: las propias del restaurante si existen; si no, las del demo */
+  throw new Error('No pude cargar el motor de lectura. Revisa tu conexión a internet e inténtalo de nuevo.');
+}
+function impPaso(txt, pct){
+  const t = $('#impTexto'), b = $('#impBarra');
+  if(t) t.textContent = txt;
+  if(b && pct != null) b.style.width = Math.max(0, Math.min(100, pct)) + '%';
+}
+function impError(msg){
+  const z = $('#impError');
+  if(!z) { toast(msg); return; }
+  z.style.display = 'block';
+  z.innerHTML = '<b style="color:var(--crema);display:block;margin-bottom:5px">No se pudo armar el borrador</b>' + String(msg).replace(/</g,'&lt;') +
+    '<div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">' +
+    '<button class="btn-mini" onclick="agregarFilaManual()">Capturar a mano</button>' +
+    (textoLeido.trim() ? '<button class="btn-mini" onclick="verTextoLeido()">Ver el texto que leí</button>' : '') +
+    '</div>';
+}
+function verTextoLeido(){
+  const w = window.open('', '_blank');
+  if(!w){ toast('Permite las ventanas emergentes para ver el texto'); return; }
+  w.document.write('<meta charset="utf-8"><title>Texto leído del menú</title><pre style="font:13px/1.6 monospace;white-space:pre-wrap;padding:24px">' +
+    textoLeido.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])) + '</pre>');
+  w.document.close();
+}
+
+/* ---------- PDF: agrupar los fragmentos en líneas reales ---------- */
+function impLineasPDF(items){
+  const filas = [];
+  for(const it of items){
+    const s = it.str;
+    if(!s || !s.trim()) continue;
+    const x = it.transform[4], y = it.transform[5];
+    let f = filas.find(r => Math.abs(r.y - y) <= 3.2);
+    if(!f){ f = { y, partes: [] }; filas.push(f); }
+    f.partes.push({ x, s, w: it.width || s.length * 4 });
+  }
+  filas.sort((a, b) => b.y - a.y);
+  return filas.map(f => {
+    f.partes.sort((a, b) => a.x - b.x);
+    let out = '', fin = null;
+    for(const p of f.partes){
+      if(fin != null){
+        const hueco = p.x - fin;
+        out += hueco > 26 ? '   ' : (hueco > 1.2 ? ' ' : '');
+      }
+      out += p.s;
+      fin = p.x + p.w;
+    }
+    return out;
+  });
+}
+async function impTextoDePDF(f){
+  impPaso('Abriendo el PDF…', 8);
+  const src = await impCargar(IMP_CDN.pdf, 'pdfjsLib');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = String(src).replace(/pdf\.min\.js$/, 'pdf.worker.min.js');
+  const doc = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise;
+  const n = Math.min(doc.numPages, 15);
+  const partes = [];
+  for(let i = 1; i <= n; i++){
+    impPaso('Leyendo página ' + i + ' de ' + n + '…', 8 + (i / n) * 45);
+    const pg = await doc.getPage(i);
+    const tc = await pg.getTextContent();
+    partes.push(impLineasPDF(tc.items).join('\n'));
+  }
+  const texto = partes.join('\n');
+  if(texto.replace(/\s/g, '').length >= 60) return texto;
+  /* Sin capa de texto: es un PDF escaneado → OCR de las páginas */
+  impPaso('El PDF es una imagen escaneada — activando OCR…', 54);
+  const m = Math.min(doc.numPages, 4);
+  let acum = '';
+  for(let i = 1; i <= m; i++){
+    const pg = await doc.getPage(i);
+    const vp = pg.getViewport({ scale: 2 });
+    const cv = document.createElement('canvas');
+    cv.width = vp.width; cv.height = vp.height;
+    await pg.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+    acum += '\n' + await impOCR(cv, 'página ' + i + ' de ' + m);
+  }
+  return acum;
+}
+
+/* ---------- Foto: preparación (escala + gris + contraste) y OCR ---------- */
+async function impPrepararImagen(file){
+  const url = URL.createObjectURL(file);
+  try{
+    const img = await new Promise((res, rej) => {
+      const i = new Image();
+      i.onload = () => res(i);
+      i.onerror = () => rej(new Error('No pude abrir esa imagen. Prueba con un JPG o PNG.'));
+      i.src = url;
+    });
+    const esc = Math.min(1, 2200 / Math.max(img.width, img.height));
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(img.width * esc); cv.height = Math.round(img.height * esc);
+    const cx = cv.getContext('2d');
+    cx.drawImage(img, 0, 0, cv.width, cv.height);
+    try{
+      const d = cx.getImageData(0, 0, cv.width, cv.height), px = d.data;
+      for(let i = 0; i < px.length; i += 4){
+        let v = px[i] * 0.299 + px[i+1] * 0.587 + px[i+2] * 0.114;
+        v = (v - 128) * 1.4 + 128;
+        px[i] = px[i+1] = px[i+2] = v < 0 ? 0 : v > 255 ? 255 : v;
+      }
+      cx.putImageData(d, 0, 0);
+    }catch(e){ /* si el canvas no deja leer píxeles, se usa la imagen tal cual */ }
+    return cv;
+  } finally { URL.revokeObjectURL(url); }
+}
+async function impOCR(fuente, etiqueta){
+  impPaso('Preparando el lector de texto' + (etiqueta ? ' (' + etiqueta + ')' : '') + '…', 60);
+  await impCargar(IMP_CDN.ocr, 'Tesseract');
+  const worker = await Tesseract.createWorker('spa', 1, {
+    logger: m => {
+      if(m.status === 'recognizing text') impPaso('Reconociendo el texto de la imagen… ' + Math.round(m.progress * 100) + '%', 65 + m.progress * 28);
+      else if(m.status && /load|initial|download/i.test(m.status)) impPaso('Descargando el diccionario en español…', 62);
+    }
+  });
+  try{
+    const { data } = await worker.recognize(fuente);
+    return (data && data.text) || '';
+  } finally { try{ await worker.terminate(); }catch(e){} }
+}
+
+/* ---------- Parser del menú ---------- */
+const IMP_CATS = [
+  ['bebidas',    /bebida|refresco|agua|cerveza|vino|c[oó]ctel|coctel|licor|caf[eé]|\bt[eé]s?\b|jugo|licuado|malteada|barra|copas?|drinks?|smoothie|michelada|mezcal|tequila|horchata|limonada|frapp|sangr[ií]a|mojito|margarita/],
+  ['postres',    /postre|dessert|dulce|helado|pastel|pasteler|reposter|dolci|tiramis|panna|gelato|cannoli|brownie|cheesecake|churro|bu[nñ]uelo|flan|crepa|nieve|\bpay\b|tarta|mousse|galleta/],
+  ['entradas',   /entrada|botana|aperitivo|antojito|para (compartir|picar)|snack|starter|appetizer|\btapas?\b|antipast|bruschetta|caprese|carpaccio|guacamole|nachos|edamame|rollos? primavera|wonton|dip\b|alitas|dedos de queso/],
+  ['sopas',      /sopas?|caldos?|consom|crema de/],
+  ['ensaladas',  /ensalada|salad|verde|light|saludable/],
+  ['tacos',      /tacos?|taquiza|quesadilla|torta|burrito|gringa/],
+  ['mariscos',   /marisco|pescado|del mar|ceviche|aguachile|mariner/],
+  ['pizzas',     /pizza/],
+  ['pastas',     /pasta|spaghetti|espagueti|risotto|lasa[gñ]|fettuccine|ravioli/],
+  ['desayunos',  /desayuno|almuerzo|breakfast|huevos|hot ?cakes/],
+  ['principales',/fuerte|principal|especialidad|parrilla|carnes?|guisado|del d[ií]a|de la casa|main|steak|plato/],
+];
+function impBuckets(t){
+  const s = ' ' + String(t || '').toLowerCase() + ' ';
+  return IMP_CATS.filter(c => c[1].test(s)).map(c => c[0]);
+}
+function impBucket(t){ return impBuckets(t)[0] || null; }
+/* Traduce un "bucket" a una categoría REAL de este restaurante */
+function impCatDestino(bucket){
+  if(!bucket) return null;
+  const re = (IMP_CATS.find(c => c[0] === bucket) || [])[1];
+  if(!re) return null;
+  const cats = catsPanel();
+  const hit = cats.find(c => re.test((c[0] + ' ' + c[1]).toLowerCase()));
+  return hit ? hit[0] : null;
+}
+function impNormNum(s){
+  s = String(s).trim().replace(/\s/g, '');
+  if(/^\d{1,3}[.,]\d{3}$/.test(s)) return parseInt(s.replace(/[.,]/, ''), 10);
+  s = s.replace(/[.,](\d{3})\b/g, '$1');
+  s = s.replace(/,(\d{1,2})$/, '.$1');
+  const v = parseFloat(s);
+  return isFinite(v) ? v : null;
+}
+function impPrecios(l){
+  const out = [];
+  const re = /(\$)\s*(\d{1,4}(?:[.,]\d{1,3})*)|(?:^|[\s.·•_\-–—>|])(\d{2,4}(?:[.,]\d{1,2})?)(?=\s|$|[).,;|])/g;
+  let m;
+  while((m = re.exec(l))){
+    const bruto = m[2] || m[3];
+    const v = impNormNum(bruto);
+    if(v == null || v < 5 || v > 9999) continue;
+    const pos = l.indexOf(bruto, m.index);
+    out.push({ v, ini: m[1] ? l.indexOf('$', m.index) : pos, fin: pos + bruto.length, signo: !!m[1] });
+  }
+  /* Si el menú usa el signo $, los números sueltos son ruido (gramajes, etc.) */
+  const conSigno = out.filter(o => o.signo);
+  return conSigno.length ? conSigno : out;
+}
+function impTitulo(s){
+  const min = ['de','del','la','el','los','las','y','con','a','al','en','ai','alla','con','le','du','a la'];
+  return s.toLowerCase().split(/\s+/).map((w, i) =>
+    (i > 0 && min.indexOf(w) >= 0) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+function impLimpiarNombre(s){
+  s = String(s || '');
+  s = s.replace(/^[\s\d]{0,4}[).\-•·*»–—]\s*/, '');
+  s = s.replace(/\.{2,}|·{2,}|_{2,}|-{3,}/g, ' ');
+  s = s.replace(/[\s.·•_\-–—|]+$/, '');
+  s = s.replace(/\s{2,}/g, ' ').trim();
+  s = s.replace(/\b(chica|mediana|grande|chico|individual|orden|media orden|c\/u|pza|pzas)\s*$/i, '').trim();
+  s = s.replace(/[\s.·•_\-–—|]+$/, '');
+  if(/[A-ZÁÉÍÓÚÑÜ]/.test(s) && s === s.toUpperCase()) s = impTitulo(s);
+  return s;
+}
+function impNombreValido(n){
+  if(!n || n.length < 3 || n.length > 70) return false;
+  const letras = (n.match(/[a-záéíóúñü]/gi) || []).length;
+  if(letras < 3 || letras < n.length * 0.45) return false;
+  if(/^(tel|cel|whats|www|http|iva|total|propina|subtotal|mesa|folio|cuenta|p[aá]gina|page|menu|men[uú]|carta|precios?|horario|direcci|rfc)\b/i.test(n)) return false;
+  if(/\d{6,}/.test(n)) return false;
+  return true;
+}
+function impEsEncabezado(l){
+  if(l.length > 42) return false;
+  if(l.split(/\s+/).length > 5) return false;
+  const letras = (l.match(/[a-záéíóúñü]/gi) || []).length;
+  if(letras < 4) return false;
+  const may = /[A-ZÁÉÍÓÚÑÜ]/.test(l) && l === l.toUpperCase();
+  return may || !!impBucket(l);
+}
+function parsearMenu(texto){
+  const cats = catsPanel();
+  const porDefecto = (impCatDestino('principales') || cats[0][0]);
+  const filas = [];
+  let catActual = null;
+  /* \u0001 marca un hueco grande: en un PDF suele separar columnas */
+  const lineas = String(texto || '').split(/\r?\n/)
+    .map(c => c.replace(/\t/g, '   ').replace(/ {3,}/g, '\u0001').replace(/ {2,}/g, ' ').trim())
+    .filter(Boolean);
+  for(const cruda of lineas){
+    const l = cruda.replace(/\u0001/g, ' ').replace(/\s{2,}/g, ' ').trim();
+    if(!l) continue;
+    const precios = impPrecios(l);
+    if(!precios.length){
+      if(impEsEncabezado(l)){
+        /* Un renglon con DOS encabezados (menu a dos columnas) es ambiguo:
+           mejor no fijar categoria y dejar que cada platillo se clasifique solo. */
+        const columnas = cruda.split('\u0001').filter(x => x.trim());
+        const bs = impBuckets(l);
+        catActual = (columnas.length === 1 && bs.length === 1) ? (impCatDestino(bs[0]) || catActual) : null;
+        continue;
+      }
+      /* Linea descriptiva: sirve como ingredientes del ultimo platillo */
+      const ult = filas[filas.length - 1];
+      if(ult && !ult.ingredientes && l.split(/\s+/).length >= 3 && l.length <= 160 && !/^[A-Z\u00C1\u00C9\u00CD\u00D3\u00DA\u00D1\u00DC\s]+$/.test(l)){
+        ult.ingredientes = l.replace(/\s*[.;]\s*$/, '').toLowerCase();
+      }
+      continue;
+    }
+    /* Un renglon puede traer varios platillos (menus a dos columnas) o varios
+       tamanos del mismo platillo. Se corta el renglon en cada precio. */
+    let desde = 0;
+    for(const pr of precios){
+      const nombre = impLimpiarNombre(l.slice(desde, pr.ini));
+      desde = pr.fin;
+      if(!impNombreValido(nombre)) continue;
+      filas.push({
+        nombre,
+        precio: Math.round(pr.v),
+        cat: catActual || impCatDestino(impBucket(nombre)) || porDefecto,
+        ingredientes: '',
+      });
+    }
+  }
+  /* Sin duplicados por nombre */
+  const vistos = new Set();
+  return filas.filter(f => {
+    const k = f.nombre.toLowerCase();
+    if(vistos.has(k)) return false;
+    vistos.add(k); return true;
+  }).slice(0, 200);
+}
+
+/* ================================================================
+   ESTIMADOR NUTRICIONAL POR INGREDIENTES (multicocina)
+   ================================================================ */
+/* ============================================================
+   Estimador nutricional para menús de restaurante (MX)
+   Vanilla ES2019 · sin dependencias · navegador y Node
+   Valores POR PORCIÓN SERVIDA dentro de un platillo, no por 100 g.
+   ============================================================ */
+
+/* Base fija que se suma siempre (aceite de cocina, sal, guarnición mínima) */
+var NUTRI_BASE_MIN = { kcal: 40, p: 1, c: 3, g: 1 };
+
+/* Tabla principal. Cada regex se evalúa UNA vez sobre el texto completo,
+   así que repetir una palabra no duplica calorías. Sinónimos agrupados
+   para evitar solapamientos entre entradas. */
+var NUTRI_BASE = [
+  /* ---------- MEXICANA: bases de maíz y granos ---------- */
+  [/tortilla|totopo|tostada|nixtamal|sope|huarache|gordita|tlacoyo|tamal|maiz pozolero|maíz pozolero|pozolero/, {kcal:170, p:4, c:33, g:4}],
+  [/\bpan(es)?\b|bolillo|telera|baguette|masa|harina|pizza|pita|bagel|croissant|bisquet|bollo|\bbun\b|hojaldre/, {kcal:250, p:8, c:46, g:5}],
+  [/arroz/, {kcal:200, p:4, c:42, g:3}],
+  [/frijol|frijoles|refrito|habas|lenteja|garbanzo/, {kcal:130, p:7, c:20, g:3}],
+  [/quinoa|amaranto|seitan|seitán|soya texturizada|proteina vegetal|proteína vegetal|granola|avena/, {kcal:150, p:9, c:24, g:3}],
+  [/elote|esquite/, {kcal:110, p:3, c:22, g:2}],
+  [/papa|papas|patata|pure de papa|puré de papa|camote/, {kcal:150, p:3, c:30, g:2}],
+  [/pasta|spaghetti|espagueti|fettuccine|penne|rigatoni|lasa[gñ]a|lasagna|ravioli|gnocchi|ñoqui|macarr[oó]n|canelon|canelón/, {kcal:290, p:10, c:56, g:3}],
+  [/fideo|noodle|tallarin|tallarín|chow mein|chowmein|ramen|udon|soba|yakisoba|mein\b/, {kcal:240, p:7, c:44, g:5}],
+
+  /* ---------- MEXICANA: carnes y guisos típicos ---------- */
+  [/carnitas|cochinita|pibil/, {kcal:260, p:24, c:1, g:18}],
+  [/pastor|adobada|trompo/, {kcal:240, p:22, c:4, g:15}],
+  [/birria|barbacoa|suadero/, {kcal:250, p:26, c:2, g:16}],
+  [/chorizo|longaniza|salchicha|salami|pepperoni|peperoni/, {kcal:200, p:12, c:2, g:17}],
+  [/chicharr[oó]n|cueritos|carnaza/, {kcal:170, p:14, c:1, g:13}],
+  [/\bmole\b|\bmoles\b|pipian|pipián|adobo rojo|recado negro/, {kcal:220, p:6, c:20, g:14}],
+  [/menudo|pancita|lengua|tripa|machaca|cecina/, {kcal:210, p:24, c:1, g:12}],
+
+  /* ---------- CARNES GENERALES ---------- */
+  [/\bres\b|ternera|bistec|arrachera|carne|filete de res|sirloin|rib ?eye|ribeye|costilla|t-bone|brisket|milanesa/, {kcal:240, p:28, c:0, g:14}],
+  [/cerdo|puerco|guanciale|tocino|panceta|pancetta|jam[oó]n|lomo de cerdo|pierna de cerdo|chuleta/, {kcal:210, p:18, c:1, g:15}],
+  [/pollo|pechuga|pavo|muslo|alitas|boneless/, {kcal:170, p:30, c:0, g:5}],
+  [/pato|codorniz|ganso/, {kcal:280, p:25, c:1, g:20}],
+  [/cordero|borrego|chivo|cabrito|conejo/, {kcal:260, p:26, c:0, g:17}],
+  [/huevo|yema|omelette|omelet/, {kcal:90, p:8, c:1, g:6}],
+
+  /* ---------- MARISCOS ---------- */
+  [/camar[oó]n|langostino|acamaya/, {kcal:120, p:22, c:1, g:2}],
+  [/pulpo|calamar|almeja|osti[oó]n|callo|mejill[oó]n|jaiba|cangrejo|langosta|caracol/, {kcal:130, p:20, c:3, g:3}],
+  [/pescado|salm[oó]n|at[uú]n|marlin|tilapia|mojarra|r[oó]balo|huachinango|sierra|bacalao|anchoa|surimi|basa/, {kcal:180, p:26, c:0, g:8}],
+
+  /* ---------- LÁCTEOS Y GRASAS ---------- */
+  [/queso|quesillo|oaxaca|cotija|panela|manchego|parmesano|mozzarella|gorgonzola|ricotta|provolone|mascarpone|gratinad/, {kcal:150, p:10, c:2, g:11}],
+  [/crema|mantequilla|bechamel|nata|media crema/, {kcal:110, p:1, c:2, g:11}],
+  [/leche\b|l[aá]cteo|yogur|yoghurt/, {kcal:90, p:6, c:9, g:4}],
+  [/aceite|oliva|aceitun|manteca/, {kcal:90, p:0, c:0, g:10}],
+  [/aderezo|mayonesa|alioli|c[eé]sar dressing|ranch|tartara|tártara/, {kcal:120, p:0, c:2, g:13}],
+  [/aguacate|guacamole/, {kcal:120, p:2, c:6, g:11}],
+  [/nuez|nueces|almendra|cacahuate|pistache|avellana|pi[nñ]on|pi[nñ]ón|semilla de girasol|pepita/, {kcal:100, p:3, c:4, g:9}],
+
+  /* ---------- VERDURAS, CHILES Y AROMÁTICOS ---------- */
+  [/verdura|vegetal|espinaca|arugula|r[uú]cula|esp[aá]rrago|champi[nñ][oó]n|hongo|seta|br[oó]coli|zanahoria|calabaza|calabacita|pimiento|lechuga|ensalada|pepino|apio|\bcol\b|repollo|ch[ií]charo|ejote|betabel|coliflor|berenjena|germinado|bamb[uú]/, {kcal:40, p:2, c:7, g:0}],
+  [/nopal/, {kcal:20, p:1, c:3, g:0}],
+  [/jitomate|tomate|tomatillo|pur[eé] de tomate/, {kcal:25, p:1, c:5, g:0}],
+  [/chile|chipotle|jalape[nñ]o|serrano|poblano|guajillo|habanero|ancho|pasilla|morita|salsa verde|salsa roja|salsa mexicana|pico de gallo|salsa de chile|salsa inglesa|p[aá]prika/, {kcal:30, p:1, c:5, g:1}],
+  [/cebolla|cilantro|epazote|perejil|\bajo\b|cebollin|cebollín|hierba|or[eé]gano|albahaca|laurel|tomillo|poro/, {kcal:15, p:0, c:3, g:0}],
+  [/caldo|consom[eé]|sopa|caldillo|fondo de|bisque/, {kcal:60, p:4, c:5, g:2}],
+
+  /* ---------- ASIÁTICA ---------- */
+  [/salsa de soya|\bsoya\b|\bsoja\b|teriyaki|hoisin|\bmiso\b|ponzu|salsa de ostion|salsa de ostión/, {kcal:40, p:3, c:6, g:1}],
+  [/tofu/, {kcal:90, p:9, c:3, g:5}],
+  [/jengibre|ajonjol[ií]|s[eé]samo|wasabi|\balga\b|\bnori\b|cinco especias|anis estrella|anís estrella/, {kcal:35, p:1, c:2, g:3}],
+  [/agridulce|salsa naranja|tamarindo dulce|salsa de ciruela|general tso/, {kcal:110, p:0, c:26, g:0}],
+  [/curry|leche de coco|\bcoco\b|masala|c[uú]rcuma|pad thai/, {kcal:150, p:2, c:6, g:13}],
+  [/wonton|won ton|rollos? primavera|dumpling|gyoza|\bbao\b|siu mai|empanada china/, {kcal:160, p:6, c:18, g:7}],
+
+  /* ---------- CONDIMENTOS PARRILLA / AMERICANA ---------- */
+  [/\bbbq\b|barbecue|catsup|ketchup|mostaza|salsa b[uú]falo|buffalo|salsa de chipotle dulce/, {kcal:60, p:0, c:14, g:0}],
+  [/vinagre|lim[oó]n|\blima\b|vinagreta|jugo de lim[oó]n/, {kcal:10, p:0, c:2, g:0}],
+
+  /* ---------- BEBIDAS ---------- */
+  [/refresco|coca ?cola|\bsoda\b|\bcola\b|sprite|fanta|manzanita/, {kcal:150, p:0, c:39, g:0}],
+  [/cerveza|michelada|chelada|lager|\bipa\b|clara y oscura/, {kcal:150, p:1, c:12, g:0}],
+  [/vino|tinto|espumoso|sangr[ií]a|champ[aá]n|prosecco/, {kcal:130, p:0, c:5, g:0}],
+  [/tequila|mezcal|\bron\b|vodka|whisky|ginebra|licor|destilado|brandy|c[oó]ctel|coctel de licor/, {kcal:110, p:0, c:1, g:0}],
+  [/agua fresca|agua de |jamaica|limonada|naranjada|agua de tamarindo|horchata de agua/, {kcal:70, p:0, c:17, g:0}],
+  [/horchata|licuado|malteada|smoothie|batido|frapp/, {kcal:170, p:3, c:30, g:4}],
+  [/jugo|zumo|n[eé]ctar/, {kcal:110, p:1, c:26, g:0}],
+  [/caf[eé]|expreso|espresso|americano|capuchino|latte|\bt[eé]\b|infusi[oó]n|matcha/, {kcal:10, p:0, c:2, g:0}],
+  [/agua natural|agua mineral|agua purificada|\bhielo\b|sin az[uú]car/, {kcal:0, p:0, c:0, g:0}],
+
+  /* ---------- POSTRES Y DULCES ---------- */
+  [/az[uú]car|\bmiel\b|jarabe|almibar|almíbar|piloncillo|cajeta|dulce de leche|leche condensada|caramelo/, {kcal:130, p:1, c:30, g:2}],
+  [/chocolate|cacao|nutella|ganache/, {kcal:180, p:3, c:22, g:9}],
+  [/helado|nieve|crema batida|gelato/, {kcal:180, p:3, c:22, g:9}],
+  [/flan|natilla|pud[ií]n|mousse|arroz con leche postre/, {kcal:200, p:6, c:28, g:8}],
+  [/pastel|tarta|\bpay\b|cheesecake|galleta|bizcocho|tres leches|brownie|panque/, {kcal:280, p:4, c:38, g:13}],
+  [/churro|bu[nñ]uelo|dona|donut|\bcrepa\b|waffle|hot ?cake/, {kcal:250, p:3, c:32, g:12}],
+  [/fruta|frutos rojos|fresa|mango|pi[nñ]a|pl[aá]tano|manzana|durazno|mel[oó]n|papaya|guayaba|naranja|granada|\buva\b|kiwi|zarzamora/, {kcal:50, p:1, c:12, g:0}],
+  [/canela|vainilla|especias|nuez moscada|clavo de olor/, {kcal:5, p:0, c:1, g:0}]
+];
+
+/* Método de cocción: multiplicadores aplicados al final (se acumulan) */
+var COCCION = [
+  [/\bfrit[oa]s?\b|fritura|capeado|empanizado|empanado|rebozado|tempura|chicharr[oó]n|a la francesa|crujiente|dorado en aceite/, {kcalX:1.45, gX:1.70}],
+  [/\bwok\b|salteado|salteada|sofrito|salteadas/, {kcalX:1.08, gX:1.20}],
+  [/asado|asada|a la plancha|al vapor|horneado|al horno|a la parrilla|parrilla|brasas|grillado|hervido|a la talla|rostizado/, {kcalX:0.92, gX:0.85}]
+];
+
+/* Tamaño de porción: se usa el PRIMER patrón que coincida */
+var PORCION = [
+  [/orden grande|familiar|para compartir|\bkilo\b|\bjumbo\b|jarra|parrillada|extra grande|1 ?kg/, 1.8],
+  [/entrada|media orden|1\/2 orden|\bmini\b|individual|bocadillo|degustaci[oó]n|peque[nñ]a|infantil/, 0.6]
+];
+
+/* Inferencia de ingredientes a partir del NOMBRE del platillo.
+   Se devuelve la PRIMERA coincidencia, por eso el orden importa
+   (lo específico va antes que lo genérico). */
+var INFERENCIA = [
+  /* --- Mexicana --- */
+  [/pastor|adobada|trompo/, 'tortilla de maíz, cerdo al pastor, piña, cebolla, cilantro, salsa roja'],
+  [/carnitas/, 'tortilla de maíz, carnitas de cerdo, cebolla, cilantro, salsa verde'],
+  [/birria|barbacoa|suadero/, 'tortilla de maíz, birria de res, consomé, cebolla, cilantro, limón'],
+  [/cochinita|pibil/, 'tortilla de maíz, cochinita pibil, cebolla morada, chile habanero'],
+  [/pozole/, 'maíz pozolero, cerdo, chile guajillo, lechuga, cebolla, orégano'],
+  [/chiles? en nogada/, 'chile poblano, carne de res y cerdo, fruta, nuez, crema, granada'],
+  [/chile relleno/, 'chile poblano, queso, huevo capeado, salsa de jitomate, arroz'],
+  [/guacamole/, 'aguacate, jitomate, cebolla, cilantro, limón, totopos, entrada'],
+  [/\bmole\b|\bmoles\b|pipi[aá]n/, 'mole poblano, pollo, ajonjolí, arroz'],
+  [/enchilada|entomatada|enmolada/, 'tortilla de maíz, pollo, salsa de chile, queso, crema, cebolla'],
+  [/chilaquil/, 'totopos de maíz, salsa verde, pollo, crema, queso fresco, cebolla'],
+  [/quesadilla/, 'tortilla de maíz, queso oaxaca, salsa verde'],
+  [/sope|huarache|gordita|tlacoyo/, 'masa de maíz, frijol, carne de res, queso fresco, crema, salsa roja'],
+  [/tostada/, 'tostada de maíz, frijol, pollo, lechuga, crema, queso fresco'],
+  [/\btorta\b|\btortas\b/, 'pan telera, milanesa de res, frijol, aguacate, jitomate, crema'],
+  [/tamal/, 'masa de maíz, manteca, pollo, salsa verde'],
+  [/sopa de tortilla|sopa azteca/, 'caldo de jitomate, totopos de maíz, aguacate, queso fresco, chile pasilla'],
+  [/sopa de fideo/, 'fideo, caldo de jitomate, queso fresco'],
+  [/caldo de pollo|caldo tlalpe|sopa de pollo/, 'caldo de pollo, verduras, arroz, aguacate, chile chipotle'],
+  [/menudo|pancita/, 'pancita de res, maíz pozolero, chile guajillo, cebolla, orégano'],
+  [/nopal/, 'nopal asado, queso fresco, cebolla, salsa verde'],
+  [/molcajete|parrillada/, 'arrachera, pollo, chorizo, queso asado, nopal, salsa roja, tortilla de maíz'],
+  [/huevos? (ranchero|divorciado|a la mexicana|revuelto|estrellado)/, 'huevo, tortilla de maíz, salsa de jitomate, frijol'],
+  [/elote|esquite/, 'elote, mayonesa, queso cotija, chile en polvo, limón'],
+  [/burrito|gringa/, 'tortilla de trigo, frijol, arroz, carne de res, queso'],
+  [/fajita/, 'arrachera a la plancha, pimiento, cebolla, tortilla de trigo, guacamole'],
+  [/\btaco/, 'tortilla de maíz, carne de res, cebolla, cilantro, salsa verde'],
+
+  /* --- Italiana --- */
+  [/pizza/, 'masa de pizza, salsa de jitomate, queso mozzarella, albahaca, aceite de oliva'],
+  [/lasa[gñ]a|lasagna/, 'pasta, carne de res molida, salsa de jitomate, queso mozzarella, bechamel'],
+  [/carbonara/, 'pasta, guanciale, huevo, queso parmesano'],
+  [/alfredo|fettuccine/, 'pasta, crema, mantequilla, queso parmesano, pollo'],
+  [/bolo[gñ]esa|bolognesa|ragu|ragú/, 'pasta, carne de res molida, salsa de jitomate, queso parmesano'],
+  [/pesto/, 'pasta, albahaca, piñón, aceite de oliva, queso parmesano'],
+  [/risotto/, 'arroz, mantequilla, queso parmesano, caldo, champiñón'],
+  [/ravioli|gnocchi|ñoqui/, 'pasta rellena, queso ricotta, salsa de jitomate, mantequilla'],
+  [/tiramis/, 'queso mascarpone, café, bizcocho'],
+  [/bruschetta|focaccia/, 'pan, jitomate, albahaca, aceite de oliva, ajo, entrada'],
+
+  /* --- China / asiática --- */
+  [/chow ?mein|chao ?mein|yakisoba|lo ?mein/, 'fideo, pollo, verduras, salsa de soya, aceite, salteado en wok'],
+  [/arroz frito|chaufa|chow ?fan|yakimeshi/, 'arroz, huevo, verduras, salsa de soya, cebollín, salteado en wok'],
+  [/pato|pekin|pekín|peking/, 'pato laqueado, salsa hoisin, tortilla china de trigo, cebolla, pepino'],
+  [/rollos? primavera|spring ?roll/, 'rollo primavera, col, zanahoria, cerdo, frito, entrada'],
+  [/wonton|won ton/, 'wonton, camarón, caldo, cebollín'],
+  [/agridulce|naranja china|general tso/, 'cerdo, salsa agridulce, pimiento, piña, empanizado'],
+  [/teriyaki/, 'pollo, salsa teriyaki, arroz, ajonjolí, verduras'],
+  [/curry/, 'curry, leche de coco, pollo, arroz, verduras'],
+  [/tempura/, 'camarón, verduras, tempura, aceite'],
+  [/ramen|udon/, 'fideo, caldo, cerdo, huevo, alga nori, cebollín'],
+  [/tofu|mapo/, 'tofu, salsa de soya, chile, verduras, arroz'],
+  [/sushi|maki|nigiri|california|sashimi|hand ?roll/, 'arroz, alga nori, pescado, aguacate, pepino'],
+  [/pad ?thai/, 'fideo, camarón, cacahuate, huevo, germinado, salsa de tamarindo dulce'],
+
+  /* --- Mariscos --- */
+  [/aguachile/, 'camarón, limón, chile serrano, pepino, cebolla morada'],
+  [/ceviche/, 'pescado, limón, jitomate, cebolla, cilantro, aguacate, tostada'],
+  [/c[oó]ctel de camar|campechana/, 'camarón, jugo de tomate, cebolla, cilantro, aguacate'],
+  [/pulpo/, 'pulpo, aceite de oliva, papa, ajo, chile guajillo'],
+  [/mojarra|tilapia|pescado frito/, 'mojarra, frito, limón, arroz, ensalada'],
+  [/camar[oó]n/, 'camarón, ajo, mantequilla, chile, arroz, ensalada'],
+  [/salm[oó]n|at[uú]n|marlin/, 'salmón a la plancha, verduras, limón, aceite de oliva'],
+  [/pescado|filete de|robalo|róbalo|huachinango/, 'pescado a la plancha, arroz, verduras, limón, aceite de oliva'],
+
+  /* --- Parrilla / americana --- */
+  [/hamburguesa|burger/, 'pan de hamburguesa, carne de res, queso, tocino, lechuga, jitomate, cebolla, catsup'],
+  [/papas? (a la francesa|fritas|gajo)/, 'papa, frito, sal, catsup'],
+  [/arrachera|carne asada|t-bone|rib ?eye|sirloin|new york/, 'arrachera de res a la parrilla, cebolla asada, nopal, frijol, tortilla de maíz'],
+  [/costilla|\bribs\b/, 'costilla de res, salsa bbq, papa, ensalada'],
+  [/alitas|boneless|nuggets/, 'pollo, empanizado, salsa bbq, apio, aderezo'],
+  [/s[aá]ndwich|sandwich|club house/, 'pan de caja, pollo, tocino, queso, lechuga, jitomate, mayonesa'],
+  [/hot ?dog|jocho/, 'pan, salchicha de cerdo, tocino, catsup, mostaza, cebolla'],
+  [/nachos/, 'totopos de maíz, queso, frijol, jalapeño, guacamole'],
+
+  /* --- Ensaladas y vegetariano --- */
+  [/ensalada c[eé]sar/, 'lechuga romana, aderezo césar, queso parmesano, crutones, pollo a la plancha'],
+  [/ensalada/, 'lechuga, jitomate, pepino, zanahoria, aderezo, queso panela'],
+  [/vegetarian|vegan|vegetal|buddha bowl/, 'verduras, tofu, quinoa, aguacate, aceite de oliva'],
+
+  /* --- Postres --- */
+  [/flan/, 'huevo, leche, azúcar, caramelo, vainilla'],
+  [/churro|bu[nñ]uelo/, 'churro, azúcar, canela'],
+  [/pastel|tarta|cheesecake|tres leches|brownie/, 'pastel, chocolate'],
+  [/\bpay\b|\bpie de\b/, 'pay, fruta, azúcar'],
+  [/helado|nieve/, 'helado, fruta'],
+  [/arroz con leche/, 'arroz, leche, azúcar, canela'],
+  [/crepa|crep[ae]s/, 'crepa, huevo, leche, cajeta'],
+
+  /* --- Bebidas --- */
+  [/horchata/, 'horchata'],
+  [/agua de|agua fresca|jamaica|limonada|naranjada/, 'agua fresca de jamaica'],
+  [/refresco|coca ?cola|sprite|manzanita|\bsoda\b/, 'refresco'],
+  [/michelada|chelada/, 'cerveza, limón, salsa inglesa, chile en polvo'],
+  [/cerveza|caguama|lager/, 'cerveza'],
+  [/margarita|paloma|mojito|c[oó]ctel|coctel/, 'tequila, limón, jarabe, hielo'],
+  [/tequila|mezcal|whisky|vodka|\bron\b/, 'tequila, hielo'],
+  [/vino|sangr[ií]a|copa de/, 'vino tinto'],
+  [/malteada|licuado|smoothie|frapp/, 'leche, fruta, azúcar, helado'],
+  [/jugo|zumo/, 'jugo natural'],
+  [/caf[eé]|espresso|expreso|capuchino|latte|americano/, 'café'],
+  [/\bt[eé]\b|infusi[oó]n|manzanilla/, 'té']
+];
+
+/* Devuelve el string de ingredientes inferido a partir del nombre, o '' */
+function inferirIngredientes(nombre) {
+  var t = String(nombre == null ? '' : nombre).toLowerCase();
+  if (!t) return '';
+  for (var i = 0; i < INFERENCIA.length; i++) {
+    if (INFERENCIA[i][0].test(t)) return INFERENCIA[i][1];
+  }
+  return '';
+}
+
+/* Acota un número a un rango */
+function acotar(v, min, max) {
+  if (!isFinite(v)) return min;
+  return v < min ? min : (v > max ? max : v);
+}
+
+/* Estimador principal.
+   texto: ingredientes (o lo que haya).
+   ctx  : texto extra (p. ej. el nombre) usado SOLO para cocción y porción. */
+function estimarNutricion(texto, ctx) {
+  var t = String(texto == null ? '' : texto).toLowerCase().trim();
+  if (!t) return null;
+  var meta = (t + ' ' + String(ctx == null ? '' : ctx).toLowerCase());
+
+  var kcal = 0, p = 0, c = 0, g = 0, aciertos = 0, i;
+
+  for (i = 0; i < NUTRI_BASE.length; i++) {
+    if (NUTRI_BASE[i][0].test(t)) {
+      var n = NUTRI_BASE[i][1];
+      kcal += n.kcal; p += n.p; c += n.c; g += n.g; aciertos++;
+    }
+  }
+  if (!aciertos) return null;
+
+  /* Base fija (aceite, sal, guarnición). En bebidas y cosas muy ligeras
+     se aplica reducida para no inflar un café o un agua fresca. */
+  var fb = kcal < 150 ? 0.2 : 1;
+  kcal += NUTRI_BASE_MIN.kcal * fb; p += NUTRI_BASE_MIN.p * fb;
+  c += NUTRI_BASE_MIN.c * fb; g += NUTRI_BASE_MIN.g * fb;
+
+  /* Cocción: los multiplicadores se acumulan */
+  var kX = 1, gX = 1;
+  for (i = 0; i < COCCION.length; i++) {
+    if (COCCION[i][0].test(meta)) { kX *= COCCION[i][1].kcalX; gX *= COCCION[i][1].gX; }
+  }
+  kcal *= kX; g *= gX;
+
+  /* Porción: primer patrón que coincida */
+  var f = 1;
+  for (i = 0; i < PORCION.length; i++) {
+    if (PORCION[i][0].test(meta)) { f = PORCION[i][1]; break; }
+  }
+  kcal *= f; p *= f; c *= f; g *= f;
+
+  /* Cotas sanas para no mostrar números absurdos */
+  return {
+    kcal:  Math.round(acotar(kcal, 20, 1800)),
+    prot:  Math.round(acotar(p, 0, 200)),
+    carb:  Math.round(acotar(c, 0, 250)),
+    grasa: Math.round(acotar(g, 0, 150))
+  };
+}
+
+/* Estima usando ingredientes reales, o inferidos, o el propio nombre.
+   Devuelve { nutri, ingredientesUsados } para que el restaurante lo edite. */
+function estimarPlatillo(nombre, ingredientes) {
+  var nom = String(nombre == null ? '' : nombre).trim();
+  var ing = String(ingredientes == null ? '' : ingredientes).trim();
+  if (!ing) ing = inferirIngredientes(nom);
+  if (!ing) ing = nom;
+  if (!ing) return { nutri: null, ingredientesUsados: '' };
+  return { nutri: estimarNutricion(ing, nom), ingredientesUsados: ing };
+}
+
+/* ---------- Categorías del restaurante (las propias si existen) ---------- */
 function catsPanel(){
   const c = cfgCache.config && cfgCache.config.categorias;
   if(Array.isArray(c) && c.length) return c.map(x => [x.id, x.nombre]);
   return [['entradas','Entradas'],['pastas','Pastas'],['pizzas','Pizzas'],['principales','Platos fuertes'],['postres','Postres'],['bebidas','Bebidas']];
 }
 function catNombres(){ return Object.fromEntries(catsPanel()); }
+
+/* ---------- Flujo de importación ---------- */
+$('#archivoMenu').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if(!f) return;
+  if(f.size > 25 * 1024 * 1024){ impError('El archivo pesa más de 25 MB. Comprímelo o sube sólo las páginas del menú.'); return; }
+  $('#impProceso').style.display = 'block';
+  $('#borradorZona').style.display = 'none';
+  $('#impError').style.display = 'none';
+  impPaso('Leyendo el documento…', 4);
+  textoLeido = '';
+  try{
+    if(/\.(txt|csv|md)$/i.test(f.name) || /^text\//.test(f.type || '')){
+      textoLeido = await f.text();
+      impPaso('Detectando platillos y precios…', 70);
+    } else if(/\.pdf$/i.test(f.name) || f.type === 'application/pdf'){
+      textoLeido = await impTextoDePDF(f);
+    } else if(/^image\//.test(f.type || '') || /\.(png|jpe?g|webp|bmp|gif)$/i.test(f.name)){
+      impPaso('Preparando la foto…', 12);
+      textoLeido = await impOCR(await impPrepararImagen(f), '');
+    } else {
+      throw new Error('Formato no reconocido. Sube un PDF, una foto (JPG/PNG) o un archivo TXT/CSV.');
+    }
+  }catch(err){
+    $('#impProceso').style.display = 'none';
+    impError((err && err.message) || 'No se pudo leer el archivo.');
+    return;
+  }
+  impPaso('Clasificando por categoría…', 94);
+  let extraidos = [];
+  try{ extraidos = parsearMenu(textoLeido); }catch(err){ extraidos = []; }
+  $('#impProceso').style.display = 'none';
+  if(!extraidos.length){
+    impError(textoLeido.replace(/\s/g, '').length < 40
+      ? 'No encontré texto legible en el archivo. Si es una foto, tómala de frente, con buena luz y que el menú llene el encuadre; si es un PDF exportado como imagen, sube mejor el PDF original.'
+      : 'Leí el documento pero no encontré líneas con formato «platillo … precio». Revisa el texto que leí o captura los platillos a mano.');
+    return;
+  }
+  borrador = extraidos.map((x, i) => ({ ...x, id: 'ai_' + Date.now().toString(36) + '_' + i, nutri: null }));
+  estimarTodo(true);
+  $('#borradorZona').style.display = 'block';
+  toast('La AI extrajo ' + borrador.length + ' platillo(s) — revísalos antes de publicar');
+});
+
+/* ---------- Borrador editable ---------- */
 function pintarBorrador(){
   const CATS = catsPanel();
+  const esc = s => String(s == null ? '' : s).replace(/"/g, '&quot;');
   $('#borradorLista').innerHTML = borrador.map((b, i) => `
     <div class="borrador-fila">
-      <input value="${b.nombre.replace(/"/g,'&quot;')}" onchange="borrador[${i}].nombre=this.value">
+      <input value="${esc(b.nombre)}" onchange="borrador[${i}].nombre=this.value">
       <input type="number" value="${b.precio}" onchange="borrador[${i}].precio=+this.value">
-      <select onchange="borrador[${i}].cat=this.value">${CATS.map(c => `<option value="${c[0]}" ${b.cat===c[0]?'selected':''}>${c[1]}</option>`).join('')}</select>
-      <input placeholder="Ingredientes principales (para estimar nutrición)…" value="${b.ingredientes.replace(/"/g,'&quot;')}" onchange="borrador[${i}].ingredientes=this.value;borrador[${i}].nutri=null;pintarBorrador()">
+      <select onchange="borrador[${i}].cat=this.value">${CATS.map(c => `<option value="${c[0]}" ${b.cat === c[0] ? 'selected' : ''}>${c[1]}</option>`).join('')}</select>
+      <input placeholder="Ingredientes principales (para estimar nutrición)…" value="${esc(b.ingredientes)}" onchange="borrador[${i}].ingredientes=this.value;borrador[${i}].nutri=null;estimarFila(${i},true);pintarBorrador()">
       <div style="display:flex;align-items:center;gap:8px">
         ${b.nutri
-          ? `<span class="nutri-mini">${b.nutri.kcal} kcal · ${b.nutri.prot}p/${b.nutri.carb}c/${b.nutri.grasa}g</span>`
+          ? `<span class="nutri-mini" title="Estimación de la AI — edítala después en la carta">${b.nutri.kcal} kcal · ${b.nutri.prot}p/${b.nutri.carb}c/${b.nutri.grasa}g</span>`
           : `<button class="btn-mini" onclick="estimarFila(${i})">Estimar con AI</button>`}
         <button class="btn-mini" title="Quitar" onclick="borrador.splice(${i},1);pintarBorrador()">×</button>
       </div>
-    </div>`).join('');
+    </div>`).join('') || '<div class="nota-pie" style="margin:0">El borrador está vacío.</div>';
+  const r = $('#borradorResumen');
+  if(r){
+    const sin = borrador.filter(b => !b.nutri).length;
+    r.textContent = borrador.length + ' platillo(s)' + (sin ? ' · ' + sin + ' sin nutrición estimada' : ' · nutrición estimada por AI');
+  }
 }
-function estimarFila(i){
+function estimarFila(i, silencio){
   const b = borrador[i];
-  if(!b.ingredientes.trim()){ toast('Escribe primero los ingredientes principales'); return; }
-  const n = estimarNutricion(b.ingredientes);
-  if(!n){ toast('No reconocí los ingredientes — intenta con términos más comunes'); return; }
-  b.nutri = n;
+  if(!b) return;
+  const r = estimarPlatillo(b.nombre, b.ingredientes);
+  if(!r.nutri){
+    if(!silencio) toast('No reconocí los ingredientes — escríbelos con términos comunes (ej. «pollo, arroz, verduras»)');
+    return;
+  }
+  if(!b.ingredientes && r.ingredientesUsados && r.ingredientesUsados.toLowerCase() !== b.nombre.toLowerCase()) b.ingredientes = r.ingredientesUsados;
+  b.nutri = r.nutri;
+  if(!silencio){ pintarBorrador(); toast('La AI estimó ' + r.nutri.kcal + ' kcal para «' + b.nombre + '» — ajustable después'); }
+}
+function estimarTodo(silencio){
+  for(let i = 0; i < borrador.length; i++) if(!borrador[i].nutri) estimarFila(i, true);
   pintarBorrador();
-  toast(`AI estimó ${n.kcal} kcal para «${b.nombre}» — ajustable después`);
+  if(!silencio){
+    const ok = borrador.filter(b => b.nutri).length;
+    toast('Nutrición estimada en ' + ok + ' de ' + borrador.length + ' platillo(s)');
+  }
+}
+function agregarFilaManual(){
+  const cats = catsPanel();
+  borrador.push({ nombre: '', precio: 0, cat: (impCatDestino('principales') || cats[0][0]), ingredientes: '', nutri: null, id: 'ai_' + Date.now().toString(36) + '_' + borrador.length });
+  $('#impError').style.display = 'none';
+  $('#borradorZona').style.display = 'block';
+  pintarBorrador();
 }
 function publicarBorrador(){
-  if(!borrador.length) return;
+  const listos = borrador.filter(b => (b.nombre || '').trim().length > 1);
+  if(!listos.length){ toast('Escribe al menos el nombre de un platillo'); return; }
   dbEscribir(d => {
     d.platillos = d.platillos || [];
-    for(const b of borrador){
+    for(const b of listos){
       d.platillos.push({
-        id: b.id, nombre: b.nombre, precio: +b.precio || 0, cat: b.cat,
+        id: b.id, nombre: b.nombre.trim(), precio: +b.precio || 0, cat: b.cat,
         ingredientes: b.ingredientes.split(',').map(s => s.trim()).filter(Boolean),
-        kcal: b.nutri?.kcal || 0, prot: b.nutri?.prot || 0, carb: b.nutri?.carb || 0, grasa: b.nutri?.grasa || 0,
-        desc: b.ingredientes ? b.ingredientes.split(',').slice(0,4).join(', ') : 'Platillo de la casa.',
+        kcal: (b.nutri && b.nutri.kcal) || 0, prot: (b.nutri && b.nutri.prot) || 0,
+        carb: (b.nutri && b.nutri.carb) || 0, grasa: (b.nutri && b.nutri.grasa) || 0,
+        desc: b.ingredientes ? b.ingredientes.split(',').slice(0, 4).join(', ') : 'Platillo de la casa.',
         origen: 'ai',
       });
     }
   });
-  toast(`${borrador.length} platillo(s) publicados — el comensal ya los ve en su carta`);
+  toast(listos.length + ' platillo(s) publicados — el comensal ya los ve en su carta');
   borrador = [];
   $('#borradorZona').style.display = 'none';
   render();
 }
-function descartarBorrador(){ borrador = []; $('#borradorZona').style.display = 'none'; }
+function descartarBorrador(){ borrador = []; $('#borradorZona').style.display = 'none'; $('#impError').style.display = 'none'; }
 
 /* ---------- Fotos propias por platillo ---------- */
 function subirFoto(id){
