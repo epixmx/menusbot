@@ -510,8 +510,12 @@
 const RESTAURANTE = { nombre:'Trattoria Bella Vita', moneda:'MXN' };
 const IMG_BASE = 'https://xwcgqhlsubyfmpdjabjt.supabase.co/storage/v1/object/public/menusbot-demo/';
 const IMG = id => IMG_BASE + id + '.jpg';
-/* Multi-restaurante: el QR trae &r=slug; sin él, se usa el restaurante demo */
-const RID = ((new URLSearchParams(location.search).get('r')) || 'bellavita').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'bellavita';
+/* Multi-restaurante: el QR SIEMPRE trae &r=slug. Sin restaurante en la URL → landing general. */
+const RID = (new URLSearchParams(location.search).get('r') || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+if(!RID){
+  location.replace('index.html');
+  throw new Error('Sin restaurante en la URL — redirigiendo a la landing');
+}
 /* Claves de almacenamiento separadas por restaurante (el demo conserva las suyas) */
 const LSK = k => RID === 'bellavita' ? k : k + '::' + RID;
 /* Para restaurantes propios, nada de marca del demo mientras carga su identidad */
