@@ -23,7 +23,24 @@
     --ink:#241F18; --nav-bg:rgba(19,16,13,.96);
     --serif:'Fraunces',Georgia,serif;
     --grot:'Space Grotesk','Inter',system-ui,sans-serif;
+    /* Alertas sólidas: NO cambian con el tema. Un aviso se ve igual siempre,
+       eso es parte de que se entienda. aplicarTema() nunca las sobreescribe. */
+    --al-roja:#D92D20;
+    --al-ambar:#C2410C;
+    --al-verde:#15803D;
+    --al-azul:#1D4ED8;
+    --al-txt:#FFFFFF;
   }
+  /* Aviso sólido: fondo lleno, texto blanco, negritas. Sin transparencias, sin borde de
+     otro color. Dos formas: etiqueta corta (.al-etiq) y bloque de una o dos frases (.al-bloque). */
+  .al-etiq,.al-bloque{background:var(--al-azul);color:var(--al-txt);border-radius:2px;font-weight:700}
+  .al-etiq.roja,.al-bloque.roja{background:var(--al-roja)}
+  .al-etiq.ambar,.al-bloque.ambar{background:var(--al-ambar)}
+  .al-etiq.verde,.al-bloque.verde{background:var(--al-verde)}
+  .al-etiq.azul,.al-bloque.azul{background:var(--al-azul)}
+  .al-etiq{display:inline-block;padding:7px 11px;line-height:1.5}
+  .al-bloque{padding:13px 15px;font-family:var(--grot);font-size:14px;line-height:1.55;letter-spacing:.2px}
+  .al-bloque b{color:var(--al-txt)}
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html{scroll-behavior:smooth}
   body{font-family:var(--grot);background:#0B0908;color:var(--crema)}
@@ -41,7 +58,9 @@
   .ico{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 
   /* ---------- utilidades editoriales ---------- */
-  .caps{font-family:var(--grot);font-size:9.5px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase}
+  /* line-height fijo, no «normal»: cuando una etiqueta en mayúsculas se va a dos renglones,
+     los renglones tienen que separarse solos. */
+  .caps{font-family:var(--grot);font-size:13px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;line-height:1.5}
   .hairline{border:none;border-top:1px solid var(--linea);margin:0}
   .leader{flex:1;border-bottom:1px dotted var(--linea2);transform:translateY(-4px);min-width:16px}
 
@@ -50,72 +69,72 @@
   .splash::before{content:'';position:absolute;inset:0;background:url('https://xwcgqhlsubyfmpdjabjt.supabase.co/storage/v1/object/public/menusbot-demo/margherita.jpg') center/cover;opacity:.16;filter:saturate(.7) contrast(1.05)}
   .splash.oculto{opacity:0;visibility:hidden}
   .splash-caja{position:relative;max-width:390px;width:100%;text-align:center}
-  .splash .sobre{font-family:var(--grot);font-size:10px;letter-spacing:4px;color:var(--humo);font-weight:600}
+  .splash .sobre{font-family:var(--grot);font-size:13px;letter-spacing:1.4px;color:var(--humo);font-weight:600}
   .splash h1{font-family:var(--serif);font-style:italic;font-weight:500;font-size:52px;line-height:.98;margin-top:14px;letter-spacing:-1px}
-  .splash h1 span{display:block;font-style:normal;font-size:20px;font-weight:400;letter-spacing:6px;margin-bottom:10px;color:var(--humo)}
+  .splash h1 span{display:block;font-style:normal;font-size:21px;font-weight:400;letter-spacing:6px;margin-bottom:10px;color:var(--humo)}
   .splash .orn{margin:20px auto;display:flex;align-items:center;gap:12px;justify-content:center;color:var(--pomodoro)}
   .splash .orn i{display:block;width:44px;border-top:1px solid var(--linea2)}
-  .splash .pregunta{font-family:var(--grot);font-size:10px;letter-spacing:3px;font-weight:600;color:var(--crema)}
+  .splash .pregunta{font-family:var(--grot);font-size:13px;letter-spacing:1.4px;font-weight:600;color:var(--crema)}
   .mesas{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-top:18px;background:var(--linea);border:1px solid var(--linea)}
-  .mesa-btn{aspect-ratio:1.15;border:none;background:var(--esp);color:var(--crema);cursor:pointer;transition:.18s;font-family:var(--serif);font-size:20px;font-weight:500}
-  .mesa-btn small{display:block;font-family:var(--grot);font-size:7.5px;letter-spacing:2.4px;color:var(--humo2);margin-top:3px;font-weight:600}
+  .mesa-btn{aspect-ratio:1.15;border:none;background:var(--esp);color:var(--crema);cursor:pointer;transition:.18s;font-family:var(--serif);font-size:21px;font-weight:500}
+  .mesa-btn small{display:block;font-family:var(--grot);font-size:12px;letter-spacing:1.4px;color:var(--humo2);margin-top:3px;font-weight:600}
   .mesa-btn:hover,.mesa-btn:active{background:var(--pomodoro);color:var(--papel)}
   .mesa-btn:hover small{color:rgba(242,235,221,.8)}
-  .splash .nota{margin-top:22px;font-size:10px;color:var(--humo2);line-height:1.8;letter-spacing:.3px}
+  .splash .nota{margin-top:22px;font-size:13px;color:var(--humo2);line-height:1.8;letter-spacing:.3px}
 
   /* ---------- Cabecera ---------- */
   .cab{padding:18px 20px 0}
   .cab .fila-top{display:flex;justify-content:space-between;align-items:center}
-  .marca-mini{font-family:var(--grot);font-size:9px;letter-spacing:3px;font-weight:700;color:var(--humo)}
-  .mesa-pill{display:flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:10px;font-weight:600;letter-spacing:2px;padding:9px 14px;border-radius:2px;cursor:pointer}
-  .mesa-pill b{color:var(--pomodoro);font-size:12px}
+  .marca-mini{font-family:var(--grot);font-size:12.5px;letter-spacing:1.4px;font-weight:700;color:var(--humo)}
+  .mesa-pill{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:13px;font-weight:600;letter-spacing:1.4px;padding:11px 14px;border-radius:2px;cursor:pointer;min-height:44px}
+  .mesa-pill b{color:var(--pomodoro);font-size:14.5px}
   .titulo-zona{position:relative;margin-top:4px}
   .titulo-zona h1{font-family:var(--serif);font-weight:500;font-size:44px;line-height:.95;letter-spacing:-1.2px}
   .titulo-zona h1 em{font-style:italic;color:var(--pomodoro)}
   .titulo-zona .sello{position:absolute;right:-4px;top:4px;width:84px;height:84px;animation:gira 28s linear infinite;opacity:.9}
   .titulo-zona .sello-logo{display:none !important}
   #logoPrincipal{width:68%;max-width:230px;height:78px;object-fit:contain;object-position:left center;display:block;margin:0}
-  .lema-cab{margin-top:2px;font-family:var(--serif);font-style:italic;font-weight:500;font-size:15px;letter-spacing:.3px;color:var(--crema)}
-  @media (min-width:700px){ #logoPrincipal{width:85%;max-width:310px;height:104px} .lema-cab{font-size:17px;margin-top:4px} .titulo-zona .sello{top:14px} .titulo-zona{margin-top:2px} }
+  .lema-cab{margin-top:2px;font-family:var(--serif);font-style:italic;font-weight:500;font-size:17px;letter-spacing:.3px;color:var(--crema)}
+  @media (min-width:700px){ #logoPrincipal{width:85%;max-width:310px;height:104px} .lema-cab{font-size:18px;margin-top:4px} .titulo-zona .sello{top:14px} .titulo-zona{margin-top:2px} }
   @keyframes gira{to{transform:rotate(360deg)}}
-  .sello text{font-family:var(--grot);font-size:10.5px;letter-spacing:2px;fill:var(--humo);font-weight:600}
-  .sello .centro{font-family:var(--serif);font-style:italic;font-size:20px;fill:var(--pomodoro)}
+  .sello text{font-family:var(--grot);font-size:11px;letter-spacing:.6px;fill:var(--humo);font-weight:600}
+  .sello .centro{font-family:var(--serif);font-style:italic;font-size:21px;fill:var(--pomodoro)}
   .marquee{margin-top:8px;border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);overflow:hidden;padding:9px 0}
   .marquee .tira{display:flex;gap:34px;white-space:nowrap;animation:desliza 26s linear infinite;width:max-content}
   @keyframes desliza{to{transform:translateX(-50%)}}
-  .marquee span{font-family:var(--grot);font-size:9px;letter-spacing:3px;font-weight:600;color:var(--humo);display:flex;align-items:center;gap:34px}
-  .marquee span::after{content:'·';color:var(--pomodoro);font-size:14px}
+  .marquee span{font-family:var(--grot);font-size:12.5px;letter-spacing:1.4px;font-weight:600;color:var(--humo);display:flex;align-items:center;gap:34px}
+  .marquee span::after{content:'·';color:var(--pomodoro);font-size:16px}
 
   /* ---------- Aviso de orden en vivo ---------- */
-  .pill-estado{margin:16px 20px 0;display:none;align-items:center;gap:12px;border:1px solid var(--linea2);border-left:3px solid var(--pomodoro);padding:12px 14px;cursor:pointer;background:var(--esp2)}
+  .pill-estado{margin:16px 20px 0;display:none;align-items:center;gap:12px;border:1px solid var(--ce,var(--al-azul));border-radius:2px;padding:13px 14px;cursor:pointer;background:var(--ce,var(--al-azul));color:var(--al-txt)}
   .pill-estado.visible{display:flex;animation:sube .4s}
   @keyframes sube{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .pill-estado .pe-txt{flex:1}
-  .pill-estado .pe-txt b{font-family:var(--grot);font-size:11px;letter-spacing:1px;color:var(--crema);font-weight:600}
-  .pill-estado .pe-txt small{display:block;font-size:10px;color:var(--humo);margin-top:3px;letter-spacing:.4px}
-  .pill-estado .dot-live{width:7px;height:7px;border-radius:50%;background:var(--pomodoro);animation:parp 1.4s infinite}
+  .pill-estado .pe-txt b{font-family:var(--grot);font-size:14px;letter-spacing:1px;color:var(--al-txt);font-weight:700;line-height:1.5;display:block}
+  .pill-estado .pe-txt small{display:block;font-size:13px;color:var(--al-txt);opacity:.92;margin-top:3px;letter-spacing:.4px;line-height:1.5;font-weight:600}
+  .pill-estado .dot-live{width:9px;height:9px;border-radius:50%;background:var(--al-txt);flex-shrink:0;animation:parp 1.4s infinite}
   @keyframes parp{0%,100%{opacity:1}50%{opacity:.25}}
 
   /* ---------- Controles ---------- */
   .controles{padding:18px 20px 0;position:sticky;top:0;background:var(--esp);box-shadow:0 14px 14px -14px rgba(0,0,0,.5);z-index:30}
   .buscador{display:flex;align-items:center;gap:10px;border:1px solid var(--linea2);padding:12px 14px;background:var(--esp)}
-  .buscador input{border:none;outline:none;flex:1;font-size:13px;background:transparent;color:var(--crema);font-family:var(--grot);letter-spacing:.4px}
+  .buscador input{border:none;outline:none;flex:1;font-size:15px;background:transparent;color:var(--crema);font-family:var(--grot);letter-spacing:.4px}
   .buscador input::placeholder{color:var(--humo2);letter-spacing:1px}
   .chips{display:flex;gap:8px;overflow-x:auto;padding:12px 0 2px;scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
-  .chip{flex-shrink:0;font-family:var(--grot);font-size:9.5px;font-weight:600;letter-spacing:1.8px;text-transform:uppercase;padding:9px 14px;border:1px solid var(--linea);background:transparent;color:var(--humo);cursor:pointer;transition:.15s;border-radius:2px}
+  .chip{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;min-height:44px;font-family:var(--grot);font-size:13px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;padding:10px 15px;border:1px solid var(--linea);background:transparent;color:var(--humo);cursor:pointer;transition:.15s;border-radius:2px}
   .chip.activo{border-color:var(--pomodoro);color:var(--pomodoro)}
   .tabs{display:flex;gap:2px;overflow-x:auto;padding:10px 0 12px;scrollbar-width:none}
   .tabs::-webkit-scrollbar{display:none}
-  .tab{flex-shrink:0;display:flex;align-items:baseline;gap:7px;font-family:var(--grot);font-size:11.5px;font-weight:600;letter-spacing:1px;padding:9px 13px;background:transparent;border:none;color:var(--humo2);cursor:pointer;text-transform:uppercase}
-  .tab sup{font-size:8px;color:var(--pomodoro);font-weight:700}
+  .tab{flex-shrink:0;display:flex;align-items:baseline;gap:7px;min-height:44px;font-family:var(--grot);font-size:14px;font-weight:600;letter-spacing:1px;padding:13px 13px;background:transparent;border:none;color:var(--humo2);cursor:pointer;text-transform:uppercase}
+  .tab sup{font-size:12px;color:var(--pomodoro);font-weight:700}
   .tab.activo{color:var(--crema);border-bottom:2px solid var(--pomodoro)}
 
   /* ---------- Destacados ---------- */
   .destacados{padding:10px 0 0}
   .dest-titulo{display:flex;align-items:center;gap:14px;padding:0 20px}
-  .dest-titulo .num{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--pomodoro)}
-  .dest-titulo h2{font-family:var(--grot);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--crema)}
+  .dest-titulo .num{font-family:var(--serif);font-style:italic;font-size:17px;color:var(--pomodoro)}
+  .dest-titulo h2{font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--crema)}
   .dest-titulo i{flex:1;border-top:1px solid var(--linea)}
   .dest-scroll{display:flex;gap:18px;overflow-x:auto;padding:18px 20px 8px;scroll-snap-type:x mandatory;scrollbar-width:none}
   .dest-scroll::-webkit-scrollbar{display:none}
@@ -124,48 +143,48 @@
   .dest-card .arco img{width:100%;height:100%;object-fit:cover;filter:saturate(.92) contrast(1.03);transition:transform .5s}
   .dest-card:active .arco img{transform:scale(1.05)}
   .dest-card .arco .svg-fb svg{width:100%;height:100%}
-  .dest-card .arco .tag-fav{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:var(--esp);border:1px solid var(--linea2);color:var(--oro);font-family:var(--grot);font-size:8px;font-weight:700;letter-spacing:2.4px;padding:6px 12px;border-radius:2px}
+  .dest-card .arco .tag-fav{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:var(--esp);border:1px solid var(--linea2);color:var(--oro);font-family:var(--grot);font-size:12px;font-weight:700;letter-spacing:1.4px;padding:6px 12px;border-radius:2px}
   .dest-card .dc-info{padding:13px 4px 0;text-align:center}
-  .dest-card h3{font-family:var(--serif);font-style:italic;font-weight:500;font-size:18px;line-height:1.15}
+  .dest-card h3{font-family:var(--serif);font-style:italic;font-weight:500;font-size:19px;line-height:1.25}
   .dest-card .dc-linea{display:flex;align-items:baseline;gap:8px;margin-top:8px;padding:0 8px}
-  .dest-card .dc-precio{font-family:var(--grot);font-weight:700;font-size:13px;color:var(--pomodoro);letter-spacing:.5px}
-  .dest-card .dc-kcal{font-family:var(--grot);font-size:9px;letter-spacing:1.6px;color:var(--humo2);font-weight:600}
+  .dest-card .dc-precio{font-family:var(--grot);font-weight:700;font-size:15px;color:var(--pomodoro);letter-spacing:.5px;white-space:nowrap}
+  .dest-card .dc-kcal{font-family:var(--grot);font-size:12.5px;letter-spacing:1px;color:var(--humo2);font-weight:600;white-space:nowrap;line-height:1.5}
 
   /* ---------- Lista editorial ---------- */
   main{padding:4px 20px}
   .seccion-cab{display:flex;align-items:baseline;gap:14px;margin:30px 0 4px;position:relative}
   .seccion-cab .gnum{font-family:var(--serif);font-style:italic;font-size:46px;line-height:1;color:transparent;-webkit-text-stroke:1px var(--linea2);position:absolute;right:0;top:-14px;pointer-events:none}
-  .seccion-cab .snum{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--pomodoro)}
-  .seccion-cab h2{font-family:var(--grot);font-size:11px;font-weight:700;letter-spacing:3.4px;text-transform:uppercase}
-  .seccion-cab small{font-size:9px;letter-spacing:2px;color:var(--humo2);font-weight:600;text-transform:uppercase}
+  .seccion-cab .snum{font-family:var(--serif);font-style:italic;font-size:16px;color:var(--pomodoro)}
+  .seccion-cab h2{font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase}
+  .seccion-cab small{font-size:12.5px;letter-spacing:1px;line-height:1.5;color:var(--humo2);font-weight:600;text-transform:uppercase}
   .fila-platillo{display:flex;gap:16px;padding:18px 0;border-bottom:1px solid var(--linea);cursor:pointer;align-items:flex-start}
   .fila-platillo .thumb{position:relative;width:86px;height:104px;border-radius:43px 43px 4px 4px;overflow:hidden;flex-shrink:0;background:var(--esp2)}
   .fila-platillo .thumb img{width:100%;height:100%;object-fit:cover;filter:saturate(.92) contrast(1.03)}
   .fila-platillo .thumb .svg-fb svg{width:100%;height:100%}
   .fila-platillo .fp-info{flex:1;min-width:0;padding-top:4px}
   .fila-platillo .fp-nombre{display:flex;align-items:baseline;gap:10px}
-  .fila-platillo h3{font-family:var(--serif);font-weight:500;font-size:17.5px;line-height:1.15}
-  .fila-platillo .fp-precio{font-family:var(--grot);font-weight:700;font-size:13.5px;color:var(--pomodoro);letter-spacing:.5px;white-space:nowrap}
-  .fila-platillo p{font-size:11.5px;color:var(--humo);margin-top:6px;line-height:1.65;letter-spacing:.2px}
+  .fila-platillo h3{font-family:var(--serif);font-weight:500;font-size:18.5px;line-height:1.25}
+  .fila-platillo .fp-precio{font-family:var(--grot);font-weight:700;font-size:15.5px;color:var(--pomodoro);letter-spacing:.5px;white-space:nowrap}
+  .fila-platillo p{font-size:14px;color:var(--humo);margin-top:6px;line-height:1.65;letter-spacing:.2px}
   .fila-platillo .fp-meta{display:flex;align-items:center;gap:12px;margin-top:9px;flex-wrap:wrap}
-  .mini-tag{font-family:var(--grot);font-size:8px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase}
+  .mini-tag{font-family:var(--grot);font-size:12px;font-weight:700;letter-spacing:1.2px;line-height:1.5;text-transform:uppercase}
   .mini-tag.veg{color:var(--basilico)}
   .mini-tag.sg{color:#9DB6CE}
   .mini-tag.pop{color:var(--oro)}
   .mini-tag.kcal{color:var(--humo2);display:flex;align-items:center;gap:4px}
-  .btn-mas-fila{width:32px;height:32px;border:1px solid var(--linea2);background:transparent;color:var(--crema);font-size:17px;font-weight:400;cursor:pointer;border-radius:2px;flex-shrink:0;margin-top:8px;transition:.15s;font-family:var(--grot)}
+  .btn-mas-fila{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:1px solid var(--linea2);background:transparent;color:var(--crema);font-size:18px;font-weight:400;cursor:pointer;border-radius:2px;flex-shrink:0;margin-top:8px;transition:.15s;font-family:var(--grot)}
   .btn-mas-fila:active{background:var(--pomodoro);border-color:var(--pomodoro);color:var(--papel)}
-  .vacio{text-align:center;color:var(--humo);padding:60px 20px;font-size:13px;line-height:1.8}
-  footer{text-align:center;font-size:9px;color:var(--humo2);padding:26px 0 10px;letter-spacing:1.6px;text-transform:uppercase}
+  .vacio{text-align:center;color:var(--humo);padding:60px 20px;font-size:15px;line-height:1.8}
+  footer{text-align:center;font-size:12.5px;color:var(--humo2);padding:26px 0 10px;letter-spacing:1px;line-height:1.6;text-transform:uppercase}
 
   /* ---------- Nav inferior ---------- */
   .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:75;background:var(--nav-bg);backdrop-filter:blur(14px);border-top:1px solid var(--linea2)}
   .nav-int{display:flex;align-items:stretch;padding:0 6px calc(4px + env(safe-area-inset-bottom))}
-  .nav-item{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;color:var(--humo2);cursor:pointer;font-family:var(--grot);font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:13px 0 9px;transition:color .2s}
+  .nav-item{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;color:var(--humo2);cursor:pointer;font-family:var(--grot);font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:13px 0 9px;transition:color .2s}
   .nav-item .ico{width:19px;height:19px;stroke-width:1.5}
   .nav-item.activo{color:var(--crema)}
   .nav-item.activo::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:26px;height:2px;background:var(--pomodoro)}
-  .nav-item .badge{position:absolute;top:7px;right:calc(50% - 20px);min-width:16px;height:16px;border-radius:9px;background:var(--pomodoro);color:var(--papel);font-size:9px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;letter-spacing:0}
+  .nav-item .badge{position:absolute;top:5px;right:calc(50% - 24px);min-width:21px;height:21px;border-radius:11px;background:var(--pomodoro);color:var(--papel);font-size:12.5px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;letter-spacing:0}
   .nav-item .badge.visible{display:flex}
   .nav-item .dot-estado{position:absolute;top:9px;right:calc(50% - 15px);width:7px;height:7px;border-radius:50%;background:var(--pomodoro);display:none;animation:parp 1.4s infinite}
   .nav-item .dot-estado.visible{display:block}
@@ -180,32 +199,34 @@
   .ticket::after{bottom:-9px}
   .ticket .t-int{padding:22px 22px 26px}
   .ticket .t-cab{text-align:center;border-bottom:1px dashed rgba(36,31,24,.35);padding-bottom:14px}
-  .ticket .t-cab .t-marca{font-family:var(--serif);font-style:italic;font-size:21px;font-weight:500}
+  .ticket .t-cab .t-marca{font-family:var(--serif);font-style:italic;font-size:22px;font-weight:500}
   .ticket .t-cab .caps{color:#6E6252;margin-top:4px}
-  .ticket .t-item{display:flex;align-items:baseline;gap:8px;padding:11px 0;border-bottom:1px dotted rgba(36,31,24,.22);font-size:13px}
-  .ticket .t-item .t-qty{font-family:var(--grot);font-weight:700;font-size:11.5px;color:var(--pomodoro);min-width:26px}
-  .ticket .t-item .t-nom{font-family:var(--serif);font-size:14.5px}
-  .ticket .t-item .t-nom small{display:block;font-family:var(--grot);font-size:9.5px;color:#8A7D69;letter-spacing:.6px;margin-top:2px}
+  .ticket .t-item{display:flex;align-items:baseline;gap:8px;padding:13px 0;line-height:1.5;border-bottom:1px dotted rgba(36,31,24,.22);font-size:15px}
+  .ticket .t-item .t-qty{font-family:var(--grot);font-weight:700;font-size:14px;color:var(--pomodoro);min-width:28px;flex-shrink:0}
+  .ticket .t-item .t-nom{font-family:var(--serif);font-size:16.5px}
+  .ticket .t-item .t-nom small{display:block;font-family:var(--grot);font-size:13px;color:#8A7D69;letter-spacing:.6px;margin-top:2px}
   .ticket .t-item .leader{border-color:rgba(36,31,24,.3)}
-  .ticket .t-item .part{display:block;font-family:var(--grot);font-size:8.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-top:3px}
+  .ticket .t-item .part{display:block;font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:.6px;line-height:1.5;text-transform:uppercase;margin-top:3px}
   .ticket .t-item .part.ok{color:#3E7A39}
   .ticket .t-item .part.ok em{font-style:normal;font-weight:600;color:#6E6252;letter-spacing:.6px}
   .ticket .t-item .part.pend{color:#A79A85}
   .ticket .t-item .part.pend i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#C4B7A0;margin-right:5px;vertical-align:1px}
-  .ticket .t-item .t-precio{font-family:var(--grot);font-weight:700;font-size:12.5px}
+  .ticket .t-item .t-precio{font-family:var(--grot);font-weight:700;font-size:15px;white-space:nowrap;flex-shrink:0}
   .ticket .t-stepper{display:flex;align-items:center;gap:0;border:1px solid rgba(36,31,24,.3);border-radius:2px;margin-left:6px}
-  .ticket .t-stepper button{width:26px;height:26px;border:none;background:transparent;color:var(--ink);font-size:14px;cursor:pointer;font-family:var(--grot)}
-  .ticket .t-stepper span{min-width:18px;text-align:center;font-family:var(--grot);font-weight:700;font-size:12px}
+  .ticket .t-stepper button{width:38px;height:44px;border:none;background:transparent;color:var(--ink);font-size:16px;cursor:pointer;font-family:var(--grot)}
+  .ticket .t-stepper span{min-width:18px;text-align:center;font-family:var(--grot);font-weight:700;font-size:14.5px}
   .ticket .t-tot{display:flex;align-items:baseline;gap:8px;padding-top:14px;font-family:var(--grot)}
-  .ticket .t-tot .caps{color:#6E6252}
-  .ticket .t-tot b{font-size:19px;letter-spacing:.5px}
+  /* La etiqueta puede irse a dos renglones; la cantidad NUNCA se parte: un precio a la
+     mitad no se lee, se adivina. */
+  .ticket .t-tot .caps{color:#6E6252;line-height:1.5}
+  .ticket .t-tot b{font-size:20px;letter-spacing:.5px;white-space:nowrap;flex-shrink:0}
   .ticket .t-bar{margin-top:18px;height:34px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 5px,var(--ink) 5px 6px,transparent 6px 10px)}
-  .ticket .t-folio{text-align:center;font-family:var(--grot);font-size:9px;letter-spacing:3px;color:#6E6252;margin-top:8px;font-weight:600}
+  .ticket .t-folio{text-align:center;font-family:var(--grot);font-size:12.5px;letter-spacing:1px;line-height:1.6;color:#6E6252;margin-top:8px;font-weight:600}
   .acciones-orden{padding:8px 20px 12px;display:flex;flex-direction:column;gap:10px}
-  .btn-primario{width:100%;padding:16px;border:none;border-radius:2px;background:var(--pomodoro);color:var(--papel);font-size:11px;font-weight:700;letter-spacing:2.6px;text-transform:uppercase;cursor:pointer;font-family:var(--grot);transition:.15s}
+  .btn-primario{width:100%;min-height:44px;padding:16px;border:none;border-radius:2px;background:var(--pomodoro);color:var(--papel);font-size:14px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;font-family:var(--grot);transition:.15s}
   .btn-primario:active{transform:scale(.98);background:#C94A2F}
-  .btn-fantasma{width:100%;padding:13px;border:1px solid var(--linea2);border-radius:2px;background:transparent;color:var(--humo);font-size:10px;font-weight:600;letter-spacing:2.2px;text-transform:uppercase;cursor:pointer;font-family:var(--grot)}
-  .nota-pie{margin:10px 20px 0;font-size:10px;color:var(--humo2);line-height:1.8;border-left:2px solid var(--linea2);padding-left:12px}
+  .btn-fantasma{width:100%;min-height:44px;padding:14px 13px;border:1px solid var(--linea2);border-radius:2px;background:transparent;color:var(--humo);font-size:13px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;font-family:var(--grot)}
+  .nota-pie{margin:10px 20px 0;font-size:13px;color:var(--humo2);line-height:1.8;border-left:2px solid var(--linea2);padding-left:12px}
 
   /* progreso en cuenta */
   .prog{margin-top:16px}
@@ -215,7 +236,7 @@
   .prog .p-dot.activo{border-color:var(--pomodoro);animation:parp 1.4s infinite}
   .prog .p-seg{flex:1;height:1.5px;background:rgba(36,31,24,.25)}
   .prog .p-seg.hecha{background:var(--pomodoro)}
-  .prog .p-etiq{display:flex;justify-content:space-between;margin-top:7px;font-family:var(--grot);font-size:8px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:#8A7D69}
+  .prog .p-etiq{display:flex;justify-content:space-between;margin-top:7px;font-family:var(--grot);font-size:12px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:#8A7D69}
   .prog .p-etiq .on{color:var(--pomodoro)}
 
   /* ---------- Sheets ---------- */
@@ -227,54 +248,54 @@
   .hero-plato img{width:100%;height:100%;object-fit:cover;filter:saturate(.94) contrast(1.04)}
   .hero-plato .svg-fb svg{width:100%;height:110%}
   .hero-plato::after{content:'';position:absolute;left:0;right:0;bottom:0;height:130px;background:linear-gradient(180deg,transparent,var(--esp))}
-  .cerrar{position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(245,237,222,.35);background:rgba(21,18,16,.72);backdrop-filter:blur(6px);cursor:pointer;color:#F5EDDE;z-index:5;display:flex;align-items:center;justify-content:center}
-  .btn-full{position:absolute;top:16px;left:16px;display:flex;align-items:center;gap:9px;border:1px solid rgba(245,237,222,.35);background:rgba(21,18,16,.78);backdrop-filter:blur(6px);color:#F5EDDE;font-family:var(--grot);font-size:11px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;padding:14px 16px;border-radius:2px;cursor:pointer;z-index:5;min-height:44px}
+  .cerrar{position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(245,237,222,.35);background:rgba(21,18,16,.72);backdrop-filter:blur(6px);cursor:pointer;color:#F5EDDE;z-index:5;display:flex;align-items:center;justify-content:center}
+  .btn-full{position:absolute;top:16px;left:16px;display:flex;align-items:center;gap:9px;border:1px solid rgba(245,237,222,.35);background:rgba(21,18,16,.78);backdrop-filter:blur(6px);color:#F5EDDE;font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;padding:14px 16px;border-radius:2px;cursor:pointer;z-index:5;min-height:44px}
   .chip-lupa{position:absolute;right:14px;bottom:14px;width:42px;height:42px;border-radius:50%;background:rgba(18,15,12,.72);backdrop-filter:blur(5px);border:1px solid var(--linea2);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:4}
   .chip-lupa .ico{width:17px;height:17px;color:#F5EDDE;stroke-width:2}
   .hoja .contenido{padding:0 24px 36px;margin-top:-44px;position:relative;z-index:2}
-  .hoja .f-cat{font-family:var(--grot);font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--pomodoro)}
+  .hoja .f-cat{font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--pomodoro)}
   .hoja h2{font-family:var(--serif);font-style:italic;font-weight:500;font-size:31px;line-height:1.05;margin-top:8px;letter-spacing:-.5px}
   .hoja .f-precio-linea{display:flex;align-items:baseline;gap:10px;margin-top:14px}
-  .hoja .f-precio{font-family:var(--grot);font-weight:700;font-size:19px;color:var(--pomodoro)}
-  .hoja .f-porcion{font-family:var(--grot);font-size:9px;letter-spacing:2px;color:var(--humo2);font-weight:600;text-transform:uppercase}
+  .hoja .f-precio{font-family:var(--grot);font-weight:700;font-size:20px;color:var(--pomodoro)}
+  .hoja .f-porcion{font-family:var(--grot);font-size:12.5px;letter-spacing:1.4px;color:var(--humo2);font-weight:600;text-transform:uppercase}
   .hoja .f-tags{display:flex;gap:14px;margin-top:10px}
-  .hoja .desc{font-size:12.5px;color:var(--humo);line-height:1.8;margin-top:16px;letter-spacing:.2px}
+  .hoja .desc{font-size:15px;color:var(--humo);line-height:1.8;margin-top:16px;letter-spacing:.2px}
   .bloque{margin-top:24px}
   .bloque .b-cab{display:flex;align-items:center;gap:12px;margin-bottom:12px}
   .bloque .b-cab .caps{color:var(--crema)}
   .bloque .b-cab i{flex:1;border-top:1px solid var(--linea)}
   .tabla-nutri{display:flex;border:1px solid var(--linea);border-radius:2px}
-  .tabla-nutri .celda{flex:1;padding:13px 6px;text-align:center;border-right:1px solid var(--linea)}
+  .tabla-nutri .celda{flex:1;min-width:0;padding:13px 4px;text-align:center;border-right:1px solid var(--linea)}
   .tabla-nutri .celda:last-child{border-right:none}
-  .tabla-nutri .num{font-family:var(--serif);font-size:19px;font-weight:500}
-  .tabla-nutri .lbl{font-family:var(--grot);font-size:7.5px;color:var(--humo2);margin-top:4px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase}
+  .tabla-nutri .num{font-family:var(--serif);font-size:20px;font-weight:500}
+  .tabla-nutri .lbl{font-family:var(--grot);font-size:12px;color:var(--humo2);margin-top:4px;font-weight:700;letter-spacing:.4px;line-height:1.5;text-transform:uppercase}
   .pildoras{display:flex;flex-wrap:wrap;gap:0}
-  .pildora{font-size:12px;color:var(--humo);padding:4px 0;letter-spacing:.3px}
+  .pildora{font-size:14.5px;color:var(--humo);padding:4px 0;letter-spacing:.3px}
   .pildora:not(:last-child)::after{content:'·';margin:0 10px;color:var(--pomodoro)}
   .alerg{display:flex;gap:10px;flex-wrap:wrap}
-  .alerg span{font-family:var(--grot);font-size:9px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--pomodoro);border:1px solid rgba(228,89,59,.4);padding:7px 12px;border-radius:2px}
-  .nota-vino{border-left:2px solid var(--oro);padding:4px 0 4px 14px;font-family:var(--serif);font-style:italic;font-size:14px;line-height:1.6;color:var(--crema)}
+  .alerg span{font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1px;line-height:1.5;text-transform:uppercase;color:var(--pomodoro);border:1px solid rgba(228,89,59,.4);padding:7px 12px;border-radius:2px}
+  .nota-vino{border-left:2px solid var(--oro);padding:4px 0 4px 14px;font-family:var(--serif);font-style:italic;font-size:16px;line-height:1.6;color:var(--crema)}
   .sug-cards{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin-top:2px}
   .sug-cards::-webkit-scrollbar{display:none}
-  .sug-card{flex:0 0 auto;display:flex;align-items:center;gap:10px;border:1px solid var(--linea2);border-radius:3px;padding:8px 10px 8px 8px;min-width:196px;background:transparent}
+  .sug-card{flex:0 0 auto;display:flex;align-items:center;gap:10px;border:1px solid var(--linea2);border-radius:3px;padding:8px 10px 8px 8px;min-width:252px;background:transparent}
   .sug-card .sug-img{width:46px;height:54px;border-radius:999px 999px 3px 3px;overflow:hidden;flex-shrink:0}
   .sug-card .sug-img img,.sug-card .sug-img svg{width:100%;height:100%;object-fit:cover;display:block}
   .sug-card .sug-info{min-width:0}
-  .sug-card .sug-nom{font-family:var(--serif);font-style:italic;font-size:13px;line-height:1.25;color:var(--crema);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
-  .sug-card .sug-precio{font-family:var(--grot);font-size:10.5px;font-weight:700;letter-spacing:1px;color:var(--pomodoro);margin-top:3px}
-  .sug-card .sug-mas{margin-left:auto;width:30px;height:30px;border:1px solid var(--linea2);border-radius:2px;background:transparent;color:var(--crema);font-size:15px;cursor:pointer;font-family:var(--grot);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.15s}
+  .sug-card .sug-nom{font-family:var(--serif);font-style:italic;font-size:15px;line-height:1.25;color:var(--crema);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:148px}
+  .sug-card .sug-precio{font-family:var(--grot);font-size:13.5px;font-weight:700;letter-spacing:1px;color:var(--pomodoro);margin-top:3px}
+  .sug-card .sug-mas{margin-left:auto;width:44px;height:44px;border:1px solid var(--linea2);border-radius:2px;background:transparent;color:var(--crema);font-size:17px;cursor:pointer;font-family:var(--grot);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.15s}
   .sug-card .sug-mas:active{background:var(--pomodoro);border-color:var(--pomodoro);color:#fff}
-  .notas-inp{width:100%;border:1px solid var(--linea2);background:transparent;border-radius:2px;padding:13px 15px;font-size:12.5px;outline:none;font-family:var(--grot);color:var(--crema);letter-spacing:.4px}
+  .notas-inp{width:100%;border:1px solid var(--linea2);background:transparent;border-radius:2px;padding:13px 15px;font-size:15px;outline:none;font-family:var(--grot);color:var(--crema);letter-spacing:.4px}
   .notas-inp::placeholder{color:var(--humo2)}
   .notas-inp:focus{border-color:var(--pomodoro)}
   .fila-agregar{display:flex;gap:12px;margin-top:24px;align-items:stretch;position:sticky;bottom:0;background:var(--esp);padding:14px 0 16px;box-shadow:0 -18px 18px -12px var(--esp);z-index:6}
   .stepper-g{display:flex;align-items:center;border:1px solid var(--linea2);border-radius:2px}
-  .stepper-g button{width:40px;height:48px;border:none;background:transparent;font-size:18px;color:var(--crema);cursor:pointer;font-family:var(--grot)}
-  .stepper-g span{min-width:24px;text-align:center;font-family:var(--grot);font-weight:700;font-size:15px}
+  .stepper-g button{width:40px;height:48px;border:none;background:transparent;font-size:19px;color:var(--crema);cursor:pointer;font-family:var(--grot)}
+  .stepper-g span{min-width:24px;text-align:center;font-family:var(--grot);font-weight:700;font-size:17px}
   .btn-agregar{flex:1;border:none;border-radius:2px;background:var(--pomodoro);color:var(--papel);cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-family:var(--grot);transition:.15s}
   .btn-agregar:active{transform:scale(.98)}
-  .btn-agregar span{font-size:10px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase}
-  .btn-agregar b{font-size:14px;font-weight:700}
+  .btn-agregar span{font-size:13px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase}
+  .btn-agregar b{font-size:16px;font-weight:700}
 
   /* ---------- Visor ---------- */
   .visor{position:fixed;inset:0;z-index:400;background:var(--esp);color:var(--crema);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:.3s}
@@ -284,56 +305,60 @@
   .visor .v-img .svg-fb svg{width:100%;height:100%}
   @keyframes v-in{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
   .visor .v-nombre{margin-top:22px;font-family:var(--serif);font-style:italic;font-weight:500;font-size:26px;text-align:center;padding:0 20px}
-  .visor .v-datos{margin-top:10px;display:flex;gap:18px;font-family:var(--grot);font-size:10px;letter-spacing:2px;font-weight:700;text-transform:uppercase}
+  .visor .v-datos{margin-top:10px;display:flex;gap:18px;flex-wrap:wrap;justify-content:center;font-family:var(--grot);font-size:13px;letter-spacing:1.4px;font-weight:700;text-transform:uppercase;line-height:1.5}
   .visor .v-datos .vp{color:var(--pomodoro)}
   .visor .v-datos .vk{color:var(--humo)}
-  .visor .v-pista{position:absolute;bottom:26px;font-size:8.5px;color:var(--humo2);letter-spacing:2.4px;text-transform:uppercase;font-family:var(--grot);font-weight:600}
+  .visor .v-pista{position:absolute;bottom:26px;font-size:12.5px;color:var(--humo2);letter-spacing:1.4px;text-transform:uppercase;font-family:var(--grot);font-weight:600}
 
   /* ---------- Confirmación ---------- */
   .confirmacion{padding:38px 26px 30px;text-align:center}
-  .conf-sello{width:88px;height:88px;margin:0 auto 20px;border:1.5px solid var(--pomodoro);border-radius:50%;display:flex;align-items:center;justify-content:center;transform:rotate(-8deg);animation:v-in .5s}
-  .conf-sello .interior{width:74px;height:74px;border:1px dashed rgba(228,89,59,.6);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--pomodoro)}
-  .conf-sello .interior b{font-family:var(--grot);font-size:8px;letter-spacing:2px;font-weight:700}
-  .conf-sello .interior span{font-family:var(--serif);font-style:italic;font-size:15px;margin-top:2px}
+  .conf-sello{width:122px;height:122px;margin:0 auto 20px;border:1.5px solid var(--pomodoro);border-radius:50%;display:flex;align-items:center;justify-content:center;transform:rotate(-8deg);animation:v-in .5s}
+  .conf-sello .interior{width:106px;height:106px;border:1px dashed rgba(228,89,59,.6);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--pomodoro)}
+  .conf-sello .interior b{font-family:var(--grot);font-size:12px;letter-spacing:1.4px;font-weight:700}
+  .conf-sello .interior span{font-family:var(--serif);font-style:italic;font-size:17px;margin-top:2px}
   .confirmacion h2{font-family:var(--serif);font-style:italic;font-weight:500;font-size:27px}
-  .confirmacion .folio{margin-top:8px;font-family:var(--grot);font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:var(--humo);font-weight:600}
+  .confirmacion .folio{margin-top:8px;font-family:var(--grot);font-size:13px;letter-spacing:1.4px;text-transform:uppercase;color:var(--humo);font-weight:600}
   .confirmacion .folio b{color:var(--pomodoro)}
 
   /* ---------- Toast ---------- */
-  .toast{position:fixed;bottom:calc(146px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,30px);background:var(--papel);color:var(--ink);font-family:var(--grot);font-size:11px;font-weight:600;letter-spacing:.6px;padding:13px 20px;border-radius:2px;z-index:150;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 16px 44px rgba(0,0,0,.55);max-width:86%;text-align:center}
+  .toast{position:fixed;bottom:calc(146px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,30px);background:var(--papel);color:var(--ink);font-family:var(--grot);font-size:14px;font-weight:600;letter-spacing:.6px;padding:13px 20px;border-radius:2px;z-index:150;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 16px 44px rgba(0,0,0,.55);max-width:86%;text-align:center}
   .toast.visible{opacity:1;transform:translate(-50%,0)}
+  /* El toast sigue siendo neutro; solo se pinta de rojo cuando avisa de una falla. */
+  .toast.falla{background:var(--al-roja);color:var(--al-txt);font-weight:700}
 
   /* ---------- Barra fija de orden (enviar a cocina) ---------- */
   .barra-orden{position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,20px);width:calc(100% - 28px);max-width:452px;display:flex;align-items:center;gap:12px;background:var(--pomodoro);color:#FFF7EE;border:none;border-radius:3px;padding:15px 16px;z-index:74;cursor:pointer;box-shadow:0 14px 40px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:.25s;font-family:var(--grot);text-align:left}
   .barra-orden.visible{opacity:1;transform:translate(-50%,0);pointer-events:auto}
-  .barra-orden .bo-num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
-  .barra-orden .bo-txt{flex:1;min-width:0;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .barra-orden .bo-num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+  .barra-orden .bo-txt{flex:1;min-width:0;font-size:14px;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .barra-orden .bo-txt b{font-weight:700}
-  .barra-orden .bo-total{font-size:14px;font-weight:700;letter-spacing:.5px}
+  .barra-orden .bo-total{font-size:16px;font-weight:700;letter-spacing:.5px;white-space:nowrap;flex-shrink:0}
   .barra-orden .ico{width:15px;height:15px;stroke-width:2}
-  .barra-orden.modo-estado{background:var(--esp2);border:1px solid var(--linea2);color:var(--crema)}
-  .barra-orden.modo-estado .bo-num{background:transparent;border:1.5px solid var(--pomodoro)}
-  .barra-orden.modo-estado .bo-num i{width:8px;height:8px;border-radius:50%;background:var(--pomodoro);display:block;animation:parp 1.4s infinite}
-  .barra-orden.modo-estado .bo-total{color:var(--pomodoro)}
+  .barra-orden.modo-estado{background:var(--al-azul);border:1px solid var(--al-azul);color:var(--al-txt);font-weight:700}
+  .barra-orden.modo-estado.cuenta{background:var(--al-verde);border-color:var(--al-verde)}
+  .barra-orden.modo-estado.espera{background:var(--al-ambar);border-color:var(--al-ambar)}
+  .barra-orden.modo-estado .bo-num{background:rgba(255,255,255,.22);border:1.5px solid var(--al-txt)}
+  .barra-orden.modo-estado .bo-num i{width:8px;height:8px;border-radius:50%;background:var(--al-txt);display:block;animation:parp 1.4s infinite}
+  .barra-orden.modo-estado .bo-total{color:var(--al-txt)}
   /* ---------- Guía de bienvenida ---------- */
   .guia{position:fixed;inset:0;z-index:300;background:rgba(12,10,8,.78);backdrop-filter:blur(6px);display:none;align-items:flex-end;justify-content:center}
   .guia.visible{display:flex}
   .guia-caja{width:100%;max-width:480px;background:var(--papel);color:var(--ink);padding:30px 26px calc(26px + env(safe-area-inset-bottom));border-radius:14px 14px 0 0;animation:sube .35s}
   .g-paso{display:flex;gap:14px;margin-top:18px;align-items:flex-start}
-  .g-paso b{width:26px;height:26px;border-radius:50%;background:var(--pomodoro);color:#FFF7EE;display:flex;align-items:center;justify-content:center;font-family:var(--grot);font-size:12px;flex-shrink:0}
-  .g-paso h4{font-family:var(--serif);font-style:italic;font-weight:500;font-size:16.5px;line-height:1.2}
-  .g-paso p{font-family:var(--grot);font-size:11.5px;line-height:1.6;color:#6E6557;margin-top:3px}
-  .g-nota{margin-top:20px;border-left:2px solid var(--oro);padding:2px 0 2px 12px;font-family:var(--serif);font-style:italic;font-size:13.5px;line-height:1.55}
+  .g-paso b{width:32px;height:32px;border-radius:50%;background:var(--pomodoro);color:#FFF7EE;display:flex;align-items:center;justify-content:center;font-family:var(--grot);font-size:14.5px;flex-shrink:0}
+  .g-paso h4{font-family:var(--serif);font-style:italic;font-weight:500;font-size:18px;line-height:1.2}
+  .g-paso p{font-family:var(--grot);font-size:14px;line-height:1.6;color:#6E6557;margin-top:3px}
+  .g-nota{margin-top:20px;border-left:2px solid var(--oro);padding:2px 0 2px 12px;font-family:var(--serif);font-style:italic;font-size:15.5px;line-height:1.55}
   .guia .btn-primario{margin-top:22px;width:100%}
   /* ---------- Affordance de detalle ---------- */
-  .banner-estado{display:flex;align-items:center;gap:14px;margin:0 18px 18px;border:1px solid var(--ce);border-left:6px solid var(--ce);border-radius:3px;padding:15px 16px;background:color-mix(in srgb, var(--ce) 12%, transparent);animation:sube .3s}
-  .banner-estado .be-dot{width:12px;height:12px;border-radius:50%;background:var(--ce);flex-shrink:0;animation:parp 1.4s infinite}
-  .banner-estado b{font-family:var(--grot);font-size:14px;letter-spacing:1.6px;color:var(--ce);display:block}
-  .banner-estado small{display:block;font-family:var(--grot);font-size:10px;letter-spacing:.6px;color:var(--humo);margin-top:4px}
-  .chip-estado{display:flex;align-items:center;gap:7px;font-family:var(--grot);font-size:9px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--ce);border:1px solid var(--ce);padding:6px 10px;border-radius:2px}
-  .chip-estado i{width:7px;height:7px;border-radius:50%;background:var(--ce)}
-  .mini-tag.detalle{color:var(--pomodoro);border:1px solid rgba(228,89,59,.5);font-size:9.5px;padding:4px 8px;border-radius:2px}
-  .tag-ver{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(18,15,12,.78);color:#F5EDDE;font-family:var(--grot);font-size:9.5px;font-weight:700;letter-spacing:1.6px;padding:7px 11px;border-radius:2px;backdrop-filter:blur(4px);white-space:nowrap}
+  .banner-estado{display:flex;align-items:center;gap:14px;margin:0 18px 18px;border:1px solid var(--ce);border-radius:2px;padding:15px 16px;background:var(--ce);color:var(--al-txt);animation:sube .3s}
+  .banner-estado .be-dot{width:12px;height:12px;border-radius:50%;background:var(--al-txt);flex-shrink:0;animation:parp 1.4s infinite}
+  .banner-estado b{font-family:var(--grot);font-size:16px;font-weight:700;letter-spacing:1.4px;line-height:1.5;color:var(--al-txt);display:block}
+  .banner-estado small{display:block;font-family:var(--grot);font-size:13px;font-weight:600;letter-spacing:.6px;line-height:1.55;color:var(--al-txt);opacity:.92;margin-top:4px}
+  .chip-estado{display:inline-flex;align-items:center;gap:7px;font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1.4px;line-height:1.5;text-transform:uppercase;color:var(--al-txt);background:var(--ce);border:1px solid var(--ce);padding:7px 11px;border-radius:2px}
+  .chip-estado i{width:7px;height:7px;border-radius:50%;background:var(--al-txt);flex-shrink:0}
+  .mini-tag.detalle{color:var(--pomodoro);border:1px solid rgba(228,89,59,.5);font-size:13px;padding:4px 8px;border-radius:2px}
+  .tag-ver{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(18,15,12,.78);color:#F5EDDE;font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:1.6px;padding:7px 11px;border-radius:2px;backdrop-filter:blur(4px);white-space:nowrap}
 
   /* ---------- Responsive: tablet (≥700px) y escritorio (≥1100px) ---------- */
   @media(min-width:700px){
@@ -363,30 +388,33 @@
   }
 
   /* ---------- Código de la mesa: grande, legible de un vistazo y fácil de dictar ---------- */
-  .cod-caja{margin-top:18px;border:1px solid var(--linea2);border-radius:3px;padding:20px 16px 18px;text-align:center;background:rgba(201,162,39,.07)}
-  .cod-caja .cod-rot{font-family:var(--grot);font-size:9px;font-weight:700;letter-spacing:2.6px;text-transform:uppercase;color:var(--oro)}
-  .cod-caja .cod-num{font-family:var(--grot);font-weight:700;font-size:52px;line-height:1;letter-spacing:12px;color:var(--crema);margin:12px 0 4px;padding-left:12px}
-  .cod-caja .cod-pie{font-family:var(--grot);font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--humo2);line-height:1.7}
+  .cod-caja{margin-top:18px;border:1px solid var(--al-azul);border-radius:2px;padding:20px 16px 18px;text-align:center;background:var(--al-azul);color:var(--al-txt)}
+  .cod-caja .cod-rot{font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1.4px;line-height:1.5;text-transform:uppercase;color:var(--al-txt)}
+  .cod-caja .cod-num{font-family:var(--grot);font-weight:700;font-size:52px;line-height:1;letter-spacing:12px;color:var(--al-txt);margin:12px 0 4px;padding-left:12px}
+  .cod-caja .cod-pie{font-family:var(--grot);font-size:13px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;color:var(--al-txt);opacity:.92;line-height:1.7}
   /* Tira discreta: conserva el código a la vista sin estorbar, para quien llega tarde */
-  .cod-tira{display:flex;align-items:center;gap:13px;margin:0 20px 14px;border:1px solid var(--linea);border-left:3px solid var(--oro);border-radius:2px;padding:11px 13px;background:transparent;width:calc(100% - 40px);text-align:left;cursor:pointer;font-family:var(--grot);color:var(--humo)}
-  .cod-tira b{font-family:var(--grot);font-weight:700;font-size:21px;letter-spacing:4px;color:var(--oro);flex-shrink:0}
-  .cod-tira span{font-size:9px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;line-height:1.65}
-  .cod-tira em{display:block;font-style:normal;color:var(--humo2)}
+  .cod-tira{display:flex;align-items:center;gap:13px;margin:0 20px 14px;min-height:44px;border:1px solid var(--al-azul);border-radius:2px;padding:11px 13px;background:var(--al-azul);width:calc(100% - 40px);text-align:left;cursor:pointer;font-family:var(--grot);color:var(--al-txt);font-weight:700}
+  .cod-tira b{font-family:var(--grot);font-weight:700;font-size:22px;letter-spacing:4px;flex-shrink:0}
+  .cod-tira span{font-size:12.5px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;line-height:1.65}
+  .cod-tira em{display:block;font-style:normal;font-weight:600;color:var(--al-txt);opacity:.9}
   /* ---------- Propina sugerida (el monto en pesos manda sobre el porcentaje) ---------- */
   .prop-ops{display:flex;flex-direction:column;gap:9px;margin-top:16px}
   .prop-btn{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;border:1px solid var(--linea2);background:transparent;border-radius:2px;padding:15px 16px;cursor:pointer;font-family:var(--grot);color:var(--crema);text-align:left;transition:.18s;min-height:56px}
   .prop-btn:hover,.prop-btn:active{border-color:var(--oro)}
-  .prop-btn .pb-pct{font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase}
+  .prop-btn .pb-pct{font-size:14px;font-weight:700;letter-spacing:1.2px;line-height:1.5;text-transform:uppercase}
   /* El monto nunca se parte: «Sin propina» y «Tú decides» se leían en dos renglones. */
-  .prop-btn .pb-mto{font-family:var(--serif);font-style:italic;font-size:21px;color:var(--oro);white-space:nowrap;flex-shrink:0}
+  .prop-btn .pb-mto{font-family:var(--serif);font-style:italic;font-size:22px;color:var(--oro);white-space:nowrap;flex-shrink:0}
   /* Sin propina: mismo tamaño y mismo peso visual que las demás. Nada de castigo visual. */
   .prop-btn.neutro .pb-pct{color:var(--humo)}
-  .prop-btn.neutro .pb-mto{color:var(--humo2);font-size:17px}
+  .prop-btn.neutro .pb-mto{color:var(--humo2);font-size:18px}
   /* Cinco pasos caben en un teléfono con la etiqueta un poco más chica */
   /* Cinco etiquetas en el ancho de un teléfono: sin este hueco mínimo se pegan unas a otras
      y la fila se lee como una sola frase corrida en vez de cinco pasos. */
-  .p-etiq.cinco{font-size:7px;letter-spacing:.6px;gap:7px}
-  .p-etiq.cinco span{white-space:nowrap}
+  /* A 12px, cinco etiquetas en fila se pisaban unas a otras en un teléfono. Los puntos
+     siguen contando el avance y debajo se nombra, en grande, el paso en el que va. */
+  .p-etiq.cinco{display:block;text-align:center;font-size:12.5px;letter-spacing:1.4px;line-height:1.5;gap:0}
+  .p-etiq.cinco .p-cual{display:block;font-family:var(--serif);font-style:italic;font-size:19px;letter-spacing:0;text-transform:none;line-height:1.3;margin-top:2px;color:var(--ink)}
+  .p-etiq.cinco .p-cual.on{color:var(--pomodoro)}
 </style>
 </head>
 <body>
@@ -419,7 +447,9 @@
         </div>
         <svg class="sello" id="selloSvg" viewBox="0 0 100 100">
           <defs><path id="circ" d="M 50,50 m -36,0 a 36,36 0 1,1 72,0 a 36,36 0 1,1 -72,0"/></defs>
-          <text><textPath id="selloTexto" href="#circ">TRATTORIA BELLA VITA · EST. 1987 · </textPath></text>
+          <!-- textLength ajusta la vuelta completa al perímetro del círculo: si no, el final
+               del texto se monta encima del principio y no se lee ni una cosa ni la otra. -->
+          <text><textPath id="selloTexto" href="#circ" textLength="224" lengthAdjust="spacingAndGlyphs">TRATTORIA BELLA VITA · EST. 1987 · </textPath></text>
           <text class="centro" id="selloCentro" x="50" y="57" text-anchor="middle">B.V.</text>
         </svg>
         <img class="sello-logo" id="selloLogo" alt="" style="display:none">
@@ -490,7 +520,7 @@
 
   <div class="guia" id="guia">
     <div class="guia-caja">
-      <div class="caps" style="color:var(--pomodoro);letter-spacing:3px;font-family:var(--grot);font-weight:700;font-size:10px">CÓMO ORDENAR DESDE TU CELULAR</div>
+      <div class="caps" style="color:var(--pomodoro);letter-spacing:1.4px;font-family:var(--grot);font-weight:700;font-size:13px">CÓMO ORDENAR DESDE TU CELULAR</div>
       <div class="g-paso"><b>1</b><div><h4>Toca cualquier platillo</h4><p>Verás su foto en grande, ingredientes, calorías y alérgenos.</p></div></div>
       <div class="g-paso"><b>2</b><div><h4>Agrégalo con el botón +</h4><p>Suma todo lo que se te antoje; puedes ajustar cantidades después.</p></div></div>
       <div class="g-paso"><b>3</b><div><h4>Manda tu orden cuando quieras</h4><p>Tu mesero pasa a la mesa a confirmarla contigo y de ahí se va a la cocina. Sigue su avance en «Cuenta».</p></div></div>
@@ -780,11 +810,15 @@ const TEMAS = {
     linea:'rgba(234,243,241,.13)', linea2:'rgba(234,243,241,.26)', 'nav-bg':'rgba(11,23,29,.96)' },
 };
 let temaActual = '';
+/* Las variables de alerta (--al-*) quedan fuera del tema a propósito: un aviso urgente se ve
+   igual en Editoriale, Notte Verde, Giorno y Mare. Si algún día un tema las trae por error,
+   este guardia las ignora en vez de dejar que las pise. */
+const VARS_INTOCABLES = k => k === 'nombre' || k.startsWith('al-');
 function aplicarTema(t){
   if(!TEMAS[t] || t === temaActual) return;
   temaActual = t;
   for(const [k,v] of Object.entries(TEMAS[t])){
-    if(k !== 'nombre') document.documentElement.style.setProperty('--' + k, v);
+    if(!VARS_INTOCABLES(k)) document.documentElement.style.setProperty('--' + k, v);
   }
   marcaAplicada = ''; // el tema pisó las variables: re-aplicar colores corporativos
 }
@@ -805,7 +839,13 @@ function aplicarMarca(){
   const splash = $('#splashMarca');
   if(splash) splash.innerHTML = (m.prefijo ? `<span>${m.prefijo.toUpperCase()}</span>` : '') + m.nombre;
   const anillo = $('#selloTexto');
-  if(anillo) anillo.textContent = `${completo.toUpperCase()} · ${(m.lema || 'MENÚ DIGITAL').toUpperCase()} · `;
+  /* La vuelta del sello se ajusta al círculo (textLength). Para que no haya que encoger las
+     letras hasta lo ilegible, si el nombre ya es largo el lema se queda fuera del anillo. */
+  if(anillo){
+    const nom = completo.toUpperCase();
+    const lema = (m.lema || 'MENÚ DIGITAL').toUpperCase();
+    anillo.textContent = (nom.length + lema.length > 32 ? `${nom} · ` : `${nom} · ${lema} · `);
+  }
   const centro = $('#selloCentro');
   if(centro) centro.textContent = iniciales(m.nombre).split('').join('.') + '.';
   const titulo = $('#cabTitulo'), logoP = $('#logoPrincipal'), lemaEl = $('#lemaCab');
@@ -840,8 +880,9 @@ async function sincronizar(){
       if(!window._rInexistente){
         window._rInexistente = true;
         document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:var(--esp);color:var(--crema);text-align:center;padding:30px;font-family:var(--grot)">
+          <div class="caps al-etiq ambar" style="margin-bottom:14px">MENÚ NO DISPONIBLE</div>
           <div style="font-family:var(--serif);font-style:italic;font-size:30px">Este menú ya no está disponible</div>
-          <div style="font-size:12px;color:var(--humo);line-height:1.8;max-width:340px">El código QR que escaneaste no corresponde a un restaurante activo. Pide ayuda al personal del restaurante.</div>
+          <div style="font-size:14.5px;color:var(--humo);line-height:1.8;max-width:340px">El código QR que escaneaste no corresponde a un restaurante activo. Pide ayuda al personal del restaurante.</div>
         </div>`;
       }
       return;
@@ -856,6 +897,7 @@ async function sincronizar(){
        encima), en el siguiente sondeo lo vuelve a intentar. */
     abrirMesaAlLlegar();
     if(bienvenidaPend) ofrecerBienvenida();
+    if(propinaPend) atenderPropinaPedida();
     const h = JSON.stringify([dbCache.precios, dbCache.ocultos, dbCache.platillos || [], Object.keys(dbCache.fotos || {}), dbCache.config && dbCache.config.categorias, dbCache.config && dbCache.config.menuPropio]);
     if(h !== hashCarta){
       hashCarta = h;
@@ -943,6 +985,25 @@ async function sincronizar(){
         mesaOtras = otras;
         totalMesaSrv = (om || []).length ? totalSrv : null;
         if(vistaActual === 'cuenta') pintarVistaCuenta();
+      }
+      /* El mesero, antes de cobrar, puede pedirle a la mesa que marque su propina: eso llega
+         como propina_pedida:true en la fila de esta mesa. Se atiende una sola vez por petición. */
+      if(mesaEsMia){
+        try{
+          const fm = await api(rutaMesa() + '&select=propina_pedida,propina_sugerida');
+          const f = (fm && fm[0]) || null;
+          if(f){
+            if(mesaFila){ mesaFila.propina_pedida = f.propina_pedida; }
+            /* Si otro teléfono de la mesa ya marcó la propina, aquí también se ve */
+            if(propinaSugerida == null && +f.propina_sugerida > 0){
+              propinaSugerida = +f.propina_sugerida;
+              guardarSesion();
+              if(vistaActual === 'cuenta') pintarVistaCuenta();
+            }
+            if(f.propina_pedida) atenderPropinaPedida();
+            else propinaPedidaAtendida = false;   // petición cerrada: la próxima sí vuelve a abrir
+          }
+        }catch(e){}
       }
     }
     // Refrescar puntos del cliente mientras mira su cuenta
@@ -1064,7 +1125,7 @@ function guardarIntentosMesa(){
   try{ localStorage.setItem(LSK('mb_mesa_intentos'), String(mesaIntentos)); }catch(e){}
 }
 
-const MESA_SEL = 'select=id,dispositivo_id,codigo,invitados,autorizada,abierta_at,latido_at';
+const MESA_SEL = 'select=id,dispositivo_id,codigo,invitados,autorizada,abierta_at,latido_at,propina_pedida,propina_sugerida';
 /* El índice único es (restaurante_id, sucursal, mesa): los tres filtros identifican UNA fila */
 const rutaMesa = () => `menusbot_mesas_abiertas?restaurante_id=eq.${encodeURIComponent(RID)}`
   + `&sucursal=eq.${encodeURIComponent(SUC)}&mesa=eq.${mesa ?? 0}`;
@@ -1223,7 +1284,7 @@ function pintarHojaBienvenida(){
   const soyDuenio = !!(mesaFila && mesaFila.dispositivo_id === DISP);
   $('#hojaBienvenida').innerHTML = `
     <div class="confirmacion" style="text-align:left">
-      <div class="caps" style="color:var(--basilico);letter-spacing:2.6px">MESA ${n} · LISTA</div>
+      <div class="caps al-etiq verde">MESA ${n} · LISTA</div>
       <h2 style="text-align:left;margin-top:8px">${soyDuenio ? 'Esta mesa ya es tuya' : 'Ya estás en la mesa ' + n}</h2>
       <div class="nota-pie" style="margin:10px 0 0">La mesa ${n} quedó apartada en ${soyDuenio ? 'este teléfono' : 'tu teléfono'}. Nadie de otra mesa puede ordenar a tu nombre, y todo lo que pidan aquí se junta en <b style="color:var(--crema)">una sola cuenta</b> que se paga al final.</div>
       ${cod ? `<div class="cod-caja">
@@ -1335,14 +1396,14 @@ function pintarHojaMesa(){
   const agotado = mesaIntentos >= MESA_MAX_INTENTOS;
   $('#hojaMesa').innerHTML = `
     <div class="confirmacion" style="text-align:left">
-      <div class="caps" style="color:var(--oro);letter-spacing:2.6px">MESA ${n}</div>
+      <div class="caps al-etiq azul">MESA ${n}</div>
       <h2 style="text-align:left;margin-top:8px">Alguien de tu mesa ya abrió la cuenta</h2>
       <div class="nota-pie" style="margin:10px 0 0">Otro teléfono escaneó el QR de la mesa ${n} antes que tú y la cuenta quedó abierta ahí. Todo bien: así evitamos que la misma orden salga dos veces a la cocina.</div>
       ${agotado
-        ? `<div class="nota-pie" style="margin:12px 0 0;border-left-color:var(--pomodoro)">Ya probamos varios códigos y ninguno coincidió. Lo más fácil ahora es que te ayude un mesero: toca el botón y en un momento está en tu mesa.</div>`
+        ? `<div class="al-bloque ambar" style="margin:12px 0 0">Ya probamos varios códigos y ninguno coincidió. Lo más fácil ahora es que te ayude un mesero: toca el botón y en un momento está en tu mesa.</div>`
         : `<div class="nota-pie" style="margin:12px 0 0">Para ordenar desde tu propio teléfono necesitas el <b style="color:var(--crema)">código de 4 dígitos de la mesa</b>. Pídeselo a quien escaneó primero — lo tiene en su pantalla, igual que todos los que ya se unieron.</div>
       <input class="notas-inp" id="mesaCodigo" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4 dígitos" style="margin-top:14px;text-align:center;letter-spacing:8px;font-size:22px;font-weight:700;padding:16px 15px">
-      <div class="nota-pie" id="mesaError" style="margin:10px 0 0;border-left-color:var(--pomodoro);display:none"></div>`}
+      <div class="al-bloque roja" id="mesaError" style="margin:10px 0 0;display:none"></div>`}
       <div class="acciones-orden" style="padding:18px 0 0">
         ${agotado ? '' : `<button class="btn-primario" onclick="unirmeAMesa()">Unirme a esta mesa</button>`}
         <button class="btn-fantasma" onclick="cerrarSheets();llamarMesero('mesa')">Pide ayuda al mesero</button>
@@ -1370,7 +1431,7 @@ function errorMesa(txt){
 function avisarMesaNoConfirmada(){
   $('#hojaMesa').innerHTML = `
     <div class="confirmacion" style="text-align:left">
-      <div class="caps" style="color:var(--pomodoro);letter-spacing:2.6px">TU ORDEN NO SE ENVIÓ</div>
+      <div class="caps al-etiq roja">TU ORDEN NO SE ENVIÓ</div>
       <h2 style="text-align:left;margin-top:8px">No pudimos confirmar tu mesa</h2>
       <div class="nota-pie" style="margin:10px 0 0">Revisa tu internet o pídele al mesero que abra tu mesa. Tu orden se queda guardada aquí tal como la armaste — nada se pierde.</div>
       <div class="acciones-orden" style="padding:18px 0 0">
@@ -1447,9 +1508,12 @@ window.addEventListener('popstate', e => {
 });
 
 let toastTimer = null;
-function toast(txt){
+/* El toast es neutro. Con falla=true se pinta de rojo sólido: solo para avisos de que algo
+   no se pudo hacer, nunca para una confirmación. */
+function toast(txt, falla){
   const t = $('#toast');
   t.textContent = txt;
+  t.classList.toggle('falla', !!falla);
   t.classList.add('visible');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('visible'), 2600);
@@ -1469,7 +1533,11 @@ function mostrarVista(v){
 }
 
 const ESTADOS_TXT = ['Recibida en cocina','En preparación','En servicio en tu mesa','Entregada en tu mesa'];
-const ESTADOS_COLOR = ['#C9A227','#D96C2F','#3E8ED0','#5FA05A'];
+/* Mismo nombre de siempre (lo leen las vistas), pero ahora apuntan a la paleta de alertas:
+   azul = dato / en marcha, verde = listo. Nunca cambian con el tema. */
+const ESTADOS_COLOR = ['var(--al-azul)','var(--al-azul)','var(--al-azul)','var(--al-verde)'];
+/* Ámbar = «ojo, falta algo»: la orden espera a que el mesero la confirme en la mesa. */
+const COLOR_PENDIENTE = 'var(--al-ambar)';
 /* Una orden nace 'pendiente' y ahí se queda hasta que el mesero la confirma en la mesa */
 const esPendiente = o => (o.verificacion || 'pendiente') === 'pendiente';
 /* Total de la mesa: el del servidor manda (es el mismo «por cobrar» que ve el restaurante);
@@ -1498,6 +1566,10 @@ function pintarIndicadores(){
       // Modo estatus: órdenes en curso y carrito vacío
       const act = ordenes.filter(o => o.estado < 3);
       barra.classList.add('modo-estado');
+      /* La barra también avisa con color: verde cuando ya pediste la cuenta, ámbar mientras
+         algo espera al mesero, azul cuando todo va en marcha. */
+      barra.classList.toggle('cuenta', !!cuentaPedida);
+      barra.classList.toggle('espera', !cuentaPedida && act.some(esPendiente));
       const corto = o => esPendiente(o) ? 'por confirmar' : ['en cocina','preparando','en servicio','entregada'][o.estado];
       if(cuentaPedida){
         $('#boNum').innerHTML = '<i></i>';
@@ -1514,6 +1586,7 @@ function pintarIndicadores(){
       barra.classList.add('visible');
     } else {
       barra.classList.remove('visible');
+      barra.classList.remove('cuenta', 'espera');
     }
   }
   $('#navDot').classList.toggle('visible', ordenes.length > 0);
@@ -1521,6 +1594,9 @@ function pintarIndicadores(){
   if(ordenes.length){
     const o = ordenes[ordenes.length - 1];
     pill.classList.add('visible');
+    /* Aviso sólido: ámbar si espera al mesero, verde si ya se entregó, azul mientras avanza */
+    pill.style.setProperty('--ce', cuentaPedida ? 'var(--al-verde)'
+      : esPendiente(o) ? COLOR_PENDIENTE : ESTADOS_COLOR[o.estado]);
     $('#pillEstadoTxt').innerHTML = `<b>ORDEN Nº ${o.num} — ${esPendiente(o) ? 'POR CONFIRMAR CON TU MESERO' : ESTADOS_TXT[o.estado].toUpperCase()}</b><small>${ordenes.length} orden(es) en curso · toca para ver tu cuenta</small>`;
   } else pill.classList.remove('visible');
 }
@@ -1686,16 +1762,16 @@ function abrirPlatillo(id){
       <div class="bloque"><div class="b-cab"><span class="caps">Valores nutricionales</span><i></i></div>
         <div class="tabla-nutri">
           <div class="celda"><div class="num">${d.kcal}</div><div class="lbl">kcal</div></div>
-          <div class="celda"><div class="num">${d.prot}<small style="font-size:11px">g</small></div><div class="lbl">Proteína</div></div>
-          <div class="celda"><div class="num">${d.carb}<small style="font-size:11px">g</small></div><div class="lbl">Carbs</div></div>
-          <div class="celda"><div class="num">${d.grasa}<small style="font-size:11px">g</small></div><div class="lbl">Grasas</div></div>
+          <div class="celda"><div class="num">${d.prot}<small style="font-size:14px">g</small></div><div class="lbl">Proteína</div></div>
+          <div class="celda"><div class="num">${d.carb}<small style="font-size:14px">g</small></div><div class="lbl">Carbs</div></div>
+          <div class="celda"><div class="num">${d.grasa}<small style="font-size:14px">g</small></div><div class="lbl">Grasas</div></div>
         </div>
       </div>
       <div class="bloque"><div class="b-cab"><span class="caps">Ingredientes</span><i></i></div>
         <div class="pildoras">${d.ingredientes.map(i => `<span class="pildora">${i}</span>`).join('')}</div>
       </div>
       <div class="bloque"><div class="b-cab"><span class="caps">Alérgenos</span><i></i></div>
-        ${d.alergenos.length ? `<div class="alerg">${d.alergenos.map(a => `<span>${a}</span>`).join('')}</div>` : '<div style="font-size:11px;color:var(--humo2);letter-spacing:1px">SIN ALÉRGENOS COMUNES</div>'}
+        ${d.alergenos.length ? `<div class="alerg">${d.alergenos.map(a => `<span>${a}</span>`).join('')}</div>` : '<div style="font-size:14px;color:var(--humo2);letter-spacing:1px">SIN ALÉRGENOS COMUNES</div>'}
       </div>
       <div class="bloque"><div class="b-cab"><span class="caps">Sugerencia de la casa</span><i></i></div>
         <div class="nota-vino" style="margin-bottom:12px">${d.maridaje}</div>
@@ -1765,7 +1841,7 @@ function ofrecerSucursal(){
   sucursalOfrecida = true;
   $('#hojaSucursal').innerHTML = `
     <div class="confirmacion" style="text-align:left">
-      <div class="caps" style="color:var(--pomodoro);letter-spacing:2.6px">¿EN QUÉ SUCURSAL ESTÁS?</div>
+      <div class="caps" style="color:var(--pomodoro)">¿EN QUÉ SUCURSAL ESTÁS?</div>
       <div class="nota-pie" style="margin:10px 0 4px">Elige tu sucursal para que tu orden llegue a la cocina correcta.</div>
       <div class="acciones-orden" style="padding:14px 0 0">
         ${sucs.map(x => `<button class="btn-primario" onclick="elegirSucursal('${x.replace(/'/g, "\\'")}')">${x}</button>`).join('')}
@@ -1878,32 +1954,34 @@ function progresoHTML(o){
   for(let i = 1; i <= ultimo; i++) linea += `<span class="p-seg ${seg(i)}"></span><span class="p-dot ${dot(i)}"></span>`;
   return `<div class="prog">
     <div class="p-linea-cont">${linea}</div>
-    <div class="p-etiq cinco">${PROG_PASOS.map((t, i) => `<span class="${p >= i ? 'on' : ''}">${t}</span>`).join('')}</div></div>
-    ${p === 0 ? `<div style="margin-top:10px;font-family:var(--grot);font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:#8A7D69;line-height:1.7">Tu mesero viene a confirmarla contigo · en cuanto lo haga, entra a la cocina</div>` : ''}
-    ${o.estado===3 && o.entregada_por ? `<div style="margin-top:10px;font-family:var(--grot);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:#8A7D69">Confirmada por ${o.entregada_por} · ${o.entregada_at ? new Date(o.entregada_at).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : ''}</div>` : ''}`;
+    <div class="p-etiq cinco">Paso ${Math.min(p, ultimo) + 1} de ${PROG_PASOS.length}<span class="p-cual ${p < ultimo ? 'on' : ''}">${PROG_PASOS[Math.min(p, ultimo)]}</span></div></div>
+    ${p === 0 ? `<div style="margin-top:10px;font-family:var(--grot);font-size:12.5px;letter-spacing:1.4px;text-transform:uppercase;color:#8A7D69;line-height:1.7">Tu mesero viene a confirmarla contigo · en cuanto lo haga, entra a la cocina</div>` : ''}
+    ${o.estado===3 && o.entregada_por ? `<div style="margin-top:10px;font-family:var(--grot);font-size:12.5px;letter-spacing:1.6px;text-transform:uppercase;color:#8A7D69">Confirmada por ${o.entregada_por} · ${o.entregada_at ? new Date(o.entregada_at).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : ''}</div>` : ''}`;
 }
 function pintarVistaCuenta(){
   const v = $('#vistaCuenta');
   let html = `<div class="vista-head"><div class="caps">Mesa ${mesa ? String(mesa).padStart(2,'0') : '—'}${SUC ? ' · ' + SUC : ''} · seguimiento en vivo</div><h2>Tu cuenta</h2>
-    ${cliente ? `<div style="margin-top:10px;font-family:var(--grot);font-size:9.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--oro);cursor:pointer" onclick="abrirHojaCliente()">★ ${cliente.nombre || cliente.telefono} · ${cliente.puntos || 0} puntos</div>` : ''}
+    ${cliente ? `<div style="margin-top:10px;font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--oro);cursor:pointer" onclick="abrirHojaCliente()">★ ${cliente.nombre || cliente.telefono} · ${cliente.puntos || 0} puntos</div>` : ''}
     <div class="nota-pie" style="margin-top:10px">Aquí vive la cuenta de tu mesa: cada orden que envíes se suma y su estado se actualiza solo. <b style="color:var(--crema)">Todo se paga junto al final.</b></div></div>`;
   html += lineaCodigoMesa();
   const activas = ordenes.filter(o => o.estado < 3);
   const porConfirmar = ordenes.filter(esPendiente);
   const totalMesa = totalMesaActual();
   if(cuentaPedida){
-    html += `<div class="banner-estado" style="--ce:#5FA05A"><span class="be-dot"></span><div><b>CUENTA SOLICITADA</b><small>El mesero viene a tu mesa a cobrar · Total ${fmt(totalMesa)} ${RESTAURANTE.moneda}</small></div></div>`;
+    html += `<div class="banner-estado" style="--ce:var(--al-verde)"><span class="be-dot"></span><div><b>CUENTA SOLICITADA</b><small>El mesero viene a tu mesa a cobrar · Total ${fmt(totalMesa)} ${RESTAURANTE.moneda}</small></div></div>`;
     if(propinaSugerida != null){
-      html += `<div class="nota-pie" style="margin:-6px 20px 14px;border-left-color:var(--oro)">${propinaSugerida > 0
-        ? `Le avisamos a tu mesero que piensas dejar <b style="color:var(--crema)">${fmt(propinaSugerida)}</b> de propina. Se la entregas a él cuando llegue a cobrar — puedes cambiar de idea sin problema.`
-        : `Le avisamos a tu mesero que esta vez no dejas propina. Todo en orden — gracias por venir.`}</div>`;
+      html += `<div class="nota-pie" style="margin:-6px 20px 10px;border-left-color:var(--oro)">${propinaSugerida > 0
+        ? `Quedan registrados <b style="color:var(--crema)">${fmt(propinaSugerida)}</b> de propina en tu cuenta. Se la entregas a tu mesero cuando llegue a cobrar, en efectivo o con tarjeta, y puedes cambiarla mientras no te haya cobrado.`
+        : `Quedó registrado que esta vez no dejas propina. Todo en orden — y si cambias de idea, aquí mismo la puedes marcar mientras tu mesero no te haya cobrado.`}</div>`;
+      /* Mientras el mesero no cobre, la propina se puede cambiar: que se vea, y con dedo de adulto */
+      html += `<div style="margin:0 20px 14px"><button class="btn-fantasma" style="width:100%" onclick="abrirHojaPropina()">${propinaSugerida > 0 ? 'Cambiar la propina' : 'Marcar una propina'}</button></div>`;
     }
     /* Mientras espera al mesero: si cerró la invitación sin querer, aquí la vuelve a encontrar */
-    if(resenasActivas()) html += `<div style="margin:-4px 20px 12px;font-family:var(--grot);font-size:9.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--oro);cursor:pointer" onclick="abrirHojaResena()">Dejar una reseña</div>`;
+    if(resenasActivas()) html += `<div style="margin:-4px 20px 12px;font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--oro);cursor:pointer" onclick="abrirHojaResena()">Dejar una reseña</div>`;
   } else if(porConfirmar.length){
     /* Manda lo que está esperando al mesero: es lo que el comensal quiere saber ahora */
     const u = porConfirmar[porConfirmar.length - 1];
-    html += `<div class="banner-estado" style="--ce:var(--oro)"><span class="be-dot"></span><div><b>ESPERANDO CONFIRMACIÓN</b><small>Orden Nº ${u.num} · tu mesero viene a la mesa a confirmarla contigo</small></div></div>`;
+    html += `<div class="banner-estado" style="--ce:${COLOR_PENDIENTE}"><span class="be-dot"></span><div><b>ESPERANDO CONFIRMACIÓN</b><small>Orden Nº ${u.num} · tu mesero viene a la mesa a confirmarla contigo</small></div></div>`;
   } else if(activas.length){
     const u = activas[activas.length - 1];
     html += `<div class="banner-estado" style="--ce:${ESTADOS_COLOR[u.estado]}"><span class="be-dot"></span><div><b>${ESTADOS_TXT[u.estado].toUpperCase()}</b><small>Orden Nº ${u.num}${activas.length > 1 ? ` · ${activas.length} órdenes en curso` : ''}</small></div></div>`;
@@ -1915,7 +1993,7 @@ function pintarVistaCuenta(){
   }
   for(const o of [...ordenes].reverse()){
     html += `<div class="ticket"><div class="t-int">
-      <div class="t-cab"><div class="t-marca">Nº ${o.num}</div><div class="chip-estado" style="--ce:${esPendiente(o) ? 'var(--oro)' : ESTADOS_COLOR[o.estado]}"><i></i>${esPendiente(o) ? 'Por confirmar' : ESTADOS_TXT[o.estado]}</div></div>
+      <div class="t-cab"><div class="t-marca">Nº ${o.num}</div><div class="chip-estado" style="--ce:${esPendiente(o) ? COLOR_PENDIENTE : ESTADOS_COLOR[o.estado]}"><i></i>${esPendiente(o) ? 'Por confirmar' : ESTADOS_TXT[o.estado]}</div></div>
       ${o.items.map(i => {
         const d = PLATILLOS.find(x => x.id === i.id);
         const nombre = d ? d.nombre : (i.nombre || '');
@@ -1936,7 +2014,7 @@ function pintarVistaCuenta(){
   if(mesaOtras.length){
     html += `<div class="bloque" style="padding:0 18px;margin:6px 0 14px"><div class="b-cab"><span class="caps">Otras órdenes de tu mesa</span><i></i></div>
       ${mesaOtras.map(x => `<div class="t-item" style="padding:8px 0">
-        <span class="t-nom" style="font-family:var(--grot);font-size:11.5px;letter-spacing:.5px">Nº ${iniciales(MARCA.nombre)}-${1000 + x.id}</span>
+        <span class="t-nom" style="font-family:var(--grot);font-size:14px;letter-spacing:.5px">Nº ${iniciales(MARCA.nombre)}-${1000 + x.id}</span>
         <span class="chip-estado" style="--ce:${ESTADOS_COLOR[x.estado] || ESTADOS_COLOR[0]};margin-left:10px"><i></i>${ESTADOS_TXT[x.estado] || ''}</span>
         <span class="leader"></span><span class="t-precio" style="font-family:var(--grot)">${fmt(+x.total || 0)}</span>
       </div>`).join('')}
@@ -1964,7 +2042,7 @@ function mostrarSugerenciaBebidas(){
   if(!bebidas.length){ sinBebidasOk = true; enviarOrden(); return; }
   $('#hojaConf').innerHTML = `
     <div class="confirmacion" style="text-align:left">
-      <div class="caps" style="color:var(--pomodoro);letter-spacing:2.6px">ANTES DE ENVIAR</div>
+      <div class="caps" style="color:var(--pomodoro)">ANTES DE ENVIAR</div>
       <h2 style="text-align:left;margin-top:8px">¿Algo de tomar?</h2>
       <div class="nota-pie" style="margin:10px 0 16px">Tu orden aún no lleva bebidas. Agrega una con el botón <b style="color:var(--pomodoro)">+</b> o envíala así.</div>
       ${sugCardsHTML(bebidas)}
@@ -2006,7 +2084,7 @@ async function enviarOrden(){
     });
     fila = filas[0];
   }catch(e){
-    toast('Sin conexión con cocina — revisa tu internet e intenta de nuevo');
+    toast('Sin conexión con cocina — revisa tu internet e intenta de nuevo', true);
     return;
   }
   /* La bandera de bebidas se consume solo cuando la orden salió de verdad: si el envío se
@@ -2075,7 +2153,7 @@ function llamarMesero(motivo){
   avisarMesero('mesero', motivo || '');
   api('menusbot_llamadas', { method:'POST', body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, motivo: motivo || 'mesero', sucursal: SUC }) })
     .then(() => toast(`Listo — un mesero viene a tu mesa ${String(mesa).padStart(2,'0')}`))
-    .catch(() => toast('Sin conexión — inténtalo de nuevo'));
+    .catch(() => toast('Sin conexión — inténtalo de nuevo', true));
 }
 function pedirSiguienteTiempo(){
   if(Date.now() - ultimaLlamada < 30000){ toast('Ya avisamos en cocina — tu siguiente tiempo va en camino'); return; }
@@ -2083,34 +2161,61 @@ function pedirSiguienteTiempo(){
   avisarMesero('tiempo');
   api('menusbot_llamadas', { method:'POST', body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, motivo:'tiempo', sucursal: SUC }) })
     .then(() => toast('Avisamos a cocina — tu siguiente tiempo sale a tu mesa'))
-    .catch(() => toast('Sin conexión — inténtalo de nuevo'));
+    .catch(() => toast('Sin conexión — inténtalo de nuevo', true));
 }
 
-/* ---------- Propina sugerida: antes de llamar al mesero a cobrar ----------
+/* ---------- Propina: la marca el comensal y esa es la que queda ----------
    Se muestra el monto en pesos de cada opción porque la gente decide con el número, no con el
    porcentaje. «Prefiero no dejar propina» está a la vista y con el mismo peso visual que las
-   demás: cobrar de más por vergüenza social no es un buen producto. */
+   demás: cobrar de más por vergüenza social no es un buen producto.
+   La cantidad que marque aquí es la que queda registrada en la cuenta (el mesero la ve, no la
+   escribe). Se sigue pagando en la mesa, en efectivo o con tarjeta, y se puede cambiar mientras
+   el mesero no haya cobrado. */
 const PROP_PCTS = [10, 15, 20];
 const montoPropina = pct => Math.round(totalMesaActual() * pct / 100);
+/* Estado de la petición del mesero («marquen su propina»):
+   atendida = ya abrimos la hoja por esta petición y no la volvemos a abrir;
+   pend     = la petición llegó mientras leía otra cosa y espera su turno;
+   porPeticion = la hoja se abrió porque el mesero la pidió, no porque pidieran la cuenta. */
+let propinaPedidaAtendida = false;
+let propinaPend = false;
+let propinaPorPeticion = false;
+/* Mismo criterio de espera que ofrecerBienvenida(): nunca le tapa la guía ni otra hoja abierta */
+function atenderPropinaPedida(){
+  if(propinaPedidaAtendida) return;
+  if($('#guia').classList.contains('visible') || document.querySelector('.hoja.abierta') || !$('#splash').classList.contains('oculto')){
+    propinaPend = true;
+    return;
+  }
+  propinaPend = false;
+  propinaPedidaAtendida = true;
+  propinaPorPeticion = true;
+  abrirHojaPropina();
+  toast('Tu mesero viene a cobrar y pregunta si quieres dejar propina');
+}
 function pintarHojaPropina(otra){
   const total = totalMesaActual();
+  const yaEligio = propinaSugerida != null;
+  const pedida = propinaPorPeticion || cuentaPedida;
   $('#hojaPropina').innerHTML = `
     <div class="confirmacion" style="text-align:left">
-      <div class="caps" style="color:var(--oro);letter-spacing:2.6px">ANTES DE LLAMAR AL MESERO</div>
-      <h2 style="text-align:left;margin-top:8px">¿Quieres dejar propina?</h2>
+      <div class="caps al-etiq ${pedida ? 'verde' : 'azul'}">${pedida ? 'TU MESERO VIENE A COBRAR' : 'ANTES DE LLAMAR AL MESERO'}</div>
+      <h2 style="text-align:left;margin-top:8px">${yaEligio ? '¿Dejamos la propina así?' : '¿Quieres dejar propina?'}</h2>
       <div class="ticket" style="margin-top:16px"><div class="t-int">
         <div class="t-tot" style="padding-top:0"><span class="caps">Total de tu mesa</span><span class="leader"></span><b>${fmt(total)} ${RESTAURANTE.moneda}</b></div>
+        ${yaEligio ? `<div class="t-tot" style="padding-top:10px"><span class="caps">Propina que marcaste</span><span class="leader"></span><b>${propinaSugerida > 0 ? fmt(propinaSugerida) + ' ' + RESTAURANTE.moneda : 'Sin propina'}</b></div>` : ''}
       </div></div>
-      <div class="nota-pie" style="margin:14px 0 0">La propina la decides tú y no se paga aquí: <b style="color:var(--crema)">se la entregas a tu mesero</b> cuando llegue a cobrar, en efectivo o con tarjeta. Esto es solo para avisarle cuánto piensas dejar.</div>
+      <div class="nota-pie" style="margin:14px 0 0">La propina la decides tú y no se paga aquí: <b style="color:var(--crema)">se la entregas a tu mesero</b> cuando llegue a cobrar, en efectivo o con tarjeta. La cantidad que marques es la que <b style="color:var(--crema)">queda registrada en tu cuenta</b>, y puedes cambiarla mientras no te haya cobrado.</div>
       ${otra ? `
       <div class="nota-pie" style="margin:14px 0 0">Escribe la cantidad que quieras dejar, en pesos.</div>
-      <input class="notas-inp" id="propOtra" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Cantidad en pesos" style="margin-top:12px;text-align:center;letter-spacing:2px;font-size:20px;font-weight:700;padding:16px 15px">
+      <input class="notas-inp" id="propOtra" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Cantidad en pesos" style="margin-top:12px;text-align:center;letter-spacing:2px;font-size:21px;font-weight:700;padding:16px 15px">
       <div class="acciones-orden" style="padding:16px 0 0">
         <button class="btn-primario" onclick="elegirPropinaOtra()">Dejar esta propina</button>
         <button class="btn-fantasma" onclick="abrirHojaPropina()">Volver a las sugerencias</button>
       </div>`
       : `
       <div class="prop-ops">
+        ${yaEligio ? `<button class="prop-btn" onclick="elegirPropina(${propinaSugerida})"><span class="pb-pct">Dejarla como la marqué</span><span class="pb-mto">${propinaSugerida > 0 ? fmt(propinaSugerida) : 'Sin propina'}</span></button>` : ''}
         ${PROP_PCTS.map(p => `<button class="prop-btn" onclick="elegirPropina(${montoPropina(p)})"><span class="pb-pct">${p}% de propina</span><span class="pb-mto">${fmt(montoPropina(p))}</span></button>`).join('')}
         <button class="prop-btn" onclick="pintarHojaPropina(true)"><span class="pb-pct">Otra cantidad</span><span class="pb-mto">Tú decides</span></button>
         <button class="prop-btn neutro" onclick="elegirPropina(0)"><span class="pb-pct">Prefiero no dejar propina</span><span class="pb-mto">Sin propina</span></button>
@@ -2128,17 +2233,30 @@ function abrirHojaPropina(){
 function elegirPropinaOtra(){
   const inp = $('#propOtra');
   const n = Math.round(+((inp && inp.value) || '').replace(/[^\d]/g, ''));
-  if(!(n >= 0) || !isFinite(n)){ toast('Escribe la cantidad en números, por ejemplo 150'); return; }
+  if(!(n >= 0) || !isFinite(n)){ toast('Escribe la cantidad en números, por ejemplo 150', true); return; }
   elegirPropina(n);
 }
-/* La sugerencia es solo eso: el mesero confirma después lo que de verdad recibió */
+/* Lo que elige aquí es lo que se registra: se guarda en propina_sugerida (la columna que leen
+   el mesero y el panel) y se apaga propina_pedida para que la misma petición no reabra la hoja. */
 function elegirPropina(monto){
   propinaSugerida = Math.max(0, Math.round(+monto || 0));
   guardarSesion();
+  const porPeticion = propinaPorPeticion;
+  propinaPorPeticion = false;
   if(mesa != null){
-    api(rutaMesa(), { method:'PATCH', body: JSON.stringify({ propina_sugerida: propinaSugerida }) }).catch(() => {});
+    api(rutaMesa(), { method:'PATCH', body: JSON.stringify({ propina_sugerida: propinaSugerida, propina_pedida: false }) }).catch(() => {});
   }
   cerrarSheets();
+  /* Si el mesero ya venía en camino (él la pidió, o la cuenta ya estaba pedida) no hay que
+     volver a llamarlo: solo confirmamos lo que quedó anotado. */
+  if(porPeticion || cuentaPedida){
+    if(vistaActual === 'cuenta') pintarVistaCuenta();
+    pintarIndicadores();
+    toast(propinaSugerida > 0
+      ? `Anotamos ${fmt(propinaSugerida)} de propina — se la das a tu mesero cuando llegue`
+      : 'Anotado: esta vez sin propina — todo en orden');
+    return;
+  }
   confirmarPedirCuenta();
 }
 function pedirCuenta(){
@@ -2162,7 +2280,7 @@ function confirmarPedirCuenta(){
       /* Con calma: primero que alcance a leer el aviso del mesero, luego pedimos la reseña */
       setTimeout(mostrarHojaResena, 1200);
     })
-    .catch(() => toast('Sin conexión — inténtalo de nuevo'));
+    .catch(() => toast('Sin conexión — inténtalo de nuevo', true));
 }
 
 /* ---------- El mesero no pudo pasar la orden ---------- */
@@ -2172,7 +2290,7 @@ function mostrarOrdenRechazada(o){
   const reponible = (o.items || []).some(i => PLATILLOS.some(p => p.id === i.id));
   $('#hojaConf').innerHTML = `
     <div class="confirmacion" style="text-align:left">
-      <div class="caps" style="color:var(--pomodoro);letter-spacing:2.6px">ORDEN Nº ${o.num}</div>
+      <div class="caps al-etiq ambar">ORDEN Nº ${o.num} · NO PASÓ</div>
       <h2 style="text-align:left;margin-top:8px">Esta orden no pudo pasar</h2>
       <div class="nota-pie" style="margin:10px 0 0">Tu mesero la revisó y no la mandó a la cocina. Suele ser porque algo se acabó o porque hubo un cambio de última hora en la mesa. <b style="color:var(--crema)">No entró a la cocina y no se te cobra nada.</b></div>
       <div class="nota-pie" style="margin:12px 0 0;border-left-color:var(--oro)">Lo más rápido: pregúntale a tu mesero qué pasó — él ya sabe. Y si quieres, vuelves a armar tu orden aquí mismo con toda calma.</div>
@@ -2208,6 +2326,8 @@ function cerrarVisita(){
   mesaFila = null; mesaEsMia = false; mesaIntentos = 0;
   /* Mesa nueva, código nuevo y bienvenida nueva: la siguiente visita vuelve a ver su código */
   mesaChequeada = false; bienvenidaPend = false; propinaSugerida = null; ordenRechazada = null;
+  /* Mesa nueva: si el mesero vuelve a pedir la propina, la hoja tiene que poder abrirse otra vez */
+  propinaPedidaAtendida = false; propinaPend = false; propinaPorPeticion = false;
   try{ localStorage.removeItem(LSK('mb_sesion_v1')); localStorage.removeItem(LSK('mb_mesa_intentos')); localStorage.removeItem(LSK('mb_mesa_saludo')); }catch(e){}
   pintarIndicadores();
   const pideResena = resenasActivas();
@@ -2248,7 +2368,7 @@ function bloqueResenaHTML(){
       ${g ? btn(g, 'Reseñar en Google', '') : ''}
       ${f ? btn(f, 'Reseñar en Facebook', 'background:var(--oro)') : ''}
     </div>
-    ${incentivo ? `<div style="margin-top:11px;font-family:var(--grot);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--humo2);line-height:1.7;text-align:left">${incentivo}</div>` : ''}`;
+    ${incentivo ? `<div style="margin-top:11px;font-family:var(--grot);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--humo2);line-height:1.7;text-align:left">${incentivo}</div>` : ''}`;
 }
 function pintarHojaResena(){
   const r = (config && config.resenas) || {};
@@ -2256,7 +2376,7 @@ function pintarHojaResena(){
   const texto = escResena((r.texto || '').trim() || RESENA_TEXTO_DEF);
   $('#hojaResena').innerHTML = `
     <div class="confirmacion" style="text-align:left">
-      <div class="caps" style="color:var(--oro);letter-spacing:2.6px">GRACIAS POR TU VISITA</div>
+      <div class="caps" style="color:var(--oro)">GRACIAS POR TU VISITA</div>
       <h2 style="text-align:left;margin-top:8px">${titulo}</h2>
       <div class="nota-pie" style="margin:10px 0 0">${texto}</div>
       ${bloqueResenaHTML()}
@@ -2301,6 +2421,7 @@ function cerrarGuia(){
   /* La bienvenida de la mesa (su código) va antes que la invitación a los puntos: es
      información que necesita ya. Los puntos se ofrecen al cerrar la bienvenida. */
   if(bienvenidaPend){ ofrecerBienvenida(); return; }
+  if(propinaPend){ atenderPropinaPedida(); return; }
   ofrecerCuentaPuntos();
 }
 
@@ -2310,7 +2431,7 @@ function pintarHojaCliente(){
   if(cliente){
     h.innerHTML = `
     <div class="confirmacion" style="text-align:left">
-      <div class="caps" style="color:var(--oro);letter-spacing:2.6px">TU CUENTA DE PUNTOS</div>
+      <div class="caps" style="color:var(--oro)">TU CUENTA DE PUNTOS</div>
       <h2 style="text-align:left;margin-top:8px">★ ${cliente.nombre || cliente.telefono}</h2>
       <div class="folio" style="text-align:left">Tel. ${cliente.telefono} · <b>${cliente.puntos || 0} puntos</b></div>
       <div class="nota-pie" style="margin:16px 0 0;text-align:left">Ganas <b style="color:var(--crema)">1 punto por cada $10</b> de consumo. Se abonan solos cuando el restaurante cobra tu mesa.</div>
@@ -2322,7 +2443,7 @@ function pintarHojaCliente(){
   } else {
     h.innerHTML = `
     <div class="confirmacion" style="text-align:left">
-      <div class="caps" style="color:var(--oro);letter-spacing:2.6px">PROGRAMA DE LEALTAD</div>
+      <div class="caps" style="color:var(--oro)">PROGRAMA DE LEALTAD</div>
       <h2 style="text-align:left;margin-top:8px">¿Quieres acumular puntos?</h2>
       <div class="nota-pie" style="margin:10px 0 16px;text-align:left">Gana <b style="color:var(--crema)">1 punto por cada $10</b> de consumo. Solo tu teléfono — sin contraseñas ni correos.</div>
       <input class="notas-inp" id="cliTel" type="tel" inputmode="tel" maxlength="10" placeholder="Teléfono a 10 dígitos">
@@ -2350,7 +2471,7 @@ function ofrecerCuentaPuntos(){
 }
 async function registrarCliente(){
   const tel = ($('#cliTel').value || '').replace(/\D/g, '');
-  if(tel.length !== 10){ toast('Escribe tu teléfono a 10 dígitos'); return; }
+  if(tel.length !== 10){ toast('Escribe tu teléfono a 10 dígitos', true); return; }
   const nombre = ($('#cliNombre').value || '').trim();
   try{
     const filas = await api('menusbot_clientes?on_conflict=restaurante_id,telefono', {
@@ -2363,7 +2484,7 @@ async function registrarCliente(){
     cerrarSheets();
     toast(`¡Listo${cliente.nombre ? ', ' + cliente.nombre : ''}! Tienes ${cliente.puntos} punto(s) acumulados`);
     if(vistaActual === 'cuenta') pintarVistaCuenta();
-  }catch(e){ toast('Sin conexión — inténtalo de nuevo'); }
+  }catch(e){ toast('Sin conexión — inténtalo de nuevo', true); }
 }
 function continuarInvitado(){
   try{ localStorage.setItem(LSK('mb_invitado'), '1'); }catch(e){}

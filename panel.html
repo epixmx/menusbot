@@ -12,6 +12,13 @@
     --pomodoro:#E4593B; --basilico:#8FAE8B; --oro:#C9A227; --papel:#F2EBDD; --ink:#241F18;
     --linea:rgba(239,231,216,.14); --linea2:rgba(239,231,216,.28);
     --serif:'Fraunces',Georgia,serif; --grot:'Space Grotesk',system-ui,sans-serif;
+    /* Alertas sólidas. NO cambian con el tema a propósito: una alerta se ve igual siempre,
+       en claro y en oscuro, y eso es parte de que se entienda de un vistazo. */
+    --al-roja:#D92D20;    /* urgente: piden la cuenta, llaman al mesero, algo está detenido */
+    --al-ambar:#C2410C;   /* ojo: sin mesero asignado, mesa abandonada, orden rechazada */
+    --al-verde:#15803D;   /* confirmado: autorizada, entregada, cobrada, mesa al día */
+    --al-azul:#1D4ED8;    /* dato: código de mesa, en preparación, información neutra */
+    --al-txt:#FFFFFF;     /* el texto de toda alerta sólida */
   }
   /* Tema claro (predeterminado). El oscuro es opcional desde el botón del encabezado. */
   html.claro{
@@ -23,25 +30,27 @@
   html.claro body::after{opacity:.03}
   html.claro .comanda{box-shadow:0 10px 26px rgba(36,31,24,.12);border:1px solid rgba(36,31,24,.1)}
   html.claro .toast{background:var(--ink);color:#FBF7EE;box-shadow:0 16px 44px rgba(36,31,24,.3)}
-  html.claro .chip-mesa.abierta,html.claro .pill-est.e3{color:#FBF7EE}
   html.claro .switch.on i{background:#FBF7EE}
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:var(--grot);background:var(--esp);color:var(--crema);min-height:100vh}
   body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:250;opacity:.05;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")}
-  .caps{font-size:9.5px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase}
+  .caps{font-size:13px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;line-height:1.5}
   .cont{max-width:1120px;margin:0 auto;padding:0 22px 60px}
 
   header{border-bottom:1px solid var(--linea);position:sticky;top:0;background:rgba(21,18,16,.96);backdrop-filter:blur(12px);z-index:50}
-  .head-int{max-width:1120px;margin:0 auto;padding:16px 22px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+  .head-int{max-width:1120px;margin:0 auto;padding:16px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   .marca{font-family:var(--serif);font-style:italic;font-size:24px;font-weight:500}
-  .marca small{display:block;font-family:var(--grot);font-style:normal;font-size:8.5px;letter-spacing:2.6px;color:var(--humo);font-weight:700;margin-top:2px}
-  .vivo{display:flex;align-items:center;gap:8px;font-size:9px;letter-spacing:2px;font-weight:700;color:var(--basilico);border:1px solid var(--linea2);padding:8px 13px;border-radius:2px}
+  .marca small{display:block;font-family:var(--grot);font-style:normal;font-size:12.5px;letter-spacing:1.4px;color:var(--humo);font-weight:700;margin-top:2px}
+  .vivo{display:flex;align-items:center;gap:8px;font-size:12.5px;letter-spacing:1.4px;font-weight:700;color:var(--basilico);border:1px solid var(--linea2);padding:8px 13px;border-radius:2px}
   .vivo i{width:7px;height:7px;border-radius:50%;background:var(--basilico);animation:parp 1.6s infinite}
   @keyframes parp{0%,100%{opacity:1}50%{opacity:.25}}
   .tabs{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
-  .tab{font-family:var(--grot);font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;padding:11px 16px;background:transparent;border:none;color:var(--humo2);cursor:pointer;position:relative}
-  .tab .mini-badge{position:absolute;top:2px;right:2px;min-width:15px;height:15px;border-radius:8px;background:var(--pomodoro);color:var(--papel);font-size:9px;display:none;align-items:center;justify-content:center;padding:0 4px;letter-spacing:0}
+  /* 14px es el mínimo legible que pidió el usuario; el espaciado y el relleno bajan para que
+     las siete pestañas sigan cabiendo en una sola línea sin partirse. */
+  .tab{font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:12px 11px;min-height:44px;background:transparent;border:none;color:var(--humo2);cursor:pointer;position:relative;white-space:nowrap}
+  .tab .mini-badge{position:absolute;top:50%;transform:translateY(-50%);right:4px;min-width:20px;height:20px;border-radius:10px;background:var(--al-roja);color:var(--al-txt);font-weight:700;font-size:12px;display:none;align-items:center;justify-content:center;padding:0 5px;letter-spacing:0;line-height:1}
+  .tab.con-globo{padding-right:30px}
   .tab .mini-badge.visible{display:flex}
   .tab.activo{color:var(--crema);border-bottom:2px solid var(--pomodoro)}
 
@@ -57,84 +66,101 @@
   .columna{border:1px solid var(--linea);border-radius:3px;min-height:300px;background:var(--esp2)}
   .col-cab{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--linea)}
   .col-cab .caps{color:var(--crema)}
-  .col-cab .cuenta-col{margin-left:auto;font-family:var(--serif);font-style:italic;font-size:16px;color:var(--pomodoro)}
+  .col-cab .cuenta-col{margin-left:auto;font-family:var(--serif);font-style:italic;font-size:17.5px;color:var(--pomodoro)}
   .col-cuerpo{padding:12px;display:flex;flex-direction:column;gap:12px}
   .comanda{background:var(--papel);color:var(--ink);border-radius:3px;padding:14px 16px;box-shadow:0 12px 30px rgba(0,0,0,.35);position:relative}
   .comanda::before{content:'';position:absolute;left:0;right:0;top:-6px;height:7px;background-image:radial-gradient(circle at 7px 7px, transparent 4px, var(--papel) 4.5px);background-size:14px 7px}
-  .comanda .c-top{display:flex;align-items:baseline;gap:10px}
-  .comanda .c-folio{font-family:var(--grot);font-weight:700;font-size:12px;color:var(--pomodoro);letter-spacing:1px}
-  .comanda .c-mesa{font-family:var(--serif);font-style:italic;font-size:15px}
-  .comanda .c-tiempo{margin-left:auto;font-size:10px;font-weight:700;letter-spacing:1px;color:#8A7D69}
+  /* La columna es angosta: que el folio y la mesa no se partan a media palabra y que
+     el reloj se baje a otro renglón si no cabe, en vez de romper «BV-1602» en dos */
+  .comanda .c-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .comanda .c-folio{font-family:var(--grot);font-weight:700;font-size:14.5px;color:var(--pomodoro);letter-spacing:1px;white-space:nowrap}
+  .comanda .c-mesa{font-family:var(--serif);font-style:italic;font-size:17px;white-space:nowrap}
+  .comanda .c-tiempo{margin-left:auto;font-size:13px;font-weight:700;letter-spacing:1px;color:#8A7D69;white-space:nowrap}
   .comanda .c-tiempo.tarde{color:var(--pomodoro)}
   .comanda .c-items{margin-top:10px;border-top:1px dashed rgba(36,31,24,.3);padding-top:8px}
-  .comanda .c-item{display:flex;gap:8px;font-size:12.5px;padding:3px 0}
-  .comanda .c-item b{font-family:var(--grot);font-size:11px;color:var(--pomodoro);min-width:24px}
-  .comanda .c-item small{display:block;font-size:10px;color:#8A7D69;letter-spacing:.4px}
+  .comanda .c-item{display:flex;gap:8px;font-size:15px;padding:3px 0}
+  .comanda .c-item b{font-family:var(--grot);font-size:14px;color:var(--pomodoro);min-width:24px}
+  .comanda .c-item small{display:block;font-size:13px;color:#8A7D69;letter-spacing:.4px}
   .comanda .c-pie{display:flex;align-items:center;gap:10px;margin-top:10px;border-top:1px dotted rgba(36,31,24,.25);padding-top:10px}
-  .comanda .c-total{font-family:var(--grot);font-weight:700;font-size:13px}
-  .btn-avanza{margin-left:auto;border:none;background:var(--ink);color:var(--papel);font-family:var(--grot);font-size:9px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;padding:10px 14px;border-radius:2px;cursor:pointer}
+  .comanda .c-total{font-family:var(--grot);font-weight:700;font-size:15px}
+  .btn-avanza{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:none;background:var(--ink);color:var(--papel);font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:10px 14px;border-radius:2px;cursor:pointer;line-height:1.4}
   .btn-avanza:active{transform:scale(.97)}
   .btn-avanza.rojo{background:var(--pomodoro)}
   .quien{margin-top:10px;border-top:1px dotted rgba(36,31,24,.25);padding-top:10px}
-  .quien .caps{color:#8A7D69;font-size:8.5px}
+  .quien .caps{color:#8A7D69;font-size:12.5px}
   .quien .meseros{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
-  .btn-mesero{border:1px solid rgba(36,31,24,.35);background:transparent;color:var(--ink);font-family:var(--grot);font-size:10.5px;font-weight:700;letter-spacing:1px;padding:9px 13px;border-radius:2px;cursor:pointer}
+  .btn-mesero{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid rgba(36,31,24,.35);background:transparent;color:var(--ink);font-family:var(--grot);font-size:13.5px;font-weight:700;letter-spacing:1px;padding:9px 13px;border-radius:2px;cursor:pointer;line-height:1.4}
   .btn-mesero:hover{background:var(--pomodoro);border-color:var(--pomodoro);color:var(--papel)}
-  .col-vacia{text-align:center;color:var(--humo2);font-size:11px;letter-spacing:1.4px;text-transform:uppercase;padding:34px 10px}
+  .col-vacia{text-align:center;color:var(--humo2);font-size:14px;letter-spacing:1.4px;text-transform:uppercase;padding:34px 10px}
   /* entrega por partidas */
-  .p-btn{margin-left:auto;border:1px solid rgba(36,31,24,.35);background:transparent;color:var(--ink);font-family:var(--grot);font-size:8.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:6px 10px;border-radius:2px;cursor:pointer;flex-shrink:0;align-self:center}
+  .p-btn{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid rgba(36,31,24,.35);background:transparent;color:var(--ink);font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:6px 10px;border-radius:2px;cursor:pointer;flex-shrink:0;align-self:center;line-height:1.4}
   .p-btn:hover{background:var(--pomodoro);border-color:var(--pomodoro);color:var(--papel)}
-  .p-ok{margin-left:auto;color:#3E7A39;font-family:var(--grot);font-size:9.5px;font-weight:700;letter-spacing:.8px;white-space:nowrap;flex-shrink:0;align-self:center;text-transform:uppercase}
+  .p-ok{margin-left:auto;color:#3E7A39;font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:.8px;white-space:nowrap;flex-shrink:0;align-self:center;text-transform:uppercase}
   /* mesas abiertas (seguridad) */
   .mesas-abiertas{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:1px solid var(--linea);border-radius:3px;background:var(--esp2);padding:12px 16px;margin-bottom:16px}
   .mesas-abiertas .caps{color:var(--humo);margin-right:6px}
-  .chip-mesa{width:38px;height:38px;border:1px solid var(--linea2);border-radius:2px;background:transparent;color:var(--humo2);font-family:var(--grot);font-weight:700;font-size:12px;cursor:pointer;transition:.15s}
+  .chip-mesa{width:44px;height:44px;border:1px solid var(--linea2);border-radius:2px;background:transparent;color:var(--humo2);font-family:var(--grot);font-weight:700;font-size:14.5px;cursor:pointer;transition:.15s}
   .chip-mesa:hover{border-color:var(--basilico);color:var(--basilico)}
-  .chip-mesa.abierta{background:var(--basilico);border-color:var(--basilico);color:var(--esp)}
-  .mesas-abiertas .hint{font-size:8.5px;letter-spacing:1.6px;color:var(--humo2);text-transform:uppercase;font-weight:700;margin-left:auto}
+  /* Alerta sólida: verde = mesa al día. Se lee igual en claro y en oscuro. */
+  .chip-mesa.abierta{background:var(--al-verde);border-color:var(--al-verde);color:var(--al-txt);font-weight:700}
+  .mesas-abiertas .hint{font-size:12.5px;letter-spacing:1.4px;color:var(--humo2);text-transform:uppercase;font-weight:700;margin-left:auto;line-height:1.5}
   /* Amarre de mesa: una mesa la toma el primer dispositivo que ordena, el resto entra con código.
-     Borde punteado = la tomó el comensal (autorizada:false) y sus órdenes siguen pidiendo confirmación. */
-  .chip-mesa.tomada{border-style:dashed;border-color:var(--oro);color:var(--oro);background:transparent}
-  html.claro .chip-mesa.tomada{color:var(--oro)}
+     Ámbar sólido = la tomó el comensal (autorizada:false) y sus órdenes siguen pidiendo confirmación. */
+  .chip-mesa.tomada{background:var(--al-ambar);border-color:var(--al-ambar);color:var(--al-txt);font-weight:700}
+  /* Mesa abierta con un número mayor al de mesas configuradas: existe en la base y hay que poder cerrarla */
+  .chip-mesa.extra{outline:2px dotted var(--al-ambar);outline-offset:1px}
+  /* Chip armado: el primer toque avisa, el segundo cierra. Rojo sólido = está a un toque de cerrarse. */
+  .chip-mesa.armado{background:var(--al-roja);border-color:var(--al-roja);color:var(--al-txt)}
   .mesas-detalle{border:1px solid var(--linea);border-radius:3px;background:var(--esp2);padding:12px 16px;margin-bottom:16px}
   .mesas-detalle .caps{color:var(--humo);display:block;margin-bottom:10px}
-  .md-ayuda{font-size:11.5px;line-height:1.65;color:var(--humo);max-width:64ch;margin-bottom:12px}
+  .md-ayuda{font-size:14px;line-height:1.65;color:var(--humo);max-width:64ch;margin-bottom:12px}
   .md-fila{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0;border-bottom:1px dotted var(--linea)}
   .md-fila:last-child{border-bottom:none}
-  .md-mesa{font-family:var(--serif);font-style:italic;font-size:15px;min-width:78px}
-  .md-codigo{font-family:var(--grot);font-weight:700;font-size:20px;letter-spacing:5px;color:var(--basilico);background:rgba(143,174,139,.12);border:1px solid var(--basilico);border-radius:2px;padding:3px 8px 3px 13px}
-  .md-meta{font-size:10.5px;letter-spacing:.4px;color:var(--humo)}
-  .md-nota{font-size:11.5px;font-style:italic;color:var(--humo2);font-family:var(--serif)}
-  .md-tag{font-family:var(--grot);font-size:8px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:4px 8px;border-radius:2px;white-space:nowrap}
-  .md-tag.libre{color:var(--oro);border:1px solid var(--oro);background:rgba(201,162,39,.1)}
-  .md-tag.ida{color:var(--pomodoro);border:1px solid var(--pomodoro);background:rgba(228,89,59,.1)}
-  .md-fila .md-btn{margin-left:auto}
-  .md-btn.armado{background:var(--pomodoro);border-color:var(--pomodoro);color:var(--papel)}
-  .md-vacio{font-family:var(--serif);font-style:italic;font-size:12.5px;color:var(--humo2)}
+  .md-mesa{font-family:var(--serif);font-style:italic;font-size:17px;min-width:86px;line-height:1.5}
+  /* Alerta sólida azul: el código de mesa es un dato que se dicta en voz alta, tiene que leerse de lejos */
+  .md-codigo{font-family:var(--grot);font-weight:700;font-size:21px;letter-spacing:5px;color:var(--al-txt);background:var(--al-azul);border:1px solid var(--al-azul);border-radius:2px;padding:5px 8px 5px 13px;line-height:1.3}
+  .md-meta{font-size:13.5px;letter-spacing:.4px;color:var(--humo);line-height:1.5}
+  .md-nota{font-size:14px;font-style:italic;color:var(--humo2);font-family:var(--serif);line-height:1.5}
+  .md-tag{font-family:var(--grot);font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:6px 9px;border-radius:2px;white-space:nowrap;color:var(--al-txt);line-height:1.5}
+  .md-tag.libre{background:var(--al-ambar);border:1px solid var(--al-ambar)}   /* ojo: sin mesero asignado */
+  .md-tag.ida{background:var(--al-ambar);border:1px solid var(--al-ambar)}     /* ojo: mesa abandonada */
+  .md-tag.dato{background:var(--al-azul);border:1px solid var(--al-azul)}      /* información neutra */
+  .md-tag.ok{background:var(--al-verde);border:1px solid var(--al-verde)}      /* confirmado */
+  /* De qué sucursal es la mesa: dato neutro, pero tiene que verse o la mesa parece de aquí */
+  .md-suc{font-family:var(--grot);font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:6px 9px;border-radius:2px;white-space:nowrap;color:var(--al-txt);background:var(--al-azul);border:1px solid var(--al-azul);line-height:1.5}
+  /* Acciones de la fila: todas juntas a la derecha, y ninguna mesa se queda sin ellas */
+  .md-acciones{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .md-btn.armado{background:var(--al-roja);border-color:var(--al-roja);color:var(--al-txt)}
+  .md-sel{background:var(--esp2);border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:13px;letter-spacing:.4px;padding:12px 10px;border-radius:2px;outline:none;min-height:44px;max-width:210px}
+  .md-sel:focus{border-color:var(--pomodoro)}
+  .md-vacio{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--humo2);line-height:1.55}
   /* órdenes por confirmar (mesa sin abrir) */
   .por-confirmar{border:1px solid rgba(201,162,39,.6);border-left:3px solid var(--oro);border-radius:3px;background:rgba(201,162,39,.08);padding:14px 16px;margin-bottom:16px;animation:llega .3s}
   .pc-fila{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0;border-bottom:1px dotted var(--linea)}
   .pc-fila:last-child{border-bottom:none}
-  .pc-fila .pc-folio{font-family:var(--grot);font-weight:700;font-size:12px;color:var(--oro);letter-spacing:1px}
-  .pc-fila .pc-mesa{font-family:var(--serif);font-style:italic;font-size:15px}
-  .pc-fila .pc-items{flex:1;min-width:200px;font-size:12px;color:var(--crema)}
-  .pc-fila .pc-total{font-family:var(--grot);font-weight:700;font-size:13px}
+  .pc-fila .pc-folio{font-family:var(--grot);font-weight:700;font-size:14.5px;color:var(--oro);letter-spacing:1px}
+  .pc-fila .pc-mesa{font-family:var(--serif);font-style:italic;font-size:17px}
+  .pc-fila .pc-items{flex:1;min-width:200px;font-size:14.5px;color:var(--crema)}
+  .pc-fila .pc-total{font-family:var(--grot);font-weight:700;font-size:15px}
   .chip-mesero{display:inline-flex;align-items:center;gap:12px;border:1px solid var(--linea2);border-radius:2px;background:var(--esp2);padding:9px 14px;margin-bottom:16px}
-  .chip-mesero b{font-family:var(--serif);font-style:italic;font-weight:500;font-size:16px;color:var(--oro)}
+  .chip-mesero b{font-family:var(--serif);font-style:italic;font-weight:500;font-size:17.5px;color:var(--oro)}
   .entregas-hoy{margin-top:20px;border:1px solid var(--linea);border-radius:3px;padding:14px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
   .entregas-hoy .caps{color:var(--humo)}
-  .entregas-hoy .lista{font-size:12px;color:var(--crema);font-family:var(--serif)}
+  .entregas-hoy .lista{font-size:14.5px;color:var(--crema);font-family:var(--serif)}
   /* Por confirmar: ahora es el respaldo del mesero, así que cada fila dice a quién le toca */
-  .pc-fila .pc-quien{font-size:10.5px;letter-spacing:.4px;color:var(--humo);white-space:nowrap}
+  .pc-fila .pc-quien{font-size:13.5px;letter-spacing:.4px;color:var(--humo);white-space:nowrap}
   .pc-fila .pc-quien b{color:var(--oro);font-weight:700}
-  .pc-fila .pc-nadie{font-size:9px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--pomodoro);border:1px solid var(--pomodoro);background:rgba(228,89,59,.1);border-radius:2px;padding:4px 8px;white-space:nowrap}
-  .pc-ayuda{font-size:11.5px;line-height:1.65;color:var(--humo);max-width:70ch;margin:6px 0 10px}
+  /* Alerta sólida ámbar: nadie tiene esta mesa asignada, alguien tiene que autorizar */
+  .pc-fila .pc-nadie{font-size:12.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--al-txt);border:1px solid var(--al-ambar);background:var(--al-ambar);border-radius:2px;padding:6px 9px;white-space:nowrap;line-height:1.5}
+  .pc-ayuda{font-size:14px;line-height:1.65;color:var(--humo);max-width:70ch;margin:6px 0 10px}
   /* Rechazadas del día: quedan a la vista para que nadie se pregunte a dónde se fue una orden */
-  .rechazadas{border:1px solid var(--linea);border-left:3px solid var(--humo2);border-radius:3px;background:var(--esp2);padding:13px 16px;margin-bottom:16px}
-  .rechazadas .rz-fila{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 0;border-bottom:1px dotted var(--linea);font-size:12px;color:var(--humo)}
+  .rechazadas{border:1px solid var(--linea);border-left:3px solid var(--al-ambar);border-radius:3px;background:var(--esp2);padding:13px 16px;margin-bottom:16px}
+  /* El título de la caja es la alerta: ámbar sólido, porque una orden rechazada hay que explicarla */
+  .rechazadas .rz-titulo{display:inline-block;background:var(--al-ambar);color:var(--al-txt);font-weight:700;letter-spacing:1.4px;padding:6px 10px;border-radius:2px;margin-bottom:10px}
+  .rechazadas .rz-fila{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 0;border-bottom:1px dotted var(--linea);font-size:14.5px;color:var(--humo);line-height:1.5}
   .rechazadas .rz-fila:last-child{border-bottom:none}
-  .rechazadas .rz-folio{font-family:var(--grot);font-weight:700;font-size:11.5px;color:var(--humo2);letter-spacing:1px}
-  .rechazadas .rz-mesa{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--crema)}
+  .rechazadas .rz-folio{font-family:var(--grot);font-weight:700;font-size:14px;color:var(--humo2);letter-spacing:1px}
+  .rechazadas .rz-mesa{font-family:var(--serif);font-style:italic;font-size:16px;color:var(--crema)}
   .rechazadas .rz-items{flex:1;min-width:180px}
 
   /* ---------- Equipo: meseros con PIN y mesas asignadas ---------- */
@@ -148,14 +174,14 @@
   .eq-fila{display:flex;align-items:flex-start;gap:13px;padding:15px 18px;border-bottom:1px solid var(--linea);flex-wrap:wrap}
   .eq-fila:last-child{border-bottom:none}
   .eq-fila.baja{opacity:.6}
-  .eq-nom{font-family:var(--serif);font-size:16.5px;flex:1;min-width:180px}
-  .eq-nom small{display:block;font-family:var(--grot);font-size:10.5px;letter-spacing:.5px;color:var(--humo);margin-top:5px;line-height:1.7}
-  .eq-pin{font-family:var(--grot);font-weight:700;font-size:15px;letter-spacing:4px;color:var(--oro);border:1px solid var(--oro);background:rgba(201,162,39,.1);border-radius:2px;padding:4px 6px 4px 10px;align-self:center}
-  .eq-baja-tag{font-family:var(--grot);font-size:8px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--humo2);border:1px solid var(--linea2);border-radius:2px;padding:4px 8px;align-self:center}
+  .eq-nom{font-family:var(--serif);font-size:18px;flex:1;min-width:180px}
+  .eq-nom small{display:block;font-family:var(--grot);font-size:13.5px;letter-spacing:.5px;color:var(--humo);margin-top:5px;line-height:1.7}
+  .eq-pin{font-family:var(--grot);font-weight:700;font-size:17px;letter-spacing:4px;color:var(--oro);border:1px solid var(--oro);background:rgba(201,162,39,.1);border-radius:2px;padding:6px 6px 6px 10px;align-self:center;line-height:1.4}
+  .eq-baja-tag{font-family:var(--grot);font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--humo2);border:1px solid var(--linea2);border-radius:2px;padding:4px 8px;align-self:center}
   .eq-link{flex-basis:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:4px}
-  .eq-link a{color:var(--pomodoro);font-size:11px;font-weight:600;text-decoration:none;word-break:break-all}
+  .eq-link a{color:var(--pomodoro);font-size:14px;font-weight:600;text-decoration:none;word-break:break-all}
   .eq-btns{display:flex;gap:8px;flex-wrap:wrap;align-self:center}
-  .eq-aviso{border:1px solid rgba(201,162,39,.6);border-left:3px solid var(--oro);border-radius:3px;background:rgba(201,162,39,.08);padding:13px 16px;margin-bottom:16px;font-size:12px;line-height:1.75;color:var(--crema);max-width:780px}
+  .eq-aviso{border:1px solid rgba(201,162,39,.6);border-left:3px solid var(--oro);border-radius:3px;background:rgba(201,162,39,.08);padding:13px 16px;margin-bottom:16px;font-size:14.5px;line-height:1.75;color:var(--crema);max-width:780px}
   .eq-aviso b{color:var(--oro)}
 
   /* ---------- Registro / conciliación ---------- */
@@ -166,45 +192,55 @@
   .kpi .num em{font-style:italic;color:var(--pomodoro)}
   .kpi .caps{color:var(--humo)}
   .fila-controles{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
-  select.filtro{background:var(--esp2);border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:11px;letter-spacing:1px;padding:10px 13px;border-radius:2px;outline:none}
-  input.filtro{background:var(--esp2);border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:12px;letter-spacing:.5px;padding:11px 13px;border-radius:2px;outline:none}
+  select.filtro{background:var(--esp2);border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:14px;letter-spacing:.6px;padding:12px 13px;border-radius:2px;outline:none;min-height:44px}
+  select.filtro:focus{border-color:var(--pomodoro)}
+  input.filtro{background:var(--esp2);border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:14.5px;letter-spacing:.5px;padding:12px 13px;border-radius:2px;outline:none;min-height:44px}
   input.filtro::placeholder{color:var(--humo2)}
   input.filtro:focus{border-color:var(--pomodoro)}
-  .btn-sec{border:1px solid var(--linea2);background:transparent;color:var(--crema);font-family:var(--grot);font-size:9.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:11px 16px;border-radius:2px;cursor:pointer}
+  /* Área de toque: todo botón que se toca con el dedo mide 44px de alto real */
+  .btn-sec{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid var(--linea2);background:transparent;color:var(--crema);font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:11px 16px;border-radius:2px;cursor:pointer;line-height:1.4}
   .btn-sec.rojo{border-color:rgba(228,89,59,.5);color:var(--pomodoro)}
   .btn-sec:hover{border-color:var(--crema)}
   table{width:100%;border-collapse:collapse;background:var(--esp2);border:1px solid var(--linea)}
-  th{font-family:var(--grot);font-size:8.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--humo);text-align:left;padding:13px 14px;border-bottom:1px solid var(--linea2)}
-  td{padding:13px 14px;border-bottom:1px solid var(--linea);font-size:12.5px;vertical-align:top}
-  td .serif{font-family:var(--serif);font-size:13.5px}
-  td small{color:var(--humo);font-size:11px}
-  .pill-est{display:inline-block;font-size:8.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:5px 10px;border-radius:2px;border:1px solid var(--linea2);color:var(--humo)}
-  .pill-est.e0{border-color:rgba(228,89,59,.5);color:var(--pomodoro)}
-  .pill-est.e1{border-color:rgba(201,162,39,.5);color:var(--oro)}
-  .pill-est.e2{border-color:rgba(143,174,139,.6);color:var(--basilico)}
-  .pill-est.e3{background:var(--basilico);border-color:var(--basilico);color:var(--esp)}
+  th{font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--humo);text-align:left;padding:13px 14px;border-bottom:1px solid var(--linea2);line-height:1.5}
+  td{padding:13px 14px;border-bottom:1px solid var(--linea);font-size:15px;vertical-align:top;line-height:1.5}
+  td .serif{font-family:var(--serif);font-size:15.5px}
+  td small{color:var(--humo);font-size:14px;line-height:1.5}
+  /* Alertas sólidas del estado de la comanda: rojo = detenida, azul = en preparación (dato),
+     ámbar = lista y esperando quién la lleve, verde = entregada. */
+  .pill-est{display:inline-block;font-size:12.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:6px 10px;border-radius:2px;border:1px solid var(--linea2);color:var(--humo);line-height:1.5;white-space:nowrap}
+  /* Estas píldoras viven en el REGISTRO, que es un historial: si todo lo que no está entregado
+     sale en rojo, la conciliación se lee como una lista de errores y el rojo pierde su trabajo.
+     El rojo queda para lo que de verdad urge (globo de llamadas, botón armado, aviso de falla).
+     Aquí: ámbar = nadie la ha empezado, azul = va en camino, verde = entregada.
+     En carta.html el estado 0 va en AZUL a propósito: al comensal su propia orden recién puesta
+     no puede salirle en ámbar de advertencia. Misma etapa, dos públicos, dos lecturas. */
+  .pill-est.e0{background:var(--al-ambar);border-color:var(--al-ambar);color:var(--al-txt)}
+  .pill-est.e1{background:var(--al-azul);border-color:var(--al-azul);color:var(--al-txt)}
+  .pill-est.e2{background:var(--al-azul);border-color:var(--al-azul);color:var(--al-txt)}
+  .pill-est.e3{background:var(--al-verde);border-color:var(--al-verde);color:var(--al-txt)}
   .tabla-scroll{overflow-x:auto}
 
   /* ---------- Carta ---------- */
   .carta-lista{border:1px solid var(--linea);border-radius:3px;background:var(--esp2)}
   .carta-fila{display:flex;align-items:center;gap:16px;padding:14px 18px;border-bottom:1px solid var(--linea)}
   .carta-fila:last-child{border-bottom:none}
-  .carta-fila .cf-nombre{font-family:var(--serif);font-size:15.5px;flex:1;min-width:200px}
-  .carta-fila .cf-nombre small{display:block;font-family:var(--grot);font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:var(--humo2);margin-top:3px}
+  .carta-fila .cf-nombre{font-family:var(--serif);font-size:17px;flex:1;min-width:200px}
+  .carta-fila .cf-nombre small{display:block;font-family:var(--grot);font-size:12.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--humo2);margin-top:3px}
   .cf-precio{display:flex;align-items:center;gap:7px}
-  .cf-precio span{color:var(--humo);font-size:12px}
-  .cf-precio input{width:76px;background:var(--esp);border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-weight:700;font-size:13px;padding:9px 10px;border-radius:2px;outline:none;text-align:right}
+  .cf-precio span{color:var(--humo);font-size:14.5px}
+  .cf-precio input{width:86px;min-height:44px;background:var(--esp);border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-weight:700;font-size:15px;padding:11px 10px;border-radius:2px;outline:none;text-align:right}
   .cf-precio input:focus{border-color:var(--pomodoro)}
-  .switch{position:relative;width:46px;height:24px;border-radius:12px;border:1px solid var(--linea2);background:transparent;cursor:pointer;flex-shrink:0}
-  .switch i{position:absolute;top:3px;left:4px;width:16px;height:16px;border-radius:50%;background:var(--humo2);transition:.2s}
+  .switch{position:relative;width:48px;height:28px;border-radius:14px;border:1px solid var(--linea2);background:transparent;cursor:pointer;flex-shrink:0}
+  .switch i{position:absolute;top:5px;left:5px;width:16px;height:16px;border-radius:50%;background:var(--humo2);transition:.2s}
   .switch.on{background:var(--basilico);border-color:var(--basilico)}
-  .switch.on i{left:24px;background:var(--esp)}
+  .switch.on i{left:25px;background:var(--esp)}
   /* Switch de formulario: checkbox real (oculto) + palanca visual, para poder leerlo con .checked como cualquier input */
-  .switch-lbl{display:inline-flex;align-items:center;gap:12px;cursor:pointer}
+  .switch-lbl{display:inline-flex;align-items:center;gap:12px;cursor:pointer;min-height:44px}
   .switch-lbl input{position:absolute;opacity:0;width:0;height:0}
   .switch-lbl span.switch{display:inline-block}
   .switch-lbl input:checked + span.switch{background:var(--basilico);border-color:var(--basilico)}
-  .switch-lbl input:checked + span.switch i{left:24px;background:var(--esp)}
+  .switch-lbl input:checked + span.switch i{left:25px;background:var(--esp)}
   html.claro .switch-lbl input:checked + span.switch i{background:#FBF7EE}
   .switch-lbl input:focus-visible + span.switch{border-color:var(--pomodoro)}
   .agotado{opacity:.45}
@@ -216,25 +252,25 @@
   .marca-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
   .marca-form .lbl{color:var(--humo);margin-bottom:8px}
   .marca-form .filtro{width:100%;background:var(--esp);color:var(--crema)}
-  .color-inp{width:64px;height:38px;border:1px solid var(--linea2);border-radius:2px;background:var(--esp);padding:3px;cursor:pointer}
+  .color-inp{width:64px;height:44px;border:1px solid var(--linea2);border-radius:2px;background:var(--esp);padding:3px;cursor:pointer}
   .tema-card{border:1px solid var(--linea);border-radius:3px;overflow:hidden;background:var(--esp2)}
   .tema-card.activo{border-color:var(--pomodoro)}
   .tc-preview{height:150px;padding:16px;display:flex;flex-direction:column;gap:8px}
-  .tc-preview .p-marca{font-family:var(--serif);font-style:italic;font-size:15px}
+  .tc-preview .p-marca{font-family:var(--serif);font-style:italic;font-size:17px}
   .tc-preview .p-linea{height:7px;border-radius:2px;width:70%}
   .tc-preview .p-linea.corta{width:45%}
-  .tc-preview .p-boton{margin-top:auto;height:24px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:7.5px;font-weight:700;letter-spacing:2px}
+  .tc-preview .p-boton{margin-top:auto;height:32px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;letter-spacing:1.4px}
   .tc-info{padding:13px 16px;border-top:1px solid var(--linea);display:flex;align-items:center;gap:10px}
-  .tc-info .nombre-t{font-family:var(--serif);font-style:italic;font-size:15px;flex:1}
-  .btn-aplicar{border:1px solid var(--linea2);background:transparent;color:var(--crema);font-family:var(--grot);font-size:8.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;padding:9px 13px;border-radius:2px;cursor:pointer}
+  .tc-info .nombre-t{font-family:var(--serif);font-style:italic;font-size:17px;flex:1}
+  .btn-aplicar{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid var(--linea2);background:transparent;color:var(--crema);font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:9px 13px;border-radius:2px;cursor:pointer;line-height:1.4}
   .tema-card.activo .btn-aplicar{background:var(--pomodoro);border-color:var(--pomodoro);color:var(--papel);pointer-events:none}
-  .nota-pie{margin-top:18px;font-size:10.5px;color:var(--humo2);line-height:1.8;border-left:2px solid var(--linea2);padding-left:12px;max-width:640px}
+  .nota-pie{margin-top:18px;font-size:13.5px;color:var(--humo2);line-height:1.8;border-left:2px solid var(--linea2);padding-left:12px;max-width:74ch}
 
   /* llamadas de mesa */
   .llamada{display:flex;align-items:center;gap:14px;border:1px solid rgba(228,89,59,.55);border-left:3px solid var(--pomodoro);background:rgba(228,89,59,.08);padding:12px 16px;border-radius:3px;margin-bottom:12px;animation:llega .3s}
   @keyframes llega{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
-  .llamada .l-txt{font-family:var(--serif);font-size:15px}
-  .llamada .l-hace{font-size:10px;letter-spacing:1.4px;color:var(--humo);text-transform:uppercase;font-weight:700}
+  .llamada .l-txt{font-family:var(--serif);font-size:17px}
+  .llamada .l-hace{font-size:13px;letter-spacing:1.4px;color:var(--humo);text-transform:uppercase;font-weight:700}
   .llamada .btn-sec{margin-left:auto}
 
   /* reportes */
@@ -247,50 +283,52 @@
   .rep-caja th{padding:10px 10px}
   .rep-caja td{padding:11px 10px}
   /* La aclaración de cada celda va en su propio renglón, no pegada al número */
-  .rep-caja td small{display:block;font-size:9px;color:var(--humo2);letter-spacing:.4px;margin-top:2px}
+  .rep-caja td small{display:block;font-size:12.5px;color:var(--humo2);letter-spacing:.4px;margin-top:2px}
   .rep-num{font-family:var(--grot);font-weight:700;text-align:right;white-space:nowrap}
   th.der,td.der{text-align:right}
   .caja-fila{display:flex;align-items:baseline;gap:12px;padding:10px 0;border-bottom:1px dotted var(--linea)}
   .caja-fila:last-child{border-bottom:none}
-  .caja-fila .cj-txt{flex:1;font-size:12.5px;line-height:1.6}
-  .caja-fila .cj-txt small{display:block;color:var(--humo2);font-size:10.5px;margin-top:3px;line-height:1.6}
-  .caja-fila .cj-num{font-family:var(--grot);font-weight:700;font-size:15px;white-space:nowrap}
+  .caja-fila .cj-txt{flex:1;font-size:15px;line-height:1.6}
+  .caja-fila .cj-txt small{display:block;color:var(--humo2);font-size:13.5px;margin-top:3px;line-height:1.6}
+  .caja-fila .cj-num{font-family:var(--grot);font-weight:700;font-size:17px;white-space:nowrap}
   .caja-fila.fuerte{border-top:1px solid var(--linea2);margin-top:6px;padding-top:14px}
-  .caja-fila.fuerte .cj-num{font-size:19px;color:var(--basilico)}
+  .caja-fila.fuerte .cj-num{font-size:20px;color:var(--basilico)}
   .rep-caja{border:1px solid var(--linea);border-radius:3px;background:var(--esp2);padding:16px 18px;min-height:200px}
   .rep-cab{color:var(--humo);margin-bottom:14px}
-  .barras{display:flex;align-items:flex-end;gap:6px;height:150px}
-  .barra{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+  .barras{display:flex;align-items:flex-end;gap:6px;height:150px;overflow-x:auto}
+  .barra{flex:1 0 auto;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:30px}
   .barra i{width:100%;background:var(--pomodoro);border-radius:2px 2px 0 0;min-height:2px;opacity:.85}
-  .barra small{font-size:8px;letter-spacing:.6px;color:var(--humo2);font-weight:700;white-space:nowrap}
+  .barra small{font-size:12px;letter-spacing:.6px;color:var(--humo2);font-weight:700;white-space:nowrap}
   .top-fila{display:flex;align-items:baseline;gap:10px;padding:8px 0;border-bottom:1px dotted var(--linea)}
   .top-fila:last-child{border-bottom:none}
   .top-fila .t-pos{font-family:var(--serif);font-style:italic;color:var(--pomodoro);min-width:18px}
-  .top-fila .t-nom{font-size:12.5px;flex:1}
-  .top-fila .t-dato{font-family:var(--grot);font-weight:700;font-size:12px}
-  .top-fila .t-dato small{display:block;font-weight:600;color:var(--humo2);font-size:9px;letter-spacing:1px;text-align:right}
+  .top-fila .t-nom{font-size:15px;flex:1}
+  .top-fila .t-dato{font-family:var(--grot);font-weight:700;font-size:14.5px}
+  .top-fila .t-dato small{display:block;font-weight:600;color:var(--humo2);font-size:12.5px;letter-spacing:1px;text-align:right}
 
   /* importador */
   .importador{border:1px dashed var(--linea2);border-radius:3px;padding:20px 22px;background:var(--esp2)}
   .imp-cab{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
   .imp-cab>div:first-child{flex:1;min-width:260px}
-  .imp-sub{font-size:12px;color:var(--humo);line-height:1.7;margin-top:8px;max-width:560px}
+  .imp-sub{font-size:14.5px;color:var(--humo);line-height:1.7;margin-top:8px;max-width:64ch}
   .imp-proceso{margin-top:18px}
   .imp-barra{height:3px;background:var(--linea);border-radius:2px;overflow:hidden;margin-bottom:10px}
   .imp-barra i{display:block;height:100%;width:0%;background:var(--pomodoro);transition:width .4s}
   .borrador-fila{display:grid;grid-template-columns:1.4fr .5fr .7fr 1.6fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dotted var(--linea)}
   @media(max-width:900px){.borrador-fila{grid-template-columns:1fr 1fr;padding:14px 0}}
-  .borrador-fila input,.borrador-fila select{background:var(--esp);border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:12px;padding:9px 11px;border-radius:2px;outline:none;width:100%}
+  .borrador-fila input,.borrador-fila select{background:var(--esp);border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:14.5px;padding:9px 11px;border-radius:2px;outline:none;width:100%}
   .borrador-fila input:focus{border-color:var(--pomodoro)}
-  .nutri-mini{font-size:10px;letter-spacing:.6px;color:var(--basilico);font-weight:700;white-space:nowrap}
+  .nutri-mini{font-size:13px;letter-spacing:.6px;color:var(--basilico);font-weight:700;white-space:nowrap}
   .nutri-mini.pendiente{color:var(--humo2)}
-  .btn-mini{border:1px solid var(--linea2);background:transparent;color:var(--crema);font-family:var(--grot);font-size:8.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:8px 11px;border-radius:2px;cursor:pointer;white-space:nowrap}
+  .btn-mini{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid var(--linea2);background:transparent;color:var(--crema);font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:8px 11px;border-radius:2px;cursor:pointer;white-space:nowrap;line-height:1.4}
   .btn-mini:hover{border-color:var(--pomodoro);color:var(--pomodoro)}
-  .cf-foto{width:44px;height:44px;border-radius:3px;overflow:hidden;background:var(--esp);border:1px solid var(--linea);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--humo2);font-size:9px}
+  .cf-foto{width:44px;height:44px;border-radius:3px;overflow:hidden;background:var(--esp);border:1px solid var(--linea);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--humo2);font-size:12.5px}
   .cf-foto img{width:100%;height:100%;object-fit:cover}
 
-  .toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,30px);background:var(--papel);color:var(--ink);font-family:var(--grot);font-size:11px;font-weight:600;letter-spacing:.6px;padding:13px 20px;border-radius:2px;z-index:300;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 16px 44px rgba(0,0,0,.55)}
+  .toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,30px);background:var(--papel);color:var(--ink);font-family:var(--grot);font-size:14px;font-weight:600;letter-spacing:.6px;line-height:1.55;padding:13px 20px;border-radius:2px;z-index:300;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 16px 44px rgba(0,0,0,.55);max-width:min(680px,90vw)}
   .toast.visible{opacity:1;transform:translate(-50%,0)}
+  /* Un aviso normal es neutro; solo el que reporta una falla se pinta de rojo sólido */
+  .toast.falla,html.claro .toast.falla{background:var(--al-roja);color:var(--al-txt);font-weight:700}
 </style>
 <script>if((localStorage.getItem('mb_panel_tema')||'claro')==='claro')document.documentElement.classList.add('claro')</script>
 </head>
@@ -303,12 +341,12 @@
       <div class="marca" id="marcaHead">Bella Vita<small>PANEL DEL RESTAURANTE</small></div>
     </div>
     <div class="vivo" id="chipVivo"><i></i> EN VIVO</div>
-    <button class="btn-sec" id="btnTema" onclick="alternarTemaPanel()" style="padding:9px 13px;font-size:8.5px" title="Cambiar tema del panel">TEMA OSCURO</button>
-    <button class="btn-sec" id="btnSalir" onclick="salirPanel()" style="padding:9px 13px;font-size:8.5px;display:none" title="Cerrar sesión">SALIR</button>
+    <button class="btn-sec" id="btnTema" onclick="alternarTemaPanel()" style="padding:9px 13px;font-size:12.5px" title="Cambiar tema del panel">TEMA OSCURO</button>
+    <button class="btn-sec" id="btnSalir" onclick="salirPanel()" style="padding:9px 13px;font-size:12.5px;display:none" title="Cerrar sesión">SALIR</button>
     <div id="urlPublica" style="display:none;align-items:center;gap:8px;flex-basis:100%;padding-top:2px">
       <span class="caps" style="color:var(--humo2)">TU CARTA PÚBLICA</span>
-      <a id="urlPublicaLink" href="#" target="_blank" style="color:var(--pomodoro);font-size:11.5px;font-weight:600;text-decoration:none;word-break:break-all"></a>
-      <button class="btn-sec" onclick="copiarUrlPublica()" style="padding:6px 10px;font-size:8px">COPIAR</button>
+      <a id="urlPublicaLink" href="#" target="_blank" style="color:var(--pomodoro);font-size:14px;font-weight:600;text-decoration:none;word-break:break-all"></a>
+      <button class="btn-sec" onclick="copiarUrlPublica()" style="padding:6px 10px;font-size:12px">COPIAR</button>
     </div>
     <div class="tabs">
       <button class="tab activo" data-v="comandas">Comandas<span class="mini-badge" id="badgeNuevas">0</span></button>
@@ -351,7 +389,7 @@
 
   <!-- REGISTRO -->
   <div class="vista" id="v-registro">
-    <div class="vista-titulo"><h1>Registro y conciliación</h1><span class="caps">Todas las comandas del servicio</span></div>
+    <div class="vista-titulo"><h1>Registro y conciliación</h1><span class="caps" id="subRegistro">Todas las comandas del servicio</span></div>
     <div class="kpis">
       <div class="kpi"><span class="caps">Vendido</span><div class="num" id="kpiVendido">$0</div></div>
       <div class="kpi"><span class="caps">Comandas</span><div class="num" id="kpiOrdenes">0</div></div>
@@ -359,15 +397,31 @@
       <div class="kpi"><span class="caps">Entregadas</span><div class="num" id="kpiEntregadas">0<em>%</em></div></div>
     </div>
     <div class="fila-controles">
-      <select class="filtro" id="filtroEstado">
+      <select class="filtro" id="filtroEstado" title="Deja solo las comandas que van en ese paso de cocina">
         <option value="todas">Todos los estados</option>
         <option value="0">Recibidas</option>
         <option value="1">En preparación</option>
         <option value="2">En servicio</option>
         <option value="3">Entregadas</option>
       </select>
-      <button class="btn-sec" onclick="exportarCSV()">Exportar CSV (Excel)</button>
-      
+      <select class="filtro" id="filtroMesa" title="Deja solo las comandas de una mesa. Las mesas son las que tienes configuradas, más cualquier otra que aparezca en las comandas">
+        <option value="">Todas las mesas</option>
+      </select>
+      <select class="filtro" id="filtroMesero" title="Busca al mesero tanto en «Entregó» como en quién autorizó la comanda: si aparece en cualquiera de los dos, la comanda entra">
+        <option value="">Todos los meseros</option>
+      </select>
+      <select class="filtro" id="filtroFecha" title="El día se corta a la medianoche de aquí, no en la del reloj universal: una comanda de las once de la noche cuenta en su propio día">
+        <option value="hoy">Hoy</option>
+        <option value="ayer">Ayer</option>
+        <option value="7">Últimos 7 días</option>
+        <option value="mes">Este mes</option>
+        <option value="todo" selected>Todo</option>
+        <option value="rango">Rango…</option>
+      </select>
+      <input class="filtro" type="date" id="fDesde" title="Desde este día, incluido" style="display:none">
+      <input class="filtro" type="date" id="fHasta" title="Hasta este día, incluido" style="display:none">
+      <button class="btn-sec" onclick="limpiarFiltrosRegistro()" title="Vuelve a mostrar todas las comandas del servicio">Limpiar filtros</button>
+      <button class="btn-sec" onclick="exportarCSV('registro')" title="Exporta exactamente lo que estás viendo, con los filtros puestos">Exportar CSV (Excel)</button>
     </div>
     <div class="tabla-scroll">
     <table>
@@ -454,10 +508,10 @@
         <div class="imp-barra"><i id="impBarra"></i></div>
         <div class="caps" id="impTexto" style="color:var(--humo)">Leyendo el documento…</div>
       </div>
-      <div id="impError" style="display:none;margin-top:18px;padding:14px 16px;border:1px solid var(--linea2);border-left:3px solid var(--pomodoro);border-radius:2px;font-size:12px;line-height:1.7;color:var(--humo)"></div>
+      <div id="impError" style="display:none;margin-top:18px;padding:14px 16px;border:1px solid var(--linea2);border-left:3px solid var(--pomodoro);border-radius:2px;font-size:14.5px;line-height:1.7;color:var(--humo)"></div>
       <div id="borradorZona" style="display:none">
         <div class="caps" style="margin:18px 0 4px;color:var(--crema)">Borrador extraído — revisa, ajusta y publica</div>
-        <div id="borradorResumen" style="font-size:11px;color:var(--humo2);margin-bottom:10px"></div>
+        <div id="borradorResumen" style="font-size:14px;color:var(--humo2);margin-bottom:10px"></div>
         <div id="borradorLista"></div>
         <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
           <button class="btn-sec" style="border-color:var(--pomodoro);color:var(--pomodoro)" onclick="publicarBorrador()">Publicar en la carta</button>
@@ -931,9 +985,12 @@ document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
 });
 
 let toastTimer = null;
-function toast(txt){
+// El aviso normal es neutro. El que reporta una falla se pinta de rojo sólido: si algo no se
+// guardó, el mesero tiene que notarlo de reojo y no confundirlo con un «listo».
+function toast(txt, falla){
   const t = $('#toast');
   t.textContent = txt;
+  t.classList.toggle('falla', !!falla || /sin conexi[oó]n|no se guard|no pude|error|falló/i.test(String(txt)));
   t.classList.add('visible');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('visible'), 2600);
@@ -1043,6 +1100,8 @@ function render(){
   const activas = d.ordenes.filter(o => o.estado < 3);
   $('#badgeNuevas').textContent = activas.length;
   $('#badgeNuevas').classList.toggle('visible', activas.length > 0);
+  // La pestaña se ensancha sólo cuando el globo está puesto, si no el número se come la última letra
+  $('#badgeNuevas').closest('.tab').classList.toggle('con-globo', activas.length > 0);
 
   if(vista === 'comandas'){
     const llamadas = (d.llamadas || []).filter(l => !l.atendida && Date.now() - l.ts < 30*60000);
@@ -1061,7 +1120,7 @@ function render(){
     }).join('');
     $('#chipMeseroZona').innerHTML = meseroActivo ? `
       <div class="chip-mesero"><span class="caps" style="color:var(--humo)">Mesero activo</span><b>${meseroActivo}</b>
-        <button class="btn-sec" style="padding:7px 11px;font-size:8.5px" onclick="cambiarMeseroActivo()">Cambiar</button></div>` : '';
+        <button class="btn-sec" style="padding:7px 11px;font-size:12.5px" onclick="cambiarMeseroActivo()">Cambiar</button></div>` : '';
     // Por confirmar: el comensal ya mandó su orden y le toca al mesero de esa mesa autorizarla en persona.
     // El panel es el respaldo para cuando el mesero no trae el teléfono a mano.
     const porConf = d.ordenes.filter(o => o.verificacion === 'pendiente' && !o.cerrada).sort((a,b) => a.creada - b.creada);
@@ -1090,7 +1149,7 @@ function render(){
     const inicioRech = new Date().setHours(0,0,0,0);
     const rechazadas = ordenesCache.filter(o => o.verificacion === 'rechazada' && o.creada >= inicioRech).sort((a,b) => b.creada - a.creada);
     $('#rechazadasZona').innerHTML = rechazadas.length ? `<div class="rechazadas">
-      <div class="caps" style="color:var(--humo2);margin-bottom:8px">Rechazadas hoy — no cuentan en ventas ni pasan a cocina</div>
+      <div class="caps rz-titulo">Rechazadas hoy — no cuentan en ventas ni pasan a cocina</div>
       ${rechazadas.map(o => `<div class="rz-fila">
         <span class="rz-folio">${o.folio}</span>
         <span class="rz-mesa">Mesa ${String(o.mesa).padStart(2,'0')}${o.sucursal ? ' · ' + escTxt(o.sucursal) : ''}</span>
@@ -1099,17 +1158,34 @@ function render(){
         <span>${o.autorizada_por ? 'rechazó ' + escTxt(o.autorizada_por) : 'sin registro de quién'}${o.autorizada_at ? ' · ' + hora(o.autorizada_at) : ''}</span>
       </div>`).join('')}
     </div>` : '';
-    // Chips de mesas abiertas (seguridad: solo mesas abiertas ordenan directo)
-    const nMesas = (d.config && d.config.mesas) || 12;
+    // Chips de mesas abiertas (seguridad: solo mesas abiertas ordenan directo).
+    // Los números son los configurados MÁS los que estén abiertos en la base aunque se salgan
+    // de la cuenta: una mesa 9 con 8 mesas configuradas no tenía chip y se quedaba sin salida.
+    const nMesas = Math.max(1, +((d.config && d.config.mesas) || 12));
+    const nums = [...new Set([
+      ...Array.from({ length: nMesas }, (_, k) => k + 1),
+      ...mesasAbiertasCache.map(x => +x.mesa).filter(x => x > 0),
+    ])].sort((a,b) => a - b);
     let chipsMesas = '';
-    for(let i = 1; i <= nMesas; i++){
+    for(const i of nums){
       const fila = mesaAbiertaDe(i);
       const ab = !!fila;
       // Distinguimos la que tomó el comensal por su cuenta: sigue abierta, pero sus órdenes piden confirmación
       const tomada = ab && !fila.autorizada;
-      chipsMesas += `<button class="chip-mesa ${ab ? 'abierta' : ''} ${tomada ? 'tomada' : ''}" onclick="alternarMesaAbierta(${i})" title="${ab ? (tomada ? 'La tomó un comensal — clic para cerrarla' : 'Mesa abierta — clic para cerrarla') : 'Mesa cerrada — clic para abrirla'}">${i}</button>`;
+      const extra = i > nMesas;
+      const armado = ab && cierreArmado === claveMesa(i, fila.sucursal || '');
+      const suc = ab ? (fila.sucursal || '') : '';
+      const tit = ab
+        ? `${tomada ? 'La tomó un comensal' : 'Mesa abierta'}${suc ? ' · sucursal ' + suc : ''}${extra ? ' · está abierta aunque ya no entra en tus ' + nMesas + ' mesas' : ''} — toca dos veces para cerrarla`
+        : 'Mesa cerrada — clic para abrirla';
+      chipsMesas += `<button class="chip-mesa ${ab ? 'abierta' : ''} ${tomada ? 'tomada' : ''} ${extra ? 'extra' : ''} ${armado ? 'armado' : ''}" onclick="alternarMesaAbierta(${i})" title="${escTxt(tit)}">${i}</button>`;
     }
-    $('#mesasAbiertasZona').innerHTML = `<div class="mesas-abiertas"><span class="caps">Mesas abiertas</span>${chipsMesas}<span class="hint">Verde = con comensales · toda orden la confirma el mesero en la mesa</span></div>`
+    // Ojo: no repintamos esta zona mientras alguien tiene abierto el selector de mesero,
+    // porque el repintado de cada segundo se lo cerraría en la cara.
+    const zonaMesas = $('#mesasAbiertasZona');
+    const act = document.activeElement;
+    const enfocado = act && act.tagName === 'SELECT' && zonaMesas.contains(act);
+    if(!enfocado) zonaMesas.innerHTML = `<div class="mesas-abiertas"><span class="caps">Mesas abiertas</span>${chipsMesas}<span class="hint">Verde = con comensales · borde punteado = abierta fuera de tu cuenta de mesas</span></div>`
       + pintarAmarresMesas();
     for(const e of [0,1,2]){
       // Cocina solo ve lo autorizado: 'ok' y nada más. Ni 'pendiente' ni 'rechazada' ni ningún valor raro.
@@ -1128,14 +1204,23 @@ function render(){
   }
 
   if(vista === 'registro'){
-    const filtro = $('#filtroEstado').value;
-    const filas = d.ordenes.filter(o => filtro === 'todas' || o.estado === +filtro).sort((a,b) => b.creada - a.creada);
-    const vendido = d.ordenes.reduce((s,o) => s + (+o.total||0), 0);
-    const entregadas = d.ordenes.filter(o => o.estado === 3).length;
+    llenarFiltrosRegistro(d);
+    const f = filtrosRegistro();
+    const filas = ordenesFiltradasRegistro(d).sort((a,b) => b.creada - a.creada);
+    // Los KPIs se calculan sobre LO FILTRADO. Antes salían de todas las órdenes del día y
+    // eso volvía inútil el filtro: elegías una mesa y el «vendido» seguía siendo el del turno.
+    const vendido = filas.reduce((s,o) => s + (+o.total||0), 0);
+    const entregadas = filas.filter(o => o.estado === 3).length;
     $('#kpiVendido').textContent = fmt(vendido);
-    $('#kpiOrdenes').textContent = d.ordenes.length;
-    $('#kpiTicket').textContent = d.ordenes.length ? fmt(Math.round(vendido / d.ordenes.length)) : '$0';
-    $('#kpiEntregadas').innerHTML = (d.ordenes.length ? Math.round(entregadas / d.ordenes.length * 100) : 0) + '<em>%</em>';
+    $('#kpiOrdenes').textContent = filas.length;
+    $('#kpiTicket').textContent = filas.length ? fmt(Math.round(vendido / filas.length)) : '$0';
+    $('#kpiEntregadas').innerHTML = (filas.length ? Math.round(entregadas / filas.length * 100) : 0) + '<em>%</em>';
+    // El subtítulo dice con palabras qué se está viendo, para que nadie lea un KPI recortado
+    // creyendo que es el del turno completo.
+    const activos = descripcionFiltrosRegistro(f);
+    $('#subRegistro').textContent = activos.length
+      ? `${filas.length} de ${d.ordenes.length} comandas · ${activos.join(' · ')}`
+      : `Todas las comandas del servicio · ${d.ordenes.length} en total`;
     $('#tablaRegistro').innerHTML = filas.length ? filas.map(o => `<tr>
       <td class="serif">${o.folio}</td>
       <td>${hora(o.creada)}</td>
@@ -1145,7 +1230,7 @@ function render(){
       <td><span class="pill-est e${o.estado}">${ESTADOS_TXT[o.estado]}</span></td>
       <td>${o.entregada_por || '<small>—</small>'}</td>
       <td>${o.entregada_at ? mm(o.entregada_at - o.creada) : '<small>en curso</small>'}</td>
-    </tr>`).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--humo2)">Sin comandas con ese filtro</td></tr>';
+    </tr>`).join('') : `<tr><td colspan="8" style="text-align:center;color:var(--humo2);line-height:1.55">${escTxt(mensajeVacioRegistro(f, d))}</td></tr>`;
   }
 
   if(vista === 'carta'){
@@ -2306,36 +2391,70 @@ function pintarEquipo(d){
       <div class="eq-link">
         <span class="caps" style="color:var(--humo2)">SU ENLACE</span>
         <a href="${escTxt(u)}" target="_blank">${escTxt(u.replace(/^https?:\/\//,''))}</a>
-        <button class="btn-sec" onclick="copiarUrlMesero(${m.id})" style="padding:6px 10px;font-size:8px">COPIAR</button>
+        <button class="btn-sec" onclick="copiarUrlMesero(${m.id})" style="padding:6px 10px;font-size:12px">COPIAR</button>
       </div>
     </div>`;
-  }).join('') : '<div class="eq-fila"><div class="eq-nom" style="color:var(--humo2);font-size:14px">Todavía no hay nadie en el equipo — da de alta al primero en el formulario de arriba.</div></div>';
+  }).join('') : '<div class="eq-fila"><div class="eq-nom" style="color:var(--humo2);font-size:16px">Todavía no hay nadie en el equipo — da de alta al primero en el formulario de arriba.</div></div>';
 }
 
 /* ---------- Mesas abiertas y amarre al dispositivo (seguridad) ---------- */
 // Una mesa la toma el primer dispositivo que ordena; el resto de la mesa entra con el código de 4 dígitos.
 const ABANDONO_MIN = 120; // sin latido en 2 h damos por hecho que el comensal ya se fue y el amarre expirará solo
 
-function mesaAbiertaDe(n){
-  return mesasAbiertasCache.find(x => x.mesa === n && (x.sucursal || '') === sucursalActivaPanel) || null;
+/* Por qué existe filtroSucMesa() — la mesa que no se podía cerrar.
+   En la base la sucursal vacía puede estar guardada como '' o como NULL (la tabla
+   menusbot_mesas_abiertas no tiene valor por omisión en esa columna). El panel mandaba
+   siempre «&sucursal=eq.» (vacío), y en SQL comparar cualquier cosa con NULL da NULL, o
+   sea falso: el DELETE y el PATCH no tocaban ni una fila. Como la pantalla ya había
+   quitado la mesa de la lista y el aviso decía «cerrada», parecía hecho — pero cuatro
+   segundos después el sondeo la leía otra vez del servidor y la mesa volvía. Así nace la
+   mesa que no se puede ver, ni cerrar, ni pasar a otro mesero.
+   Cuando la sucursal viene vacía preguntamos por las dos formas a la vez. */
+function filtroSucMesa(suc){
+  const s = (suc == null ? '' : String(suc));
+  return s ? `&sucursal=eq.${encodeURIComponent(s)}` : '&or=(sucursal.eq.,sucursal.is.null)';
+}
+const mismaSuc = (a, b) => (a || '') === (b || '');
+// Texto que va dentro de un onclick: primero se escapa para JavaScript y luego para HTML
+const argJS = s => escTxt(String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"));
+const mesaTxtN = n => `Mesa ${String(n).padStart(2,'0')}`;
+const claveMesa = (n, suc) => n + '|' + (suc || '');
+
+// Sin segundo argumento significa «la mesa número n, en la sucursal que sea»: si la fila
+// llegó con una sucursal que el panel no tiene seleccionada, igual hay que poder actuar
+// sobre ella. Ninguna mesa abierta se queda sin dueño.
+function mesaAbiertaDe(n, suc){
+  if(suc === undefined){
+    return mesasAbiertasCache.find(x => x.mesa === n && mismaSuc(x.sucursal, sucursalActivaPanel))
+      || mesasAbiertasCache.find(x => x.mesa === n) || null;
+  }
+  return mesasAbiertasCache.find(x => x.mesa === n && mismaSuc(x.sucursal, suc)) || null;
 }
 
-// Mesa "armada" para liberar: el primer clic avisa, el segundo ejecuta.
+// Mesa "armada" para liberar o para cerrar: el primer toque avisa, el segundo ejecuta.
 // No usamos confirm() nativo porque congela la página y el mesero trabaja con la cocina en vivo.
+// La clave es mesa|sucursal para que armar la mesa 9 de una sucursal no arme la 9 de la otra.
 let liberarArmada = null;
 let liberarArmadaTimer = null;
+let cierreArmado = null;
+let cierreArmadoTimer = null;
 
 function pintarAmarresMesas(){
-  const abiertas = mesasAbiertasCache
-    .filter(x => (x.sucursal || '') === sucursalActivaPanel)
-    .sort((a,b) => a.mesa - b.mesa);
+  // TODAS las mesas abiertas del restaurante, de la sucursal que sean. Antes filtrábamos por
+  // la sucursal del panel y una mesa de otra sucursal quedaba invisible: existía en la base,
+  // bloqueaba el número de mesa y no había manera de tocarla desde ninguna pantalla.
+  const abiertas = mesasAbiertasCache.slice()
+    .sort((a,b) => (a.sucursal || '').localeCompare(b.sucursal || '') || a.mesa - b.mesa);
   const ayuda = `La primera pantalla que ordena se queda con la mesa y recibe un código de cuatro dígitos; cualquiera más que quiera ordenar desde su propio teléfono en esa misma mesa necesita que se lo dictes.
-    Si al comensal se le acabó la pila o se sentó un grupo nuevo, libera la mesa y el siguiente teléfono que ordene la tomará.`;
-  const filas = abiertas.map(m => {
-    const mesaTxt = `Mesa ${String(m.mesa).padStart(2,'0')}`;
-    const etiquetas = m.autorizada ? '' : `<span class="md-tag libre" title="La abrió el comensal, no el restaurante: sus órdenes pasan por Por confirmar">La tomó el comensal</span>`;
+    Si al comensal se le acabó la pila o se sentó un grupo nuevo, libera la mesa y el siguiente teléfono que ordene la tomará. Y si la mesa ya se fue, ciérrala: se cierran sus comandas y el número queda libre.`;
+  const filas = abiertas.map((m, i) => {
+    const suc = m.sucursal || '';
+    const k = argJS(suc);
+    const mesaTxt = mesaTxtN(m.mesa);
+    const sucTxt = suc ? `<span class="md-suc" title="Esta mesa es de la sucursal ${escTxt(suc)}">${escTxt(suc)}</span>` : '';
+    const etiquetas = m.autorizada ? '' : `<span class="md-tag dato" title="La abrió el comensal, no el restaurante: sus órdenes pasan por Por confirmar">La tomó el comensal</span>`;
     // Quién trae la mesa: el mesero al que se le asignó, y si alguien ya cobró ahí, quién fue
-    const suyos = meserosDeMesa(m.mesa, m.sucursal);
+    const suyos = meserosDeMesa(m.mesa, suc);
     const cobro = m.mesero_id != null ? nombreMeseroPorId(m.mesero_id) : '';
     const quien = suyos.length
       ? `<span class="md-meta" title="Mesero al que le asignaste esta mesa">La trae <b style="color:var(--oro)">${escTxt(suyos.map(x => x.nombre).join(' o '))}</b></span>`
@@ -2343,32 +2462,60 @@ function pintarAmarresMesas(){
     // Si el que cobró es el mismo que tiene la mesa asignada no lo repetimos: no aporta nada
     const cobroDistinto = cobro && !suyos.some(x => x.nombre === cobro);
     const quienCobro = cobroDistinto ? `<span class="md-meta" title="Quedó anotado al cobrar">Cobró ${escTxt(cobro)}</span>` : '';
+    // Cuánto tiene esta mesa sin cobrar: es lo que se cierra si le das «Cerrar mesa»
+    const suyas = ordenesCache.filter(o => o.mesa === m.mesa && mismaSuc(o.sucursal, suc) && o.verificacion !== 'rechazada');
+    const porCobrar = suyas.filter(o => !o.cerrada).reduce((s,o) => s + (+o.total || 0), 0);
+    // Selector de mesero: los activos de esa sucursal. Se guarda igual que en EQUIPO, en el
+    // arreglo `mesas` de la fila del mesero; no hay una segunda forma de guardar lo mismo.
+    const candidatos = meserosActivos().filter(x => !x.sucursal || mismaSuc(x.sucursal, suc));
+    const selMesero = candidatos.length
+      ? `<select class="md-sel" id="selMesero_${i}" title="Asigna esta mesa a un mesero. Se guarda en su ficha de EQUIPO, igual que si se la asignaras ahí, y desde ese momento los avisos de la mesa le llegan a él y no a todos" onchange="asignarMeseroMesa(${m.mesa}, this.value, '${k}')">
+          <option value="">Asignar mesero…</option>
+          ${candidatos.map(x => `<option value="${x.id}"${suyos.some(y => y.id === x.id) ? ' selected' : ''}>${escTxt(x.nombre)}</option>`).join('')}
+          <option value="0">Quitar mesero</option>
+        </select>`
+      : `<span class="md-nota" title="Da de alta a tus meseros en la pestaña EQUIPO">agrega meseros en EQUIPO para poder asignar esta mesa</span>`;
+    const armadaLib = liberarArmada === claveMesa(m.mesa, suc);
+    const armadoCerrar = cierreArmado === claveMesa(m.mesa, suc);
+    // Acciones: TODA fila las lleva, con dispositivo o sin él. «Liberar» solo tiene sentido
+    // cuando hay un teléfono amarrado; «Cerrar mesa» está siempre, es la salida garantizada.
+    const acciones = `<span class="md-acciones">
+      <button class="btn-sec md-btn" onclick="verMesaAbierta(${m.mesa},'${k}')" title="Ver las comandas de esta mesa en Registro y conciliación">Ver</button>
+      ${selMesero}
+      ${m.dispositivo_id ? `<button class="btn-sec md-btn ${armadaLib ? 'armado' : ''}" onclick="liberarMesa(${m.mesa},'${k}')" title="Suelta el teléfono que tiene la mesa sin cerrarla: el código deja de servir y el siguiente teléfono que ordene la toma">${armadaLib ? 'Confirmar liberar' : 'Liberar'}</button>` : ''}
+      <button class="btn-sec md-btn ${armadoCerrar ? 'armado' : ''}" onclick="cerrarMesaAbierta(${m.mesa},'${k}')" title="${porCobrar > 0 ? `Cierra sus comandas por ${fmt(porCobrar)} y deja libre el número de mesa` : 'No tiene nada que cobrar: solo deja libre el número de mesa'}">${armadoCerrar ? 'Confirmar cerrar' : 'Cerrar mesa'}</button>
+    </span>`;
     if(!m.dispositivo_id){
       // Abierta desde el panel pero nadie ha ordenado: sigue disponible para el primer teléfono
+      const desde0 = haceHumano(m.abierta_at);
       return `<div class="md-fila">
         <span class="md-mesa">${mesaTxt}</span>
-        <span class="md-nota">abierta, sin dispositivo todavía</span>
+        ${sucTxt}
+        <span class="md-nota">abierta, sin dispositivo todavía${desde0 ? ' · ' + desde0 : ''}</span>
         ${quien}
         ${quienCobro}
         ${etiquetas}
+        ${porCobrar > 0 ? `<span class="md-meta" title="Comandas de esta mesa que siguen sin cobrarse">${fmt(porCobrar)} sin cobrar</span>` : ''}
+        ${acciones}
       </div>`;
     }
     const dispositivos = 1 + (m.invitados ? m.invitados.length : 0);
     // El latido viejo delata una mesa abandonada; su amarre caduca solo, pero el mesero puede adelantarse
     const abandonada = m.latido_at != null && (Date.now() - m.latido_at) > ABANDONO_MIN * 60000;
     const desde = haceHumano(m.abierta_at);
-    const armada = liberarArmada === m.mesa;
     // Del dispositivo_id (UUID) solo los últimos 4 caracteres: identifica sin ensuciar la pantalla
     const cola = escTxt(String(m.dispositivo_id).slice(-4));
     return `<div class="md-fila">
       <span class="md-mesa">${mesaTxt}</span>
+      ${sucTxt}
       ${m.codigo ? `<span class="md-codigo" title="Díctale este código a quien quiera ordenar desde su teléfono en esta mesa">${escTxt(m.codigo)}</span>` : `<span class="md-nota">tomada, sin código</span>`}
       <span class="md-meta">${dispositivos} dispositivo${dispositivos === 1 ? '' : 's'} · ···${cola}${desde ? ' · ' + desde : ''}</span>
       ${quien}
       ${quienCobro}
       ${etiquetas}
+      ${porCobrar > 0 ? `<span class="md-meta" title="Comandas de esta mesa que siguen sin cobrarse">${fmt(porCobrar)} sin cobrar</span>` : ''}
       ${abandonada ? `<span class="md-tag ida" title="Sin señal de vida en más de ${ABANDONO_MIN} minutos">Posiblemente abandonada</span>` : ''}
-      <button class="btn-sec md-btn ${armada ? 'armado' : ''}" onclick="liberarMesa(${m.mesa})">${armada ? 'Confirmar liberar' : 'Liberar'}</button>
+      ${acciones}
     </div>`;
   }).join('');
   return `<div class="mesas-detalle">
@@ -2378,50 +2525,162 @@ function pintarAmarresMesas(){
   </div>`;
 }
 
+/* Ver las comandas de una mesa. Si no tiene ninguna hay que decirlo con palabras: el
+   silencio es justo lo que hacía sentir que la mesa estaba embrujada. */
+let mesaSolicitada = null; // el filtro de mesa del registro se pone en cuanto la vista se dibuja
+function verMesaAbierta(n, suc){
+  const sucM = suc === undefined ? ((mesaAbiertaDe(n) || {}).sucursal || '') : (suc || '');
+  const suyas = ordenesCache.filter(o => o.mesa === n && mismaSuc(o.sucursal, sucM) && o.verificacion !== 'rechazada');
+  if(!suyas.length){
+    toast(`La ${mesaTxtN(n)} está abierta pero todavía nadie ha ordenado ahí: no hay ninguna comanda que ver. Si el grupo ya se fue, ciérrala y el número queda libre.`);
+    return;
+  }
+  mesaSolicitada = String(n);
+  const fe = document.getElementById('filtroEstado'); if(fe) fe.value = 'todas';
+  const ff = document.getElementById('filtroFecha'); if(ff) ff.value = 'todo';
+  const fms = document.getElementById('filtroMesero'); if(fms) fms.value = '';
+  const tab = document.querySelector('.tab[data-v="registro"]');
+  if(tab) tab.click(); else render();
+  const abiertas = suyas.filter(o => !o.cerrada).length;
+  toast(`${suyas.length} comanda${suyas.length === 1 ? '' : 's'} de la ${mesaTxtN(n)}${abiertas ? ` · ${abiertas} sin cobrar` : ' · todas cobradas'} — aquí está cada una con folio, hora y total`);
+}
+
+/* Asignar la mesa a un mesero. Se guarda donde ya vivía: en el arreglo `mesas` de la fila
+   del mesero, exactamente como lo hace EQUIPO. Cambiar de mesero mueve la mesa, no la duplica. */
+async function asignarMeseroMesa(mesa, meseroId, suc){
+  const n = +mesa;
+  const sucM = suc === undefined ? ((mesaAbiertaDe(n) || {}).sucursal || '') : (suc || '');
+  const crudo = meseroId == null ? '' : String(meseroId);
+  const id = (crudo === '' || crudo === '0') ? null : +crudo;
+  const elegido = id != null ? meserosCache.find(m => m.id === id) : null;
+  if(id != null && !elegido){ toast('Ese mesero ya no está en el equipo — vuelve a cargar la pantalla', true); return; }
+  if(crudo === '') return; // el usuario volvió a la opción de encabezado: no es una orden de cambiar nada
+  const quitar = meserosCache.filter(m => m.mesas.includes(n)
+    && (!m.sucursal || mismaSuc(m.sucursal, sucM))
+    && (!elegido || m.id !== elegido.id));
+  if(elegido && !elegido.mesas.includes(n)) elegido.mesas = [...elegido.mesas, n].sort((a,b) => a - b);
+  quitar.forEach(m => { m.mesas = m.mesas.filter(x => x !== n); });
+  render();
+  try{
+    if(elegido) await api(`menusbot_meseros?id=eq.${elegido.id}`, { method:'PATCH', body: JSON.stringify({ mesas: elegido.mesas }) });
+    for(const m of quitar) await api(`menusbot_meseros?id=eq.${m.id}`, { method:'PATCH', body: JSON.stringify({ mesas: m.mesas }) });
+    toast(elegido
+      ? `La ${mesaTxtN(n)} es de ${elegido.nombre} — de aquí en adelante los avisos de esa mesa le llegan solo a él${quitar.length ? ` y sale de las mesas de ${quitar.map(m => m.nombre).join(', ')}` : ''}`
+      : `La ${mesaTxtN(n)} quedó sin mesero — sus avisos les vuelven a llegar a todos los meseros activos`);
+  }catch(e){ toast('Sin conexión — la mesa no cambió de mesero, inténtalo de nuevo', true); }
+}
+
+/* Cerrar una mesa abierta de verdad, con dispositivo o sin él, con comandas o sin ellas.
+   Cierra lo que tuviera pendiente, deja el registro de venta si había algo que cobrar y
+   borra la fila con un filtro que sí le pega aunque la sucursal esté en NULL. */
+async function cerrarMesaAbierta(n, suc){
+  const num = +n;
+  const m = suc === undefined ? mesaAbiertaDe(num) : mesaAbiertaDe(num, suc);
+  const sucM = m ? (m.sucursal || '') : (suc || '');
+  const clave = claveMesa(num, sucM);
+  const abiertasMesa = ordenesCache.filter(o => o.mesa === num && mismaSuc(o.sucursal, sucM) && !o.cerrada && o.verificacion !== 'rechazada');
+  const total = abiertasMesa.reduce((s,o) => s + (+o.total || 0), 0);
+  if(!m && cierreArmado !== clave){
+    toast(`La ${mesaTxtN(num)} ya no está abierta — vuelve a cargar la pantalla si la sigues viendo`, true);
+    return;
+  }
+  if(cierreArmado !== clave){
+    // Primer toque: avisamos qué se va a cerrar y armamos. Se desarma solo a los 6 s.
+    cierreArmado = clave;
+    clearTimeout(cierreArmadoTimer);
+    cierreArmadoTimer = setTimeout(() => { cierreArmado = null; render(); }, 6000);
+    render();
+    toast(abiertasMesa.length
+      ? `¿Cerrar la ${mesaTxtN(num)}? Se cierran sus ${abiertasMesa.length} comanda${abiertasMesa.length === 1 ? '' : 's'} por ${fmt(total)} y el número queda libre. Toca otra vez para confirmar.`
+      : `¿Cerrar la ${mesaTxtN(num)}? No tiene nada que cobrar, solo deja de estar abierta. Toca otra vez para confirmar.`);
+    return;
+  }
+  cierreArmado = null;
+  clearTimeout(cierreArmadoTimer);
+  if(liberarArmada === clave) liberarArmada = null; // la mesa se va: no dejamos un «confirmar» colgado
+  const suyos = meserosDeMesa(num, sucM);
+  const meseroId = (m && m.mesero_id) || (suyos.length === 1 ? suyos[0].id : null);
+  const meseroNom = meseroId ? nombreMeseroPorId(meseroId) : '';
+  // Igual que al cobrar desde el panel: nadie capturó la forma de pago ni la propina, así que
+  // NO las adivinamos. Va como 'sin anotar' para que en el corte se vea que falta el dato.
+  const cobro = {
+    restaurante_id: RID, sucursal: sucM, mesa: num,
+    mesero: meseroNom, mesero_id: meseroId,
+    total, propina: 0, propina_sugerida: (m && m.propina_sugerida) || 0,
+    metodo: 'sin anotar', folios: abiertasMesa.map(o => o.folio).filter(Boolean),
+    cobrado_at: new Date().toISOString(),
+  };
+  const porCliente = {};
+  for(const o of abiertasMesa) if(o.cliente_id != null) porCliente[o.cliente_id] = (porCliente[o.cliente_id] || 0) + (+o.total || 0);
+  const llamadasMesa = llamadasCache.filter(l => l.mesa === num && mismaSuc(l.sucursal, sucM));
+  // Optimista: la mesa desaparece de la pantalla al instante
+  ordenesCache.forEach(o => { if(o.mesa === num && mismaSuc(o.sucursal, sucM)) o.cerrada = true; });
+  mesasAbiertasCache = mesasAbiertasCache.filter(x => !(x.mesa === num && mismaSuc(x.sucursal, sucM)));
+  llamadasCache = llamadasCache.filter(l => !llamadasMesa.includes(l));
+  if(total > 0) cobrosCache.unshift({ id: null, sucursal: sucM, mesa: num, mesero: meseroNom, mesero_id: meseroId,
+    total, propina: 0, propina_sugerida: cobro.propina_sugerida, metodo: 'sin anotar',
+    folios: cobro.folios, cobrado_at: Date.parse(cobro.cobrado_at) });
+  render();
+  try{
+    let puntosDados = 0;
+    for(const [cid, suma] of Object.entries(porCliente)){
+      const pts = Math.floor(suma / 10);
+      if(!pts) continue;
+      const cf = await api(`menusbot_clientes?id=eq.${cid}&select=puntos`);
+      const actuales = (cf && cf[0] && +cf[0].puntos) || 0;
+      await api(`menusbot_clientes?id=eq.${cid}`, { method:'PATCH', body: JSON.stringify({ puntos: actuales + pts }) });
+      puntosDados += pts;
+    }
+    if(abiertasMesa.length) await api(`menusbot_ordenes?restaurante_id=eq.${RID}&mesa=eq.${num}${filtroSucMesa(sucM)}&cerrada=eq.false`, { method:'PATCH', body: JSON.stringify({ cerrada: true }) });
+    await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${num}${filtroSucMesa(sucM)}`, { method:'DELETE' });
+    for(const l of llamadasMesa) if(l.dbId) await api(`menusbot_llamadas?id=eq.${l.dbId}`, { method:'PATCH', body: JSON.stringify({ atendida: true }) });
+    // Sin este registro la mesa desaparecería del corte de caja como si nunca se hubiera vendido
+    if(total > 0) await api('menusbot_cobros', { method:'POST', body: JSON.stringify(cobro) });
+    toast(total > 0
+      ? `${mesaTxtN(num)} cerrada — ${fmt(total)} quedó en el corte sin forma de pago, porque se cerró desde aquí${puntosDados ? ` · ${puntosDados} punto(s) abonados al cliente` : ''}`
+      : `${mesaTxtN(num)} cerrada — no había nada que cobrar, así que no quedó registro de venta`);
+  }catch(e){ toast('Sin conexión — la mesa sigue abierta en el servidor, inténtalo de nuevo', true); }
+}
+
 // Suelta el amarre sin cobrar y sin cerrar la mesa: la mesa sigue abierta y queda libre para el siguiente teléfono
-async function liberarMesa(n){
-  const m = mesaAbiertaDe(n);
+async function liberarMesa(n, suc){
+  const num = +n;
+  const m = suc === undefined ? mesaAbiertaDe(num) : mesaAbiertaDe(num, suc);
   if(!m || !m.dispositivo_id) return;
-  if(liberarArmada !== n){
+  const sucM = m.sucursal || '';
+  const clave = claveMesa(num, sucM);
+  if(liberarArmada !== clave){
     // Primer clic: solo avisamos y armamos. Se desarma solo para no dejar el botón en rojo indefinidamente.
-    liberarArmada = n;
+    liberarArmada = clave;
     clearTimeout(liberarArmadaTimer);
     liberarArmadaTimer = setTimeout(() => { liberarArmada = null; render(); }, 6000);
     render();
-    toast(`¿Liberar la mesa ${String(n).padStart(2,'0')}? El código dejará de servir. Confirma para soltarla.`);
+    toast(`¿Liberar la ${mesaTxtN(num)}? El código dejará de servir. Confirma para soltarla.`);
     return;
   }
   liberarArmada = null;
   clearTimeout(liberarArmadaTimer);
-  const suc = (m.sucursal || '');
   const ahora = new Date().toISOString();
   // Optimista: el mesero ve la mesa libre de inmediato
   m.dispositivo_id = null; m.codigo = null; m.invitados = []; m.latido_at = Date.parse(ahora);
   render();
   try{
-    await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${n}&sucursal=eq.${encodeURIComponent(suc)}`, {
+    await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${num}${filtroSucMesa(sucM)}`, {
       method:'PATCH',
       body: JSON.stringify({ dispositivo_id: null, codigo: null, invitados: [], latido_at: ahora }),
     });
-    toast(`Mesa ${String(n).padStart(2,'0')} liberada — sigue abierta y el siguiente teléfono que ordene ahí la tomará`);
-  }catch(e){ toast('Sin conexión — inténtalo de nuevo'); }
+    toast(`${mesaTxtN(num)} liberada — sigue abierta y el siguiente teléfono que ordene ahí la tomará`);
+  }catch(e){ toast('Sin conexión — inténtalo de nuevo', true); }
 }
 
 async function alternarMesaAbierta(n){
+  // Cerrar es destructivo, así que el chip verde no cierra de golpe: manda al mismo doble
+  // toque que la fila. Abrir no destruye nada y sí es de un solo clic.
+  const yaAbierta = mesaAbiertaDe(n);
+  if(yaAbierta) return cerrarMesaAbierta(n, yaAbierta.sucursal || '');
   const suc = sucursalActivaPanel;
-  const abierta = mesasAbiertasCache.some(x => x.mesa === n && (x.sucursal || '') === suc);
-  if(abierta){
-    mesasAbiertasCache = mesasAbiertasCache.filter(x => !(x.mesa === n && (x.sucursal || '') === suc));
-    if(liberarArmada === n) liberarArmada = null; // la mesa ya no existe: no dejamos un "confirmar" colgado
-    render();
-    try{
-      await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${n}&sucursal=eq.${encodeURIComponent(suc)}`, { method:'DELETE' });
-      toast(`Mesa ${String(n).padStart(2,'0')} cerrada — queda libre para los siguientes comensales`);
-    }catch(e){ toast('Sin conexión — inténtalo de nuevo'); }
-  } else {
-    const previa = mesaAbiertaDe(n);
-    if(previa) previa.autorizada = true;
-    else mesasAbiertasCache.push({ mesa: n, sucursal: suc, autorizada: true, dispositivo_id: null, codigo: null, invitados: [], latido_at: null, abierta_at: Date.now() });
+  {
+    mesasAbiertasCache.push({ mesa: n, sucursal: suc, autorizada: true, mesero_id: null, propina_sugerida: 0, dispositivo_id: null, codigo: null, invitados: [], latido_at: null, abierta_at: Date.now() });
     render();
     try{
       // autorizada:true marca que la mesa la abrió el restaurante y no un comensal por su cuenta.
@@ -2633,7 +2892,7 @@ function renderReportes(d){
   const top = Object.entries(cuenta).sort((a,b) => b[1].m - a[1].m).slice(0,6);
   $('#topPlatillos').innerHTML = top.length ? top.map(([n,v], i) =>
     `<div class="top-fila"><span class="t-pos">${i+1}.</span><span class="t-nom">${n}</span><span class="t-dato">${fmt(v.m)}<small>${v.u} uds</small></span></div>`).join('')
-    : '<div style="color:var(--humo2);font-size:11px">Sin ventas en el periodo</div>';
+    : '<div style="color:var(--humo2);font-size:14px">Sin ventas en el periodo</div>';
   // Desempeño por mesero: sale de los cobros, que es donde queda el dinero de verdad.
   // Las entregas confirmadas en el tablero se quedan como dato de servicio, debajo del nombre.
   const porEntregas = {};
@@ -2705,18 +2964,18 @@ function imprimirCorte(){
   };
   w.document.write(`<html><head><title>${escTxt(titulo)} · ${escTxt(marcaDe().nombre)}</title><style>
     body{font-family:Georgia,serif;max-width:720px;margin:30px auto;color:#241F18;padding:0 20px}
-    h1{font-style:italic;font-weight:500} h2{font-style:italic;font-weight:500;font-size:17px;margin-top:30px}
-    .caps{font-family:Arial;font-size:10px;letter-spacing:2px;color:#777}
-    table{width:100%;border-collapse:collapse;margin-top:12px;font-size:12.5px}
-    th{font-family:Arial;font-size:8.5px;letter-spacing:1.2px;text-align:left;border-bottom:1px solid #999;padding:7px 5px}
+    h1{font-style:italic;font-weight:500} h2{font-style:italic;font-weight:500;font-size:18px;margin-top:30px}
+    .caps{font-family:Arial;font-size:13px;letter-spacing:1.4px;color:#777}
+    table{width:100%;border-collapse:collapse;margin-top:12px;font-size:15px}
+    th{font-family:Arial;font-size:12.5px;letter-spacing:1.2px;text-align:left;border-bottom:1px solid #999;padding:7px 5px}
     td{border-bottom:1px dotted #bbb;padding:7px 5px;vertical-align:top}
-    .tot{font-size:18px;margin-top:18px;border-top:2px solid #241F18;padding-top:10px;display:flex;justify-content:space-between}
-    .caja{margin-top:12px;font-size:13px}
+    .tot{font-size:19px;margin-top:18px;border-top:2px solid #241F18;padding-top:10px;display:flex;justify-content:space-between}
+    .caja{margin-top:12px;font-size:15px}
     .caja div{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dotted #bbb}
     .caja div.fuerte{border-top:1.5px solid #241F18;border-bottom:none;font-weight:bold;padding-top:11px;margin-top:4px}
-    .caja em{display:block;font-size:10.5px;color:#666;font-style:normal;max-width:62%}
-    .aclara{font-family:Arial;font-size:10.5px;color:#555;line-height:1.65;margin-top:10px}
-    .vacio{font-family:Arial;font-size:11px;color:#777;margin-top:10px}
+    .caja em{display:block;font-size:13.5px;color:#666;font-style:normal;max-width:62%}
+    .aclara{font-family:Arial;font-size:13.5px;color:#555;line-height:1.65;margin-top:10px}
+    .vacio{font-family:Arial;font-size:14px;color:#777;margin-top:10px}
   </style></head><body>
     <div class="caps">${escTxt(((marcaDe().prefijo ? marcaDe().prefijo + ' ' : '') + marcaDe().nombre).toUpperCase())} · MENUSBOT</div>
     <h1>${escTxt(titulo)}</h1>
@@ -2772,31 +3031,164 @@ function aplicarTemaCliente(t){
   dbEscribir(d => { d.config.tema = t; });
   toast(`Tema «${TEMAS[t].nombre}» aplicado — la app del comensal cambió al instante`);
 }
-function exportarCSV(){
+/* ---------- Filtros del registro: mesa, mesero y fecha ----------
+   Reglas que no se negocian:
+   · el día se corta a la medianoche LOCAL, nunca en UTC. Una comanda de las 11 de la noche
+     pertenece a su propio día, no al siguiente.
+   · las mesas salen de la configuración del restaurante, no de un 1..12 inventado, y se les
+     suman las que aparezcan en las comandas por si alguien cerró mesas después.
+   · el mesero casa con «Entregó» O con quién autorizó: son dos columnas distintas y el
+     administrador no tiene por qué saber en cuál quedó anotado. */
+function diaLocal(s){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ''));
+  return m ? new Date(+m[1], +m[2] - 1, +m[3]).getTime() : null; // medianoche de aquí, no de UTC
+}
+const fechaCorta = ts => new Date(ts).toLocaleDateString('es-MX', { day:'2-digit', month:'2-digit', year:'numeric' });
+function rangoFechaRegistro(){
+  const v = (document.getElementById('filtroFecha') || {}).value || 'todo';
+  const hoy0 = new Date(); hoy0.setHours(0,0,0,0);
+  const dia = 86400000;
+  if(v === 'hoy') return { desde: hoy0.getTime(), hasta: Infinity, txt: 'de hoy' };
+  if(v === 'ayer') return { desde: hoy0.getTime() - dia, hasta: hoy0.getTime(), txt: 'de ayer' };
+  if(v === '7'){ const a = new Date(hoy0); a.setDate(a.getDate() - 6); return { desde: a.getTime(), hasta: Infinity, txt: 'de los últimos 7 días' }; }
+  if(v === 'mes'){ const a = new Date(hoy0.getFullYear(), hoy0.getMonth(), 1); return { desde: a.getTime(), hasta: Infinity, txt: 'de este mes' }; }
+  if(v === 'rango'){
+    const a = diaLocal((document.getElementById('fDesde') || {}).value);
+    const b = diaLocal((document.getElementById('fHasta') || {}).value);
+    const desde = a != null ? a : -Infinity;
+    const hasta = b != null ? b + dia : Infinity; // el día «hasta» entra completo
+    const txt = a != null && b != null ? `del ${fechaCorta(a)} al ${fechaCorta(b)}`
+      : a != null ? `desde el ${fechaCorta(a)}`
+      : b != null ? `hasta el ${fechaCorta(b)}` : '';
+    return { desde, hasta, txt };
+  }
+  return { desde: -Infinity, hasta: Infinity, txt: '' };
+}
+function filtrosRegistro(){
+  return {
+    est: (document.getElementById('filtroEstado') || {}).value || 'todas',
+    mesa: (document.getElementById('filtroMesa') || {}).value || '',
+    mesero: (document.getElementById('filtroMesero') || {}).value || '',
+    r: rangoFechaRegistro(),
+  };
+}
+const meseroDeOrden = (o, nombre) => (o.entregada_por || '') === nombre || (o.autorizada_por || '').replace(' (desde el panel)','') === nombre;
+function ordenesFiltradasRegistro(d){
+  const f = filtrosRegistro();
+  return d.ordenes.filter(o =>
+    (f.est === 'todas' || o.estado === +f.est) &&
+    (!f.mesa || String(o.mesa) === f.mesa) &&
+    (!f.mesero || meseroDeOrden(o, f.mesero)) &&
+    o.creada >= f.r.desde && o.creada < f.r.hasta);
+}
+function descripcionFiltrosRegistro(f){
+  const partes = [];
+  if(f.mesa) partes.push(`solo la ${mesaTxtN(f.mesa)}`);
+  if(f.mesero) partes.push(`solo lo de ${f.mesero}`);
+  if(f.est !== 'todas') partes.push(`solo ${String(ESTADOS_TXT[+f.est] || '').toLowerCase()}`);
+  if(f.r.txt) partes.push(f.r.txt);
+  return partes;
+}
+function mensajeVacioRegistro(f, d){
+  const quitar = [];
+  if(f.mesa) quitar.push(`el de mesa (${mesaTxtN(f.mesa)})`);
+  if(f.mesero) quitar.push(`el de mesero (${f.mesero})`);
+  if(f.est !== 'todas') quitar.push(`el de estado (${ESTADOS_TXT[+f.est] || ''})`);
+  if(f.r.txt) quitar.push(`el de fecha (${f.r.txt})`);
+  if(!quitar.length) return d.ordenes.length ? 'Sin comandas que mostrar.' : 'Todavía no hay ninguna comanda en este servicio.';
+  return `Ninguna comanda cumple con todo eso a la vez. Quita ${quitar.length === 1 ? quitar[0] : quitar.join(' o ')} y volverás a ver comandas.`;
+}
+// Las opciones se reescriben solo cuando cambian, para no cerrarle el desplegable en la cara
+// a quien lo tiene abierto en el repintado de cada segundo.
+function ponerOpciones(sel, html){
+  if(!sel || sel.dataset.opts === html) return;
+  const antes = sel.value;
+  sel.dataset.opts = html;
+  sel.innerHTML = html;
+  sel.value = [...sel.options].some(o => o.value === antes) ? antes : '';
+}
+function llenarFiltrosRegistro(d){
+  const nMesas = Math.max(1, +((d.config && d.config.mesas) || 12));
+  const nums = [...new Set([
+    ...Array.from({ length: nMesas }, (_, k) => k + 1),
+    ...d.ordenes.map(o => +o.mesa).filter(x => x > 0),
+    ...mesasAbiertasCache.map(x => +x.mesa).filter(x => x > 0),
+  ])].sort((a,b) => a - b);
+  ponerOpciones(document.getElementById('filtroMesa'),
+    '<option value="">Todas las mesas</option>' + nums.map(n => `<option value="${n}">${mesaTxtN(n)}</option>`).join(''));
+  const nombres = [...new Set([
+    ...meserosActivos().map(m => m.nombre),
+    ...d.ordenes.map(o => o.entregada_por || ''),
+    ...d.ordenes.map(o => (o.autorizada_por || '').replace(' (desde el panel)','')),
+  ].filter(Boolean))].sort((a,b) => a.localeCompare(b));
+  ponerOpciones(document.getElementById('filtroMesero'),
+    '<option value="">Todos los meseros</option>' + nombres.map(n => `<option value="${escTxt(n)}">${escTxt(n)}</option>`).join(''));
+  // El filtro de mesa que pidió «Ver» desde una mesa abierta: se aplica cuando ya hay opciones
+  if(mesaSolicitada != null){
+    const fm = document.getElementById('filtroMesa');
+    if(fm && [...fm.options].some(o => o.value === mesaSolicitada)) fm.value = mesaSolicitada;
+    mesaSolicitada = null;
+  }
+  const porRango = (document.getElementById('filtroFecha') || {}).value === 'rango';
+  ['fDesde','fHasta'].forEach(id => { const e = document.getElementById(id); if(e) e.style.display = porRango ? 'block' : 'none'; });
+}
+function limpiarFiltrosRegistro(){
+  const v = { filtroEstado:'todas', filtroMesa:'', filtroMesero:'', filtroFecha:'todo', fDesde:'', fHasta:'' };
+  for(const id in v){ const e = document.getElementById(id); if(e) e.value = v[id]; }
+  mesaSolicitada = null;
+  render();
+  toast('Filtros limpios — otra vez están todas las comandas del servicio');
+}
+
+/* Exporta lo que se está viendo. Desde el registro respeta los filtros y lo dice en el nombre
+   del archivo; desde Reportes sigue exportando el servicio completo, como siempre. */
+function exportarCSV(origen){
   const d = dbLeer();
-  const filas = [['Folio','Fecha','Hora','Mesa','Articulos','Notas','Total','Estado','EntregadaPor','HoraEntrega','MinutosServicio']];
-  for(const o of [...d.ordenes].sort((a,b) => a.creada - b.creada)){
-    const f = new Date(o.creada);
+  const conFiltro = origen === 'registro';
+  const f = conFiltro ? filtrosRegistro() : null;
+  const cuales = conFiltro ? ordenesFiltradasRegistro(d) : d.ordenes;
+  if(!cuales.length){
+    toast(conFiltro ? 'No hay ninguna comanda con esos filtros, así que no hay nada que exportar — quita un filtro' : 'Todavía no hay comandas que exportar', true);
+    return;
+  }
+  const filas = [['Folio','Fecha','Hora','Mesa','Sucursal','Articulos','Notas','Total','Estado','EntregadaPor','AutorizadaPor','HoraEntrega','MinutosServicio']];
+  for(const o of [...cuales].sort((a,b) => a.creada - b.creada)){
+    const fh = new Date(o.creada);
     filas.push([
-      o.folio, f.toLocaleDateString('es-MX'), hora(o.creada), o.mesa,
+      o.folio, fh.toLocaleDateString('es-MX'), hora(o.creada), o.mesa, o.sucursal || '',
       o.items.map(i => `${i.qty}x ${i.nombre}`).join(' | '),
       o.items.filter(i=>i.notas).map(i=>i.notas).join(' | '),
-      o.total, ESTADOS_TXT[o.estado], o.entregada_por || '', o.entregada_at ? hora(o.entregada_at) : '',
+      o.total, ESTADOS_TXT[o.estado], o.entregada_por || '', o.autorizada_por || '',
+      o.entregada_at ? hora(o.entregada_at) : '',
       o.entregada_at ? Math.round((o.entregada_at - o.creada)/60000) : '',
     ]);
   }
   const csv = '﻿' + filas.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  // El nombre del archivo lleva el filtro: dos exportaciones distintas no pueden llamarse igual
+  // ni dejar dudas de qué trae cada una cuando ya están las dos en la carpeta de descargas.
+  const limpio = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  const partes = [];
+  if(f){
+    if(f.mesa) partes.push('mesa' + String(f.mesa).padStart(2,'0'));
+    if(f.mesero) partes.push(limpio(f.mesero));
+    if(f.est !== 'todas') partes.push(limpio(ESTADOS_TXT[+f.est] || 'estado'));
+    if(f.r.txt) partes.push(limpio(f.r.txt));
+  }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
-  a.download = 'bellavita_conciliacion.csv';
+  a.download = 'bellavita_conciliacion' + (partes.length ? '_' + partes.join('_') : '') + '.csv';
   a.click();
-  toast('Registro exportado — ábrelo en Excel');
+  toast(partes.length
+    ? `${cuales.length} comanda${cuales.length === 1 ? '' : 's'} exportadas con los filtros puestos — el archivo se llama ${a.download}`
+    : `${cuales.length} comanda${cuales.length === 1 ? '' : 's'} exportadas — ábrelo en Excel`);
 }
 
 
 /* refresco en vivo */
-$('#filtroEstado').onchange = render;
-$('#periodo').onchange = render;
+['filtroEstado','filtroMesa','filtroMesero','filtroFecha','fDesde','fHasta','periodo'].forEach(id => {
+  const e = document.getElementById(id);
+  if(e) e.onchange = render;
+});
 /* ---------- QR por mesa ---------- */
 let qrListos = -1;
 function renderQRs(d){
@@ -2895,7 +3287,7 @@ function imprimirQRResenas(){
     const cv = el.querySelector('canvas'), im = el.querySelector('img');
     const src = cv ? cv.toDataURL() : (im ? im.src : '');
     const red = (links[i] || {}).red || '';
-    return `<div style="display:inline-block;text-align:center;margin:16px;padding:22px;border:1px solid #999;max-width:300px"><img src="${src}" style="width:210px"><div style="font-family:Georgia;font-style:italic;font-size:19px;margin-top:12px">${escTxt(leyenda)}</div><div style="font-family:Arial;font-size:11px;color:#444;margin-top:8px;line-height:1.5">${escTxt(texto)}</div>${incentivo ? `<div style="font-family:Arial;font-size:10px;color:#666;margin-top:8px;font-style:italic">${escTxt(incentivo)}</div>` : ''}<div style="font-family:Arial;font-size:8px;letter-spacing:2px;color:#777;margin-top:10px">ESCANEA Y DÉJANOS TU RESEÑA EN ${escTxt(red).toUpperCase()}</div></div>`;
+    return `<div style="display:inline-block;text-align:center;margin:16px;padding:22px;border:1px solid #999;max-width:300px"><img src="${src}" style="width:210px"><div style="font-family:Georgia;font-style:italic;font-size:20px;margin-top:12px">${escTxt(leyenda)}</div><div style="font-family:Arial;font-size:14px;color:#444;margin-top:8px;line-height:1.5">${escTxt(texto)}</div>${incentivo ? `<div style="font-family:Arial;font-size:13px;color:#666;margin-top:8px;font-style:italic">${escTxt(incentivo)}</div>` : ''}<div style="font-family:Arial;font-size:12px;letter-spacing:1.4px;color:#777;margin-top:10px">ESCANEA Y DÉJANOS TU RESEÑA EN ${escTxt(red).toUpperCase()}</div></div>`;
   }).join('');
   const w = window.open('', '_blank');
   if(!w){ toast('El navegador bloqueó la ventana de impresión — permite las ventanas emergentes'); return; }
@@ -2911,7 +3303,7 @@ function imprimirQRs(){
     const cv = el.querySelector('canvas');
     const im = el.querySelector('img');
     const src = cv ? cv.toDataURL() : (im ? im.src : '');
-    return `<div style="display:inline-block;text-align:center;margin:14px;padding:16px;border:1px solid #999"><img src="${src}" style="width:150px"><div style="font-family:Georgia;font-style:italic;margin-top:8px">Mesa ${String(i+1).padStart(2,'0')}</div><div style="font-family:Arial;font-size:8px;letter-spacing:2px;color:#777;margin-top:3px">ESCANEA PARA VER LA CARTA Y ORDENAR</div></div>`;
+    return `<div style="display:inline-block;text-align:center;margin:14px;padding:16px;border:1px solid #999"><img src="${src}" style="width:150px"><div style="font-family:Georgia;font-style:italic;margin-top:8px">Mesa ${String(i+1).padStart(2,'0')}</div><div style="font-family:Arial;font-size:12px;letter-spacing:1.4px;color:#777;margin-top:3px">ESCANEA PARA VER LA CARTA Y ORDENAR</div></div>`;
   }).join('');
   const w = window.open('', '_blank');
   w.document.write(`<html><head><title>QRs · ${marcaDe().nombre}</title></head><body style="text-align:center;font-family:Georgia"><h2 style="font-style:italic">${(marcaDe().prefijo ? marcaDe().prefijo + ' ' : '') + marcaDe().nombre}${(document.getElementById('sucQR')||{}).value ? ' — ' + document.getElementById('sucQR').value : ''}</h2>${imgs}</body></html>`);

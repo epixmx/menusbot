@@ -20,9 +20,45 @@
     --pomodoro:#E4593B; --basilico:#8FAE8B; --oro:#C9A227;
     --linea:rgba(239,231,216,.14); --linea2:rgba(239,231,216,.28);
     --ink:#241F18; --nav-bg:rgba(19,16,13,.96);
+    /* Alertas sólidas: NO cambian con el tema. Una alerta se ve igual siempre, y eso
+       es parte de que se entienda de un vistazo desde el otro lado del salón. */
+    --al-roja:#D92D20; --al-ambar:#C2410C; --al-verde:#15803D; --al-azul:#1D4ED8; --al-txt:#FFFFFF;
     --serif:'Fraunces',Georgia,serif;
     --grot:'Space Grotesk','Inter',system-ui,sans-serif;
   }
+  /* Tema claro (predeterminado), igual que el panel del restaurante.
+     El oscuro es opcional desde el botón del encabezado. */
+  html.claro{
+    --esp:#F6F1E7; --esp2:#FFFFFF; --crema:#241F18; --humo:#6E6558; --humo2:#9C9081;
+    --basilico:#5F8A5B; --oro:#A8871D; --papel:#FBF7EE; --ink:#241F18;
+    --linea:rgba(36,31,24,.13); --linea2:rgba(36,31,24,.28);
+  }
+  /* Lo que no se arregla solo con variables: esta pantalla nació oscura, así que las
+     sombras negras, el velo, el degradado de la mesa urgente y el fondo del teclado
+     dejan manchas si no se corrigen a mano. */
+  html.claro{ --nav-bg:rgba(251,247,238,.97); --papel2:#EFE7D8 }
+  html.claro body{background:#E8E0D2}
+  html.claro .telefono{box-shadow:0 0 60px rgba(36,31,24,.13)}
+  html.claro .telefono::after{opacity:.03}
+  html.claro .teclado,html.claro .rejilla-meseros,html.claro .contadores{background:var(--linea2)}
+  html.claro .tecla,html.claro .mesero-card,html.claro .cnt,html.claro .bloque{background:var(--esp2)}
+  html.claro .bloque.pend{background:rgba(217,45,32,.05)}
+  html.claro .tarj-mesa{box-shadow:0 2px 9px rgba(36,31,24,.05)}
+  html.claro .tarj-mesa.urge{background:linear-gradient(90deg,rgba(217,45,32,.10),rgba(255,255,255,0) 62%)}
+  html.claro .tarj-mesa.libre{background:transparent;box-shadow:none}
+  html.claro .velo{background:rgba(36,31,24,.42)}
+  html.claro .hoja{box-shadow:0 -18px 50px rgba(36,31,24,.16)}
+  html.claro .barra{box-shadow:0 -6px 20px rgba(36,31,24,.07)}
+  html.claro .toast{background:var(--ink);color:#FBF7EE;box-shadow:0 16px 44px rgba(36,31,24,.3)}
+  html.claro .switch{background:#EDE6DA}
+  html.claro .switch.on{background:rgba(228,89,59,.18)}
+  html.claro .btn-fantasma:active{background:#EDE6DA}
+  html.claro .met-btn.sel{background:rgba(228,89,59,.08)}
+  /* En claro el gris más claro se pierde: los textos de apoyo suben un tono. */
+  html.claro .nota-pie,html.claro .vacio,html.claro .cnt small,html.claro .mesero-card small,
+  html.claro .cab .donde,html.claro .switch-fila .txt small,html.claro .mesa-fila .hh,
+  html.claro .mesa-fila .met,html.claro .bloque .bl-cab .hh,html.claro .btn-tema,
+  html.claro .btn-salir,html.claro .campo .caps,html.claro .tot-linea .caps{color:var(--humo)}
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   body{font-family:var(--grot);background:#0B0908;color:var(--crema);-webkit-text-size-adjust:100%}
   button{font-family:var(--grot)}
@@ -35,77 +71,80 @@
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")}
 
   /* ---------- utilidades editoriales ---------- */
-  .caps{font-family:var(--grot);font-size:9.5px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase}
+  .caps{font-family:var(--grot);font-size:13px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase}
   .hairline{border:none;border-top:1px solid var(--linea);margin:0}
   .leader{flex:1;border-bottom:1px dotted var(--linea2);transform:translateY(-4px);min-width:14px}
-  .btn-primario{width:100%;min-height:52px;padding:16px;border:none;border-radius:2px;background:var(--pomodoro);color:var(--papel);font-size:12px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase;cursor:pointer;transition:.15s}
+  .btn-primario{width:100%;min-height:52px;padding:16px;border:none;border-radius:2px;background:var(--pomodoro);color:var(--papel);font-size:14.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;transition:.15s}
   .btn-primario:active{transform:scale(.98);background:#C94A2F}
-  .btn-fantasma{width:100%;min-height:48px;padding:14px;border:1px solid var(--linea2);border-radius:2px;background:transparent;color:var(--humo);font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer}
+  .btn-fantasma{width:100%;min-height:48px;padding:14px;border:1px solid var(--linea2);border-radius:2px;background:transparent;color:var(--humo);font-size:14px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer}
   .btn-fantasma:active{background:var(--esp2)}
   .btn-primario.armado,.btn-fantasma.armado{background:var(--oro);color:var(--ink);border-color:var(--oro);animation:pulso 1s infinite}
   @keyframes pulso{0%,100%{opacity:1}50%{opacity:.7}}
-  .nota-pie{margin:16px 0 0;font-size:11px;color:var(--humo2);line-height:1.85;border-left:2px solid var(--linea2);padding-left:12px;letter-spacing:.2px}
+  .nota-pie{margin:16px 0 0;font-size:14px;color:var(--humo2);line-height:1.85;border-left:2px solid var(--linea2);padding-left:12px;letter-spacing:.2px}
   .pantalla{display:none}
   .pantalla.activa{display:block}
   .vista{display:none;padding:0 18px 132px}
   .vista.activa{display:block}
-  .vacio{padding:40px 4px;text-align:center;color:var(--humo2);font-size:12.5px;line-height:1.9}
+  .vacio{padding:40px 4px;text-align:center;color:var(--humo2);font-size:15px;line-height:1.9}
 
   /* ---------- Sin restaurante ---------- */
   #sinRid .caja{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:34px 26px;text-align:center}
   #sinRid h1{font-family:var(--serif);font-style:italic;font-weight:500;font-size:38px;line-height:1.02;letter-spacing:-.8px;margin-top:14px}
-  #sinRid p{margin-top:18px;font-size:13px;color:var(--humo);line-height:1.9}
+  #sinRid p{margin-top:18px;font-size:15px;color:var(--humo);line-height:1.9}
   .orn{margin:22px auto;display:flex;align-items:center;gap:12px;justify-content:center;color:var(--pomodoro)}
   .orn i{display:block;width:44px;border-top:1px solid var(--linea2)}
 
   /* ---------- Entrada ---------- */
   .cab-entrada{padding:38px 22px 0}
-  .cab-entrada .sobre{font-size:9.5px;letter-spacing:4px;color:var(--humo);font-weight:600;text-transform:uppercase}
+  .cab-entrada .sobre{font-size:13px;letter-spacing:1.4px;color:var(--humo);font-weight:600;text-transform:uppercase}
   .cab-entrada h1{font-family:var(--serif);font-style:italic;font-weight:500;font-size:40px;line-height:1;margin-top:12px;letter-spacing:-1px}
   .cab-entrada h1 em{font-style:normal;color:var(--pomodoro)}
-  .cab-entrada .sub{margin-top:12px;font-size:12.5px;color:var(--humo);line-height:1.8}
+  .cab-entrada .sub{margin-top:12px;font-size:15px;color:var(--humo);line-height:1.8}
   #paso1,#paso2{padding:0 22px 46px}
   .rejilla-meseros{display:flex;flex-direction:column;gap:1px;margin-top:26px;background:var(--linea);border:1px solid var(--linea)}
   .mesero-card{display:flex;align-items:center;gap:14px;width:100%;min-height:68px;padding:18px 18px;border:none;background:var(--esp);color:var(--crema);cursor:pointer;text-align:left;transition:.15s}
   .mesero-card:active{background:var(--pomodoro);color:var(--papel)}
-  .mesero-card .ini{width:42px;height:42px;flex-shrink:0;border:1px solid var(--linea2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-style:italic;font-size:17px;color:var(--pomodoro)}
+  .mesero-card .ini{width:42px;height:42px;flex-shrink:0;border:1px solid var(--linea2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-style:italic;font-size:18px;color:var(--pomodoro)}
   .mesero-card:active .ini{color:var(--papel);border-color:rgba(242,235,221,.5)}
-  .mesero-card b{font-family:var(--serif);font-style:italic;font-weight:500;font-size:21px;letter-spacing:-.2px}
-  .mesero-card small{display:block;font-size:9.5px;letter-spacing:2px;color:var(--humo2);font-weight:600;text-transform:uppercase;margin-top:4px}
+  .mesero-card b{font-family:var(--serif);font-style:italic;font-weight:500;font-size:22px;letter-spacing:-.2px}
+  .mesero-card small{display:block;font-size:13px;letter-spacing:1.4px;color:var(--humo2);font-weight:600;text-transform:uppercase;margin-top:4px}
   .mesero-card:active small{color:rgba(242,235,221,.75)}
 
   .pin-cab{margin-top:24px;text-align:center}
   .pin-cab .quien{font-family:var(--serif);font-style:italic;font-size:30px;font-weight:500}
-  .pin-cab .pide{margin-top:8px;font-size:10px;letter-spacing:2.6px;color:var(--humo);font-weight:600;text-transform:uppercase}
+  .pin-cab .pide{margin-top:8px;font-size:13px;letter-spacing:1.4px;color:var(--humo);font-weight:600;text-transform:uppercase}
   #pinPuntos{display:flex;gap:16px;justify-content:center;margin:26px 0 6px}
   #pinPuntos span{width:15px;height:15px;border-radius:50%;border:1px solid var(--linea2);transition:.18s}
   #pinPuntos span.lleno{background:var(--pomodoro);border-color:var(--pomodoro);transform:scale(1.12)}
   #pinPuntos.sacude{animation:sacude .42s}
   @keyframes sacude{0%,100%{transform:translateX(0)}20%{transform:translateX(-11px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
-  #pinAviso{min-height:20px;text-align:center;font-size:11.5px;color:var(--pomodoro);letter-spacing:.4px;margin-bottom:14px}
+  #pinAviso{min-height:26px;text-align:center;font-size:14px;line-height:1.55;color:var(--pomodoro);letter-spacing:.4px;margin-bottom:14px}
   .teclado{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--linea);border:1px solid var(--linea)}
   .tecla{min-height:66px;border:none;background:var(--esp);color:var(--crema);font-family:var(--serif);font-size:27px;font-weight:500;cursor:pointer;transition:.1s}
   .tecla:active{background:var(--pomodoro);color:var(--papel)}
-  .tecla.aux{font-family:var(--grot);font-size:10px;font-weight:700;letter-spacing:1.8px;color:var(--humo);text-transform:uppercase}
+  .tecla.aux{font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:1.2px;color:var(--humo);text-transform:uppercase}
   .tecla:disabled{opacity:.32;cursor:default}
 
   /* ---------- Cabecera de la app ---------- */
   .cab{padding:20px 18px 0;position:relative}
-  .cab .fila{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .cab .fila{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+  .cab-btns{margin-left:auto;display:flex;gap:7px;flex-shrink:0}
   .cab .yo{font-family:var(--serif);font-style:italic;font-weight:500;font-size:27px;line-height:1.05;letter-spacing:-.4px}
-  .cab .donde{margin-top:5px;font-size:9px;letter-spacing:2.4px;color:var(--humo2);font-weight:600;text-transform:uppercase}
-  .btn-salir{flex-shrink:0;border:1px solid var(--linea);background:transparent;color:var(--humo2);font-size:9px;font-weight:600;letter-spacing:1.8px;text-transform:uppercase;padding:10px 12px;min-height:44px;border-radius:2px;cursor:pointer}
+  .cab .donde{margin-top:5px;font-size:12.5px;letter-spacing:1.4px;color:var(--humo2);font-weight:600;text-transform:uppercase}
+  .btn-salir,.btn-tema{flex-shrink:0;border:1px solid var(--linea);background:transparent;color:var(--humo2);font-size:12.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;padding:10px 12px;min-height:44px;border-radius:2px;cursor:pointer;white-space:nowrap;line-height:1.3}
+  .btn-salir:active,.btn-tema:active{border-color:var(--pomodoro);color:var(--pomodoro)}
+  .cab-entrada .fila-sup{display:flex;align-items:center;justify-content:space-between;gap:10px}
   .contadores{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin:18px 0 4px;background:var(--linea);border:1px solid var(--linea)}
   .cnt{background:var(--esp);padding:14px 10px;text-align:center}
   .cnt b{display:block;font-family:var(--serif);font-size:26px;font-weight:500;line-height:1}
-  .cnt small{display:block;font-size:8.5px;letter-spacing:1.6px;color:var(--humo2);font-weight:600;text-transform:uppercase;margin-top:7px;line-height:1.4}
-  .cnt.venta b{color:var(--basilico);font-size:21px;padding-top:4px}
+  .cnt small{display:block;font-size:12.5px;letter-spacing:1.2px;color:var(--humo2);font-weight:600;text-transform:uppercase;margin-top:7px;line-height:1.5}
+  .cnt.venta b{color:var(--basilico);font-size:22px;padding-top:4px;letter-spacing:-.6px}
 
   /* ---------- Tarjetas de mesa ---------- */
   .grupo-tit{display:flex;align-items:center;gap:12px;margin:24px 0 12px}
-  .grupo-tit h2{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--crema)}
+  .grupo-tit h2{font-size:13px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--crema)}
   .grupo-tit i{flex:1;border-top:1px solid var(--linea)}
-  .grupo-tit em{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--pomodoro)}
+  .grupo-tit em{font-family:var(--serif);font-style:italic;font-size:16px;color:var(--pomodoro)}
   .tarj-mesa{display:block;width:100%;text-align:left;border:1px solid var(--linea);border-left:3px solid var(--linea2);background:var(--esp2);color:var(--crema);padding:16px 16px;margin-bottom:10px;cursor:pointer;border-radius:2px;transition:.15s}
   .tarj-mesa:active{transform:scale(.994)}
   .tarj-mesa.urge{border-left-color:var(--pomodoro);background:linear-gradient(90deg,rgba(228,89,59,.13),rgba(29,25,21,0) 62%)}
@@ -113,25 +152,39 @@
   .tarj-mesa.libre{background:transparent;border-left-color:var(--linea)}
   .tm-top{display:flex;align-items:baseline;gap:10px}
   .tm-num{font-family:var(--serif);font-style:italic;font-weight:500;font-size:32px;line-height:1;letter-spacing:-1px}
-  .tm-num small{font-family:var(--grot);font-style:normal;font-size:8.5px;letter-spacing:2.2px;color:var(--humo2);font-weight:600;display:block;margin-bottom:4px;text-transform:uppercase}
-  .tm-total{margin-left:auto;font-size:15px;font-weight:700;letter-spacing:.4px}
-  .tm-meta{margin-top:9px;font-size:10.5px;color:var(--humo);letter-spacing:.3px}
+  .tm-num small{font-family:var(--grot);font-style:normal;font-size:12.5px;letter-spacing:1.4px;color:var(--humo2);font-weight:600;display:block;margin-bottom:4px;text-transform:uppercase}
+  .tm-total{margin-left:auto;font-size:17px;font-weight:700;letter-spacing:.4px}
+  .tm-meta{margin-top:9px;font-size:13.5px;color:var(--humo);letter-spacing:.3px;line-height:1.5}
   .etiquetas{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
-  .et{font-size:9px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;padding:7px 10px;border-radius:2px;border:1px solid var(--linea2);color:var(--humo)}
-  .et.roja{border-color:var(--pomodoro);color:var(--pomodoro)}
-  .et.oro{border-color:var(--oro);color:var(--oro)}
-  .et.verde{border-color:var(--basilico);color:var(--basilico)}
-  .aviso-caja{border:1px solid var(--oro);border-left:3px solid var(--oro);background:rgba(201,162,39,.07);padding:16px;margin-top:20px;border-radius:2px}
-  .aviso-caja b{display:block;font-size:11px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--oro)}
-  .aviso-caja p{margin-top:9px;font-size:12px;color:var(--humo);line-height:1.85}
+  /* Etiquetas de urgencia: fondo sólido, texto blanco, negrita. Sin transparencias y
+     sin borde de otro color, que se ve sucio. */
+  .et{display:inline-block;font-size:12.5px;font-weight:700;letter-spacing:1.2px;line-height:1.5;
+    text-transform:uppercase;padding:8px 11px;border:none;border-radius:2px;
+    background:var(--al-azul);color:var(--al-txt)}
+  .et.roja{background:var(--al-roja)}
+  .et.ambar{background:var(--al-ambar)}
+  .et.verde{background:var(--al-verde)}
+  .et.azul{background:var(--al-azul)}
+  .aviso-caja{border:none;border-left:4px solid rgba(255,255,255,.4);background:var(--al-ambar);
+    color:var(--al-txt);padding:16px;margin-top:20px;border-radius:2px}
+  .aviso-caja.roja{background:var(--al-roja)}
+  .aviso-caja.azul{background:var(--al-azul)}
+  .aviso-caja.verde{background:var(--al-verde)}
+  .aviso-caja b{display:block;font-size:14px;font-weight:700;letter-spacing:1.4px;line-height:1.5;text-transform:uppercase;color:var(--al-txt)}
+  .aviso-caja p{margin-top:9px;font-size:14.5px;color:var(--al-txt);font-weight:600;line-height:1.6}
+  .aviso-caja p.caps{font-size:13px;letter-spacing:1.4px;opacity:.9}
+  .aviso-caja .acciones{margin-top:14px}
+  .aviso-caja .btn-fantasma{border-color:rgba(255,255,255,.55);color:var(--al-txt)}
+  .aviso-caja .btn-fantasma:active{background:rgba(255,255,255,.16)}
+  .aviso-caja .btn-fantasma:disabled{opacity:.72;cursor:default}
 
   /* ---------- Barra inferior ---------- */
   .barra{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;display:grid;grid-template-columns:repeat(3,1fr);background:var(--nav-bg);backdrop-filter:blur(14px);border-top:1px solid var(--linea);z-index:60;padding-bottom:env(safe-area-inset-bottom)}
-  .nav-btn{min-height:62px;border:none;background:transparent;color:var(--humo2);font-size:9px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 4px;position:relative}
-  .nav-btn .gl{font-family:var(--serif);font-style:italic;font-size:19px;line-height:1}
+  .nav-btn{min-height:66px;border:none;background:transparent;color:var(--humo2);font-size:12.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 4px;position:relative}
+  .nav-btn .gl{font-family:var(--serif);font-style:italic;font-size:20px;line-height:1}
   .nav-btn.activo{color:var(--crema)}
   .nav-btn.activo::after{content:'';position:absolute;top:0;left:22%;right:22%;border-top:2px solid var(--pomodoro)}
-  .nav-btn .globo{position:absolute;top:9px;right:calc(50% - 26px);min-width:18px;height:18px;border-radius:9px;background:var(--pomodoro);color:var(--papel);font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;letter-spacing:0}
+  .nav-btn .globo{position:absolute;top:7px;right:calc(50% - 30px);min-width:22px;height:22px;border-radius:11px;background:var(--al-roja);color:var(--al-txt);font-size:13px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;padding:0 6px;letter-spacing:0}
 
   /* ---------- Velo y hojas ---------- */
   .velo{position:fixed;inset:0;background:rgba(6,4,3,.9);z-index:80;opacity:0;pointer-events:none;transition:.25s}
@@ -142,45 +195,52 @@
   .hoja .cuerpo{padding:18px 20px 34px}
   .h-top{display:flex;align-items:flex-start;gap:12px}
   .h-top h2{font-family:var(--serif);font-style:italic;font-weight:500;font-size:31px;line-height:1.02;letter-spacing:-.6px}
-  .h-top .cerrar{margin-left:auto;flex-shrink:0;min-width:44px;min-height:44px;border:1px solid var(--linea);background:transparent;color:var(--humo);font-size:15px;border-radius:2px;cursor:pointer}
+  .h-top .cerrar{margin-left:auto;flex-shrink:0;min-width:44px;min-height:44px;border:1px solid var(--linea);background:transparent;color:var(--humo);font-size:17px;border-radius:2px;cursor:pointer}
   .bloque{border:1px solid var(--linea);border-radius:2px;margin-top:16px;padding:15px}
   .bloque.pend{border-color:var(--pomodoro);border-left:3px solid var(--pomodoro);background:rgba(228,89,59,.06)}
-  .bloque .bl-cab{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .bloque .bl-cab{display:flex;align-items:center;gap:9px;flex-wrap:wrap;line-height:1.5}
   .bloque .bl-cab .caps{color:var(--pomodoro)}
-  .bloque .bl-cab .hh{margin-left:auto;font-size:9.5px;letter-spacing:1.4px;color:var(--humo2);font-weight:600}
-  .reng{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px dotted var(--linea)}
+  .bloque .bl-cab .hh{margin-left:auto;font-size:13px;letter-spacing:1.4px;color:var(--humo2);font-weight:600}
+  .reng{display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px dotted var(--linea)}
   .reng:last-of-type{border-bottom:none}
-  .reng .q{font-weight:700;font-size:13px;color:var(--pomodoro);min-width:30px}
-  .reng .n{flex:1;font-size:13.5px;line-height:1.5}
-  .reng .n em{display:block;font-style:italic;font-family:var(--serif);font-size:12.5px;color:var(--oro);margin-top:4px;line-height:1.5}
-  .reng .p{font-size:12.5px;font-weight:600;letter-spacing:.3px}
-  .reng .marca{flex-basis:100%;display:flex;justify-content:flex-end;margin-top:-4px}
-  .reng .p-ok{font-size:9px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--basilico)}
-  .reng .p-btn{min-height:40px;padding:9px 14px;border:1px solid var(--linea2);background:transparent;color:var(--humo);font-size:9px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;border-radius:2px;cursor:pointer}
+  .reng .q{font-weight:700;font-size:15px;color:var(--pomodoro);min-width:30px}
+  .reng .n{flex:1 1 130px;min-width:0;font-size:15.5px;line-height:1.55}
+  .reng .n em{display:block;font-style:italic;font-family:var(--serif);font-size:15px;color:var(--oro);margin-top:4px;line-height:1.55}
+  .reng .p{font-size:15px;font-weight:600;letter-spacing:.3px;white-space:nowrap}
+  .reng .marca{flex-basis:100%;display:flex;justify-content:flex-end;margin-top:2px}
+  .reng .p-ok{display:inline-block;font-size:12.5px;font-weight:700;letter-spacing:1.2px;line-height:1.5;text-transform:uppercase;background:var(--al-verde);color:var(--al-txt);padding:6px 10px;border-radius:2px}
+  .reng .p-btn{min-height:44px;padding:11px 15px;border:1px solid var(--linea2);background:transparent;color:var(--humo);font-size:12.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;border-radius:2px;cursor:pointer}
   .tot-linea{display:flex;align-items:baseline;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--linea2)}
   .tot-linea .caps{color:var(--humo2)}
-  .tot-linea b{margin-left:auto;font-size:19px;font-weight:700}
+  .tot-linea b{margin-left:auto;font-size:20px;font-weight:700}
   .acciones{display:flex;flex-direction:column;gap:9px;margin-top:14px}
-  .estado-cocina{display:flex;align-items:center;gap:8px;font-size:9.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--humo)}
-  .estado-cocina i{width:7px;height:7px;border-radius:50%;background:var(--humo2);flex-shrink:0}
-  .estado-cocina.e0 i{background:var(--humo)}
-  .estado-cocina.e1 i{background:var(--oro)}
-  .estado-cocina.e2 i{background:var(--pomodoro);animation:pulso 1.2s infinite}
-  .estado-cocina.e3 i{background:var(--basilico)}
+  /* Estado de la comanda: pill sólida, el mismo lenguaje de color que las etiquetas. */
+  .estado-cocina{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;
+    letter-spacing:1.2px;line-height:1.5;text-transform:uppercase;padding:8px 11px;border-radius:2px;
+    background:var(--al-azul);color:var(--al-txt)}
+  .estado-cocina i{width:8px;height:8px;border-radius:50%;background:var(--al-txt);opacity:.9;flex-shrink:0}
+  .estado-cocina.e2{background:var(--al-ambar)}
+  .estado-cocina.e2 i{animation:pulso 1.2s infinite}
+  .estado-cocina.e3{background:var(--al-verde)}
 
   /* ---------- Cobro ---------- */
   .campo{margin-top:16px}
   .campo .caps{color:var(--humo2);display:block;margin-bottom:8px}
-  .campo input{width:100%;min-height:54px;padding:14px 15px;border:1px solid var(--linea2);background:var(--esp2);color:var(--crema);font-family:var(--grot);font-size:20px;font-weight:700;letter-spacing:.5px;border-radius:2px;outline:none}
+  .campo input{width:100%;min-height:54px;padding:14px 15px;border:1px solid var(--linea2);background:var(--esp2);color:var(--crema);font-family:var(--grot);font-size:21px;font-weight:700;letter-spacing:.5px;border-radius:2px;outline:none}
   .campo input:focus{border-color:var(--pomodoro)}
   .duo{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-  .met-btn{min-height:58px;border:1px solid var(--linea2);background:transparent;color:var(--humo);font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;border-radius:2px;cursor:pointer}
+  .met-btn{min-height:58px;border:1px solid var(--linea2);background:transparent;color:var(--humo);font-size:14px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;border-radius:2px;cursor:pointer}
   .met-btn.sel{border-color:var(--pomodoro);color:var(--pomodoro);background:rgba(228,89,59,.09)}
   .atajos{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
-  .atajo{min-height:44px;flex:1;min-width:56px;border:1px solid var(--linea);background:transparent;color:var(--humo);font-size:10.5px;font-weight:700;letter-spacing:1.2px;border-radius:2px;cursor:pointer}
-  .atajo.sel{border-color:var(--oro);color:var(--oro)}
-  .refer{margin-top:14px;border:1px dashed var(--linea2);border-radius:2px;padding:13px 14px;font-size:12px;color:var(--humo);line-height:1.7}
+  .atajo{min-height:46px;flex:1;min-width:62px;border:1px solid var(--linea);background:transparent;color:var(--humo);font-size:13.5px;font-weight:700;letter-spacing:1.2px;border-radius:2px;cursor:pointer}
+  .refer{margin-top:14px;border:1px dashed var(--linea2);border-radius:2px;padding:13px 14px;font-size:14.5px;color:var(--humo);line-height:1.6}
   .refer b{color:var(--oro)}
+  /* Propina que puso el comensal: se ve, no se escribe. Sólida y bien visible para que
+     el mesero la cante en la mesa sin dudar. */
+  .propina-fija{margin-top:16px;background:var(--al-verde);color:var(--al-txt);border-radius:2px;padding:15px 16px}
+  .propina-fija .caps{color:var(--al-txt);opacity:.92;display:block}
+  .propina-fija .cifra{display:block;margin-top:6px;font-family:var(--serif);font-style:italic;font-weight:500;font-size:34px;line-height:1.05;color:var(--al-txt)}
+  .propina-fija p{margin-top:9px;font-size:14.5px;font-weight:600;line-height:1.6;color:var(--al-txt)}
   .cambio{margin-top:12px;display:flex;align-items:baseline;gap:10px;border-top:1px solid var(--linea2);padding-top:12px}
   .cambio b{margin-left:auto;font-family:var(--serif);font-style:italic;font-size:26px;font-weight:500;color:var(--basilico)}
   .cambio b.falta{color:var(--pomodoro)}
@@ -188,34 +248,34 @@
   /* ---------- Avisos ---------- */
   .switch-fila{display:flex;align-items:center;gap:14px;border:1px solid var(--linea);border-radius:2px;padding:16px;margin-top:14px}
   .switch-fila .txt{flex:1}
-  .switch-fila .txt b{font-size:12.5px;font-weight:600;letter-spacing:.4px}
-  .switch-fila .txt small{display:block;font-size:11px;color:var(--humo2);margin-top:5px;line-height:1.6}
-  .switch{flex-shrink:0;width:60px;height:34px;border-radius:17px;border:1px solid var(--linea2);background:var(--esp2);position:relative;cursor:pointer;transition:.2s}
-  .switch::after{content:'';position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:var(--humo2);transition:.2s}
+  .switch-fila .txt b{font-size:15px;font-weight:600;letter-spacing:.4px}
+  .switch-fila .txt small{display:block;font-size:14px;color:var(--humo2);margin-top:5px;line-height:1.6}
+  .switch-fila .txt b{line-height:1.5}
+  .switch{flex-shrink:0;width:64px;height:38px;border-radius:19px;border:1px solid var(--linea2);background:var(--esp2);position:relative;cursor:pointer;transition:.2s}
+  .switch::after{content:'';position:absolute;top:3px;left:3px;width:30px;height:30px;border-radius:50%;background:var(--humo2);transition:.2s}
   .switch.on{background:rgba(228,89,59,.25);border-color:var(--pomodoro)}
   .switch.on::after{left:29px;background:var(--pomodoro)}
 
   /* ---------- Reporte ---------- */
   .periodos{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:16px}
-  .per-btn{min-height:46px;border:1px solid var(--linea);background:transparent;color:var(--humo);font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;border-radius:2px;cursor:pointer}
+  .per-btn{min-height:48px;border:1px solid var(--linea);background:transparent;color:var(--humo);font-size:13px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;border-radius:2px;cursor:pointer}
   .per-btn.sel{border-color:var(--pomodoro);color:var(--pomodoro)}
-  .fila-dato{display:flex;align-items:baseline;gap:10px;padding:12px 0;border-bottom:1px dotted var(--linea)}
-  .fila-dato span{font-size:12px;color:var(--humo)}
-  .fila-dato b{margin-left:auto;font-size:14px;font-weight:700;letter-spacing:.3px}
-  .fila-dato.fuerte b{font-size:17px;color:var(--crema)}
+  .fila-dato{display:flex;align-items:baseline;gap:10px;padding:12px 0;border-bottom:1px dotted var(--linea);line-height:1.5}
+  .fila-dato span{font-size:14.5px;color:var(--humo)}
+  .fila-dato b{margin-left:auto;font-size:16px;font-weight:700;letter-spacing:.3px}
+  .fila-dato.fuerte b{font-size:18px;color:var(--crema)}
   .fila-dato.verde b{color:var(--basilico)}
-  .fila-dato.roja b{color:var(--pomodoro)}
-  .cierre{margin-top:18px;border-top:2px solid var(--linea2);padding-top:14px;display:flex;align-items:baseline;gap:10px}
+    .cierre{margin-top:18px;border-top:2px solid var(--linea2);padding-top:14px;display:flex;align-items:baseline;gap:10px}
   .cierre .caps{color:var(--humo)}
   .cierre b{margin-left:auto;font-family:var(--serif);font-style:italic;font-size:30px;font-weight:500;color:var(--basilico)}
-  .mesa-fila{display:flex;align-items:baseline;gap:9px;padding:11px 0;border-bottom:1px dotted var(--linea);font-size:12px}
-  .mesa-fila .hh{font-size:10px;color:var(--humo2);letter-spacing:1.2px;font-weight:600;min-width:52px}
+  .mesa-fila{display:flex;align-items:baseline;gap:9px;padding:12px 0;border-bottom:1px dotted var(--linea);font-size:14.5px;line-height:1.5;flex-wrap:wrap}
+  .mesa-fila .hh{font-size:13px;color:var(--humo2);letter-spacing:1.2px;font-weight:600;min-width:52px}
   .mesa-fila .mm{font-weight:700}
-  .mesa-fila .met{font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--humo2);font-weight:600}
+  .mesa-fila .met{font-size:12.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--humo2);font-weight:600}
   .mesa-fila .tt{margin-left:auto;font-weight:700}
 
   /* ---------- Toast ---------- */
-  .toast{position:fixed;bottom:calc(92px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,30px);background:var(--papel);color:var(--ink);font-size:11.5px;font-weight:600;letter-spacing:.4px;padding:14px 20px;border-radius:2px;z-index:200;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 16px 44px rgba(0,0,0,.55);max-width:86%;text-align:center;line-height:1.55}
+  .toast{position:fixed;bottom:calc(92px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,30px);background:var(--papel);color:var(--ink);font-size:14px;font-weight:600;letter-spacing:.4px;padding:14px 20px;border-radius:2px;z-index:200;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 16px 44px rgba(0,0,0,.55);max-width:86%;text-align:center;line-height:1.55}
   .toast.visible{opacity:1;transform:translate(-50%,0)}
   @media(min-width:900px){.toast{max-width:440px}}
 
@@ -229,15 +289,16 @@
     body > *{display:none !important}
     #impresion{display:block !important;font-family:Georgia,serif;max-width:640px;margin:0 auto;padding:12px 16px;color:#241F18}
     #impresion h1{font-style:italic;font-weight:500;font-size:26px;margin:6px 0}
-    #impresion .caps{font-family:Arial,sans-serif;font-size:10px;letter-spacing:2px;color:#777;text-transform:uppercase}
-    #impresion table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px}
-    #impresion th{font-family:Arial,sans-serif;font-size:9px;letter-spacing:1.5px;text-align:left;border-bottom:1px solid #999;padding:7px 6px;text-transform:uppercase}
+    #impresion .caps{font-family:Arial,sans-serif;font-size:13px;letter-spacing:1.4px;color:#777;text-transform:uppercase}
+    #impresion table{width:100%;border-collapse:collapse;margin-top:14px;font-size:15px}
+    #impresion th{font-family:Arial,sans-serif;font-size:12.5px;letter-spacing:1.5px;text-align:left;border-bottom:1px solid #999;padding:7px 6px;text-transform:uppercase}
     #impresion td{border-bottom:1px dotted #bbb;padding:7px 6px;vertical-align:top}
-    #impresion .res div{display:flex;justify-content:space-between;border-bottom:1px dotted #bbb;padding:6px 0;font-size:13px}
-    #impresion .tot{font-size:18px;margin-top:16px;border-top:2px solid #241F18;padding-top:10px;display:flex;justify-content:space-between}
+    #impresion .res div{display:flex;justify-content:space-between;border-bottom:1px dotted #bbb;padding:6px 0;font-size:15px}
+    #impresion .tot{font-size:19px;margin-top:16px;border-top:2px solid #241F18;padding-top:10px;display:flex;justify-content:space-between}
     @page{margin:12mm}
   }
 </style>
+<script>if((localStorage.getItem('mb_mesero_tema')||'claro')==='claro')document.documentElement.classList.add('claro')</script>
 </head>
 <body>
 
@@ -257,7 +318,10 @@
   <!-- ============ Entrada con PIN ============ -->
   <section class="pantalla" id="entrada">
     <header class="cab-entrada">
-      <div class="sobre">MenusBot · Servicio</div>
+      <div class="fila-sup">
+        <div class="sobre">MenusBot · Servicio</div>
+        <button class="btn-tema" data-tema-btn onclick="alternarTemaMesero()" title="Cambiar el tema de la pantalla">TEMA OSCURO</button>
+      </div>
       <h1>Buen <em>turno</em></h1>
       <div class="sub" id="entradaSub">Toca tu nombre para entrar.</div>
     </header>
@@ -292,7 +356,10 @@
           <div class="yo" id="miNombre"></div>
           <div class="donde" id="miDonde"></div>
         </div>
-        <button class="btn-salir" id="btnSalir" data-armar="salir" data-normal="Salir" data-armado="¿Seguro?">Salir</button>
+        <div class="cab-btns">
+          <button class="btn-tema" data-tema-btn onclick="alternarTemaMesero()" title="Cambiar el tema de la pantalla">TEMA OSCURO</button>
+          <button class="btn-salir" id="btnSalir" data-armar="salir" data-normal="Salir" data-armado="¿Seguro?">Salir</button>
+        </div>
       </div>
     </header>
 
@@ -341,6 +408,22 @@ const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const fmt = n => '$' + Math.round(+n || 0).toLocaleString('es-MX');
 const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- Tema: claro por omisión, igual que el panel del restaurante ----------
+   El oscuro queda a un toque para quien trabaja turno de noche. La clase se pone antes
+   de pintar (script de una línea en el <head>) para que no haya parpadeo al recargar. */
+function pintarBtnTema(){
+  const claro = document.documentElement.classList.contains('claro');
+  $$('[data-tema-btn]').forEach(b => { b.textContent = claro ? 'TEMA OSCURO' : 'TEMA CLARO'; });
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', claro ? '#F6F1E7' : '#0f0d0b');
+}
+function alternarTemaMesero(){
+  const claro = document.documentElement.classList.toggle('claro');
+  try{ localStorage.setItem('mb_mesero_tema', claro ? 'claro' : 'oscuro'); }catch(e){}
+  pintarBtnTema();
+}
+pintarBtnTema();
 
 /* ---------- Multi-tenant: el enlace del restaurante manda ---------- */
 const PARAMS = new URLSearchParams(location.search);
@@ -673,6 +756,7 @@ async function sondear(){
   detectarNovedades();
   pintarMesas();
   if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
+  refrescarPropinaDelCobro();
 }
 
 async function refrescarMiFicha(){
@@ -762,9 +846,15 @@ function tarjetaMesa(m){
   const clase = m.urgencia === 0 ? 'urge' : (m.urgencia <= 3 ? 'avisa' : (m.ocupada ? '' : 'libre'));
   const ets = [];
   if(m.pendientes.length) ets.push('<span class="et roja">' + m.pendientes.length + ' por autorizar</span>');
-  if(m.pidioCuenta) ets.push('<span class="et oro">Pidió la cuenta</span>');
-  if(m.listas.length) ets.push('<span class="et oro">' + m.listas.length + ' lista' + (m.listas.length === 1 ? '' : 's') + ' por llevar</span>');
-  m.otrasLlamadas.forEach(l => ets.push('<span class="et">' + esc(l.motivo === 'tiempo' ? 'Quiere el siguiente tiempo' : l.motivo === 'listo' ? 'Cocina terminó algo' : 'Te llaman') + '</span>'));
+  if(m.pidioCuenta) ets.push('<span class="et roja">Pidió la cuenta</span>');
+  if(m.listas.length) ets.push('<span class="et ambar">' + m.listas.length + ' lista' + (m.listas.length === 1 ? '' : 's') + ' por llevar</span>');
+  /* Color por lo que significa, no por adorno: rojo = te necesitan ya, ámbar = ojo,
+     azul = un dato. La misma lectura que en el panel. */
+  m.otrasLlamadas.forEach(l => {
+    const tono = l.motivo === 'tiempo' ? 'azul' : l.motivo === 'listo' ? 'ambar' : 'roja';
+    const txt = l.motivo === 'tiempo' ? 'Quiere el siguiente tiempo' : l.motivo === 'listo' ? 'Cocina terminó algo' : 'Te llaman';
+    ets.push('<span class="et ' + tono + '">' + esc(txt) + '</span>');
+  });
   if(!ets.length && m.ocupada) ets.push('<span class="et verde">Todo en orden</span>');
   const meta = m.abierta ? 'Abierta ' + haceHumano(m.abierta.abierta_at) : (m.ocupada ? 'Con órdenes abiertas' : 'Libre');
   return '<button class="tarj-mesa ' + clase + '" data-mesa="' + m.mesa + '">' +
@@ -862,7 +952,7 @@ function pintarDetalle(n){
       '</div><h2>Mesa ' + String(m.mesa).padStart(2,'0') + '</h2></div>' +
     '<button class="cerrar" data-cerrar="1">&#10005;</button></div>';
 
-  if(m.pidioCuenta) html += '<div class="aviso-caja"><b>Pidieron la cuenta</b><p>' +
+  if(m.pidioCuenta) html += '<div class="aviso-caja roja"><b>Pidieron la cuenta</b><p>' +
     (propina > 0 ? 'El cliente marcó ' + fmt(propina) + ' de propina. Cóbrala con el botón de abajo.' : 'Ve a la mesa y cóbrala con el botón de abajo.') + '</p></div>';
 
   m.otrasLlamadas.forEach(l => {
@@ -1009,11 +1099,14 @@ function abrirCobro(n){
   if(!m.autorizadas.length){ toast('Esta mesa no tiene nada que cobrar.'); return; }
   const sug = Math.round(+((m.abierta && m.abierta.propina_sugerida) || 0));
   /* El cobro se congela al abrirse: el mesero está parado en la mesa y los números no deben
-     cambiarle debajo de la mano a media cuenta. */
+     cambiarle debajo de la mano a media cuenta.
+     La propina NO vive en este estado como algo editable: es siempre `sugerida`, la que el
+     comensal marcó en su teléfono. Así el corte cuadra por construcción. */
   cobro = {
-    mesa: n, total: Math.round(m.total), sugerida: sug, propina: sug,
-    metodo: 'efectivo', recibido: 0, atajo: sug > 0 ? 'sug' : '0',
+    mesa: n, total: Math.round(m.total), sugerida: sug,
+    metodo: 'efectivo', recibido: 0,
     folios: m.autorizadas.map(o => +o.id),
+    hayMesaAbierta: !!m.abierta, pedidaHasta: 0, sugNueva: null,
   };
   pintarCobro();
   abrirVelo();
@@ -1021,31 +1114,45 @@ function abrirCobro(n){
   $('#hojaCobro').scrollTop = 0;
 }
 
-const PCTS = [0, 10, 15, 20];
+/* Si la mesa marca propina con el cobro ya abierto y el mesero ya está contando efectivo,
+   no se le mueven los números: se le deja este aviso en la hoja. */
+function avisoPropinaNuevaHtml(c){
+  if(c.sugNueva == null) return '';
+  return '<div class="aviso-caja roja"><b>La mesa ya marcó su propina</b>' +
+    '<p>Acaba de marcar ' + fmt(c.sugNueva) + '. No la cambio sola aquí para no moverte los números mientras cuentas el efectivo: cierra este cobro y vuélvelo a abrir y entra con la cifra nueva.</p></div>';
+}
+
 function pintarCobro(){
   const c = cobro;
   if(!c) return;
-  const cobrar = c.total + (+c.propina || 0);
+  const sug = Math.round(+c.sugerida || 0);
+  const cobrar = c.total + sug;
   const cambio = (+c.recibido || 0) - cobrar;
   let html = '<div class="asa"></div><div class="cuerpo">' +
     '<div class="h-top"><div><div class="caps" style="color:var(--pomodoro)">Cobrar y cerrar</div>' +
     '<h2>Mesa ' + String(c.mesa).padStart(2,'0') + '</h2></div><button class="cerrar" data-cerrar="1">&#10005;</button></div>' +
     '<div class="tot-linea" style="margin-top:18px"><span class="caps">Consumo</span><b>' + fmt(c.total) + '</b></div>';
 
-  if(c.sugerida > 0) html += '<div class="refer">El cliente marcó <b>' + fmt(c.sugerida) + '</b> de propina. Es solo referencia: abajo pon lo que de verdad recibiste.</div>';
-  else html += '<div class="refer">El cliente no marcó propina en su teléfono.</div>';
+  /* La propina la puso el comensal en su teléfono. Se lee, no se escribe. */
+  if(sug > 0){
+    html += '<div class="propina-fija"><span class="caps">Propina de la mesa</span>' +
+      '<span class="cifra">' + fmt(sug) + '</span>' +
+      '<p>La marcó el cliente en su teléfono y es la que se registra. Aquí no se puede cambiar: así tu corte y la caja cuadran solos y nadie tiene que discutir números.</p></div>';
+  } else if(c.hayMesaAbierta){
+    const esperando = c.pedidaHasta > Date.now();
+    html += '<div class="aviso-caja azul"><b>Esta mesa no marcó propina</b>' +
+      '<p>La propina la elige el cliente en su teléfono. Si quieres, pídesela y le aparece en su pantalla ahora mismo.</p>' +
+      '<div class="acciones"><button class="btn-fantasma" id="btnPedirPropina"' + (esperando ? ' disabled' : '') + '>' +
+      (esperando ? 'Ya se le pidió, dale un momento' : 'Pedirle a la mesa que marque su propina') + '</button></div></div>';
+  } else {
+    html += '<div class="aviso-caja azul"><b>Esta mesa no marcó propina</b>' +
+      '<p>La propina la elige el cliente en su teléfono, y esta mesa ya no tiene la carta abierta, así que se cobra sin propina. Si te dieron algo en la mano, eso no pasa por el sistema.</p></div>';
+  }
+  html += '<div id="avisoPropinaNueva">' + avisoPropinaNuevaHtml(c) + '</div>';
 
   html += '<div class="campo"><span class="caps">¿Cómo va a pagar?</span><div class="duo">' +
     '<button class="met-btn ' + (c.metodo === 'efectivo' ? 'sel' : '') + '" data-met="efectivo">Efectivo</button>' +
     '<button class="met-btn ' + (c.metodo === 'tarjeta' ? 'sel' : '') + '" data-met="tarjeta">Tarjeta</button></div></div>';
-
-  html += '<div class="campo"><span class="caps">Propina que recibiste</span>' +
-    '<input id="inpPropina" type="text" inputmode="decimal" value="' + (+c.propina || 0) + '">' +
-    '<div class="atajos">' +
-    (c.sugerida > 0 ? '<button class="atajo ' + (c.atajo === 'sug' ? 'sel' : '') + '" data-pct="sug">' + fmt(c.sugerida) + '</button>' : '') +
-    PCTS.map(p => '<button class="atajo ' + (c.atajo === String(p) ? 'sel' : '') + '" data-pct="' + p + '">' + p + '%</button>').join('') +
-    '<button class="atajo ' + (c.atajo === 'otra' ? 'sel' : '') + '" data-pct="otra">Otra</button>' +
-    '</div></div>';
 
   html += '<div class="tot-linea"><span class="caps">Total a cobrar</span><b>' + fmt(cobrar) + '</b></div>';
 
@@ -1068,20 +1175,8 @@ function pintarCobro(){
   const h = $('#hojaCobro');
   h.querySelectorAll('[data-cerrar]').forEach(b => b.addEventListener('click', cerrarSheets));
   h.querySelectorAll('[data-met]').forEach(b => b.addEventListener('click', () => { c.metodo = b.dataset.met; c.recibido = 0; pintarCobro(); }));
-  h.querySelectorAll('[data-pct]').forEach(b => b.addEventListener('click', () => {
-    const v = b.dataset.pct;
-    c.atajo = v;
-    if(v === 'sug') c.propina = c.sugerida;
-    else if(v === 'otra'){ pintarCobro(); const i = $('#inpPropina'); if(i){ i.focus(); i.select(); } return; }
-    else c.propina = Math.round(c.total * (+v) / 100);
-    pintarCobro();
-  }));
-  const ip = $('#inpPropina');
-  if(ip) ip.addEventListener('input', () => {
-    c.propina = Math.max(0, Math.round(+String(ip.value).replace(/[^0-9.]/g, '') || 0));
-    c.atajo = 'otra';
-    actualizarCambio();
-  });
+  const bp = $('#btnPedirPropina');
+  if(bp) bp.addEventListener('click', () => pedirPropina(bp));
   const ir = $('#inpRecibido');
   if(ir) ir.addEventListener('input', () => {
     c.recibido = Math.max(0, Math.round(+String(ir.value).replace(/[^0-9.]/g, '') || 0));
@@ -1095,17 +1190,68 @@ function pintarCobro(){
   $('#btnCobrar').addEventListener('click', confirmarCobro);
   repintarArmados();
 }
+/* Le prende el aviso en el teléfono del comensal para que él marque su propina.
+   Se toca el botón en el sitio (sin repintar la hoja) porque el mesero puede estar
+   a media captura del efectivo recibido. */
+async function pedirPropina(btn){
+  const c = cobro;
+  if(!c || !c.hayMesaAbierta) return;
+  const antes = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = 'Ya se le pidió, dale un momento'; }
+  try{
+    await api('menusbot_mesas_abiertas?restaurante_id=eq.' + encodeURIComponent(RID) + '&mesa=eq.' + c.mesa + filtroSuc(),
+      { method:'PATCH', body: JSON.stringify({ propina_pedida:true }) });
+  }catch(e){
+    if(btn){ btn.disabled = false; btn.textContent = antes; }
+    toast('No se pudo avisarle a la mesa. Revisa el internet y vuelve a intentar.');
+    return;
+  }
+  c.pedidaHasta = Date.now() + 20000;
+  toast('Listo, en el teléfono de la mesa ya le apareció para marcar su propina.');
+  setTimeout(() => {
+    if(cobro === c) c.pedidaHasta = 0;
+    const b2 = $('#btnPedirPropina');
+    if(b2){ b2.disabled = false; b2.textContent = 'Pedirle a la mesa que marque su propina'; }
+  }, 20000);
+}
+
+/* Con el cobro abierto, la propina que marque la mesa entra sin sacudirle la pantalla
+   al mesero: si todavía no empezó a contar el efectivo se repinta con la cifra buena;
+   si ya está capturando, solo se le deja el aviso. */
+function refrescarPropinaDelCobro(){
+  const c = cobro;
+  if(!c) return;
+  const h = $('#hojaCobro');
+  if(!h || !h.classList.contains('abierta')) return;
+  const m = (mesasAbiertas || []).find(x => +x.mesa === +c.mesa);
+  const sug = Math.round(+((m && m.propina_sugerida) || 0));
+  if(sug === Math.round(+c.sugerida || 0)) return;
+  const ir = $('#inpRecibido');
+  const capturando = !!(+c.recibido || 0) || !!(ir && String(ir.value).trim());
+  if(!capturando){
+    c.sugerida = sug;
+    c.sugNueva = null;
+    c.pedidaHasta = 0;
+    pintarCobro();
+    if(sug > 0) toast('La mesa marcó ' + fmt(sug) + ' de propina. Ya está en el cobro.');
+    return;
+  }
+  c.sugNueva = sug;
+  const caja = $('#avisoPropinaNueva');
+  if(caja) caja.innerHTML = avisoPropinaNuevaHtml(c);
+  toast('La mesa acaba de marcar ' + fmt(sug) + ' de propina. Mira el aviso de la hoja.');
+}
+
 /* Se actualiza solo el cambio y el total, sin repintar: repintar mataría el foco del campo. */
 function actualizarCambio(){
   const c = cobro; if(!c) return;
-  const cobrarTot = c.total + (+c.propina || 0);
+  const cobrarTot = c.total + Math.round(+c.sugerida || 0);
   const dif = (+c.recibido || 0) - cobrarTot;
   const lbl = $('#lblCambio');
   if(lbl){
     lbl.textContent = c.recibido ? (dif < 0 ? 'faltan ' + fmt(-dif) : fmt(dif)) : '—';
     lbl.classList.toggle('falta', dif < 0);
   }
-  const tot = $('#hojaCobro .tot-linea:nth-of-type(2) b');
   const totales = $('#hojaCobro').querySelectorAll('.tot-linea b');
   if(totales.length > 1) totales[1].textContent = fmt(cobrarTot);
 }
@@ -1120,7 +1266,8 @@ async function confirmarCobro(){
   const cuerpo = {
     restaurante_id: RID, sucursal: sesion.sucursal || '', mesa: c.mesa,
     mesero: sesion.nombre, mesero_id: sesion.id,
-    total: c.total, propina: +c.propina || 0, propina_sugerida: c.sugerida,
+    total: c.total, propina: c.sugerida, propina_sugerida: c.sugerida,
+    origen_propina: 'comensal',
     metodo: c.metodo, folios: c.folios,
   };
 
@@ -1201,7 +1348,7 @@ async function pintarAvisos(){
     html += '<div class="aviso-caja"><b>Este navegador no puede avisarte</b>' +
       '<p>Tu navegador no sabe recibir avisos. Prueba con Chrome o Safari actualizado, o deja esta pantalla abierta: mientras esté abierta, suena y vibra sola cuando algo pasa en tus mesas.</p></div>';
   } else if(iosSinInstalar()){
-    html += '<div class="aviso-caja"><b>En iPhone hay un paso extra</b>' +
+    html += '<div class="aviso-caja azul"><b>En iPhone hay un paso extra</b>' +
       '<p>En iPhone los avisos solo suenan si agregas esta página a tu pantalla de inicio: toca Compartir, luego Agregar a inicio, y ábrela desde ahí.</p>' +
       '<p>Cuando la abras desde el icono, regresa a esta pantalla y prende el interruptor.</p></div>';
   } else if(permiso === 'denied'){
@@ -1299,7 +1446,7 @@ async function probarAviso(){
   let d;
   try{ d = await avisar({ accion:'prueba', mesero_id: sesion.id }); }
   catch(e){
-    res.innerHTML = '<div class="aviso-caja"><b>No se pudo mandar</b><p>El sistema de avisos no contestó. Revisa el internet del lugar y vuelve a intentar.</p></div>';
+    res.innerHTML = '<div class="aviso-caja roja"><b>No se pudo mandar</b><p>El sistema de avisos no contestó. Revisa el internet del lugar y vuelve a intentar.</p></div>';
     return;
   }
   const enviados = +(d.enviados || 0);
@@ -1375,7 +1522,6 @@ function resumenRep(){
   const cs = cobrosRep;
   const venta = cs.reduce((s,c) => s + (+c.total || 0), 0);
   const propinas = cs.reduce((s,c) => s + (+c.propina || 0), 0);
-  const sugeridas = cs.reduce((s,c) => s + (+c.propina_sugerida || 0), 0);
   const efe = cs.filter(c => (c.metodo || 'efectivo') === 'efectivo');
   const tar = cs.filter(c => (c.metodo || '') === 'tarjeta');
   const ventaEfe = efe.reduce((s,c) => s + (+c.total || 0), 0);
@@ -1383,7 +1529,7 @@ function resumenRep(){
   const ventaTar = tar.reduce((s,c) => s + (+c.total || 0), 0);
   const propTar = tar.reduce((s,c) => s + (+c.propina || 0), 0);
   const pct = venta > 0 ? (propinas / venta * 100) : 0;
-  return { cs, venta, propinas, sugeridas, dif: propinas - sugeridas, efe, tar, ventaEfe, propEfe, ventaTar, propTar, pct, cobrado: venta + propinas };
+  return { cs, venta, propinas, efe, tar, ventaEfe, propEfe, ventaTar, propTar, pct, cobrado: venta + propinas };
 }
 
 function pintarReporte(){
@@ -1394,16 +1540,14 @@ function pintarReporte(){
     cont.innerHTML = '<div class="vacio">' + esc(r.titulo) + ': todavía no has cobrado nada.<br>Cuando cobres tu primera mesa aparece aquí, lista para cuadrar con caja.</div>';
     return;
   }
-  const difTxt = s.dif === 0 ? 'igual a lo sugerido' : (s.dif > 0 ? fmt(s.dif) + ' más de lo sugerido' : fmt(-s.dif) + ' menos de lo sugerido');
   let html = '<div class="grupo-tit" style="margin-top:20px"><em>&#10022;</em><h2>' + esc(r.titulo) + '</h2><i></i></div>';
   html += '<div class="fila-dato"><span>Mesas cobradas</span><b>' + s.cs.length + '</b></div>' +
     '<div class="fila-dato fuerte"><span>Total vendido</span><b>' + fmt(s.venta) + '</b></div>' +
     '<div class="fila-dato"><span>Efectivo (' + s.efe.length + ')</span><b>' + fmt(s.ventaEfe) + '</b></div>' +
     '<div class="fila-dato"><span>Tarjeta (' + s.tar.length + ')</span><b>' + fmt(s.ventaTar) + '</b></div>' +
-    '<div class="fila-dato verde"><span>Propinas que cobraste</span><b>' + fmt(s.propinas) + '</b></div>' +
-    '<div class="fila-dato"><span>Propinas que sugirió el cliente</span><b>' + fmt(s.sugeridas) + '</b></div>' +
-    '<div class="fila-dato ' + (s.dif < 0 ? 'roja' : 'verde') + '"><span>Diferencia</span><b>' + esc(difTxt) + '</b></div>' +
-    '<div class="fila-dato"><span>Propina promedio</span><b>' + s.pct.toFixed(1) + '% de la venta</b></div>';
+    '<div class="fila-dato verde"><span>Propinas del turno</span><b>' + fmt(s.propinas) + '</b></div>' +
+    '<div class="fila-dato"><span>Propina promedio</span><b>' + s.pct.toFixed(1) + '% de la venta</b></div>' +
+    '<div class="nota-pie">Cada propina la marcó el cliente en su teléfono, así que esta cifra es la misma que ve caja.</div>';
 
   html += '<div class="grupo-tit"><em>&#8212;</em><h2>Mesa por mesa</h2><i></i></div>';
   html += s.cs.map(c => '<div class="mesa-fila"><span class="hh">' + esc(hora(c.cobrado_at)) + '</span>' +
@@ -1439,8 +1583,7 @@ function imprimirCorte(){
       '<div><span>Total vendido</span><b>' + fmt(s.venta) + '</b></div>' +
       '<div><span>Efectivo (' + s.efe.length + ' mesas)</span><b>' + fmt(s.ventaEfe) + '</b></div>' +
       '<div><span>Tarjeta (' + s.tar.length + ' mesas)</span><b>' + fmt(s.ventaTar) + '</b></div>' +
-      '<div><span>Propinas cobradas</span><b>' + fmt(s.propinas) + '</b></div>' +
-      '<div><span>Propinas sugeridas por el cliente</span><b>' + fmt(s.sugeridas) + '</b></div>' +
+      '<div><span>Propinas del turno (las marcó el cliente)</span><b>' + fmt(s.propinas) + '</b></div>' +
       '<div><span>Propina promedio</span><b>' + s.pct.toFixed(1) + '%</b></div>' +
       '<div><span>Efectivo que entrega en caja</span><b>' + fmt(s.ventaEfe + s.propEfe) + '</b></div>' +
     '</div>' +
