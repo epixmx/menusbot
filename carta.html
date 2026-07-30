@@ -1172,6 +1172,38 @@ function mesaAbandonada(f){
   return !!t && (Date.now() - t) > MESA_ABANDONO_MIN * 60000;
 }
 
+/* ---------- La mesa que alguien escaneó por error ----------
+   Las dos horas de arriba son para la mesa que SÍ estaba trabajando y se quedó a medias: ahí
+   conviene esperar, porque hay una cuenta viva de por medio. Pero la mesa que nadie usó nunca
+   —alguien pasó, escaneó el código de la mesa de junto mientras esperaba, y se fue— no tiene
+   nada que proteger, y dos horas apartada significa que el comensal que sí se sentó ahí no
+   puede ordenar en toda la comida.
+
+   Media hora sin señales y sin una sola comanda, y la mesa se suelta sola. Lo importante es
+   QUIÉN lo decide: no este teléfono. Aquí solo se señala una candidata; el servidor vuelve a
+   contar las comandas y a mirar el reloj con su propia hora antes de soltar nada, y si algo no
+   cuadra contesta que no. Por eso esta llamada no lleva credencial alguna y aun así no le sirve
+   de nada a quien quisiera tumbarle la mesa a otro: pedir no es poder. Soltar a propósito una
+   mesa viva sigue siendo cosa del mesero o del panel, nunca del comensal. */
+const MESA_CADUCA_MIN = 30;
+const caducarPedido = {};   // id de fila -> cuándo se lo pedimos, para no insistir cada 4 s
+function mesaSilenciosa(f){
+  const t = Date.parse(f.latido_at || f.abierta_at || '') || 0;
+  return !!t && (Date.now() - t) > MESA_CADUCA_MIN * 60000;
+}
+async function pedirCaducarMesa(f){
+  if(!f || f.id == null) return false;
+  if(Date.now() - (caducarPedido[f.id] || 0) < 120000) return false;
+  caducarPedido[f.id] = Date.now();
+  try{
+    const res = await api('rpc/menusbot_soltar_mesa', {
+      method:'POST',
+      body: JSON.stringify({ p_rest: RID, p_mesa: mesa, p_modo:'caducar', p_suc: SUC, p_minutos: MESA_CADUCA_MIN }),
+    });
+    return !!(res && res.ok);
+  }catch(e){ return false; }   // sin red o función vieja: la mesa se queda como estaba
+}
+
 /* Único punto de verdad sobre "¿puedo ordenar en esta mesa?".
    Devuelve { ok:true, fila } si este dispositivo está autorizado,
    { ok:false, motivo:'bloqueada', fila } si la mesa es de alguien más y está viva,
@@ -1261,7 +1293,13 @@ async function asegurarMesa(){
       continue; // el dueño volvió a la vida entre el GET y el PATCH: reevaluar
     }
 
-    /* 6) Es de alguien más y está viva */
+    /* 6) Antes de darse por vencido: puede que esta mesa no esté ocupada sino mal escaneada.
+       Se le propone al servidor que la deje caducar y, si acepta, se vuelve a dar la vuelta al
+       ciclo para tomarla ya libre por el caso 1. Si el servidor dice que no —tiene cuenta
+       abierta, o le falta tiempo— caemos al caso 7 exactamente igual que antes. */
+    if(mesaSilenciosa(f) && await pedirCaducarMesa(f)) continue;
+
+    /* 7) Es de alguien más y está viva */
     mesaFila = f; mesaEsMia = false; guardarSesion();
     return { ok:false, motivo:'bloqueada', fila:f };
   }
@@ -1393,6 +1431,25 @@ async function compartirCodigoMesa(){
    su código desde el primer segundo y puede pasárselo a los suyos mientras leen la carta. */
 let mesaChequeada = false;
 let abriendoMesa = false;
+/* Reintento silencioso de una mesa que quedó apartada sin uso. Tope de intentos a propósito:
+   pasada media hora esperando, si sigue trabada es que no está vacía y la salida ya no es
+   esperar, es el mesero. */
+let reintentandoMesa = false;
+let reintentosMesa = 0;
+function reintentarMesaLuego(){
+  if(reintentandoMesa || reintentosMesa >= 30) return;
+  reintentandoMesa = true;
+  setTimeout(async () => {
+    reintentosMesa++;
+    mesaChequeada = false;   // deja que la mesa se vuelva a evaluar
+    try{ await abrirMesaAlLlegar(); }catch(e){}
+    reintentandoMesa = false;
+    /* La siguiente vuelta se agenda aquí y no dentro de abrirMesaAlLlegar: mientras este
+       reintento estaba en curso el sondeo de cada 4 s pudo haber hecho la evaluación él
+       mismo, y si lo dejáramos a él la cadena se cortaría en silencio. */
+    if(!mesaEsMia && mesaFila && mesaSilenciosa(mesaFila)) reintentarMesaLuego();
+  }, 60000);
+}
 const faltaElegirSucursal = () => !SUC
   && ((dbCache.config && dbCache.config.sucursales) || []).filter(Boolean).length > 0;
 async function abrirMesaAlLlegar(){
@@ -1414,7 +1471,14 @@ async function abrirMesaAlLlegar(){
     refrescarCodigoVisible();
   } else if(r.motivo === 'bloqueada'){
     mesaChequeada = true;
-    abrirHojaMesa();
+    /* La hoja se abre sola una sola vez: en los reintentos de abajo el comensal ya sabe qué
+       pasa y no hay por qué taparle la carta cada minuto. */
+    if(!reintentandoMesa) abrirHojaMesa();
+    /* La mesa apartada sin nadie ordenando se suelta sola, pero el comensal no tiene por qué
+       enterarse recargando la página: si la fila lleva rato callada, se vuelve a intentar cada
+       minuto. Cuando el servidor la suelte, este teléfono la toma y la hoja se cierra sin que
+       él haya tenido que hacer nada. */
+    if(r.fila && mesaSilenciosa(r.fila)) reintentarMesaLuego();
   }
   /* 'sinred': no lo molestamos con un error mientras lee la carta. Se reintenta en el
      siguiente sondeo y, de todos modos, la mesa se vuelve a verificar al enviar la orden. */
@@ -1426,6 +1490,11 @@ async function abrirMesaAlLlegar(){
 function pintarHojaMesa(){
   const n = mesa != null ? String(mesa).padStart(2, '0') : '—';
   const agotado = mesaIntentos >= MESA_MAX_INTENTOS;
+  /* Si la fila lleva rato sin dar señales, lo más probable es que nadie esté ordenando ahí:
+     alguien escaneó de paso y se fue. No lo prometemos —el servidor tiene la última palabra y
+     puede haber una cuenta abierta que este teléfono no ve— pero sí le decimos que espere en
+     vez de dejarlo creyendo que la única salida es buscar a alguien. */
+  const quizaVacia = mesaFila && mesaSilenciosa(mesaFila);
   $('#hojaMesa').innerHTML = `
     <div class="confirmacion" style="text-align:left">
       <div class="caps al-etiq azul">MESA ${n}</div>
@@ -1441,6 +1510,7 @@ function pintarHojaMesa(){
         <button class="btn-fantasma" onclick="cerrarSheets();llamarMesero('mesa')">Pide ayuda al mesero</button>
         <button class="btn-fantasma" onclick="cerrarSheets();cambiarMesa()">No es mi mesa · escanear otro QR</button>
       </div>
+      ${quizaVacia ? `<div class="nota-pie" style="margin:12px 0 0">Parece que en esta mesa nadie ha ordenado nada. Si es así, se libera sola en unos minutos y podrás tomarla sin código: deja abierta la carta y vuelve a intentar.</div>` : ''}
       <div class="nota-pie" style="margin:14px 0 0;border-left-color:var(--linea2)">Mientras tanto puedes ver la carta con calma: cierra esta ventana tocando fuera y sigue explorando. Solo necesitas el código a la hora de mandar tu orden.</div>
     </div>`;
 }

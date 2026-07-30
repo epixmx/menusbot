@@ -814,6 +814,10 @@ async function cargar(){
   if(chip){ chip.style.color = enLinea ? 'var(--basilico)' : 'var(--pomodoro)'; chip.lastChild.textContent = enLinea ? ' EN VIVO' : ' SIN CONEXIÓN'; }
   aplicarMarcaPanel();
   render();
+  /* Aprovechando que los datos acaban de llegar frescos, se revisa si alguna mesa se quedó
+     abierta por un escaneo perdido. Va aquí y no en un temporizador aparte porque lo único que
+     necesita es mirar lo que este sondeo ya trajo; no se le espera, para no retrasar la pantalla. */
+  barrerMesasCaducadas();
 }
 async function configEscribir(mut){
   mut(cfgCache);
@@ -2622,7 +2626,9 @@ const ABANDONO_MIN = 120; // sin latido en 2 h damos por hecho que el comensal y
    quitado la mesa de la lista y el aviso decía «cerrada», parecía hecho — pero cuatro
    segundos después el sondeo la leía otra vez del servidor y la mesa volvía. Así nace la
    mesa que no se puede ver, ni cerrar, ni pasar a otro mesero.
-   Cuando la sucursal viene vacía preguntamos por las dos formas a la vez. */
+   Cuando la sucursal viene vacía preguntamos por las dos formas a la vez.
+   Soltar y cerrar mesas ya no pasa por aquí —eso lo hace menusbot_soltar_mesa, que resuelve lo
+   mismo del lado del servidor—, pero el resto de las consultas por mesa siguen necesitándolo. */
 function filtroSucMesa(suc){
   const s = (suc == null ? '' : String(suc));
   return s ? `&sucursal=eq.${encodeURIComponent(s)}` : '&or=(sucursal.eq.,sucursal.is.null)';
@@ -2640,8 +2646,10 @@ const claveMesa = (n, suc) => n + '|' + (suc || '');
 // escoger a propósito: gana la que está VIVA (teléfono amarrado y latido reciente), no la que
 // empate con la sucursal activa. En el restaurante real el panel no tiene sucursal seleccionada
 // (sucursalActivaPanel es ''), así que "empatar" premiaba a las filas viejas sin sucursal.
+// Ojo: latido_at y abierta_at ya vienen convertidos a milisegundos al cargar (ver «cargar»), así
+// que aquí NO hay que volver a parsearlos —Date.parse de un número da NaN y la fecha se perdía.
 const vivezaFila = (x, suc) => {
-  const lat = Date.parse(x.latido_at || x.abierta_at || 0) || 0;
+  const lat = x.latido_at || x.abierta_at || 0;
   return (x.dispositivo_id ? 16 : 0) +
     ((lat && (Date.now() - lat) < 3 * 3600000) ? 8 : 0) +
     (mismaSuc(x.sucursal, suc) ? 4 : 0) +
@@ -2653,7 +2661,7 @@ function mesaAbiertaDe(n, suc){
     if(filas.length < 2) return filas[0] || null;
     return filas.slice().sort((a, b) =>
       vivezaFila(b, sucursalActivaPanel) - vivezaFila(a, sucursalActivaPanel) ||
-      (Date.parse(b.latido_at || b.abierta_at || 0) || 0) - (Date.parse(a.latido_at || a.abierta_at || 0) || 0) ||
+      ((b.latido_at || b.abierta_at || 0) - (a.latido_at || a.abierta_at || 0)) ||
       (+b.id) - (+a.id))[0];
   }
   return mesasAbiertasCache.find(x => x.mesa === n && mismaSuc(x.sucursal, suc)) || null;
@@ -2666,6 +2674,54 @@ let liberarArmada = null;
 let liberarArmadaTimer = null;
 let cierreArmado = null;
 let cierreArmadoTimer = null;
+/* ¿Ya le pusimos al dueño enfrente cuánto dinero hay en juego en esa mesa? Solo entonces vale
+   mandar p_confirmado: confirmar a ciegas es exactamente lo que el servidor está evitando cuando
+   se niega la primera vez. Si la pantalla creía que la mesa estaba vacía y el servidor sabe que
+   no, el aviso vuelve con el monto de verdad y el dueño decide con el dato en la mano. */
+let cierreAvisadoMonto = false;
+let liberarAvisadoMonto = false;
+
+/* Soltar una mesa lo hace el servidor, no el panel. Antes esta pantalla borraba la fila y
+   cerraba las comandas por su cuenta: cualquiera con la llave pública podía hacer lo mismo desde
+   la consola del navegador, y el mesero y el panel tenían cada uno su propia versión de la regla.
+   Ahora hay una sola puerta —menusbot_soltar_mesa— que revisa quién llama, si la mesa tiene
+   cuenta pendiente y si de verdad lleva media hora sola. Aquí solo se toca el timbre y se lee la
+   respuesta tal como viene. */
+async function pedirSoltarMesa(cuerpo){
+  const r = await fetch(SUPA_URL + '/rest/v1/rpc/menusbot_soltar_mesa', {
+    method: 'POST',
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify(cuerpo),
+  });
+  if(!r.ok) throw new Error(await r.text());
+  return await r.json();
+}
+
+/* La contraseña con la que el dueño entró al panel es su credencial ante esa puerta. Las sesiones
+   que este navegador guardó antes de esta versión no la traen, y sin ella el servidor contesta
+   «sin permiso» una y otra vez: en vez de dejar al dueño picando un botón muerto sin entender por
+   qué, se le pide entrar de nuevo una sola vez y listo. */
+function credencialPanel(){
+  if(SESION && SESION.h) return SESION.h;
+  if(SESION){
+    toast('Vuelve a entrar al panel para poder soltar mesas — tu sesión es de una versión anterior', true);
+    setTimeout(salirPanel, 2000); // que alcance a leerse el aviso antes de que la pantalla se vaya
+    return null;
+  }
+  toast('El menú de ejemplo no suelta mesas — entra con la cuenta de tu restaurante', true);
+  return null;
+}
+
+/* Motivos por los que el servidor puede negarse, dichos como los diría un mesero. 'tiene_ordenes'
+   no está aquí: ese no es una negativa, es una pregunta, y se contesta con el monto a la vista. */
+function motivoSoltarMesa(err){
+  return ({
+    sin_permiso: 'Vuelve a entrar al panel: el servidor no reconoció tu cuenta',
+    faltan_datos: 'Faltan datos de la mesa — vuelve a cargar la pantalla',
+    modo: 'Esa operación no existe — vuelve a cargar la pantalla',
+    sin_fecha: 'Esa mesa no tiene hora de apertura; ciérrala en vez de esperar a que caduque',
+  })[err] || 'No se pudo soltar la mesa — inténtalo de nuevo';
+}
 
 function pintarAmarresMesas(){
   // TODAS las mesas abiertas del restaurante, de la sucursal que sean. Antes filtrábamos por
@@ -2674,7 +2730,8 @@ function pintarAmarresMesas(){
   const abiertas = mesasAbiertasCache.slice()
     .sort((a,b) => (a.sucursal || '').localeCompare(b.sucursal || '') || a.mesa - b.mesa);
   const ayuda = `La primera pantalla que ordena se queda con la mesa y recibe un código de cuatro dígitos; cualquiera más que quiera ordenar desde su propio teléfono en esa misma mesa necesita que se lo dictes.
-    Si al comensal se le acabó la pila o se sentó un grupo nuevo, libera la mesa y el siguiente teléfono que ordene la tomará. Y si la mesa ya se fue, ciérrala: se cierran sus comandas y el número queda libre.`;
+    Si al comensal se le acabó la pila o se sentó un grupo nuevo, libera la mesa y el siguiente teléfono que ordene la tomará. Y si la mesa ya se fue, ciérrala: se cierran sus comandas y el número queda libre.
+    La mesa que alguien escaneó por error y en la que nunca se ordenó nada no se queda apartada: a la media hora sin señales se suelta sola.`;
   const filas = abiertas.map((m, i) => {
     const suc = m.sucursal || '';
     const k = argJS(suc);
@@ -2799,8 +2856,9 @@ async function asignarMeseroMesa(mesa, meseroId, suc){
 }
 
 /* Cerrar una mesa abierta de verdad, con dispositivo o sin él, con comandas o sin ellas.
-   Cierra lo que tuviera pendiente, deja el registro de venta si había algo que cobrar y
-   borra la fila con un filtro que sí le pega aunque la sucursal esté en NULL. */
+   Cerrar las comandas y borrar la fila es trabajo del servidor; lo que queda de este lado es el
+   papeleo del restaurante: el registro de venta para el corte, los puntos del cliente y las
+   llamadas que esa mesa dejó sonando. */
 async function cerrarMesaAbierta(n, suc){
   const num = +n;
   const m = suc === undefined ? mesaAbiertaDe(num) : mesaAbiertaDe(num, suc);
@@ -2815,15 +2873,22 @@ async function cerrarMesaAbierta(n, suc){
   if(cierreArmado !== clave){
     // Primer toque: avisamos qué se va a cerrar y armamos. Se desarma solo a los 6 s.
     cierreArmado = clave;
+    // El monto solo se le puso enfrente si había algo que cobrar; si la pantalla creía que no,
+    // el segundo toque va sin confirmar y que sea el servidor quien saque la cuenta verdadera.
+    cierreAvisadoMonto = abiertasMesa.length > 0;
     clearTimeout(cierreArmadoTimer);
-    cierreArmadoTimer = setTimeout(() => { cierreArmado = null; render(); }, 6000);
+    cierreArmadoTimer = setTimeout(() => { cierreArmado = null; cierreAvisadoMonto = false; render(); }, 6000);
     render();
     toast(abiertasMesa.length
       ? `¿Cerrar la ${mesaTxtN(num)}? Se cierran sus ${abiertasMesa.length} comanda${abiertasMesa.length === 1 ? '' : 's'} por ${fmt(total)} y el número queda libre. Toca otra vez para confirmar.`
       : `¿Cerrar la ${mesaTxtN(num)}? No tiene nada que cobrar, solo deja de estar abierta. Toca otra vez para confirmar.`);
     return;
   }
+  const credencial = credencialPanel();
+  if(!credencial) return; // sin identidad el servidor diría «sin permiso»: mejor decirlo aquí y no borrar nada de la pantalla
+  const confirmado = cierreAvisadoMonto;
   cierreArmado = null;
+  cierreAvisadoMonto = false;
   clearTimeout(cierreArmadoTimer);
   if(liberarArmada === clave) liberarArmada = null; // la mesa se va: no dejamos un «confirmar» colgado
   const suyos = meserosDeMesa(num, sucM);
@@ -2841,7 +2906,42 @@ async function cerrarMesaAbierta(n, suc){
   const porCliente = {};
   for(const o of abiertasMesa) if(o.cliente_id != null) porCliente[o.cliente_id] = (porCliente[o.cliente_id] || 0) + (+o.total || 0);
   const llamadasMesa = llamadasCache.filter(l => l.mesa === num && mismaSuc(l.sucursal, sucM));
-  // Optimista: la mesa desaparece de la pantalla al instante
+  /* Primero el servidor, después la pantalla. Antes la mesa desaparecía de la vista al instante y
+     el papeleo iba detrás; ahora el servidor tiene derecho a contestar «esta mesa todavía debe
+     $430, ¿de verdad?», y si ya le hubiéramos quitado la fila al dueño no le quedaría botón que
+     volver a tocar. La media docena de milisegundos de espera valen ese derecho a réplica. */
+  let res;
+  try{
+    res = await pedirSoltarMesa({ p_rest: RID, p_mesa: num, p_modo: 'cerrar', p_suc: sucM, p_pass_hash: credencial, p_confirmado: confirmado });
+  }catch(e){ toast('Sin conexión — la mesa sigue abierta en el servidor, inténtalo de nuevo', true); return; }
+  if(res && res.ok === false){
+    if(res.error === 'tiene_ordenes'){
+      // La pantalla creía que la mesa estaba limpia y el servidor sabe que no. Se lo decimos con
+      // la cuenta de verdad y dejamos el botón armado: el siguiente toque ya va a sabiendas.
+      cierreArmado = clave;
+      cierreAvisadoMonto = true;
+      clearTimeout(cierreArmadoTimer);
+      cierreArmadoTimer = setTimeout(() => { cierreArmado = null; cierreAvisadoMonto = false; render(); }, 6000);
+      render();
+      toast(`Esta ${mesaTxtN(num)} tiene ${res.ordenes} comanda${+res.ordenes === 1 ? '' : 's'} por ${fmt(+res.total || 0)}. Toca otra vez para cerrarla de todos modos.`);
+      return;
+    }
+    toast(motivoSoltarMesa(res.error), true);
+    render();
+    return;
+  }
+  if(res && res.ya_estaba){
+    /* Se le adelantaron: otro panel, el mesero desde su teléfono o el barrido de mesas caducadas.
+       Las comandas de esa mesa ya se cerraron allá, y volver a levantar un registro de venta aquí
+       le duplicaría la venta en el corte. Solo ponemos la pantalla al día. */
+    mesasAbiertasCache = mesasAbiertasCache.filter(x => !(x.mesa === num && mismaSuc(x.sucursal, sucM)));
+    render();
+    cargar();
+    toast(`La ${mesaTxtN(num)} ya estaba cerrada — la pantalla se puso al día`);
+    return;
+  }
+  // La mesa ya quedó cerrada en la base: el servidor cerró sus comandas y borró la fila. Lo que
+  // sigue es el papeleo que solo el panel lleva —puntos, llamadas y el registro de venta del corte.
   ordenesCache.forEach(o => { if(o.mesa === num && mismaSuc(o.sucursal, sucM)) o.cerrada = true; });
   mesasAbiertasCache = mesasAbiertasCache.filter(x => !(x.mesa === num && mismaSuc(x.sucursal, sucM)));
   llamadasCache = llamadasCache.filter(l => !llamadasMesa.includes(l));
@@ -2859,15 +2959,16 @@ async function cerrarMesaAbierta(n, suc){
       await api(`menusbot_clientes?id=eq.${cid}`, { method:'PATCH', body: JSON.stringify({ puntos: actuales + pts }) });
       puntosDados += pts;
     }
-    if(abiertasMesa.length) await api(`menusbot_ordenes?restaurante_id=eq.${RID}&mesa=eq.${num}${filtroSucMesa(sucM)}&cerrada=eq.false`, { method:'PATCH', body: JSON.stringify({ cerrada: true }) });
-    await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${num}${filtroSucMesa(sucM)}`, { method:'DELETE' });
     for(const l of llamadasMesa) if(l.dbId) await api(`menusbot_llamadas?id=eq.${l.dbId}`, { method:'PATCH', body: JSON.stringify({ atendida: true }) });
     // Sin este registro la mesa desaparecería del corte de caja como si nunca se hubiera vendido
     if(total > 0) await api('menusbot_cobros', { method:'POST', body: JSON.stringify(cobro) });
     toast(total > 0
       ? `${mesaTxtN(num)} cerrada — ${fmt(total)} quedó en el corte sin forma de pago, porque se cerró desde aquí${puntosDados ? ` · ${puntosDados} punto(s) abonados al cliente` : ''}`
       : `${mesaTxtN(num)} cerrada — no había nada que cobrar, así que no quedó registro de venta`);
-  }catch(e){ toast('Sin conexión — la mesa sigue abierta en el servidor, inténtalo de nuevo', true); }
+    /* Si algo de esto se cae, la mesa YA se cerró allá arriba: prometerle al dueño que «sigue
+       abierta» sería mentirle. Lo que falta es el papeleo, y eso se dice tal cual, porque es la
+       venta que a fin de día no le va a cuadrar en el corte. */
+  }catch(e){ toast(`${mesaTxtN(num)} se cerró, pero no se pudo guardar su registro de venta — anótalo en el corte a mano`, true); }
 }
 
 // Suelta el amarre sin cobrar y sin cerrar la mesa: la mesa sigue abierta y queda libre para el siguiente teléfono
@@ -2880,25 +2981,106 @@ async function liberarMesa(n, suc){
   if(liberarArmada !== clave){
     // Primer clic: solo avisamos y armamos. Se desarma solo para no dejar el botón en rojo indefinidamente.
     liberarArmada = clave;
+    // Liberar no cobra ni cierra nada, pero si la mesa trae cuenta pendiente el dueño merece
+    // verla antes: soltar el teléfono de una mesa que todavía debe es una decisión, no un trámite.
+    const pendientes = ordenesCache.filter(o => o.mesa === num && mismaSuc(o.sucursal, sucM) && !o.cerrada && o.verificacion !== 'rechazada');
+    const debe = pendientes.reduce((s,o) => s + (+o.total || 0), 0);
+    liberarAvisadoMonto = pendientes.length > 0;
     clearTimeout(liberarArmadaTimer);
-    liberarArmadaTimer = setTimeout(() => { liberarArmada = null; render(); }, 6000);
+    liberarArmadaTimer = setTimeout(() => { liberarArmada = null; liberarAvisadoMonto = false; render(); }, 6000);
     render();
-    toast(`¿Liberar la ${mesaTxtN(num)}? El código dejará de servir. Confirma para soltarla.`);
+    toast(pendientes.length
+      ? `¿Liberar la ${mesaTxtN(num)}? El código dejará de servir y sus ${pendientes.length} comanda${pendientes.length === 1 ? '' : 's'} por ${fmt(debe)} siguen abiertas. Confirma para soltarla.`
+      : `¿Liberar la ${mesaTxtN(num)}? El código dejará de servir. Confirma para soltarla.`);
     return;
   }
+  const credencial = credencialPanel();
+  if(!credencial) return; // sin identidad el servidor diría «sin permiso»: mejor no tumbar el amarre de la pantalla
+  const confirmado = liberarAvisadoMonto;
   liberarArmada = null;
+  liberarAvisadoMonto = false;
   clearTimeout(liberarArmadaTimer);
-  const ahora = new Date().toISOString();
-  // Optimista: el mesero ve la mesa libre de inmediato
-  m.dispositivo_id = null; m.codigo = null; m.invitados = []; m.latido_at = Date.parse(ahora);
-  render();
+  /* El amarre lo suelta el servidor. Se espera su respuesta antes de tocar la pantalla porque
+     puede contestar con la cuenta pendiente de la mesa, y esa pregunta necesita que el botón
+     siga ahí para volver a tocarlo. */
+  let res;
   try{
-    await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${num}${filtroSucMesa(sucM)}`, {
-      method:'PATCH',
-      body: JSON.stringify({ dispositivo_id: null, codigo: null, invitados: [], latido_at: ahora }),
-    });
-    toast(`${mesaTxtN(num)} liberada — sigue abierta y el siguiente teléfono que ordene ahí la tomará`);
-  }catch(e){ toast('Sin conexión — inténtalo de nuevo', true); }
+    res = await pedirSoltarMesa({ p_rest: RID, p_mesa: num, p_modo: 'liberar', p_suc: sucM, p_pass_hash: credencial, p_confirmado: confirmado });
+  }catch(e){ toast('Sin conexión — inténtalo de nuevo', true); return; }
+  if(res && res.ok === false){
+    if(res.error === 'tiene_ordenes'){
+      liberarArmada = clave;
+      liberarAvisadoMonto = true; // ya lleva el monto del servidor: el siguiente toque sí puede confirmar
+      clearTimeout(liberarArmadaTimer);
+      liberarArmadaTimer = setTimeout(() => { liberarArmada = null; liberarAvisadoMonto = false; render(); }, 6000);
+      render();
+      toast(`Esta ${mesaTxtN(num)} tiene ${res.ordenes} comanda${+res.ordenes === 1 ? '' : 's'} por ${fmt(+res.total || 0)} sin cobrar. Toca otra vez para soltar el teléfono de todos modos.`);
+      return;
+    }
+    toast(motivoSoltarMesa(res.error), true);
+    render();
+    return;
+  }
+  if(res && res.ya_estaba){
+    // La fila ya no existe: la mesa se cerró o caducó mientras tanto. Quedó libre igual, que es
+    // lo que se pedía; solo hay que quitarle a la pantalla el amarre que ya no existe.
+    mesasAbiertasCache = mesasAbiertasCache.filter(x => !(x.mesa === num && mismaSuc(x.sucursal, sucM)));
+    render();
+    cargar();
+    toast(`La ${mesaTxtN(num)} ya no estaba tomada — la pantalla se puso al día`);
+    return;
+  }
+  // El latido se pone en hora aquí mismo para que el barrido de caducadas no confunda una mesa
+  // recién liberada, que está esperando al siguiente comensal, con una olvidada desde la mañana.
+  m.dispositivo_id = null; m.codigo = null; m.invitados = []; m.latido_at = Date.now();
+  render();
+  toast(`${mesaTxtN(num)} liberada — sigue abierta y el siguiente teléfono que ordene ahí la tomará`);
+}
+
+/* ---------- La mesa mal escaneada se suelta sola ----------
+   Alguien pasa junto a la mesa 7, escanea el código sin querer y se va. La mesa queda abierta,
+   nadie ordena nunca ahí, y el número se queda apartado hasta que el dueño se da cuenta y lo
+   cierra a mano. Eso es lo que este barrido quita de encima.
+   Quien decide es el servidor, siempre: la app solo señala candidatas. Aquí se mira lo que ya
+   está en memoria —ninguna comanda abierta y media hora sin señales de vida— y allá se vuelve a
+   revisar cada condición antes de borrar nada, así que equivocarse de mesa desde esta pantalla no
+   cuesta más que una petición rechazada. */
+const CADUCA_MIN = 30;
+let caducando = {};   // mesas con la petición en vuelo: no se les vuelve a tocar el timbre
+let ultimoBarrido = 0;
+async function barrerMesasCaducadas(){
+  // El visitante del menú de ejemplo no anda soltando mesas de un restaurante que no es suyo
+  if(!accesoOk || !RID || !SESION) return;
+  // Una vuelta por minuto basta: el sondeo corre cada 4 s y no hace falta insistirle al servidor
+  // sobre la misma mesa quince veces mientras todavía le faltan minutos para caducar.
+  if(Date.now() - ultimoBarrido < 60000) return;
+  ultimoBarrido = Date.now();
+  const corte = Date.now() - CADUCA_MIN * 60000;
+  const candidatas = mesasAbiertasCache.filter(x => {
+    const suc = x.sucursal || '';
+    if(caducando[claveMesa(x.mesa, suc)]) return false;
+    const senal = x.latido_at || x.abierta_at || 0;
+    if(!senal || senal > corte) return false;
+    // Con una sola comanda viva la mesa no está mal escaneada: está trabajando
+    return !ordenesCache.some(o => o.mesa === x.mesa && mismaSuc(o.sucursal, suc) && !o.cerrada && o.verificacion !== 'rechazada');
+  }).slice(0, 3); // de tres en tres: al abrir el panel por la mañana puede haber una docena y no vale ametrallar la red
+  let solto = false;
+  for(const x of candidatas){
+    const suc = x.sucursal || '';
+    const k = claveMesa(x.mesa, suc);
+    caducando[k] = true;
+    try{
+      const res = await pedirSoltarMesa({ p_rest: RID, p_mesa: x.mesa, p_modo: 'caducar', p_suc: suc, p_minutos: CADUCA_MIN });
+      if(res && res.ok){
+        mesasAbiertasCache = mesasAbiertasCache.filter(y => !(y.mesa === x.mesa && mismaSuc(y.sucursal, suc)));
+        solto = true;
+      }
+      // Si el servidor dice que no ('muy_pronto', o le apareció una comanda), no hay nada que
+      // avisarle a nadie: esto pasa en segundo plano y la mesa se queda como estaba.
+    }catch(e){ /* sin red: la próxima vuelta lo intenta de nuevo */ }
+    delete caducando[k];
+  }
+  if(solto) render();
 }
 
 async function alternarMesaAbierta(n){
@@ -3588,7 +3770,12 @@ async function entrarPanel(){
     const hash = await sha256(email + ':' + pass);
     if(!r || r.pass_hash !== hash){ err.textContent = 'CORREO O CONTRASEÑA INCORRECTOS'; err.style.visibility = 'visible'; return; }
     if(r.activo === false){ err.textContent = 'CUENTA DESACTIVADA'; err.style.visibility = 'visible'; return; }
-    SESION = { slug: r.slug, nombre: r.nombre, email: r.email };
+    /* El hash se queda guardado con la sesión (h) para que el panel pueda identificarse ante el
+       servidor cada vez que suelta una mesa, sin volver a pedirle la contraseña al dueño en cada
+       toque. No es un secreto nuevo que se filtre: ese mismo pass_hash se lee hoy de
+       menusbot_restaurantes con la llave pública, y es justo lo que permite que la regla de quién
+       puede cerrar una mesa viva en la base de datos y no en la buena voluntad de este botón. */
+    SESION = { slug: r.slug, nombre: r.nombre, email: r.email, h: hash };
     try{ localStorage.setItem('mb_panel_sesion', JSON.stringify(SESION)); }catch(e){}
     RID = r.slug;
     abrirPanel();
