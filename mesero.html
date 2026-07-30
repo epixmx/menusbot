@@ -750,17 +750,26 @@ const mias = fila => {
 function filasAbiertasDe(n){
   return (mesasAbiertas || []).filter(x => +x.mesa === +n && mias(x));
 }
+const cuandoFila = f => Date.parse(f.latido_at || f.abierta_at || 0) || 0;
+/* Lo que decide NO es la sucursal, es qué fila está VIVA. Primero se puso la sucursal y salió
+   mal en el restaurante de verdad: el mesero no tiene sucursal asignada, así que la fila vieja
+   sin sucursal empataba con «la suya» y le ganaba a la fila donde el comensal estaba comiendo.
+   Una mesa viva se reconoce sola: tiene un teléfono amarrado y dio señales de vida hace poco.
+   La sucursal solo desempata entre dos filas igual de vivas. */
 function mesaAbiertaDe(n){
   const filas = filasAbiertasDe(n);
   if(filas.length < 2) return filas[0] || null;
   const mi = sesion.sucursal || '';
-  const cuanto = f =>
-    (((f.sucursal || '') === mi) ? 8 : 0) +   /* mi sucursal manda sobre cualquier otra */
-    (f.dispositivo_id ? 4 : 0) +              /* una mesa con teléfono amarrado está viva */
-    (f.codigo ? 2 : 0) +
-    ((+f.propina_sugerida || 0) > 0 ? 1 : 0);
-  const cuando = f => Date.parse(f.latido_at || f.abierta_at || 0) || 0;
-  return filas.slice().sort((a,b) => cuanto(b) - cuanto(a) || cuando(b) - cuando(a) || (+b.id) - (+a.id))[0];
+  const cuanto = f => {
+    const lat = cuandoFila(f);
+    const fresca = !!lat && (Date.now() - lat) < 3 * 3600000;
+    return (f.dispositivo_id ? 16 : 0) +               /* hay un teléfono amarrado a esta fila */
+      (fresca ? 8 : 0) +                               /* y dio señales de vida hace poco */
+      (((f.sucursal || '') === mi) ? 4 : 0) +          /* a igual de viva, manda mi sucursal */
+      (f.codigo ? 2 : 0) +
+      ((+f.propina_sugerida || 0) > 0 ? 1 : 0);
+  };
+  return filas.slice().sort((a,b) => cuanto(b) - cuanto(a) || cuandoFila(b) - cuandoFila(a) || (+b.id) - (+a.id))[0];
 }
 
 async function sondear(){

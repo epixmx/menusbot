@@ -2427,10 +2427,25 @@ const claveMesa = (n, suc) => n + '|' + (suc || '');
 // Sin segundo argumento significa «la mesa número n, en la sucursal que sea»: si la fila
 // llegó con una sucursal que el panel no tiene seleccionada, igual hay que poder actuar
 // sobre ella. Ninguna mesa abierta se queda sin dueño.
+// Cuando no se dice de qué sucursal, la misma mesa puede tener una fila por sucursal y hay que
+// escoger a propósito: gana la que está VIVA (teléfono amarrado y latido reciente), no la que
+// empate con la sucursal activa. En el restaurante real el panel no tiene sucursal seleccionada
+// (sucursalActivaPanel es ''), así que "empatar" premiaba a las filas viejas sin sucursal.
+const vivezaFila = (x, suc) => {
+  const lat = Date.parse(x.latido_at || x.abierta_at || 0) || 0;
+  return (x.dispositivo_id ? 16 : 0) +
+    ((lat && (Date.now() - lat) < 3 * 3600000) ? 8 : 0) +
+    (mismaSuc(x.sucursal, suc) ? 4 : 0) +
+    (x.codigo ? 2 : 0);
+};
 function mesaAbiertaDe(n, suc){
   if(suc === undefined){
-    return mesasAbiertasCache.find(x => x.mesa === n && mismaSuc(x.sucursal, sucursalActivaPanel))
-      || mesasAbiertasCache.find(x => x.mesa === n) || null;
+    const filas = mesasAbiertasCache.filter(x => x.mesa === n);
+    if(filas.length < 2) return filas[0] || null;
+    return filas.slice().sort((a, b) =>
+      vivezaFila(b, sucursalActivaPanel) - vivezaFila(a, sucursalActivaPanel) ||
+      (Date.parse(b.latido_at || b.abierta_at || 0) || 0) - (Date.parse(a.latido_at || a.abierta_at || 0) || 0) ||
+      (+b.id) - (+a.id))[0];
   }
   return mesasAbiertasCache.find(x => x.mesa === n && mismaSuc(x.sucursal, suc)) || null;
 }
