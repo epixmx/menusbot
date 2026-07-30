@@ -1150,7 +1150,7 @@ function pintarHojaMesa(){
 function abrirHojaMesa(){
   pintarHojaMesa();
   cerrarSheets();
-  $('#velo').classList.add('abierto');
+  abrirVelo();
   $('#hojaMesa').classList.add('abierta');
   history.pushState({ v: vistaActual, capa: 'mesa' }, '');
 }
@@ -1175,7 +1175,7 @@ function avisarMesaNoConfirmada(){
       </div>
     </div>`;
   cerrarSheets();
-  $('#velo').classList.add('abierto');
+  abrirVelo();
   $('#hojaMesa').classList.add('abierta');
 }
 /* Unirse con el código: queda como invitado autorizado y su orden sale sola */
@@ -1485,7 +1485,7 @@ function abrirPlatillo(id){
         <button class="btn-agregar" onclick="agregarDesdeModal('${d.id}')"><span>Agregar</span><b id="precioModal">${fmt(d.precio)}</b></button>
       </div>
     </div>`;
-  $('#velo').classList.add('abierto');
+  abrirVelo();
   $('#hoja').classList.add('abierta');
   history.pushState({ v: vistaActual, capa: 'ficha' }, '');
   document.querySelectorAll('#hoja .sug-cards').forEach(arrastrable);
@@ -1504,6 +1504,20 @@ function abrirVisor(id){
   $('#visor').classList.add('abierto');
 }
 function cerrarVisor(){ $('#visor').classList.remove('abierto'); }
+/* Abre el velo de cualquier hoja. Existe para un motivo concreto: la guía de bienvenida vive en
+   z-index 300, encima de las hojas (z-index 90). Si algo abre una hoja mientras la guía está
+   visible —el bloqueo de mesa, el selector de sucursal, un error— el comensal ve el velo de la
+   guía y no el contenido, y parece que la app se congeló. Cualquier hoja gana a la guía.
+   No se llama cerrarGuia() aquí a propósito: esa función abre a su vez la hoja de puntos. */
+function abrirVelo(){
+  const g = $('#guia');
+  if(g && g.classList.contains('visible')){
+    g.classList.remove('visible');
+    try{ localStorage.setItem(LSK('mb_guia_v1'), '1'); }catch(e){}
+  }
+  $('#velo').classList.add('abierto');
+}
+
 function cerrarSheets(){
   $('#velo').classList.remove('abierto');
   $('#hoja').classList.remove('abierta');
@@ -1531,7 +1545,7 @@ function ofrecerSucursal(){
         ${sucs.map(x => `<button class="btn-primario" onclick="elegirSucursal('${x.replace(/'/g, "\\'")}')">${x}</button>`).join('')}
       </div>
     </div>`;
-  $('#velo').classList.add('abierto');
+  abrirVelo();
   $('#hojaSucursal').classList.add('abierta');
 }
 function elegirSucursal(x){
@@ -1544,7 +1558,7 @@ function elegirSucursal(x){
 }
 function abrirAyuda(){
   cerrarSheets();
-  $('#velo').classList.add('abierto');
+  abrirVelo();
   $('#hojaAyuda').classList.add('abierta');
   history.pushState({ v: vistaActual, capa: 'ayuda' }, '');
 }
@@ -1717,7 +1731,7 @@ function mostrarSugerenciaBebidas(){
         <button class="btn-fantasma" onclick="sinBebidasOk=true;cerrarSheets();enviarOrden()">Enviar sin bebidas</button>
       </div>
     </div>`;
-  $('#velo').classList.add('abierto');
+  abrirVelo();
   $('#hojaConf').classList.add('abierta');
   document.querySelectorAll('#hojaConf .sug-cards').forEach(arrastrable);
 }
@@ -1795,7 +1809,7 @@ function mostrarConfirmacion(o){
         <button class="btn-fantasma" onclick="cerrarSheets();mostrarVista('menu')">Ordenar algo más</button>
       </div>
     </div>`;
-  $('#velo').classList.add('abierto');
+  abrirVelo();
   $('#hojaConf').classList.add('abierta');
 }
 let ultimaLlamada = 0;
@@ -1855,7 +1869,7 @@ function cerrarVisita(){
         <button class="${pideResena ? 'btn-fantasma' : 'btn-primario'}" onclick="cerrarSheets();mostrarVista('menu')">Volver a la carta</button>
       </div>
     </div>`;
-  $('#velo').classList.add('abierto');
+  abrirVelo();
   $('#hojaConf').classList.add('abierta');
   if(vistaActual === 'cuenta') pintarVistaCuenta();
 }
@@ -1912,7 +1926,7 @@ function abrirHojaResena(){
   if(!resenasActivas()) return;
   pintarHojaResena();
   cerrarSheets();
-  $('#velo').classList.add('abierto');
+  abrirVelo();
   $('#hojaResena').classList.add('abierta');
   history.pushState({ v: vistaActual, capa: 'resena' }, '');
 }
@@ -1968,7 +1982,7 @@ function pintarHojaCliente(){
 function abrirHojaCliente(){
   pintarHojaCliente();
   cerrarSheets();
-  $('#velo').classList.add('abierto');
+  abrirVelo();
   $('#hojaCliente').classList.add('abierta');
   history.pushState({ v: vistaActual, capa: 'cliente' }, '');
 }
