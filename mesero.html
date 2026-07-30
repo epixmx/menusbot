@@ -729,18 +729,48 @@ document.addEventListener('visibilitychange', () => {
   else if(sesion) arrancarSondeo();
 });
 
-const filtroSuc = () => sesion.sucursal ? '&sucursal=eq.' + encodeURIComponent(sesion.sucursal) : '';
+/* Un filtro para UNA sucursal concreta. Con sucursal vacía hay que aceptar además el NULL:
+   en PostgREST `sucursal=eq.` NO empata con una columna NULL (semántica SQL: NULL comparado
+   con cualquier cosa es NULL, o sea falso), y un DELETE que no toca filas se ve igual que
+   uno que sí — así nació la mesa perdida de v10.9. */
+const filtroSucDe = s => (s ? '&sucursal=eq.' + encodeURIComponent(s) : '&or=(sucursal.eq.,sucursal.is.null)');
+const filtroSuc = () => filtroSucDe(sesion.sucursal || '');
 const mias = fila => {
   if(sesion.sucursal && (fila.sucursal || '') !== sesion.sucursal) return false;
   return sesion.mesas.indexOf(+fila.mesa) !== -1;
 };
+
+/* UNA MESA PUEDE TENER MÁS DE UNA FILA ABIERTA. El índice único es
+   (restaurante_id, sucursal, mesa), así que la «mesa 02» existe una vez por sucursal, y las
+   filas de una sucursal que ya se dejó de usar se quedan ahí como fantasmas. Buscar por
+   número de mesa a secas devolvía tan pronto la fila viva como el fantasma —PostgREST sin
+   `order=` no promete un orden estable entre peticiones—, y por eso el cobro brincaba solo
+   entre «marcó $164» y «esta mesa no marcó propina», con el total moviéndose entre $1,259 y
+   $1,095 cada 4 segundos. Esta función elige SIEMPRE la misma fila, y deja dicho por qué gana. */
+function filasAbiertasDe(n){
+  return (mesasAbiertas || []).filter(x => +x.mesa === +n && mias(x));
+}
+function mesaAbiertaDe(n){
+  const filas = filasAbiertasDe(n);
+  if(filas.length < 2) return filas[0] || null;
+  const mi = sesion.sucursal || '';
+  const cuanto = f =>
+    (((f.sucursal || '') === mi) ? 8 : 0) +   /* mi sucursal manda sobre cualquier otra */
+    (f.dispositivo_id ? 4 : 0) +              /* una mesa con teléfono amarrado está viva */
+    (f.codigo ? 2 : 0) +
+    ((+f.propina_sugerida || 0) > 0 ? 1 : 0);
+  const cuando = f => Date.parse(f.latido_at || f.abierta_at || 0) || 0;
+  return filas.slice().sort((a,b) => cuanto(b) - cuanto(a) || cuando(b) - cuando(a) || (+b.id) - (+a.id))[0];
+}
 
 async function sondear(){
   if(!sesion) return;
   try{
     const [ords, mesas, lls] = await Promise.all([
       api('menusbot_ordenes?restaurante_id=eq.' + encodeURIComponent(RID) + '&cerrada=eq.false&order=creada.desc'),
-      api('menusbot_mesas_abiertas?restaurante_id=eq.' + encodeURIComponent(RID)),
+      /* order= explícito: sin él PostgREST no promete un orden estable y dos filas de la misma
+         mesa se alternan entre peticiones. La fila viva (latido más nuevo) va primero. */
+      api('menusbot_mesas_abiertas?restaurante_id=eq.' + encodeURIComponent(RID) + '&order=mesa.asc,latido_at.desc.nullslast,id.desc'),
       api('menusbot_llamadas?restaurante_id=eq.' + encodeURIComponent(RID) + '&atendida=eq.false&order=ts.desc&limit=40').catch(() => []),
     ]);
     ordenes = (ords || []).filter(o => o.verificacion !== 'rechazada');
@@ -795,7 +825,9 @@ function estadoMesas(){
   const tocar = n => (porMesa[n] = porMesa[n] || { mesa:+n, ordenes:[], abierta:null, llamadas:[] });
   sesion.mesas.forEach(n => tocar(n));
   ordenes.filter(mias).forEach(o => tocar(+o.mesa).ordenes.push(o));
-  mesasAbiertas.filter(mias).forEach(m => { tocar(+m.mesa).abierta = m; });
+  /* Antes era `forEach(m => tocar(m.mesa).abierta = m)`: con dos filas para la misma mesa
+     ganaba la última que llegara en la respuesta, o sea el azar. Ahora se elige a propósito. */
+  new Set(mesasAbiertas.filter(mias).map(m => +m.mesa)).forEach(n => { tocar(n).abierta = mesaAbiertaDe(n); });
   llamadas.filter(mias).forEach(l => tocar(+l.mesa).llamadas.push(l));
 
   return Object.values(porMesa).map(m => {
@@ -1107,6 +1139,9 @@ function abrirCobro(n){
     metodo: 'efectivo', recibido: 0,
     folios: m.autorizadas.map(o => +o.id),
     hayMesaAbierta: !!m.abierta, pedidaHasta: 0, sugNueva: null,
+    /* Se guarda la sucursal DE LA FILA que se está cobrando, no la del mesero: si él no tiene
+       sucursal asignada, un DELETE sin este dato borraría la mesa 02 de TODAS las sucursales. */
+    suc: (m.abierta ? (m.abierta.sucursal || '') : (sesion.sucursal || '')),
   };
   pintarCobro();
   abrirVelo();
@@ -1199,7 +1234,7 @@ async function pedirPropina(btn){
   const antes = btn ? btn.textContent : '';
   if(btn){ btn.disabled = true; btn.textContent = 'Ya se le pidió, dale un momento'; }
   try{
-    await api('menusbot_mesas_abiertas?restaurante_id=eq.' + encodeURIComponent(RID) + '&mesa=eq.' + c.mesa + filtroSuc(),
+    await api('menusbot_mesas_abiertas?restaurante_id=eq.' + encodeURIComponent(RID) + '&mesa=eq.' + c.mesa + filtroSucDe(c.suc),
       { method:'PATCH', body: JSON.stringify({ propina_pedida:true }) });
   }catch(e){
     if(btn){ btn.disabled = false; btn.textContent = antes; }
@@ -1223,7 +1258,9 @@ function refrescarPropinaDelCobro(){
   if(!c) return;
   const h = $('#hojaCobro');
   if(!h || !h.classList.contains('abierta')) return;
-  const m = (mesasAbiertas || []).find(x => +x.mesa === +c.mesa);
+  /* La MISMA fila que eligió abrirCobro, no cualquiera con ese número de mesa. */
+  const m = mesaAbiertaDe(c.mesa);
+  if(c.hayMesaAbierta && !m) return;   /* si se cayó la fila, no se le borra la propina de enfrente */
   const sug = Math.round(+((m && m.propina_sugerida) || 0));
   if(sug === Math.round(+c.sugerida || 0)) return;
   const ir = $('#inpRecibido');
@@ -1264,7 +1301,7 @@ async function confirmarCobro(){
   if(btn) btn.disabled = true;
 
   const cuerpo = {
-    restaurante_id: RID, sucursal: sesion.sucursal || '', mesa: c.mesa,
+    restaurante_id: RID, sucursal: c.suc || '', mesa: c.mesa,
     mesero: sesion.nombre, mesero_id: sesion.id,
     total: c.total, propina: c.sugerida, propina_sugerida: c.sugerida,
     origen_propina: 'comensal',
@@ -1286,7 +1323,7 @@ async function confirmarCobro(){
     await api('menusbot_ordenes?id=in.(' + c.folios.join(',') + ')', { method:'PATCH', body: JSON.stringify({ cerrada:true }) });
   }catch(e){ okOrdenes = false; }
   try{
-    await api('menusbot_mesas_abiertas?restaurante_id=eq.' + encodeURIComponent(RID) + '&mesa=eq.' + c.mesa + filtroSuc(), { method:'DELETE' });
+    await api('menusbot_mesas_abiertas?restaurante_id=eq.' + encodeURIComponent(RID) + '&mesa=eq.' + c.mesa + filtroSucDe(c.suc), { method:'DELETE' });
   }catch(e){ okMesa = false; }
 
   llamadas.filter(l => +l.mesa === c.mesa).forEach(l => {

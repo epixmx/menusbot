@@ -736,7 +736,11 @@ async function cargar(){
     const lls = await api(`menusbot_llamadas?restaurante_id=eq.${RID}&atendida=eq.false&order=ts.desc&limit=20&select=*`);
     llamadasCache = (lls || []).map(l => ({ dbId: l.id, mesa: l.mesa, ts: Date.parse(l.ts), motivo: l.motivo || '', sucursal: l.sucursal || '', atendida: false }));
     // Traemos también el amarre: quién tiene la mesa, con qué código y desde cuándo, para que el mesero lo vea
-    const ma = await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&select=mesa,sucursal,autorizada,dispositivo_id,codigo,invitados,latido_at,abierta_at,mesero_id,propina_sugerida`);
+    // order= explícito: la misma mesa puede tener una fila por sucursal, y sin orden PostgREST
+    // devuelve las filas en el orden que le convenga, distinto entre peticiones. Eso hacía que
+    // el respaldo «la mesa n en la sucursal que sea» de mesaAbiertaDe() escogiera una fila
+    // distinta cada 4 segundos. La fila con el latido más nuevo va primero.
+    const ma = await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&select=mesa,sucursal,autorizada,dispositivo_id,codigo,invitados,latido_at,abierta_at,mesero_id,propina_sugerida&order=mesa.asc,latido_at.desc.nullslast`);
     mesasAbiertasCache = (ma || []).map(x => ({
       mesa: x.mesa, sucursal: x.sucursal || '',
       mesero_id: x.mesero_id != null ? x.mesero_id : null,
