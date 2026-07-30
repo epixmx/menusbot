@@ -3607,10 +3607,15 @@ setInterval(render, 1000);
 /* La marca que este navegador ya conoce se pinta ANTES de hablar con la nube. Es lo que
    evita el destello: el encabezado nace con el logo correcto y no con un nombre ajeno. */
 marcaTemprana();
-if(MODO_DEMO){
-  // El menú de ejemplo no es de nadie: no tiene dirección que cambiar
+/* Cambiar de dirección se ofrece solo a quien entró con su cuenta. Quien llega por el enlace
+   de ejemplo está viendo un menú que no es suyo: no tiene dirección que cambiar. Ojo: esto NO
+   es lo mismo que MODO_DEMO, porque el dueño de bellavita entra por ?r=bellavita, que también
+   prende el modo demo — y a él sí le toca poder cambiarse de dirección. */
+if(!(SESION && SESION.email && SESION.slug)){
   $('#slugTitulo').style.display = 'none';
   $('#slugZona').style.display = 'none';
+}
+if(MODO_DEMO){
   $('#accesoDemo').style.display = 'flex';
   cargar(); // el demo carga su marca aunque el candado esté puesto
   if(sessionStorage.getItem('menusbot_pin_ok')) abrirPanel();
