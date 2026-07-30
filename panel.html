@@ -599,6 +599,20 @@
       </div>
       <div class="nota-pie">Solo minúsculas, números y guiones, de 3 a 30 caracteres. Tus QR ya impresos <strong>siguen funcionando</strong>: la dirección vieja queda apuntando a la nueva y el comensal ni se entera. Aun así conviene reimprimirlos cuando puedas, y volver a compartir el enlace de tus meseros. La dirección vieja queda apartada para siempre, así que nadie más puede tomarla.</div>
     </div>
+    <!-- CONTRASEÑA: cambiarla desde dentro, sin tener que pasar por el correo -->
+    <div class="vista-titulo" style="margin-top:36px" id="passTitulo"><h1 style="font-size:24px">Contraseña</h1><span class="caps">La que usas para entrar a este panel</span></div>
+    <div class="marca-zona" id="passZona">
+      <div class="marca-form">
+        <div><div class="caps lbl">Contraseña actual</div><input class="filtro" type="password" id="passActual" placeholder="La misma con la que entraste" autocomplete="current-password"></div>
+        <div><div class="caps lbl">Contraseña nueva</div><input class="filtro" type="password" id="passNueva" placeholder="Mínimo 8 caracteres" autocomplete="new-password"></div>
+        <div><div class="caps lbl">Repite la nueva</div><input class="filtro" type="password" id="passNueva2" placeholder="La misma otra vez" autocomplete="new-password"></div>
+      </div>
+      <div id="passAviso" class="caps" style="margin-top:10px;min-height:18px;letter-spacing:1.4px;font-size:12px;color:var(--humo2)"></div>
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+        <button class="btn-sec" id="btnCambiarPass" onclick="cambiarContrasena()">Cambiar contraseña</button>
+      </div>
+      <div class="nota-pie">Mínimo 8 caracteres. Al cambiarla se cancelan los enlaces de recuperación que sigan pendientes: si alguna vez pediste uno por correo y nunca lo abriste, deja de servir en ese momento. Tu contraseña no sale de este dispositivo — aquí solo se calcula su huella y es la huella lo único que viaja.</div>
+    </div>
     <!-- RESEÑAS: el restaurante pega aquí sus links; el comensal los ve al pedir la cuenta -->
     <div class="vista-titulo" style="margin-top:36px"><h1 style="font-size:24px">Reseñas al final de la visita</h1><span class="caps">Google y Facebook — se le ofrecen al comensal cuando pide la cuenta</span></div>
     <div class="marca-zona" id="resenasZona">
@@ -662,7 +676,38 @@
     <input id="logPass" type="password" autocomplete="current-password" placeholder="Contraseña" class="filtro" style="padding:13px">
     <button class="btn-sec" style="padding:13px;border-color:var(--pomodoro);color:var(--pomodoro)" onclick="entrarPanel()">Entrar a mi panel</button>
     <div class="caps" id="logError" style="color:var(--pomodoro);visibility:hidden;text-align:center;line-height:1.8">ERROR</div>
+    <a href="#" id="linkOlvide" class="caps" onclick="mostrarOlvide();return false" style="color:var(--humo);text-align:center;text-decoration:none;margin-top:4px">¿OLVIDASTE TU CONTRASEÑA?</a>
     <a href="alta.html" class="caps" style="color:var(--humo);text-align:center;text-decoration:none;margin-top:4px">¿AÚN NO TIENES CUENTA? <span style="color:var(--pomodoro)">REGÍSTRATE GRATIS</span></a>
+  </div>
+  <!-- Pedir el enlace de recuperación: el mismo candado cambiando de modo, no otra pantalla,
+       para que el dueño no sienta que se fue del sitio por olvidar una contraseña. -->
+  <div id="accesoOlvide" style="display:none;flex-direction:column;align-items:stretch;gap:12px;width:min(320px,86vw)">
+    <div class="caps" style="color:var(--humo);text-align:center">RECUPERAR MI CONTRASEÑA</div>
+    <div style="font-size:13.5px;color:var(--humo2);line-height:1.8;text-align:center">Escribe el correo con el que diste de alta tu restaurante y te mandamos un enlace para poner una contraseña nueva.</div>
+    <input id="olvEmail" type="email" autocomplete="username" placeholder="Correo del restaurante" class="filtro" style="padding:13px">
+    <button class="btn-sec" id="btnOlvEnviar" style="padding:13px;border-color:var(--pomodoro);color:var(--pomodoro)" onclick="pedirEnlaceRecuperacion()">Enviarme el enlace</button>
+    <div id="olvAviso" style="font-size:13.5px;color:var(--humo2);text-align:center;line-height:1.8;min-height:18px"></div>
+    <a href="#" id="linkVolverLogin" class="caps" onclick="volverAEntrar();return false" style="color:var(--humo);text-align:center;text-decoration:none;margin-top:4px">← VOLVER A ENTRAR</a>
+  </div>
+</div>
+
+<!-- Poner una contraseña nueva al llegar por el enlace del correo (panel.html?recuperar=TOKEN).
+     Va por encima del candado a propósito: quien abre este enlace viene a arreglar su acceso,
+     y aunque este navegador tuviera una sesión guardada de otra cuenta, eso no es lo que vino a hacer. -->
+<div id="recuperar" style="position:fixed;inset:0;z-index:500;background:var(--esp);display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:20px">
+  <div class="marca" style="text-align:center">Contraseña nueva<small>RECUPERAR EL ACCESO A TU PANEL</small></div>
+  <div class="caps" id="recEspera" style="color:var(--humo)">REVISANDO EL ENLACE…</div>
+  <div id="recFalla" style="display:none;flex-direction:column;align-items:stretch;gap:14px;width:min(360px,88vw)">
+    <div id="recFallaTxt" style="font-size:13.5px;color:var(--humo);line-height:1.8;text-align:center"></div>
+    <button class="btn-sec" style="padding:13px" onclick="salirDeRecuperacion()">Ir a la pantalla de entrar</button>
+  </div>
+  <div id="recForm" style="display:none;flex-direction:column;align-items:stretch;gap:12px;width:min(360px,88vw)">
+    <div style="font-size:13.5px;color:var(--humo2);line-height:1.8;text-align:center">Vas a cambiar la contraseña de <strong id="recNombre" style="color:var(--crema)"></strong><br><span id="recCorreo" style="color:var(--humo)"></span></div>
+    <input id="recPass1" type="password" autocomplete="new-password" placeholder="Contraseña nueva" class="filtro" style="padding:13px">
+    <input id="recPass2" type="password" autocomplete="new-password" placeholder="Repite la contraseña nueva" class="filtro" style="padding:13px">
+    <button class="btn-sec" id="btnRecGuardar" style="padding:13px;border-color:var(--pomodoro);color:var(--pomodoro)" onclick="guardarPassRecuperada()">Guardar y entrar</button>
+    <div id="recAviso" style="font-size:13.5px;color:var(--humo2);text-align:center;line-height:1.8;min-height:18px"></div>
+    <div class="caps" style="color:var(--humo2);text-align:center;font-size:12px">MÍNIMO 8 CARACTERES</div>
   </div>
 </div>
 
@@ -692,6 +737,11 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 /* ---------- Multi-restaurante: sesión propia o modo demo ---------- */
 const PARAMS = new URLSearchParams(location.search);
 const MODO_DEMO = PARAMS.has('demo') || PARAMS.get('r') === 'bellavita';
+/* El correo de recuperación manda al dueño a panel.html?recuperar=TOKEN. Ese token se guarda
+   aquí, junto a lo demás que decide qué se pinta al arrancar, porque la pantalla de contraseña
+   nueva tiene que ganarle a todo lo demás: quien llega por ese enlace no puede entrar de otra
+   forma, y una sesión vieja guardada en este navegador no le sirve de nada. */
+const TOKEN_REC = PARAMS.get('recuperar');
 let SESION = null;
 try{ SESION = JSON.parse(localStorage.getItem('mb_panel_sesion') || 'null'); }catch(e){}
 let RID = MODO_DEMO ? 'bellavita' : ((SESION && SESION.slug) || null);
@@ -1090,6 +1140,59 @@ async function renombrarRestaurante(){
     cargar();
   }catch(e){
     avisoSlug('No se pudo cambiar la dirección; revisa tu conexión', 'var(--al-roja)');
+  }
+  btn.disabled = false;
+}
+/* ---------- Cambiar la contraseña desde dentro del panel ----------
+   Vive junto al renombrado porque es la otra cosa de la cuenta que solo el dueño puede tocar,
+   y se comporta igual: avisos en línea dentro de la propia caja, nunca ventanas del navegador. */
+function avisoPass(txt, color){
+  const el = document.getElementById('passAviso');
+  if(el){ el.textContent = txt; el.style.color = color || 'var(--humo2)'; }
+}
+async function cambiarContrasena(){
+  const aInp = document.getElementById('passActual');
+  const n1 = document.getElementById('passNueva'), n2 = document.getElementById('passNueva2');
+  if(!SESION || !SESION.email){ toast('Entra con tu cuenta para poder cambiar la contraseña', true); return; }
+  const actual = aInp.value, nueva = n1.value;
+  if(!actual){ avisoPass('Escribe tu contraseña actual', 'var(--al-ambar)'); aInp.focus(); return; }
+  if(nueva.length < 8){ avisoPass('La contraseña nueva necesita al menos 8 caracteres', 'var(--al-ambar)'); n1.focus(); return; }
+  // No se borra nada de lo escrito: quien se equivoca al repetirla solo tiene que corregir el segundo campo
+  if(nueva !== n2.value){ avisoPass('Las dos contraseñas nuevas no son iguales', 'var(--al-ambar)'); n2.focus(); return; }
+  if(nueva === actual){ avisoPass('La contraseña nueva es igual a la de ahora', 'var(--al-ambar)'); n1.focus(); return; }
+  const btn = document.getElementById('btnCambiarPass');
+  btn.disabled = true;
+  avisoPass('Cambiando la contraseña…', 'var(--al-azul)');
+  try{
+    /* Las dos contraseñas se convierten en huella aquí mismo, en el navegador del dueño: lo que
+       sale de esta computadora son dos SHA-256 y nunca el texto que él escribió. Así ni el
+       servidor, ni un registro de peticiones, ni quien esté mirando el tráfico llegan a leer la
+       contraseña de nadie; la comparación de «¿es la correcta?» la hace la base contra la huella. */
+    const viejo = await sha256(SESION.email + ':' + actual);
+    const nuevo = await sha256(SESION.email + ':' + nueva);
+    const d = await api('rpc/menusbot_cambiar_pass', { method:'POST', body: JSON.stringify({ p_email: SESION.email, p_viejo: viejo, p_nuevo: nuevo }) });
+    if(!d || !d.ok){
+      const motivos = {
+        contrasena: 'La contraseña actual no es correcta.',
+        igual: 'La contraseña nueva es igual a la de ahora.',
+        hash: 'No se pudo leer la contraseña; vuelve a escribirla.',
+        faltan_datos: 'Faltan datos para cambiar la contraseña.',
+      };
+      avisoPass(motivos[d && d.error] || 'No se pudo cambiar la contraseña', 'var(--al-roja)');
+      btn.disabled = false;
+      return;
+    }
+    /* La sesión guardada lleva la huella de la contraseña (h) y con ella se identifica el panel
+       cada vez que suelta una mesa. Si aquí no se reemplaza por la nueva, la sesión sigue viva
+       pero cargando una huella que ya no existe en la base: el dueño no se entera de nada hasta
+       que intenta cerrar una mesa y el servidor se lo niega sin explicación. */
+    SESION.h = nuevo;
+    try{ localStorage.setItem('mb_panel_sesion', JSON.stringify(SESION)); }catch(e){}
+    aInp.value = ''; n1.value = ''; n2.value = '';
+    avisoPass('Listo — tu contraseña quedó cambiada', 'var(--al-verde)');
+    toast('Contraseña cambiada. Los enlaces de recuperación pendientes ya no sirven');
+  }catch(e){
+    avisoPass('No se pudo cambiar la contraseña; revisa tu conexión', 'var(--al-roja)');
   }
   btn.disabled = false;
 }
@@ -3727,6 +3830,12 @@ function imprimirQRs(){
 function abrirPanel(){
   accesoOk = true;
   $('#candado').style.display = 'none';
+  /* El botón de salir se enciende aquí y no en el arranque. Antes solo se prendía cuando la
+     sesión YA estaba guardada al cargar la página, así que quien acababa de entrar con su
+     correo —o de recuperar su contraseña— se quedaba dentro del panel sin ninguna forma de
+     cerrar sesión hasta recargar. Justo al revés de lo que conviene: recuperar el acceso es
+     lo que más se hace desde una computadora prestada. */
+  if(SESION && SESION.slug) $('#btnSalir').style.display = '';
   pintarUrlPublica();
   cargar();
 }
@@ -3785,10 +3894,177 @@ function salirPanel(){
   try{ localStorage.removeItem('mb_panel_sesion'); }catch(e){}
   location.href = 'panel.html';
 }
+/* ================================================================
+   RECUPERAR LA CONTRASEÑA
+   Dos momentos distintos: pedir el enlace desde el candado, y llegar
+   por el enlace del correo a poner una contraseña nueva.
+   ================================================================ */
+/* Este texto es siempre el mismo, tenga cuenta ese correo o no. Decir «ese correo no existe»
+   sería cómodo para el que se equivocó de teclado, pero convertiría esta pantalla en una lista
+   de clientes: cualquiera podría ir probando correos y saber cuáles son restaurantes nuestros,
+   sin entrar a ninguna cuenta. Por eso la respuesta es idéntica en los dos casos, y por eso
+   también se responde igual cuando el servidor ya cortó por demasiados intentos. Si alguien
+   viene después a «mejorar» esto para que sea más claro, está deshaciendo la protección. */
+const MSG_REC_NEUTRO = 'Si ese correo tiene una cuenta, ya va en camino un enlace para poner una contraseña nueva. Revisa tu bandeja (y la carpeta de no deseados). El enlace vence en una hora.';
+function avisoOlvide(txt, color){
+  const el = $('#olvAviso');
+  if(el){ el.textContent = txt; el.style.color = color || 'var(--humo2)'; }
+}
+function mostrarOlvide(){
+  $('#accesoLogin').style.display = 'none';
+  $('#accesoOlvide').style.display = 'flex';
+  // Si ya venía escribiendo su correo para entrar, no hay razón para hacérselo escribir otra vez
+  const ya = $('#logEmail').value.trim();
+  if(ya) $('#olvEmail').value = ya;
+  avisoOlvide('');
+  $('#olvEmail').focus();
+}
+function volverAEntrar(){
+  $('#accesoOlvide').style.display = 'none';
+  $('#accesoLogin').style.display = 'flex';
+  $('#logError').style.visibility = 'hidden';
+  $('#logEmail').focus();
+}
+async function pedirEnlaceRecuperacion(){
+  const email = $('#olvEmail').value.trim().toLowerCase();
+  const btn = $('#btnOlvEnviar');
+  if(!email){ avisoOlvide('Escribe un correo válido.', 'var(--pomodoro)'); $('#olvEmail').focus(); return; }
+  /* El botón se apaga mientras la petición va en camino. El servidor corta a los cinco intentos
+     por hora y al cortar contesta exactamente igual que si hubiera enviado, así que quien toque
+     cinco veces seguidas por nervios se quemaría sus intentos sin que nada se lo diga. */
+  btn.disabled = true;
+  avisoOlvide('Enviando…', 'var(--humo2)');
+  try{
+    const r = await fetch(SUPA_URL + '/functions/v1/mb-recuperar', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY },
+      body: JSON.stringify({ email }),
+    });
+    const d = await r.json().catch(()=>null);
+    if(d && d.ok && d.enviado){
+      avisoOlvide(MSG_REC_NEUTRO, 'var(--humo)');
+    }else if(d && d.error === 'sin_correo'){
+      avisoOlvide('Todavía no está configurado el envío de correos. Pide el enlace de recuperación al administrador de MenusBot.', 'var(--pomodoro)');
+    }else if(d && d.error === 'correo'){
+      avisoOlvide('Escribe un correo válido.', 'var(--pomodoro)');
+    }else{
+      avisoOlvide('No se pudo enviar. Intenta de nuevo en un momento.', 'var(--pomodoro)');
+    }
+  }catch(e){
+    avisoOlvide('No se pudo enviar. Intenta de nuevo en un momento.', 'var(--pomodoro)');
+  }
+  btn.disabled = false;
+}
+/* ---------- Llegar por el enlace del correo ---------- */
+let recEmailCuenta = ''; // el correo dueño del token, tal como lo devolvió el servidor
+function avisoRec(txt, color){
+  const el = $('#recAviso');
+  if(el){ el.textContent = txt; el.style.color = color || 'var(--humo2)'; }
+}
+function fallaRecuperacion(txt){
+  $('#recEspera').style.display = 'none';
+  $('#recForm').style.display = 'none';
+  $('#recFallaTxt').textContent = txt;
+  $('#recFalla').style.display = 'flex';
+}
+function salirDeRecuperacion(){
+  /* Se recarga sin el token en vez de solo esconder la pantalla. Así la barra de direcciones y
+     el historial quedan como si el enlace nunca se hubiera abierto, y el arranque normal del
+     panel vuelve a decidir qué toca: candado para quien no tiene sesión, panel para quien sí. */
+  const u = new URL(location.href);
+  u.searchParams.delete('recuperar');
+  location.replace(u.pathname + u.search + u.hash);
+}
+async function validarEnlaceRecuperacion(){
+  const MAL = 'Este enlace no sirve. Puede que se haya copiado mal o que ya se haya pedido uno más nuevo.';
+  try{
+    /* Preguntar de quién es el enlace no lo gasta: el token se consume hasta que se guarda la
+       contraseña. Por eso el dueño puede recargar esta pantalla, cerrarla y volver a abrirla
+       desde el correo las veces que necesite sin quedarse encerrado fuera. */
+    const d = await api('rpc/menusbot_ver_recuperacion', { method:'POST', body: JSON.stringify({ p_token: TOKEN_REC }) });
+    if(d && d.ok){
+      recEmailCuenta = d.email;
+      // Se le enseña de quién es la cuenta para que confirme que el enlace le llegó a él y no a otro correo suyo
+      $('#recNombre').textContent = d.nombre || d.slug || 'tu restaurante';
+      $('#recCorreo').textContent = d.email || '';
+      $('#recEspera').style.display = 'none';
+      $('#recForm').style.display = 'flex';
+      $('#recPass1').focus();
+      return;
+    }
+    const motivos = {
+      invalido: MAL,
+      faltan_datos: MAL,
+      usado: 'Este enlace ya se usó. Si necesitas cambiar la contraseña otra vez, pide uno nuevo.',
+      vencido: 'Este enlace ya venció. Pide uno nuevo desde la pantalla de entrar.',
+    };
+    fallaRecuperacion(motivos[d && d.error] || MAL);
+  }catch(e){
+    fallaRecuperacion('No se pudo revisar el enlace; parece que no hay conexión. Vuelve a abrirlo en un momento.');
+  }
+}
+async function guardarPassRecuperada(){
+  const p1 = $('#recPass1').value, p2 = $('#recPass2').value;
+  const btn = $('#btnRecGuardar');
+  if(p1.length < 8){ avisoRec('La contraseña necesita al menos 8 caracteres.', 'var(--pomodoro)'); $('#recPass1').focus(); return; }
+  // Sin borrar lo escrito: se corrige el segundo campo y ya
+  if(p1 !== p2){ avisoRec('Las dos contraseñas no son iguales. Revísalas.', 'var(--pomodoro)'); $('#recPass2').focus(); return; }
+  btn.disabled = true;
+  avisoRec('Guardando…', 'var(--humo2)');
+  try{
+    /* La contraseña que acaba de escribir el dueño no sale de su navegador: lo que viaja es su
+       huella SHA-256 mezclada con el correo de la cuenta, igual que al entrar. Ni el servidor ni
+       el correo por el que llegó hasta aquí llegan a conocer el texto, y esa misma huella es la
+       que se queda en la sesión para poder identificarse después. */
+    const hash = await sha256(recEmailCuenta + ':' + p1);
+    const d = await api('rpc/menusbot_usar_recuperacion', { method:'POST', body: JSON.stringify({ p_token: TOKEN_REC, p_pass_hash: hash }) });
+    if(!d || !d.ok){
+      const motivos = {
+        invalido: 'Este enlace no sirve. Puede que se haya copiado mal o que ya se haya pedido uno más nuevo.',
+        usado: 'Este enlace ya se usó. Si necesitas cambiar la contraseña otra vez, pide uno nuevo.',
+        vencido: 'Este enlace ya venció. Pide uno nuevo desde la pantalla de entrar.',
+        hash: 'No se pudo leer la contraseña; vuelve a escribirla.',
+        faltan_datos: 'Faltan datos para cambiar la contraseña.',
+      };
+      // Un token que se murió a mitad del camino ya no se arregla escribiendo otra contraseña: se manda a pedir uno nuevo
+      if(d && (d.error === 'invalido' || d.error === 'usado' || d.error === 'vencido')){ fallaRecuperacion(motivos[d.error]); return; }
+      avisoRec(motivos[d && d.error] || 'No se pudo guardar la contraseña. Intenta de nuevo en un momento.', 'var(--pomodoro)');
+      btn.disabled = false;
+      return;
+    }
+    // La sesión se arma igual que en entrarPanel(): el dueño ya no tiene por qué volver a escribir nada
+    SESION = { slug: d.slug, nombre: d.nombre, email: d.email, h: hash };
+    try{ localStorage.setItem('mb_panel_sesion', JSON.stringify(SESION)); }catch(e){}
+    RID = d.slug;
+    /* El token se va de la URL antes de entrar. Si se queda, vive en el historial del navegador
+       y en cualquier captura de pantalla de la barra de direcciones, y aunque ya esté usado no
+       hay motivo para pasearlo. */
+    const u = new URL(location.href);
+    u.searchParams.delete('recuperar');
+    history.replaceState(null, '', u.pathname + u.search + u.hash);
+    $('#recuperar').style.display = 'none';
+    /* Los dos campos se vacían aunque la pantalla ya esté escondida: si no, la contraseña en
+       claro se queda viva dentro del DOM el resto de la sesión del navegador, y no hay motivo
+       para que siga ahí una vez que ya se guardó su huella. */
+    $('#recPass1').value = ''; $('#recPass2').value = '';
+    // El arranque escondió la zona de cuenta porque en ese momento todavía no había sesión
+    $('#slugTitulo').style.display = '';
+    $('#slugZona').style.display = '';
+    $('#passTitulo').style.display = '';
+    $('#passZona').style.display = '';
+    abrirPanel();
+    toast('Contraseña cambiada — ya estás dentro de tu panel');
+  }catch(e){
+    avisoRec('No se pudo guardar la contraseña; revisa tu conexión.', 'var(--pomodoro)');
+    btn.disabled = false;
+  }
+}
 document.getElementById('slugNuevo').addEventListener('input', revisarSlugEscrito);
 document.getElementById('slugPass').addEventListener('input', desarmarRenombrar);
 document.getElementById('pinInp').addEventListener('keydown', e => { if(e.key === 'Enter') probarPin(); });
 document.getElementById('logPass').addEventListener('keydown', e => { if(e.key === 'Enter') entrarPanel(); });
+document.getElementById('olvEmail').addEventListener('keydown', e => { if(e.key === 'Enter') pedirEnlaceRecuperacion(); });
+document.getElementById('recPass2').addEventListener('keydown', e => { if(e.key === 'Enter') guardarPassRecuperada(); });
 
 setInterval(render, 1000);
 /* La marca que este navegador ya conoce se pinta ANTES de hablar con la nube. Es lo que
@@ -3801,8 +4077,15 @@ marcaTemprana();
 if(!(SESION && SESION.email && SESION.slug)){
   $('#slugTitulo').style.display = 'none';
   $('#slugZona').style.display = 'none';
+  $('#passTitulo').style.display = 'none';
+  $('#passZona').style.display = 'none';
 }
-if(MODO_DEMO){
+if(TOKEN_REC){
+  /* Quien llega con un token viene a recuperar su acceso y nada más: ni el candado ni una sesión
+     guardada de antes le sirven, así que esta pantalla se pone delante de todo lo demás. */
+  $('#recuperar').style.display = 'flex';
+  validarEnlaceRecuperacion();
+}else if(MODO_DEMO){
   $('#accesoDemo').style.display = 'flex';
   cargar(); // el demo carga su marca aunque el candado esté puesto
   if(sessionStorage.getItem('menusbot_pin_ok')) abrirPanel();
