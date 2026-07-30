@@ -531,8 +531,40 @@ function pantalla(id){
 
 /* Se llama al final del archivo a propósito: entrarApp() toca variables que se declaran más
    abajo, y arrancar aquí mismo reventaría al recargar con la sesión ya guardada. */
-function arrancar(){
+/* ---------- Mudanza de dirección pública ----------
+   El restaurante puede cambiar su dirección desde el panel. El mesero tiene el enlace viejo
+   guardado en la pantalla de inicio de su teléfono y no se va a enterar, así que la dirección
+   vieja queda respondiendo «me mudé aquí» y el teléfono sigue la mudanza solo. Sus claves de
+   este teléfono llevan el slug pegado (ver LSK): si no se las lleva, pierde su sesión a media
+   hora pico y tiene que volver a teclear su PIN. */
+const CLAVES_MUDANZA = ['mb_mesero','mb_mesero_fallos','mb_mesero_bloqueo','mb_mesero_sonido'];
+function mudarse(nuevo){
+  if(!/^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/.test(nuevo) || nuevo === RID) return false;
+  const nk = k => nuevo === 'bellavita' ? k : k + '::' + nuevo;
+  try{
+    CLAVES_MUDANZA.forEach(k => {
+      const v = localStorage.getItem(LSK(k));
+      /* Si en la dirección nueva ya hay algo, manda lo nuevo: no se pisa una sesión viva */
+      if(v != null && localStorage.getItem(nk(k)) == null) localStorage.setItem(nk(k), v);
+    });
+  }catch(e){}
+  const p = new URLSearchParams(location.search);
+  p.set('r', nuevo);
+  location.replace(location.pathname + '?' + p.toString());
+  return true;
+}
+/* Una sola consulta al arrancar. Si la nube no contesta, no se estorba: la app sigue con la
+   dirección que trae el enlace, que es la de siempre mientras nadie se haya mudado. */
+async function revisarMudanza(){
+  try{
+    const cfgs = await api('menusbot_config?id=eq.' + encodeURIComponent(RID) + '&select=data');
+    const destino = cfgs && cfgs[0] && cfgs[0].data && cfgs[0].data.redirige_a;
+    return !!(destino && mudarse(destino));
+  }catch(e){ return false; }
+}
+async function arrancar(){
   if(!RID){ pantalla('sinRid'); return; }
+  if(await revisarMudanza()) return; // la página se está recargando en la dirección nueva
   if(sesion && sesion.id != null){ entrarApp(); return; }
   pantalla('entrada');
   cargarMeseros();

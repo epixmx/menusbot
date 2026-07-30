@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bella Vita · Panel del Restaurante — MenusBot</title>
+<title>Panel del Restaurante — MenusBot</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -338,7 +338,9 @@
   <div class="head-int">
     <div style="display:flex;flex-direction:column;align-items:flex-start;gap:3px">
       <img id="logoHead" alt="" style="display:none;height:40px;width:auto;max-width:150px;object-fit:contain">
-      <div class="marca" id="marcaHead">Bella Vita<small>PANEL DEL RESTAURANTE</small></div>
+      <!-- Sin nombre escrito a mano: lo pone marcaTemprana() antes del primer pintado, con lo
+           que este navegador ya sabe. Si aquí hubiera un nombre, se alcanzaría a leer. -->
+      <div class="marca" id="marcaHead"><small>PANEL DEL RESTAURANTE</small></div>
     </div>
     <div class="vivo" id="chipVivo"><i></i> EN VIVO</div>
     <button class="btn-sec" id="btnTema" onclick="alternarTemaPanel()" style="padding:9px 13px;font-size:12.5px" title="Cambiar tema del panel">TEMA OSCURO</button>
@@ -583,6 +585,20 @@
         <button class="btn-mini" onclick="coloresDelTema()">Usar colores del tema</button>
       </div>
     </div>
+    <!-- DIRECCIÓN PÚBLICA: el slug con el que se dio de alta el restaurante vive en todas sus URLs -->
+    <div class="vista-titulo" style="margin-top:36px" id="slugTitulo"><h1 style="font-size:24px">Dirección pública</h1><span class="caps">El nombre corto que aparece en la URL de tu carta y en todos tus QR</span></div>
+    <div class="marca-zona" id="slugZona">
+      <div style="font-size:13.5px;color:var(--humo2);margin-bottom:14px">Hoy tu carta vive en <strong id="slugActualTxt" style="color:var(--pomodoro);font-family:var(--grot);letter-spacing:.5px">—</strong></div>
+      <div class="marca-form">
+        <div><div class="caps lbl">Nueva dirección</div><input class="filtro" id="slugNuevo" placeholder="mi-restaurante" autocomplete="off" spellcheck="false" maxlength="30"></div>
+        <div><div class="caps lbl">Tu contraseña del panel</div><input class="filtro" type="password" id="slugPass" placeholder="La misma con la que entraste" autocomplete="current-password"></div>
+      </div>
+      <div id="slugAviso" class="caps" style="margin-top:10px;min-height:18px;letter-spacing:1.4px;font-size:12px;color:var(--humo2)"></div>
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+        <button class="btn-sec" id="btnRenombrar" onclick="renombrarRestaurante()">Cambiar dirección</button>
+      </div>
+      <div class="nota-pie">Solo minúsculas, números y guiones, de 3 a 30 caracteres. Tus QR ya impresos <strong>siguen funcionando</strong>: la dirección vieja queda apuntando a la nueva y el comensal ni se entera. Aun así conviene reimprimirlos cuando puedas, y volver a compartir el enlace de tus meseros. La dirección vieja queda apartada para siempre, así que nadie más puede tomarla.</div>
+    </div>
     <!-- RESEÑAS: el restaurante pega aquí sus links; el comensal los ve al pedir la cuenta -->
     <div class="vista-titulo" style="margin-top:36px"><h1 style="font-size:24px">Reseñas al final de la visita</h1><span class="caps">Google y Facebook — se le ofrecen al comensal cuando pide la cuenta</span></div>
     <div class="marca-zona" id="resenasZona">
@@ -633,7 +649,7 @@
 <!-- Acceso: PIN (demo) o inicio de sesión por restaurante -->
 <div id="candado" style="position:fixed;inset:0;z-index:400;background:var(--esp);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px">
   <img id="logoCandado" alt="" style="display:none;height:72px;width:auto;max-width:220px;object-fit:contain">
-  <div class="marca" id="marcaCandado" style="text-align:center">Bella Vita<small>PANEL DEL RESTAURANTE</small></div>
+  <div class="marca" id="marcaCandado" style="text-align:center"><small>PANEL DEL RESTAURANTE</small></div>
   <div id="accesoDemo" style="display:none;flex-direction:column;align-items:center;gap:16px">
     <div class="caps" style="color:var(--humo)">PIN DE ACCESO</div>
     <input id="pinInp" type="password" inputmode="numeric" maxlength="6" class="filtro" style="width:140px;text-align:center;font-size:22px;letter-spacing:8px;padding:14px">
@@ -721,9 +737,32 @@ function dbLeer(){
   // Las órdenes rechazadas quedan fuera de tablero, KPIs y reportes
   return { ...cfgCache, config: cfgCache.config, ordenes: ordenesCache.filter(o => o.verificacion !== 'rechazada'), llamadas: llamadasCache };
 }
+/* ---------- Mudanza de dirección pública ----------
+   Cuando el restaurante cambia su dirección, la vieja se queda respondiendo «me mudé aquí».
+   Este panel puede estar abierto en otra pestaña o en otra computadora cuando eso pasa, así
+   que en vez de quedarse hablándole a una dirección que ya no es de nadie, se muda solo. */
+let saltosMudanza = 0;
+function seguirMudanza(nuevo){
+  if(!/^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/.test(nuevo) || nuevo === RID) return;
+  if(++saltosMudanza > 3) return; // por si alguna vez quedara una cadena circular
+  RID = nuevo;
+  if(SESION){
+    SESION.slug = nuevo;
+    try{ localStorage.setItem('mb_panel_sesion', JSON.stringify(SESION)); }catch(e){}
+  }
+  // La marca recordada lleva pegado el slug viejo; si se queda, el próximo arranque no la reconoce
+  try{ localStorage.removeItem(MARCA_MEM); }catch(e){}
+  if(typeof pintarUrlPublica === 'function') pintarUrlPublica();
+  cargar();
+}
 async function cargar(){
   try{
     const cfgs = await api(`menusbot_config?id=eq.${RID}&select=data`);
+    /* El restaurante pudo haber cambiado su dirección pública desde otra pestaña o desde otro
+       dispositivo. La dirección vieja queda como una lápida que dice a dónde se mudó; aquí se
+       sigue la mudanza para que este panel no se quede hablándole a una dirección vacía. */
+    const mudanza = cfgs && cfgs[0] && cfgs[0].data && cfgs[0].data.redirige_a;
+    if(mudanza && mudanza !== RID){ seguirMudanza(mudanza); return; }
     if(cfgs && cfgs[0]) cfgCache = cfgs[0].data || cfgCache;
     const filas = await api(`menusbot_ordenes?restaurante_id=eq.${RID}&order=creada.desc&limit=500&select=*`);
     ordenesCache = (filas || []).map(f => ({
@@ -788,6 +827,47 @@ const dbEscribir = configEscribir; // los escritores de carta / temas / equipo m
 const MARCA_DEF = { prefijo:'Trattoria', nombre:'Bella Vita', lema:'Est. 1987', logo:'', acento:'', secundario:'' };
 const marcaDe = () => Object.assign({}, MARCA_DEF, (cfgCache.config && cfgCache.config.marca) || {});
 const iniciales = n => (n || 'BV').split(/\s+/).filter(Boolean).slice(0,2).map(w => w[0].toUpperCase()).join('') || 'BV';
+
+/* ---------- Que la marca no parpadee ----------
+   La identidad vive en la nube y tarda medio segundo en llegar. En ese medio segundo el
+   encabezado tenía escrito a mano «Bella Vita», y el dueño alcanzaba a leer un nombre que
+   no es el suyo antes de ver aparecer su logo. Ahora el HTML nace sin nombre y este
+   navegador recuerda la marca del restaurante con el que entró: se pinta de una vez. */
+const MARCA_MEM = 'mb_panel_marca';
+function marcaPanelRecordar(m){
+  // Solo se recuerda la identidad DE VERDAD; si la nube no contestó, marcaDe() devuelve el
+  // ejemplo y guardarlo haría que el próximo arranque pintara «Bella Vita» a propósito.
+  if(!RID || !(cfgCache.config && cfgCache.config.marca)) return;
+  try{ localStorage.setItem(MARCA_MEM, JSON.stringify({ slug: RID, marca: m })); }catch(e){}
+}
+function marcaPanelRecordada(){
+  try{
+    const g = JSON.parse(localStorage.getItem(MARCA_MEM) || 'null');
+    return (g && g.slug === RID && g.marca) ? g.marca : null;
+  }catch(e){ return null; }
+}
+/* Se llama antes de hablar con la nube: es lo que evita el destello */
+function marcaTemprana(){
+  const m = marcaPanelRecordada();
+  if(!m || !m.nombre) return;
+  document.title = `${m.nombre} · Panel del Restaurante — MenusBot`;
+  const leyenda = '<small>PANEL DEL RESTAURANTE</small>';
+  ['marcaHead','marcaCandado'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.innerHTML = m.logo ? leyenda : `${m.nombre}${leyenda}`;
+  });
+  if(m.logo) ['logoHead','logoCandado'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.src = m.logo;
+    const mostrar = () => { el.style.display = 'block'; };
+    if(el.decode) el.decode().then(mostrar).catch(mostrar);
+    else { el.onload = mostrar; el.onerror = mostrar; }
+  });
+  if(m.acento) document.documentElement.style.setProperty('--pomodoro', m.acento);
+  if(m.secundario) document.documentElement.style.setProperty('--oro', m.secundario);
+}
+
 let marcaPanelHash = '', marcaFormHash = '';
 function aplicarMarcaPanel(){
   const m = marcaDe();
@@ -802,8 +882,23 @@ function aplicarMarcaPanel(){
     ['logoHead','logoCandado'].forEach(id => {
       const el = document.getElementById(id);
       if(!el) return;
-      if(m.logo){ el.src = m.logo; el.style.display = 'block'; } else el.style.display = 'none';
+      if(!m.logo){ el.style.display = 'none'; return; }
+      // El logo se enseña cuando ya está DIBUJADO, no cuando se le asigna el src: si no,
+      // primero se ve el hueco y luego la imagen aparece de golpe encima.
+      if(el.getAttribute('src') === m.logo){ el.style.display = 'block'; return; }
+      el.style.display = 'none';
+      el.src = m.logo;
+      const mostrar = () => { el.style.display = 'block'; };
+      if(el.decode) el.decode().then(mostrar).catch(mostrar);
+      else { el.onload = mostrar; el.onerror = mostrar; }
+      // Si la imagen nunca llega, mejor el nombre en texto que un encabezado vacío
+      setTimeout(() => {
+        if(el.style.display !== 'none') return;
+        const cont = document.getElementById(id === 'logoHead' ? 'marcaHead' : 'marcaCandado');
+        if(cont && !/\w/.test(cont.textContent.replace(/PANEL DEL RESTAURANTE/i,''))) cont.innerHTML = `${m.nombre}${leyenda}`;
+      }, 4000);
     });
+    marcaPanelRecordar(m);
     document.documentElement.style.setProperty('--pomodoro', m.acento || '#E4593B');
     document.documentElement.style.setProperty('--oro', m.secundario || '#C9A227');
   }
@@ -879,6 +974,120 @@ function guardarResenas(){
   llenarFormResenas(true);
   qrResenasListos = -1; renderQRResenas(); /* el QR imprimible apunta a estos links: se rehace al guardar */
   toast(activo ? 'Reseñas guardadas — el comensal las verá al pedir la cuenta' : 'Reseñas guardadas — la invitación está apagada por ahora');
+}
+/* ---------- Cambiar la dirección pública ----------
+   El slug con el que se dio de alta el restaurante no es un detalle interno: sale en la URL de
+   su carta, en todos sus QR impresos y en el enlace de sus meseros. Cambiarlo tiene que mover
+   sus datos de un lado al otro sin partirlos, así que el trabajo pesado lo hace una función en
+   la base (menusbot_renombrar_slug) en un solo golpe. Aquí solo se pide bien y se avisa. */
+const SLUG_RESERVADOS = ['admin','api','www','panel','carta','mesero','index','alta','app','menusbot','soporte','ayuda','login','demo','sitio','null','undefined','static','assets','fotos'];
+const limpiarSlug = t => (t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+  .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,30);
+const slugValido = s => /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/.test(s);
+let renombrarArmado = false, avisoSlugTimer = null;
+function avisoSlug(txt, color){
+  const el = document.getElementById('slugAviso');
+  if(el){ el.textContent = txt; el.style.color = color || 'var(--humo2)'; }
+}
+function pintarSlugActual(){
+  const el = document.getElementById('slugActualTxt');
+  if(el && RID) el.textContent = urlPublicaCarta().replace(/^https?:\/\//,'');
+}
+/* Se revisa mientras escribe, pero sin castigar cada tecla con una petición */
+function revisarSlugEscrito(){
+  const inp = document.getElementById('slugNuevo');
+  if(!inp) return;
+  const limpio = limpiarSlug(inp.value);
+  if(inp.value !== limpio) inp.value = limpio; // se corrige a la vista: mayúsculas, acentos y espacios
+  desarmarRenombrar();
+  clearTimeout(avisoSlugTimer);
+  if(!limpio){ avisoSlug(''); return; }
+  if(limpio === RID){ avisoSlug('Esa ya es tu dirección de hoy'); return; }
+  if(!slugValido(limpio)){ avisoSlug('De 3 a 30 caracteres; no puede empezar ni terminar con guion', 'var(--al-ambar)'); return; }
+  if(SLUG_RESERVADOS.includes(limpio)){ avisoSlug('Esa palabra está reservada por el sistema', 'var(--al-ambar)'); return; }
+  avisoSlug('Revisando si está libre…');
+  avisoSlugTimer = setTimeout(async () => {
+    try{
+      /* Ocupado cuenta también las direcciones que alguna vez fueron de alguien: sus QR viejos
+         siguen apuntando ahí, así que esas direcciones no se reciclan nunca. */
+      const [rest, cfg] = await Promise.all([
+        api(`menusbot_restaurantes?slug=eq.${encodeURIComponent(limpio)}&select=slug`),
+        api(`menusbot_config?id=eq.${encodeURIComponent(limpio)}&select=id`),
+      ]);
+      if(limpiarSlug(document.getElementById('slugNuevo').value) !== limpio) return; // ya siguió escribiendo
+      if((rest && rest.length) || (cfg && cfg.length)) avisoSlug('Ocupada — prueba con otra', 'var(--al-roja)');
+      else avisoSlug('Libre — puedes tomarla', 'var(--al-verde)');
+    }catch(e){ avisoSlug('No se pudo revisar; revisa tu conexión', 'var(--al-ambar)'); }
+  }, 450);
+}
+function desarmarRenombrar(){
+  if(!renombrarArmado) return;
+  renombrarArmado = false;
+  const b = document.getElementById('btnRenombrar');
+  if(b) b.textContent = 'Cambiar dirección';
+}
+async function renombrarRestaurante(){
+  const inp = document.getElementById('slugNuevo'), passInp = document.getElementById('slugPass');
+  const nuevo = limpiarSlug(inp.value);
+  if(!nuevo){ avisoSlug('Escribe la dirección nueva', 'var(--al-ambar)'); inp.focus(); return; }
+  if(nuevo === RID){ avisoSlug('Esa ya es tu dirección de hoy', 'var(--al-ambar)'); return; }
+  if(!slugValido(nuevo)){ avisoSlug('De 3 a 30 caracteres; no puede empezar ni terminar con guion', 'var(--al-ambar)'); inp.focus(); return; }
+  if(SLUG_RESERVADOS.includes(nuevo)){ avisoSlug('Esa palabra está reservada por el sistema', 'var(--al-ambar)'); return; }
+  const pass = passInp.value;
+  if(!pass){ avisoSlug('Escribe tu contraseña para confirmar', 'var(--al-ambar)'); passInp.focus(); return; }
+  if(MODO_DEMO || !SESION || !SESION.email){ toast('El menú de ejemplo no cambia de dirección', true); return; }
+  const btn = document.getElementById('btnRenombrar');
+  /* Doble toque en vez de una ventana del navegador: es un cambio que se siente grande y el
+     dueño merece un segundo para leerlo, pero un confirm() nativo congela la pestaña. */
+  if(!renombrarArmado){
+    renombrarArmado = true;
+    btn.textContent = 'Toca otra vez para confirmar el cambio';
+    avisoSlug('Tu carta pasará a /carta.html?r=' + nuevo, 'var(--al-azul)');
+    setTimeout(desarmarRenombrar, 6000);
+    return;
+  }
+  desarmarRenombrar();
+  btn.disabled = true;
+  avisoSlug('Cambiando la dirección…', 'var(--al-azul)');
+  try{
+    const hash = await sha256(SESION.email + ':' + pass);
+    const r = await fetch(SUPA_URL + '/rest/v1/rpc/menusbot_renombrar_slug', {
+      method: 'POST',
+      headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_viejo: RID, p_nuevo: nuevo, p_pass_hash: hash }),
+    });
+    if(!r.ok) throw new Error(await r.text());
+    const res = await r.json();
+    if(!res || !res.ok){
+      const motivos = {
+        contrasena: 'La contraseña no es la de esta cuenta',
+        formato: 'Esa dirección no tiene un formato válido',
+        reservado: 'Esa palabra está reservada por el sistema',
+        ocupado: 'Ocupada — prueba con otra',
+        igual: 'Esa ya es tu dirección de hoy',
+        no_existe: 'No encontramos tu restaurante; vuelve a entrar al panel',
+      };
+      avisoSlug(motivos[res && res.error] || 'No se pudo cambiar la dirección', 'var(--al-roja)');
+      btn.disabled = false;
+      return;
+    }
+    passInp.value = ''; inp.value = '';
+    RID = res.slug;
+    if(SESION){ SESION.slug = res.slug; try{ localStorage.setItem('mb_panel_sesion', JSON.stringify(SESION)); }catch(e){} }
+    try{ localStorage.removeItem(MARCA_MEM); }catch(e){}
+    saltosMudanza = 0;
+    pintarUrlPublica(); pintarSlugActual();
+    // Los QR de mesa y el enlace de los meseros llevan el slug adentro: se invalidan y el
+    // repintado de cada segundo los vuelve a dibujar con la dirección nueva.
+    qrListos = -1; qrResenasListos = -1;
+    render();
+    avisoSlug('Listo — tu carta vive ahora en ' + urlPublicaCarta().replace(/^https?:\/\//,''), 'var(--al-verde)');
+    toast('Dirección cambiada. Tus QR viejos siguen funcionando, pero reimprímelos cuando puedas');
+    cargar();
+  }catch(e){
+    avisoSlug('No se pudo cambiar la dirección; revisa tu conexión', 'var(--al-roja)');
+  }
+  btn.disabled = false;
 }
 function coloresDelTema(){
   configEscribir(d => { d.config.marca = { ...marcaDe(), acento:'', secundario:'' }; });
@@ -3195,7 +3404,9 @@ function exportarCSV(origen){
   }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
-  a.download = 'bellavita_conciliacion' + (partes.length ? '_' + partes.join('_') : '') + '.csv';
+  // El nombre del archivo lleva el del restaurante: quien recibe varios cortes por correo
+  // necesita distinguirlos sin abrirlos.
+  a.download = (limpio(marcaDe().nombre) || RID || 'restaurante') + '_conciliacion' + (partes.length ? '_' + partes.join('_') : '') + '.csv';
   a.click();
   toast(partes.length
     ? `${cuales.length} comanda${cuales.length === 1 ? '' : 's'} exportadas con los filtros puestos — el archivo se llama ${a.download}`
@@ -3346,6 +3557,7 @@ function pintarUrlPublica(){
   const a = $('#urlPublicaLink');
   a.href = urlPublicaCarta();
   a.textContent = urlPublicaCarta().replace(/^https?:\/\//,'');
+  pintarSlugActual();
 }
 function copiarUrlPublica(){
   const u = urlPublicaCarta();
@@ -3386,11 +3598,19 @@ function salirPanel(){
   try{ localStorage.removeItem('mb_panel_sesion'); }catch(e){}
   location.href = 'panel.html';
 }
+document.getElementById('slugNuevo').addEventListener('input', revisarSlugEscrito);
+document.getElementById('slugPass').addEventListener('input', desarmarRenombrar);
 document.getElementById('pinInp').addEventListener('keydown', e => { if(e.key === 'Enter') probarPin(); });
 document.getElementById('logPass').addEventListener('keydown', e => { if(e.key === 'Enter') entrarPanel(); });
 
 setInterval(render, 1000);
+/* La marca que este navegador ya conoce se pinta ANTES de hablar con la nube. Es lo que
+   evita el destello: el encabezado nace con el logo correcto y no con un nombre ajeno. */
+marcaTemprana();
 if(MODO_DEMO){
+  // El menú de ejemplo no es de nadie: no tiene dirección que cambiar
+  $('#slugTitulo').style.display = 'none';
+  $('#slugZona').style.display = 'none';
   $('#accesoDemo').style.display = 'flex';
   cargar(); // el demo carga su marca aunque el candado esté puesto
   if(sessionStorage.getItem('menusbot_pin_ok')) abrirPanel();

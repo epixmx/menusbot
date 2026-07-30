@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Trattoria Bella Vita</title>
+<title>Menú digital</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -424,7 +424,9 @@
   <div class="splash" id="splash">
     <div class="splash-caja">
       <div class="sobre">ORDENA DESDE TU CELULAR</div>
-      <h1 id="splashMarca"><span>TRATTORIA</span>Bella Vita</h1>
+      <!-- Sin nombre escrito a mano: lo pone la marca de verdad. Si aquí hubiera uno, el
+           comensal alcanzaría a leerlo antes de que llegue el del restaurante. -->
+      <h1 id="splashMarca"></h1>
       <div class="orn"><i></i>✳<i></i></div>
       <div class="pregunta">¿EN QUÉ MESA TE ENCUENTRAS?</div>
       <div class="mesas" id="gridMesas"></div>
@@ -441,7 +443,7 @@
       </div>
       <div class="titulo-zona">
         <div id="cabPrincipal">
-          <h1 id="cabTitulo">Trattoria<br><em>Bella Vita</em></h1>
+          <h1 id="cabTitulo"></h1>
           <img id="logoPrincipal" alt="" style="display:none">
           <div class="lema-cab" id="lemaCab"></div>
         </div>
@@ -449,8 +451,8 @@
           <defs><path id="circ" d="M 50,50 m -36,0 a 36,36 0 1,1 72,0 a 36,36 0 1,1 -72,0"/></defs>
           <!-- textLength ajusta la vuelta completa al perímetro del círculo: si no, el final
                del texto se monta encima del principio y no se lee ni una cosa ni la otra. -->
-          <text><textPath id="selloTexto" href="#circ" textLength="224" lengthAdjust="spacingAndGlyphs">TRATTORIA BELLA VITA · EST. 1987 · </textPath></text>
-          <text class="centro" id="selloCentro" x="50" y="57" text-anchor="middle">B.V.</text>
+          <text><textPath id="selloTexto" href="#circ" textLength="224" lengthAdjust="spacingAndGlyphs"></textPath></text>
+          <text class="centro" id="selloCentro" x="50" y="57" text-anchor="middle"></text>
         </svg>
         <img class="sello-logo" id="selloLogo" alt="" style="display:none">
       </div>
@@ -579,10 +581,20 @@ if(!RID){
 }
 /* Claves de almacenamiento separadas por restaurante (el demo conserva las suyas) */
 const LSK = k => RID === 'bellavita' ? k : k + '::' + RID;
-/* Para restaurantes propios, nada de marca del demo mientras carga su identidad */
-if(RID !== 'bellavita'){
+
+/* ---------- Que la marca no parpadee ----------
+   El HTML trae un nombre escrito porque algo tiene que haber antes de que la nube conteste.
+   El problema es que el comensal ALCANZA A LEERLO: ve un nombre en texto pelón y medio
+   segundo después lo ve saltar al logo. Se apaga siempre lo que viene escrito en el HTML —el
+   nombre del ejemplo no es el de nadie— y la marca de verdad se recuerda en este teléfono:
+   de la segunda visita en adelante se pinta la correcta de inmediato, sin esperar a nadie. */
+const marcaRecordada = () => { try{ return JSON.parse(localStorage.getItem(LSK('mb_marca')) || 'null'); }catch(e){ return null; } };
+const recordarMarca = m => { try{ localStorage.setItem(LSK('mb_marca'), JSON.stringify(m)); }catch(e){} };
+{
   const sm = document.getElementById('splashMarca'); if(sm) sm.innerHTML = '';
-  const ct = document.getElementById('cabTitulo'); if(ct) ct.innerHTML = '';
+  const ct = document.getElementById('cabTitulo');   if(ct) ct.innerHTML = '';
+  const st = document.getElementById('selloTexto');  if(st) st.textContent = '';
+  const sc = document.getElementById('selloCentro'); if(sc) sc.textContent = '';
   document.title = 'Menú digital';
 }
 
@@ -850,12 +862,25 @@ function aplicarMarca(){
   if(centro) centro.textContent = iniciales(m.nombre).split('').join('.') + '.';
   const titulo = $('#cabTitulo'), logoP = $('#logoPrincipal'), lemaEl = $('#lemaCab');
   if(titulo && logoP){
-    if(m.logo){
-      logoP.src = m.logo; logoP.style.display = 'block'; titulo.style.display = 'none';
-    } else {
+    const enTexto = () => {
       logoP.style.display = 'none'; titulo.style.display = 'block';
       titulo.innerHTML = (m.prefijo ? m.prefijo + '<br>' : '') + `<em>${m.nombre}</em>`;
-    }
+    };
+    if(m.logo){
+      /* El logo se enseña cuando ya está DIBUJADO, no cuando se le asigna el src. Si no,
+         queda primero un hueco del tamaño del logo y la imagen aparece de golpe encima. */
+      titulo.style.display = 'none';
+      if(logoP.getAttribute('src') !== m.logo){
+        logoP.style.display = 'none';
+        logoP.src = m.logo;
+        const mostrar = () => { titulo.style.display = 'none'; logoP.style.display = 'block'; };
+        if(logoP.decode) logoP.decode().then(mostrar).catch(mostrar);
+        else { logoP.onload = mostrar; logoP.onerror = mostrar; }
+        /* Y si la imagen nunca llega —enlace roto, red mala—, más vale el nombre en texto
+           que un encabezado en blanco para siempre. */
+        setTimeout(() => { if(logoP.style.display === 'none') enTexto(); }, 4000);
+      } else logoP.style.display = 'block';
+    } else enTexto();
     if(lemaEl) lemaEl.textContent = SUC ? 'Sucursal ' + SUC : (m.lema || '');
   }
   const base = TEMAS[temaActual] || TEMAS.editoriale;
@@ -874,6 +899,11 @@ let misIds = [];
 async function sincronizar(){
   try{
     const cfgs = await api(`menusbot_config?id=eq.${RID}&select=data`);
+    /* El restaurante pudo haber cambiado su dirección pública. Los QR ya impresos y los
+       links compartidos siguen apuntando a la vieja, así que la vieja se queda como una
+       lápida que dice a dónde se mudó; aquí se sigue la mudanza y el comensal ni se entera. */
+    const mudanza = cfgs && cfgs[0] && cfgs[0].data && cfgs[0].data.redirige_a;
+    if(mudanza){ mudarse(mudanza); return; }
     if(cfgs && cfgs[0]) dbCache = cfgs[0].data || dbCache;
     /* Un slug que no existe (restaurante dado de baja) NO debe caer al menú demo */
     if(RID !== 'bellavita' && (!cfgs || !cfgs.length)){
@@ -891,6 +921,8 @@ async function sincronizar(){
     configCargada = true;
     aplicarTema((dbCache.config && dbCache.config.tema) || 'editoriale');
     aplicarMarca();
+    /* Ya que se sabe la marca de verdad, se guarda para que la próxima visita no espere */
+    recordarMarca(MARCA);
     ofrecerSucursal();
     /* Apartar la mesa en cuanto sabemos en qué sucursal está. Los guardas de dentro hacen
        que esto corra una sola vez; si la bienvenida no pudo salir (guía abierta, otra hoja
@@ -2498,8 +2530,34 @@ function salirCliente(){
   if(vistaActual === 'cuenta') pintarVistaCuenta();
 }
 
+/* ---------- Mudanza de dirección pública ----------
+   Las claves de este teléfono llevan el slug pegado (ver LSK), así que al mudarse hay que
+   llevárselas: si no, el comensal que está a media comida pierde su sesión, su mesa, su
+   código y sus puntos, y la mesa se le queda amarrada a una dirección que ya no existe. */
+const CLAVES_MUDANZA = ['mb_cliente','mb_sesion_v1','mb_mesa_intentos','mb_mesa_saludo','mb_guia_v1','mb_invitado','mb_puntos_visto','mb_marca'];
+function mudarse(nuevo){
+  if(!/^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/.test(nuevo) || nuevo === RID) return;
+  const nk = k => nuevo === 'bellavita' ? k : k + '::' + nuevo;
+  try{
+    CLAVES_MUDANZA.forEach(k => {
+      const v = localStorage.getItem(LSK(k));
+      /* Si en la dirección nueva ya hay algo, manda lo nuevo: no se pisa una sesión viva */
+      if(v != null && localStorage.getItem(nk(k)) == null) localStorage.setItem(nk(k), v);
+    });
+  }catch(e){}
+  const p = new URLSearchParams(location.search);
+  p.set('r', nuevo);
+  location.replace(location.pathname + '?' + p.toString());
+}
+
 /* ---------- Arranque ---------- */
 $('#buscar').addEventListener('input', pintarLista);
+/* La marca que este teléfono ya conoce se pinta ANTES de hablar con la nube. Es lo que
+   evita el destello: el encabezado nace con el logo correcto en vez de con un nombre ajeno. */
+{
+  const mem = marcaRecordada();
+  if(mem && mem.nombre){ MARCA = Object.assign({}, MARCA, mem); aplicarMarca(); }
+}
 sincronizar();
 iniciarMesa();
 pintarMarquee();
