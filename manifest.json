@@ -1,0 +1,19 @@
+{
+  "name": "MenusBot — Mesero",
+  "short_name": "Mesero",
+  "description": "Avisos y autorizaciones de tus mesas.",
+  "start_url": "mesero.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f0d0b",
+  "theme_color": "#0f0d0b",
+  "lang": "es-MX",
+  "dir": "ltr",
+  "categories": ["business", "food", "productivity"],
+  "icons": [
+    { "src": "icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

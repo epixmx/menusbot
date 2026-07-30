@@ -124,6 +124,39 @@
   .entregas-hoy{margin-top:20px;border:1px solid var(--linea);border-radius:3px;padding:14px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
   .entregas-hoy .caps{color:var(--humo)}
   .entregas-hoy .lista{font-size:12px;color:var(--crema);font-family:var(--serif)}
+  /* Por confirmar: ahora es el respaldo del mesero, así que cada fila dice a quién le toca */
+  .pc-fila .pc-quien{font-size:10.5px;letter-spacing:.4px;color:var(--humo);white-space:nowrap}
+  .pc-fila .pc-quien b{color:var(--oro);font-weight:700}
+  .pc-fila .pc-nadie{font-size:9px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--pomodoro);border:1px solid var(--pomodoro);background:rgba(228,89,59,.1);border-radius:2px;padding:4px 8px;white-space:nowrap}
+  .pc-ayuda{font-size:11.5px;line-height:1.65;color:var(--humo);max-width:70ch;margin:6px 0 10px}
+  /* Rechazadas del día: quedan a la vista para que nadie se pregunte a dónde se fue una orden */
+  .rechazadas{border:1px solid var(--linea);border-left:3px solid var(--humo2);border-radius:3px;background:var(--esp2);padding:13px 16px;margin-bottom:16px}
+  .rechazadas .rz-fila{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 0;border-bottom:1px dotted var(--linea);font-size:12px;color:var(--humo)}
+  .rechazadas .rz-fila:last-child{border-bottom:none}
+  .rechazadas .rz-folio{font-family:var(--grot);font-weight:700;font-size:11.5px;color:var(--humo2);letter-spacing:1px}
+  .rechazadas .rz-mesa{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--crema)}
+  .rechazadas .rz-items{flex:1;min-width:180px}
+
+  /* ---------- Equipo: meseros con PIN y mesas asignadas ---------- */
+  .eq-caja{border:1px solid var(--linea);border-radius:3px;background:var(--esp2);padding:18px 20px;max-width:780px}
+  .eq-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px}
+  .eq-form .lbl{color:var(--humo);margin-bottom:8px}
+  .eq-form .filtro{width:100%;background:var(--esp);color:var(--crema)}
+  .eq-mesas{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+  .chip-mesa.sel{background:var(--pomodoro);border-color:var(--pomodoro);color:var(--papel)}
+  html.claro .chip-mesa.sel{color:#FBF7EE}
+  .eq-fila{display:flex;align-items:flex-start;gap:13px;padding:15px 18px;border-bottom:1px solid var(--linea);flex-wrap:wrap}
+  .eq-fila:last-child{border-bottom:none}
+  .eq-fila.baja{opacity:.6}
+  .eq-nom{font-family:var(--serif);font-size:16.5px;flex:1;min-width:180px}
+  .eq-nom small{display:block;font-family:var(--grot);font-size:10.5px;letter-spacing:.5px;color:var(--humo);margin-top:5px;line-height:1.7}
+  .eq-pin{font-family:var(--grot);font-weight:700;font-size:15px;letter-spacing:4px;color:var(--oro);border:1px solid var(--oro);background:rgba(201,162,39,.1);border-radius:2px;padding:4px 6px 4px 10px;align-self:center}
+  .eq-baja-tag{font-family:var(--grot);font-size:8px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--humo2);border:1px solid var(--linea2);border-radius:2px;padding:4px 8px;align-self:center}
+  .eq-link{flex-basis:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:4px}
+  .eq-link a{color:var(--pomodoro);font-size:11px;font-weight:600;text-decoration:none;word-break:break-all}
+  .eq-btns{display:flex;gap:8px;flex-wrap:wrap;align-self:center}
+  .eq-aviso{border:1px solid rgba(201,162,39,.6);border-left:3px solid var(--oro);border-radius:3px;background:rgba(201,162,39,.08);padding:13px 16px;margin-bottom:16px;font-size:12px;line-height:1.75;color:var(--crema);max-width:780px}
+  .eq-aviso b{color:var(--oro)}
 
   /* ---------- Registro / conciliación ---------- */
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
@@ -207,6 +240,23 @@
   /* reportes */
   .rep-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:16px}
   @media(max-width:960px){.rep-grid{grid-template-columns:1fr}}
+  /* El desglose por mesero necesita ancho completo: vendido, método de pago y propinas no caben en un tercio */
+  .rep-grid.dos{grid-template-columns:1.2fr 1fr}
+  @media(max-width:960px){.rep-grid.dos{grid-template-columns:1fr}}
+  .rep-caja table{border:none;background:transparent}
+  .rep-caja th{padding:10px 10px}
+  .rep-caja td{padding:11px 10px}
+  /* La aclaración de cada celda va en su propio renglón, no pegada al número */
+  .rep-caja td small{display:block;font-size:9px;color:var(--humo2);letter-spacing:.4px;margin-top:2px}
+  .rep-num{font-family:var(--grot);font-weight:700;text-align:right;white-space:nowrap}
+  th.der,td.der{text-align:right}
+  .caja-fila{display:flex;align-items:baseline;gap:12px;padding:10px 0;border-bottom:1px dotted var(--linea)}
+  .caja-fila:last-child{border-bottom:none}
+  .caja-fila .cj-txt{flex:1;font-size:12.5px;line-height:1.6}
+  .caja-fila .cj-txt small{display:block;color:var(--humo2);font-size:10.5px;margin-top:3px;line-height:1.6}
+  .caja-fila .cj-num{font-family:var(--grot);font-weight:700;font-size:15px;white-space:nowrap}
+  .caja-fila.fuerte{border-top:1px solid var(--linea2);margin-top:6px;padding-top:14px}
+  .caja-fila.fuerte .cj-num{font-size:19px;color:var(--basilico)}
   .rep-caja{border:1px solid var(--linea);border-radius:3px;background:var(--esp2);padding:16px 18px;min-height:200px}
   .rep-cab{color:var(--humo);margin-bottom:14px}
   .barras{display:flex;align-items:flex-end;gap:6px;height:150px}
@@ -279,6 +329,7 @@
     <div class="vista-titulo"><h1>Comandas en vivo</h1><span class="caps" id="resumenHoy"></span></div>
     <div id="llamadasZona"></div>
     <div id="porConfirmarZona"></div>
+    <div id="rechazadasZona"></div>
     <div id="mesasAbiertasZona"></div>
     <div id="chipMeseroZona"></div>
     <div class="tablero">
@@ -347,7 +398,7 @@
       <div class="kpi"><span class="caps">Ticket promedio</span><div class="num" id="rTicket">$0</div></div>
       <div class="kpi"><span class="caps">Servicio promedio</span><div class="num" id="rServicio">—</div></div>
     </div>
-    <div class="rep-grid">
+    <div class="rep-grid dos">
       <div class="rep-caja">
         <div class="rep-cab caps">Ventas por día</div>
         <div class="barras" id="barrasVentas"></div>
@@ -356,12 +407,33 @@
         <div class="rep-cab caps">Top platillos</div>
         <div id="topPlatillos"></div>
       </div>
-      <div class="rep-caja">
-        <div class="rep-cab caps">Desempeño por mesero</div>
-        <div id="topMeseros"></div>
-      </div>
     </div>
-    <div class="nota-pie">El corte del día imprime un resumen del turno (ventas, comandas, top platillos y entregas por mesero) listo para engrapar al corte de caja. En el producto real estos reportes se envían también por correo cada noche.</div>
+    <!-- Desempeño por mesero: se arma con los cobros registrados en la mesa, que es el dinero de verdad -->
+    <div class="rep-caja" style="margin-top:16px">
+      <div class="rep-cab caps">Desempeño por mesero — ventas y propinas</div>
+      <div class="tabla-scroll">
+        <table>
+          <thead><tr>
+            <th>Mesero</th>
+            <th class="der">Mesas atendidas</th>
+            <th class="der">Vendido</th>
+            <th class="der">En efectivo</th>
+            <th class="der">Con tarjeta</th>
+            <th class="der">Propina registrada</th>
+            <th class="der">Propina que eligió el cliente</th>
+            <th class="der">Diferencia</th>
+            <th class="der">Propina sobre su venta</th>
+          </tr></thead>
+          <tbody id="tablaMeseros"></tbody>
+        </table>
+      </div>
+      <div class="nota-pie" style="margin-top:14px">La columna «Propina que eligió el cliente» es lo que el comensal marcó en su teléfono al pedir la cuenta; «Propina registrada» es lo que el mesero anotó al cobrar. La diferencia entre las dos casi siempre tiene una explicación cotidiana: el cliente cambió de opinión al pagar, dejó menos suelto del que había marcado, o repartió el pago entre varios. Es un dato para platicarlo, no un señalamiento.</div>
+    </div>
+    <div class="rep-caja" style="margin-top:16px">
+      <div class="rep-cab caps">Para cuadrar la caja</div>
+      <div id="cajaEsperada"></div>
+    </div>
+    <div class="nota-pie">El corte imprime el resumen del turno (ventas, comandas, top platillos) más el desglose por mesero y por forma de pago, que es lo que necesitas para cuadrar la caja al cerrar. Si un periodo no tiene cobros registrados en mesa, el desglose de dinero sale vacío aunque haya comandas: el dinero se registra cuando el mesero cobra en la mesa, o cuando tú cierras la mesa desde Comandas.</div>
   </div>
 
   <!-- CARTA -->
@@ -403,13 +475,34 @@
 
   <!-- EQUIPO -->
   <div class="vista" id="v-equipo">
-    <div class="vista-titulo"><h1>El equipo</h1><span class="caps">Meseros que confirman entregas en mesa</span></div>
-    <div class="carta-lista" id="equipoLista" style="max-width:560px"></div>
-    <div style="display:flex;gap:10px;margin-top:16px;max-width:560px">
-      <input class="filtro" id="nuevoMesero" placeholder="Nombre del mesero…" style="flex:1;background:var(--esp2)">
-      <button class="btn-sec" onclick="agregarMesero()">Agregar</button>
+    <div class="vista-titulo"><h1>El equipo</h1><span class="caps">Cada mesero con su PIN, su sucursal y las mesas que le tocan</span></div>
+    <div id="equipoMigrar"></div>
+    <div id="equipoAviso"></div>
+    <div class="eq-caja" id="equipoFormZona">
+      <div class="caps" id="eqFormTitulo" style="color:var(--pomodoro);margin-bottom:16px">Agregar un mesero</div>
+      <div class="eq-form">
+        <div><div class="caps lbl">Nombre</div><input class="filtro" id="eqNombre" placeholder="Marco" autocomplete="off"></div>
+        <div><div class="caps lbl">PIN de 4 dígitos</div>
+          <div style="display:flex;gap:8px">
+            <input class="filtro" id="eqPin" inputmode="numeric" maxlength="4" placeholder="1234" autocomplete="off" style="letter-spacing:5px;text-align:center">
+            <button class="btn-mini" onclick="pinAlAzarForm()" title="Poner un PIN al azar">Al azar</button>
+          </div>
+        </div>
+        <div><div class="caps lbl">Sucursal</div><select class="filtro" id="eqSucursal" style="width:100%"><option value="">Sin sucursal</option></select></div>
+      </div>
+      <div style="margin-top:18px">
+        <div class="caps lbl" style="color:var(--humo)">Mesas que le tocan — toca los números</div>
+        <div class="eq-mesas" id="eqMesasGrid"></div>
+        <div class="caps" id="eqMesasResumen" style="color:var(--humo2);margin-top:10px;letter-spacing:1.2px"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
+        <button class="btn-sec" style="border-color:var(--pomodoro);color:var(--pomodoro)" onclick="guardarMesero()" id="eqGuardar">Agregar al equipo</button>
+        <button class="btn-mini" onclick="limpiarFormMesero()" id="eqCancelar" style="display:none">Cancelar</button>
+      </div>
     </div>
-    <div class="nota-pie">Estos nombres aparecen en el tablero de comandas al confirmar una entrega, y en los reportes de desempeño. En el producto real cada mesero tendría su PIN o su propio acceso desde el teléfono.</div>
+    <div class="carta-lista" id="equipoLista" style="max-width:780px;margin-top:20px"></div>
+    <div class="nota-pie">Cada mesero abre su enlace en el teléfono, elige su nombre de la lista y teclea su PIN: de ahí en adelante ve solo las mesas que le asignaste, autoriza las órdenes de viva voz en la mesa y registra lo que cobra.
+    El PIN es apenas una llave de casa: sirve para separar las mesas de cada quien y para que quede constancia de quién autorizó una orden y quién cobró una mesa. No es una contraseña fuerte, así que cámbialo si alguien lo vio o si el mesero deja de trabajar contigo.</div>
   </div>
 
   <!-- TEMAS E IDENTIDAD -->
@@ -542,12 +635,31 @@ async function api(ruta, opc = {}){
     ...opc,
     headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', ...(opc.headers || {}) },
   });
-  if(!r.ok) throw new Error(await r.text());
+  if(!r.ok){
+    // El status viaja en el error para poder distinguir un nombre repetido (409) de una caída de red
+    const e = new Error(await r.text());
+    e.status = r.status;
+    throw e;
+  }
   const tx = await r.text();
   return tx ? JSON.parse(tx) : null;
 }
+/* Avisos al teléfono del mesero: la función de la nube decide a quién le suena.
+   Nunca esperamos su respuesta ni dejamos que un aviso fallido detenga el cambio que ya se guardó. */
+function avisar(cuerpo){
+  try{
+    fetch(SUPA_URL + '/functions/v1/mb-avisar', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', apikey: SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY },
+      body: JSON.stringify(cuerpo),
+    }).catch(()=>{});
+  }catch(e){}
+}
 let cfgCache = { config:{ tema:'editoriale', meseros:['Marco','Lucía','Giovanni'], pin:'1987', mesas:12 }, precios:{}, ocultos:[], platillos:[], fotos:{}, adminVisto:0 };
 let ordenesCache = [], llamadasCache = [], mesasAbiertasCache = [];
+// El equipo ya no vive en la configuración: cada mesero es una fila con PIN, sucursal y mesas.
+// menusbot_cobros es el registro de dinero de verdad (venta, propina y forma de pago).
+let meserosCache = [], cobrosCache = [];
 let enLinea = false;
 const sucursalActivaPanel = ''; // sin selector de sucursal en el panel (demo)
 
@@ -565,13 +677,18 @@ async function cargar(){
       estado: f.estado, creada: Date.parse(f.creada), sucursal: f.sucursal || '', cerrada: !!f.cerrada,
       entregada_at: f.entregada_at ? Date.parse(f.entregada_at) : null, entregada_por: f.entregada_por,
       verificacion: f.verificacion || 'ok', cliente_id: f.cliente_id != null ? f.cliente_id : null,
+      autorizada_por: f.autorizada_por || '', autorizada_at: f.autorizada_at ? Date.parse(f.autorizada_at) : null,
     }));
     const lls = await api(`menusbot_llamadas?restaurante_id=eq.${RID}&atendida=eq.false&order=ts.desc&limit=20&select=*`);
     llamadasCache = (lls || []).map(l => ({ dbId: l.id, mesa: l.mesa, ts: Date.parse(l.ts), motivo: l.motivo || '', sucursal: l.sucursal || '', atendida: false }));
     // Traemos también el amarre: quién tiene la mesa, con qué código y desde cuándo, para que el mesero lo vea
-    const ma = await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&select=mesa,sucursal,autorizada,dispositivo_id,codigo,invitados,latido_at,abierta_at`);
+    const ma = await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&select=mesa,sucursal,autorizada,dispositivo_id,codigo,invitados,latido_at,abierta_at,mesero_id,propina_sugerida`);
     mesasAbiertasCache = (ma || []).map(x => ({
       mesa: x.mesa, sucursal: x.sucursal || '',
+      mesero_id: x.mesero_id != null ? x.mesero_id : null,
+      // La propina que el comensal eligió en su pantalla al pedir la cuenta; la guardamos
+      // para que quede en el registro de venta aunque la mesa se cierre desde el panel.
+      propina_sugerida: +x.propina_sugerida || 0,
       // autorizada:false = la tomó el comensal al ordenar, no el restaurante → sus órdenes piden confirmación
       autorizada: x.autorizada !== false,
       dispositivo_id: x.dispositivo_id || null,
@@ -579,6 +696,20 @@ async function cargar(){
       invitados: Array.isArray(x.invitados) ? x.invitados : [],
       latido_at: x.latido_at ? Date.parse(x.latido_at) : null,
       abierta_at: x.abierta_at ? Date.parse(x.abierta_at) : null,
+    }));
+    // El equipo y los cobros del mes: de aquí salen las mesas asignadas, los avisos y el dinero de los reportes
+    const mss = await api(`menusbot_meseros?restaurante_id=eq.${RID}&order=nombre.asc&select=*`);
+    meserosCache = (mss || []).map(m => ({
+      id: m.id, nombre: m.nombre || '', pin: String(m.pin == null ? '' : m.pin),
+      sucursal: m.sucursal || '', mesas: (Array.isArray(m.mesas) ? m.mesas : []).map(Number).filter(n => !isNaN(n)),
+      activo: m.activo !== false,
+    }));
+    const cbs = await api(`menusbot_cobros?restaurante_id=eq.${RID}&order=cobrado_at.desc&limit=1000&select=*`);
+    cobrosCache = (cbs || []).map(c => ({
+      id: c.id, sucursal: c.sucursal || '', mesa: c.mesa, mesero: c.mesero || '', mesero_id: c.mesero_id != null ? c.mesero_id : null,
+      total: +c.total || 0, propina: +c.propina || 0, propina_sugerida: +c.propina_sugerida || 0,
+      metodo: c.metodo || 'efectivo', folios: Array.isArray(c.folios) ? c.folios : [],
+      cobrado_at: c.cobrado_at ? Date.parse(c.cobrado_at) : null,
     }));
     enLinea = true;
   }catch(e){ enLinea = false; }
@@ -825,6 +956,9 @@ async function avanzar(folio){
   if(!o || o.estado >= 2) return;
   o.estado++;
   render();
+  // Estado 2 = el platillo está listo: le suena el teléfono al mesero de esa mesa para que lo recoja.
+  // El aviso va suelto y con el error tragado: si falla, el cambio de estado se guarda igual.
+  if(o.estado === 2) avisar({ restaurante_id: RID, sucursal: o.sucursal || '', mesa: o.mesa, tipo:'listo' });
   try{ await api(`menusbot_ordenes?id=eq.${o.dbId}`, { method:'PATCH', body: JSON.stringify({ estado: o.estado }) }); }catch(e){ toast('Sin conexión — reintenta'); }
 }
 async function entregar(folio, mesero){
@@ -867,6 +1001,8 @@ async function confirmarPartida(folio, idx, mesero){
   } else if(o.estado === 1){
     cuerpo.estado = 2; // con la primera partida servida, la comanda pasa a "En servicio"
     o.estado = 2;
+    // Aquí no mandamos el aviso de «listo»: el mesero acaba de servir esa partida en la mesa,
+    // ya está ahí. El aviso se manda cuando cocina la marca lista desde el tablero (avanzar).
   }
   render();
   toast(todos ? `Comanda ${folio} entregada completa — confirmó ${mesero}` : `Partida entregada — ${mesero} · ${folio}`);
@@ -882,8 +1018,10 @@ function tarjetaComanda(o, d){
   if(o.estado === 1) acciones = `<div class="c-pie"><span class="c-total">${fmt(o.total)}</span><button class="btn-avanza" onclick="avanzar('${o.folio}')">Sale a la mesa</button></div>`;
   if(o.estado === 2) acciones = `<div class="c-pie"><span class="c-total">${fmt(o.total)}</span></div>`;
   if(conPartidas && pidiendoMesero && pidiendoMesero.folio === o.folio){
-    acciones += `<div class="quien"><span class="caps">¿Quién entrega esta partida?</span>
-    <div class="meseros">${(d.config.meseros||[]).map(m => `<button class="btn-mesero" onclick="elegirMeseroYMarcar('${m.replace(/'/g,"\\'")}')">${m}</button>`).join('')}
+    // Los nombres salen de la tabla del equipo; la lista vieja de la configuración solo sirve de respaldo
+    const nombres = nombresMeseros();
+    acciones += `<div class="quien"><span class="caps">${nombres.length ? '¿Quién entrega esta partida?' : 'Todavía no hay nadie en el equipo — dálos de alta en la pestaña Equipo'}</span>
+    <div class="meseros">${nombres.map(m => `<button class="btn-mesero" onclick="elegirMeseroYMarcar('${m.replace(/'/g,"\\'")}')">${escTxt(m)}</button>`).join('')}
     <button class="btn-mesero" style="opacity:.55" onclick="pidiendoMesero=null;render()">Cancelar</button></div></div>`;
   }
   const items = o.items.map((i, ix) => {
@@ -924,17 +1062,41 @@ function render(){
     $('#chipMeseroZona').innerHTML = meseroActivo ? `
       <div class="chip-mesero"><span class="caps" style="color:var(--humo)">Mesero activo</span><b>${meseroActivo}</b>
         <button class="btn-sec" style="padding:7px 11px;font-size:8.5px" onclick="cambiarMeseroActivo()">Cambiar</button></div>` : '';
-    // Órdenes por confirmar: llegaron de una mesa que no está abierta
-    const porConf = d.ordenes.filter(o => o.verificacion === 'pendiente' && !o.cerrada);
+    // Por confirmar: el comensal ya mandó su orden y le toca al mesero de esa mesa autorizarla en persona.
+    // El panel es el respaldo para cuando el mesero no trae el teléfono a mano.
+    const porConf = d.ordenes.filter(o => o.verificacion === 'pendiente' && !o.cerrada).sort((a,b) => a.creada - b.creada);
     $('#porConfirmarZona').innerHTML = porConf.length ? `<div class="por-confirmar">
-      <div class="caps" style="color:var(--oro)">Por confirmar — mesa sin abrir</div>
-      ${porConf.map(o => `<div class="pc-fila">
-        <span class="pc-folio">${o.folio}</span>
-        <span class="pc-mesa">Mesa ${String(o.mesa).padStart(2,'0')}${o.sucursal ? ' · ' + o.sucursal : ''}</span>
-        <span class="pc-items">${o.items.map(i => `${i.qty}× ${i.nombre}`).join(' · ')}</span>
-        <span class="pc-total">${fmt(o.total)}</span>
-        <button class="btn-avanza" onclick="aceptarOrden(${o.dbId})">Aceptar</button>
-        <button class="btn-sec rojo" onclick="rechazarOrden(${o.dbId})">Rechazar</button>
+      <div class="caps" style="color:var(--oro)">Por confirmar — esperando al mesero en la mesa</div>
+      <p class="pc-ayuda">Cocina no ve estas órdenes todavía. El mesero de cada mesa las confirma de viva voz desde su teléfono; si no lo trae encima, autorízalas tú desde aquí.</p>
+      ${porConf.map(o => {
+        const suyos = meserosDeMesa(o.mesa, o.sucursal);
+        const quien = suyos.length
+          ? `<span class="pc-quien">le toca a <b>${escTxt(suyos.map(m => m.nombre).join(' o '))}</b> · espera ${haceHumano(o.creada)}</span>`
+          : `<span class="pc-quien">espera ${haceHumano(o.creada)}</span><span class="pc-nadie" title="Sin mesero asignado, el aviso les llegó a todos los meseros activos">Nadie tiene esta mesa</span>`;
+        const armado = rechazoArmado === o.dbId;
+        return `<div class="pc-fila">
+          <span class="pc-folio">${o.folio}</span>
+          <span class="pc-mesa">Mesa ${String(o.mesa).padStart(2,'0')}${o.sucursal ? ' · ' + escTxt(o.sucursal) : ''}</span>
+          <span class="pc-items">${o.items.map(i => `${i.qty}× ${escTxt(i.nombre)}`).join(' · ')}</span>
+          ${quien}
+          <span class="pc-total">${fmt(o.total)}</span>
+          <button class="btn-avanza" onclick="aceptarOrden(${o.dbId})">Autorizar</button>
+          <button class="btn-sec rojo" onclick="rechazarOrden(${o.dbId})">${armado ? 'Confirmar rechazo' : 'Rechazar'}</button>
+        </div>`;
+      }).join('')}
+    </div>` : '';
+    // Rechazadas de hoy: quedan a la vista para que una orden no se desvanezca sin dejar rastro.
+    // Van desde ordenesCache porque dbLeer() las saca del tablero y de los reportes a propósito.
+    const inicioRech = new Date().setHours(0,0,0,0);
+    const rechazadas = ordenesCache.filter(o => o.verificacion === 'rechazada' && o.creada >= inicioRech).sort((a,b) => b.creada - a.creada);
+    $('#rechazadasZona').innerHTML = rechazadas.length ? `<div class="rechazadas">
+      <div class="caps" style="color:var(--humo2);margin-bottom:8px">Rechazadas hoy — no cuentan en ventas ni pasan a cocina</div>
+      ${rechazadas.map(o => `<div class="rz-fila">
+        <span class="rz-folio">${o.folio}</span>
+        <span class="rz-mesa">Mesa ${String(o.mesa).padStart(2,'0')}${o.sucursal ? ' · ' + escTxt(o.sucursal) : ''}</span>
+        <span class="rz-items">${o.items.map(i => `${i.qty}× ${escTxt(i.nombre)}`).join(' · ')}</span>
+        <span>${fmt(o.total)}</span>
+        <span>${o.autorizada_por ? 'rechazó ' + escTxt(o.autorizada_por) : 'sin registro de quién'}${o.autorizada_at ? ' · ' + hora(o.autorizada_at) : ''}</span>
       </div>`).join('')}
     </div>` : '';
     // Chips de mesas abiertas (seguridad: solo mesas abiertas ordenan directo)
@@ -947,10 +1109,11 @@ function render(){
       const tomada = ab && !fila.autorizada;
       chipsMesas += `<button class="chip-mesa ${ab ? 'abierta' : ''} ${tomada ? 'tomada' : ''}" onclick="alternarMesaAbierta(${i})" title="${ab ? (tomada ? 'La tomó un comensal — clic para cerrarla' : 'Mesa abierta — clic para cerrarla') : 'Mesa cerrada — clic para abrirla'}">${i}</button>`;
     }
-    $('#mesasAbiertasZona').innerHTML = `<div class="mesas-abiertas"><span class="caps">Mesas abiertas</span>${chipsMesas}<span class="hint">Verde = con comensales · sus órdenes entran directo</span></div>`
+    $('#mesasAbiertasZona').innerHTML = `<div class="mesas-abiertas"><span class="caps">Mesas abiertas</span>${chipsMesas}<span class="hint">Verde = con comensales · toda orden la confirma el mesero en la mesa</span></div>`
       + pintarAmarresMesas();
     for(const e of [0,1,2]){
-      const del = d.ordenes.filter(o => o.estado === e && o.verificacion !== 'pendiente').sort((a,b) => a.creada - b.creada);
+      // Cocina solo ve lo autorizado: 'ok' y nada más. Ni 'pendiente' ni 'rechazada' ni ningún valor raro.
+      const del = d.ordenes.filter(o => o.estado === e && o.verificacion === 'ok').sort((a,b) => a.creada - b.creada);
       $('#n'+e).textContent = del.length;
       $('#col'+e).innerHTML = del.length ? del.map(o => tarjetaComanda(o,d)).join('') : '<div class="col-vacia">Sin comandas</div>';
     }
@@ -1011,15 +1174,7 @@ function render(){
 
   if(vista === 'qr'){ renderQRs(d); renderQRResenas(); }
 
-  if(vista === 'equipo'){
-    $('#equipoLista').innerHTML = (d.config.meseros || []).map(m => {
-      const entregas = d.ordenes.filter(o => o.entregada_por === m).length;
-      return `<div class="carta-fila">
-        <div class="cf-nombre">${m}<small>${entregas} entrega(s) confirmadas</small></div>
-        <button class="btn-mini" onclick="quitarMesero('${m.replace(/'/g,"\\'")}')" title="Quitar del equipo">×</button>
-      </div>`;
-    }).join('') || '<div class="carta-fila"><div class="cf-nombre" style="color:var(--humo2)">Sin meseros — agrega al primero abajo</div></div>';
-  }
+  if(vista === 'equipo') pintarEquipo(d);
 
   if(vista === 'temas'){
     $('#temasGrid').innerHTML = Object.entries(TEMAS).map(([k,t]) => `
@@ -1897,16 +2052,264 @@ function quitarPlatillo(id){
   });
 }
 
-/* ---------- Equipo de meseros ---------- */
-function agregarMesero(){
-  const n = $('#nuevoMesero').value.trim();
-  if(!n) return;
-  dbEscribir(d => { if(!d.config.meseros.includes(n)) d.config.meseros.push(n); });
-  $('#nuevoMesero').value = '';
-  toast(`${n} agregado al equipo`);
+/* ================================================================
+   EQUIPO — cada mesero es una fila de menusbot_meseros con su PIN,
+   su sucursal y las mesas que le tocan. La lista de nombres que vivía
+   en la configuración se queda solo como respaldo mientras el
+   restaurante no haya pasado su equipo a la nueva forma.
+   ================================================================ */
+function meserosActivos(){ return meserosCache.filter(m => m.activo); }
+// Nombres para los selectores del tablero: la tabla manda; si está vacía usamos la lista vieja
+function nombresMeseros(){
+  const act = meserosActivos();
+  if(act.length) return act.map(m => m.nombre);
+  return ((cfgCache.config && cfgCache.config.meseros) || []).filter(Boolean);
 }
-function quitarMesero(n){
-  dbEscribir(d => { d.config.meseros = d.config.meseros.filter(x => x !== n); });
+const nMesasConfig = () => Math.max(1, +((cfgCache.config && cfgCache.config.mesas) || 12));
+// Un mesero sin sucursal atiende en todas: así se comporta también la función de avisos
+function meserosDeMesa(mesa, suc){
+  const s = suc || '';
+  return meserosActivos().filter(m => m.mesas.includes(+mesa) && (!m.sucursal || m.sucursal === s));
+}
+function nombreMeseroPorId(id){
+  const m = meserosCache.find(x => x.id === id);
+  return m ? m.nombre : '';
+}
+function mesasSinMesero(){
+  const tomadas = new Set();
+  for(const m of meserosActivos()) for(const n of m.mesas) tomadas.add(+n);
+  const faltan = [];
+  for(let i = 1; i <= nMesasConfig(); i++) if(!tomadas.has(i)) faltan.push(i);
+  return faltan;
+}
+// Lista en español: «7, 8 y 9»
+function listaEs(arr){
+  if(!arr.length) return '';
+  if(arr.length === 1) return String(arr[0]);
+  return arr.slice(0,-1).join(', ') + ' y ' + arr[arr.length-1];
+}
+const pinAlAzar = () => String(Math.floor(1000 + Math.random() * 9000));
+function urlMesero(m){
+  const base = new URL('mesero.html', location.href).href;
+  return base + '?r=' + encodeURIComponent(RID) + (m && m.sucursal ? '&s=' + encodeURIComponent(m.sucursal) : '');
+}
+function copiarUrlMesero(id){
+  const m = meserosCache.find(x => x.id === id);
+  if(!m) return;
+  const u = urlMesero(m);
+  (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject())
+    .then(() => toast(`Enlace de ${m.nombre} copiado — mándaselo por mensaje`))
+    // Igual que la URL pública: sin permiso de portapapeles dejamos el enlace a la vista en lugar de usar prompt()
+    .catch(() => toast('Copia el enlace desde el texto en rojo de su fila'));
+}
+
+/* Formulario: un solo formulario que sirve para agregar y para editar.
+   Los campos de texto NO se repintan en cada vuelta del reloj para no borrar lo que se está escribiendo. */
+let formMesero = { id:null, mesas:[] };
+function limpiarFormMesero(){
+  formMesero = { id:null, mesas:[] };
+  $('#eqNombre').value = '';
+  $('#eqPin').value = '';
+  $('#eqSucursal').value = '';
+  $('#eqFormTitulo').textContent = 'Agregar un mesero';
+  $('#eqGuardar').textContent = 'Agregar al equipo';
+  $('#eqCancelar').style.display = 'none';
+  render();
+}
+function pinAlAzarForm(){
+  $('#eqPin').value = pinAlAzar();
+  toast('PIN nuevo puesto en el formulario — recuerda guardar');
+}
+function editarMesero(id){
+  const m = meserosCache.find(x => x.id === id);
+  if(!m) return;
+  formMesero = { id: m.id, mesas: m.mesas.slice() };
+  $('#eqNombre').value = m.nombre;
+  $('#eqPin').value = m.pin;
+  pintarSucEquipo();
+  $('#eqSucursal').value = m.sucursal;
+  $('#eqFormTitulo').textContent = 'Editando a ' + m.nombre;
+  $('#eqGuardar').textContent = 'Guardar cambios';
+  $('#eqCancelar').style.display = 'inline-block';
+  $('#equipoFormZona').scrollIntoView({ behavior:'smooth', block:'center' });
+  render();
+}
+function alternarMesaMesero(n){
+  const i = formMesero.mesas.indexOf(n);
+  if(i >= 0) formMesero.mesas.splice(i, 1); else formMesero.mesas.push(n);
+  formMesero.mesas.sort((a,b) => a - b);
+  render();
+}
+async function guardarMesero(){
+  const nombre = $('#eqNombre').value.trim();
+  const pin = $('#eqPin').value.trim();
+  const sucursal = $('#eqSucursal').value || '';
+  if(!nombre){ toast('Escribe el nombre del mesero'); return; }
+  if(!/^\d{4}$/.test(pin)){ toast('El PIN tiene que ser de cuatro números — usa el botón «Al azar» si quieres uno'); return; }
+  const cuerpo = { nombre, pin, sucursal, mesas: formMesero.mesas.slice() };
+  const editando = formMesero.id != null;
+  try{
+    if(editando){
+      await api(`menusbot_meseros?id=eq.${formMesero.id}`, { method:'PATCH', body: JSON.stringify(cuerpo) });
+      const m = meserosCache.find(x => x.id === formMesero.id);
+      if(m) Object.assign(m, cuerpo);
+      toast(`${nombre} actualizado`);
+    } else {
+      const filas = await api('menusbot_meseros', {
+        method:'POST', headers:{ 'Prefer':'return=representation' },
+        body: JSON.stringify({ restaurante_id: RID, activo: true, ...cuerpo }),
+      });
+      const f = filas && filas[0];
+      meserosCache.push({ id: f ? f.id : Date.now(), activo:true, ...cuerpo });
+      meserosCache.sort((a,b) => a.nombre.localeCompare(b.nombre, 'es'));
+      toast(`${nombre} agregado — mándale su enlace y su PIN`);
+    }
+    limpiarFormMesero();
+  }catch(e){
+    // 409 = ya hay alguien con ese nombre en este restaurante (el índice único no deja repetirlo)
+    if(e && e.status === 409) toast('Ya tienes a alguien con ese nombre — usa el apellido o un apodo para distinguirlos');
+    else toast('Sin conexión — inténtalo de nuevo');
+  }
+}
+async function alternarActivoMesero(id){
+  const m = meserosCache.find(x => x.id === id);
+  if(!m) return;
+  const nuevo = !m.activo;
+  m.activo = nuevo;
+  render();
+  try{
+    await api(`menusbot_meseros?id=eq.${id}`, { method:'PATCH', body: JSON.stringify({ activo: nuevo }) });
+    toast(nuevo ? `${m.nombre} vuelve al equipo` : `${m.nombre} dado de baja — su historial de ventas se queda`);
+  }catch(e){ m.activo = !nuevo; render(); toast('Sin conexión — inténtalo de nuevo'); }
+}
+// Borrar de verdad solo si nunca cobró: si tiene cobros, la fila sostiene el historial de ventas.
+// Doble clic para confirmar, igual que al liberar una mesa: nada de confirm() nativo.
+let borrarMeseroArmado = null;
+let borrarMeseroTimer = null;
+async function borrarMesero(id){
+  const m = meserosCache.find(x => x.id === id);
+  if(!m) return;
+  if(borrarMeseroArmado !== id){
+    borrarMeseroArmado = id;
+    clearTimeout(borrarMeseroTimer);
+    borrarMeseroTimer = setTimeout(() => { borrarMeseroArmado = null; render(); }, 6000);
+    render();
+    toast(`¿Borrar a ${m.nombre} del todo? Toca otra vez para confirmar.`);
+    return;
+  }
+  borrarMeseroArmado = null;
+  clearTimeout(borrarMeseroTimer);
+  try{
+    const cobros = await api(`menusbot_cobros?restaurante_id=eq.${RID}&mesero_id=eq.${id}&select=id&limit=1`);
+    if(cobros && cobros.length){
+      render();
+      toast(`${m.nombre} ya cobró mesas: si lo borro, esas ventas se quedan sin dueño en tus reportes. Dale de baja y desaparece de la lista sin perder el historial.`);
+      return;
+    }
+    await api(`menusbot_meseros?id=eq.${id}`, { method:'DELETE' });
+    meserosCache = meserosCache.filter(x => x.id !== id);
+    if(formMesero.id === id) limpiarFormMesero(); else render();
+    toast(`${m.nombre} borrado del equipo`);
+  }catch(e){ render(); toast('Sin conexión — inténtalo de nuevo'); }
+}
+// Migración amable: nunca automática. Solo se ofrece si hay nombres viejos y la tabla está vacía.
+let migrandoMeseros = false;
+async function migrarMeseros(){
+  if(migrandoMeseros) return;
+  const viejos = ((cfgCache.config && cfgCache.config.meseros) || []).filter(Boolean);
+  if(!viejos.length || meserosCache.length) return;
+  migrandoMeseros = true;
+  render();
+  try{
+    const filas = await api('menusbot_meseros', {
+      method:'POST', headers:{ 'Prefer':'return=representation' },
+      body: JSON.stringify(viejos.map(n => ({ restaurante_id: RID, nombre: n, pin: pinAlAzar(), sucursal:'', mesas:[], activo:true }))),
+    });
+    meserosCache = (filas || []).map(f => ({
+      id: f.id, nombre: f.nombre, pin: String(f.pin || ''), sucursal: f.sucursal || '',
+      mesas: Array.isArray(f.mesas) ? f.mesas.map(Number) : [], activo: f.activo !== false,
+    }));
+    toast(`${viejos.length} mesero(s) pasados a la nueva forma — a cada uno le tocó un PIN al azar, revísalos y asígnales sus mesas`);
+  }catch(e){ toast('Sin conexión — inténtalo de nuevo'); }
+  migrandoMeseros = false;
+  render();
+}
+/* El selector de sucursales, con el mismo patrón de guardia que el de reportes y el de QR */
+function pintarSucEquipo(){
+  const sel = document.getElementById('eqSucursal');
+  if(!sel) return;
+  const sucs = ((cfgCache.config && cfgCache.config.sucursales) || []).filter(Boolean);
+  const quiere = '<option value="">' + (sucs.length ? 'Todas las sucursales' : 'Sin sucursal') + '</option>'
+    + sucs.map(x => `<option value="${escTxt(x)}">${escTxt(x)}</option>`).join('');
+  if(sel.dataset.opts !== quiere){
+    const a = sel.value;
+    sel.dataset.opts = quiere;
+    sel.innerHTML = quiere;
+    sel.value = a && [...sel.options].some(o => o.value === a) ? a : '';
+  }
+}
+function pintarEquipo(d){
+  pintarSucEquipo();
+  // Rejilla de mesas: se reconstruye solo si cambió el número de mesas; la selección se marca con clases
+  const grid = $('#eqMesasGrid');
+  const nM = nMesasConfig();
+  if(grid.dataset.n !== String(nM)){
+    grid.dataset.n = String(nM);
+    let h = '';
+    for(let i = 1; i <= nM; i++) h += `<button class="chip-mesa" data-mesa="${i}" onclick="alternarMesaMesero(${i})">${i}</button>`;
+    grid.innerHTML = h;
+  }
+  grid.querySelectorAll('.chip-mesa').forEach(b => b.classList.toggle('sel', formMesero.mesas.includes(+b.dataset.mesa)));
+  $('#eqMesasResumen').textContent = formMesero.mesas.length
+    ? (formMesero.mesas.length === 1 ? `LE TOCA LA MESA ${formMesero.mesas[0]}` : `LE TOCAN LAS MESAS ${listaEs(formMesero.mesas).toUpperCase()}`)
+    : 'SIN MESAS TODAVÍA — VERÁ LOS AVISOS DE LAS MESAS QUE NADIE TIENE';
+
+  // Aviso de mesas huérfanas: así se comporta de verdad la función de avisos
+  const faltan = mesasSinMesero();
+  const zonaAviso = $('#equipoAviso');
+  if(meserosActivos().length && faltan.length){
+    const una = faltan.length === 1;
+    zonaAviso.innerHTML = una
+      ? `<div class="eq-aviso">La mesa <b>${faltan[0]}</b> no tiene mesero asignado: los avisos de esa mesa les llegarán a todos los meseros activos. Está bien si así lo quieres; si prefieres que tenga dueño, asígnala arriba.</div>`
+      : `<div class="eq-aviso">Las mesas <b>${listaEs(faltan)}</b> no tienen mesero asignado: los avisos de esas mesas les llegarán a todos los meseros activos. Está bien si así lo quieres; si prefieres que cada mesa tenga dueño, asígnalas arriba.</div>`;
+  } else zonaAviso.innerHTML = '';
+
+  // Migración: solo mientras haya nombres viejos y la tabla siga vacía
+  const viejos = ((d.config && d.config.meseros) || []).filter(Boolean);
+  const zonaMig = $('#equipoMigrar');
+  if(viejos.length && !meserosCache.length){
+    zonaMig.innerHTML = `<div class="eq-aviso">Tenías estos nombres apuntados de antes: <b>${escTxt(viejos.join(' · '))}</b>.
+      Ahora cada mesero necesita su propio PIN para entrar desde su teléfono. Puedo darlos de alta de una vez, con un PIN al azar para cada uno, y tú les cambias el PIN y les asignas mesas después.
+      <div style="margin-top:12px"><button class="btn-sec" onclick="migrarMeseros()" ${migrandoMeseros ? 'disabled' : ''}>${migrandoMeseros ? 'Pasando…' : 'Pasar mis meseros a la nueva forma'}</button></div></div>`;
+  } else zonaMig.innerHTML = '';
+
+  const orden = [...meserosCache].sort((a,b) => (a.activo === b.activo ? a.nombre.localeCompare(b.nombre, 'es') : (a.activo ? -1 : 1)));
+  $('#equipoLista').innerHTML = orden.length ? orden.map(m => {
+    const entregas = d.ordenes.filter(o => o.entregada_por === m.nombre).length;
+    const cobros = cobrosCache.filter(c => c.mesero_id === m.id || (c.mesero_id == null && c.mesero === m.nombre));
+    const vendido = cobros.reduce((s,c) => s + c.total, 0);
+    const mesasTxt = !m.mesas.length ? 'Sin mesas asignadas'
+      : (m.mesas.length === 1 ? 'Mesa ' + m.mesas[0] : 'Mesas ' + listaEs(m.mesas));
+    const sucTxt = m.sucursal ? ' · ' + escTxt(m.sucursal) : '';
+    const u = urlMesero(m);
+    const armado = borrarMeseroArmado === m.id;
+    return `<div class="eq-fila ${m.activo ? '' : 'baja'}">
+      <div class="eq-nom">${escTxt(m.nombre)}
+        <small>${mesasTxt}${sucTxt}<br>${entregas} entrega(s) confirmadas · ${cobros.length} mesa(s) cobradas${vendido ? ' · ' + fmt(vendido) : ''}</small></div>
+      <span class="eq-pin" title="PIN con el que entra desde su teléfono">${escTxt(m.pin || '····')}</span>
+      ${m.activo ? '' : '<span class="eq-baja-tag">Dado de baja</span>'}
+      <div class="eq-btns">
+        <button class="btn-mini" onclick="editarMesero(${m.id})">Editar</button>
+        <button class="btn-mini" onclick="alternarActivoMesero(${m.id})">${m.activo ? 'Dar de baja' : 'Reactivar'}</button>
+        <button class="btn-mini" style="${armado ? 'border-color:var(--pomodoro);color:var(--pomodoro)' : ''}" onclick="borrarMesero(${m.id})" title="Borrar del todo — solo se puede si nunca cobró">${armado ? 'Confirmar borrar' : 'Borrar'}</button>
+      </div>
+      <div class="eq-link">
+        <span class="caps" style="color:var(--humo2)">SU ENLACE</span>
+        <a href="${escTxt(u)}" target="_blank">${escTxt(u.replace(/^https?:\/\//,''))}</a>
+        <button class="btn-sec" onclick="copiarUrlMesero(${m.id})" style="padding:6px 10px;font-size:8px">COPIAR</button>
+      </div>
+    </div>`;
+  }).join('') : '<div class="eq-fila"><div class="eq-nom" style="color:var(--humo2);font-size:14px">Todavía no hay nadie en el equipo — da de alta al primero en el formulario de arriba.</div></div>';
 }
 
 /* ---------- Mesas abiertas y amarre al dispositivo (seguridad) ---------- */
@@ -1931,11 +2334,22 @@ function pintarAmarresMesas(){
   const filas = abiertas.map(m => {
     const mesaTxt = `Mesa ${String(m.mesa).padStart(2,'0')}`;
     const etiquetas = m.autorizada ? '' : `<span class="md-tag libre" title="La abrió el comensal, no el restaurante: sus órdenes pasan por Por confirmar">La tomó el comensal</span>`;
+    // Quién trae la mesa: el mesero al que se le asignó, y si alguien ya cobró ahí, quién fue
+    const suyos = meserosDeMesa(m.mesa, m.sucursal);
+    const cobro = m.mesero_id != null ? nombreMeseroPorId(m.mesero_id) : '';
+    const quien = suyos.length
+      ? `<span class="md-meta" title="Mesero al que le asignaste esta mesa">La trae <b style="color:var(--oro)">${escTxt(suyos.map(x => x.nombre).join(' o '))}</b></span>`
+      : `<span class="md-tag libre" title="Sin mesero asignado: los avisos de esta mesa les llegan a todos">Sin mesero asignado</span>`;
+    // Si el que cobró es el mismo que tiene la mesa asignada no lo repetimos: no aporta nada
+    const cobroDistinto = cobro && !suyos.some(x => x.nombre === cobro);
+    const quienCobro = cobroDistinto ? `<span class="md-meta" title="Quedó anotado al cobrar">Cobró ${escTxt(cobro)}</span>` : '';
     if(!m.dispositivo_id){
       // Abierta desde el panel pero nadie ha ordenado: sigue disponible para el primer teléfono
       return `<div class="md-fila">
         <span class="md-mesa">${mesaTxt}</span>
         <span class="md-nota">abierta, sin dispositivo todavía</span>
+        ${quien}
+        ${quienCobro}
         ${etiquetas}
       </div>`;
     }
@@ -1950,6 +2364,8 @@ function pintarAmarresMesas(){
       <span class="md-mesa">${mesaTxt}</span>
       ${m.codigo ? `<span class="md-codigo" title="Díctale este código a quien quiera ordenar desde su teléfono en esta mesa">${escTxt(m.codigo)}</span>` : `<span class="md-nota">tomada, sin código</span>`}
       <span class="md-meta">${dispositivos} dispositivo${dispositivos === 1 ? '' : 's'} · ···${cola}${desde ? ' · ' + desde : ''}</span>
+      ${quien}
+      ${quienCobro}
       ${etiquetas}
       ${abandonada ? `<span class="md-tag ida" title="Sin señal de vida en más de ${ABANDONO_MIN} minutos">Posiblemente abandonada</span>` : ''}
       <button class="btn-sec md-btn ${armada ? 'armado' : ''}" onclick="liberarMesa(${m.mesa})">${armada ? 'Confirmar liberar' : 'Liberar'}</button>
@@ -2000,7 +2416,7 @@ async function alternarMesaAbierta(n){
     render();
     try{
       await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${n}&sucursal=eq.${encodeURIComponent(suc)}`, { method:'DELETE' });
-      toast(`Mesa ${String(n).padStart(2,'0')} cerrada — sus órdenes pedirán confirmación`);
+      toast(`Mesa ${String(n).padStart(2,'0')} cerrada — queda libre para los siguientes comensales`);
     }catch(e){ toast('Sin conexión — inténtalo de nuevo'); }
   } else {
     const previa = mesaAbiertaDe(n);
@@ -2008,35 +2424,62 @@ async function alternarMesaAbierta(n){
     else mesasAbiertasCache.push({ mesa: n, sucursal: suc, autorizada: true, dispositivo_id: null, codigo: null, invitados: [], latido_at: null, abierta_at: Date.now() });
     render();
     try{
-      // autorizada:true es lo que hace que sus órdenes entren directo a cocina (el default de la columna es false).
+      // autorizada:true marca que la mesa la abrió el restaurante y no un comensal por su cuenta.
+      // Ya no salta la confirmación: desde v10.8 toda orden la autoriza el mesero en la mesa.
       // No mandamos dispositivo_id / codigo / invitados: con merge-duplicates los sobrescribiríamos y
       // le tumbaríamos el amarre al comensal que ya tomó la mesa; aquí solo la autorizamos.
       await api(`menusbot_mesas_abiertas?on_conflict=restaurante_id,sucursal,mesa`, {
         method:'POST', headers:{ 'Prefer':'resolution=merge-duplicates' },
         body: JSON.stringify({ restaurante_id: RID, sucursal: suc, mesa: n, autorizada: true }),
       });
-      toast(`Mesa ${String(n).padStart(2,'0')} abierta — sus órdenes entran directo a cocina`);
+      toast(`Mesa ${String(n).padStart(2,'0')} abierta — el mesero confirma cada orden en la mesa`);
     }catch(e){ toast('Sin conexión — inténtalo de nuevo'); }
   }
 }
 
-/* ---------- Órdenes por confirmar ---------- */
+/* ---------- Órdenes por confirmar: el panel como respaldo del mesero ----------
+   Quién queda en autorizada_por: lo normal es que autorice el mesero desde su teléfono y ahí
+   quede su nombre limpio. Cuando autoriza el panel es otra cosa y conviene que se distinga en el
+   historial, así que anotamos «<mesero> (desde el panel)» si hay un mesero activo elegido en el
+   tablero, y «Panel» a secas si el administrador no eligió a nadie. Así nadie confunde una
+   autorización hecha en la mesa con una hecha desde la caja. */
+function quienAutorizaDesdePanel(){
+  return meseroActivo ? `${meseroActivo} (desde el panel)` : 'Panel';
+}
 async function aceptarOrden(dbId){
   const o = ordenesCache.find(x => x.dbId === dbId);
-  if(o) o.verificacion = 'ok';
+  const quien = quienAutorizaDesdePanel();
+  const ahora = new Date().toISOString();
+  if(o){ o.verificacion = 'ok'; o.autorizada_por = quien; o.autorizada_at = Date.parse(ahora); }
+  rechazoArmado = null;
   render();
   try{
-    await api(`menusbot_ordenes?id=eq.${dbId}`, { method:'PATCH', body: JSON.stringify({ verificacion: 'ok' }) });
-    toast(`Comanda ${o ? o.folio : ''} aceptada — pasa a Recibidas`);
+    await api(`menusbot_ordenes?id=eq.${dbId}`, { method:'PATCH', body: JSON.stringify({ verificacion:'ok', autorizada_por: quien, autorizada_at: ahora }) });
+    toast(`Comanda ${o ? o.folio : ''} autorizada desde el panel — ya la ve cocina`);
   }catch(e){ toast('Sin conexión — reintenta'); }
 }
+// Rechazar es destructivo para el comensal: doble clic para confirmar, sin confirm() nativo
+let rechazoArmado = null;
+let rechazoArmadoTimer = null;
 async function rechazarOrden(dbId){
   const o = ordenesCache.find(x => x.dbId === dbId);
-  if(o){ o.verificacion = 'rechazada'; o.estado = 3; o.cerrada = true; }
+  if(rechazoArmado !== dbId){
+    rechazoArmado = dbId;
+    clearTimeout(rechazoArmadoTimer);
+    rechazoArmadoTimer = setTimeout(() => { rechazoArmado = null; render(); }, 6000);
+    render();
+    toast(`¿Rechazar la comanda ${o ? o.folio : ''}? El comensal se queda sin ese pedido. Toca otra vez para confirmar.`);
+    return;
+  }
+  rechazoArmado = null;
+  clearTimeout(rechazoArmadoTimer);
+  const quien = quienAutorizaDesdePanel();
+  const ahora = new Date().toISOString();
+  if(o){ o.verificacion = 'rechazada'; o.estado = 3; o.cerrada = true; o.autorizada_por = quien; o.autorizada_at = Date.parse(ahora); }
   render();
   try{
-    await api(`menusbot_ordenes?id=eq.${dbId}`, { method:'PATCH', body: JSON.stringify({ verificacion: 'rechazada', estado: 3, cerrada: true }) });
-    toast(`Comanda ${o ? o.folio : ''} rechazada — no cuenta en reportes`);
+    await api(`menusbot_ordenes?id=eq.${dbId}`, { method:'PATCH', body: JSON.stringify({ verificacion:'rechazada', autorizada_por: quien, autorizada_at: ahora, estado: 3, cerrada: true }) });
+    toast(`Comanda ${o ? o.folio : ''} rechazada — queda anotada abajo y no cuenta en ventas`);
   }catch(e){ toast('Sin conexión — reintenta'); }
 }
 
@@ -2047,12 +2490,33 @@ async function cobrarMesa(mesaN, ts){
   const sucM = (l && l.sucursal) || '';
   // Consumo por cliente registrado (antes de marcar cerradas): 1 punto por cada $10
   const abiertasMesa = ordenesCache.filter(o => o.mesa === mesaN && (o.sucursal || '') === sucM && !o.cerrada && o.verificacion !== 'rechazada');
+  // Datos del amarre antes de soltarlo: de aquí salen la propina que eligió el comensal y quién traía la mesa
+  const amarre = mesasAbiertasCache.find(x => x.mesa === mesaN && (x.sucursal || '') === sucM);
+  const suyos = meserosDeMesa(mesaN, sucM);
+  const meseroId = (amarre && amarre.mesero_id) || (suyos.length === 1 ? suyos[0].id : null);
+  const meseroNom = meseroId ? nombreMeseroPorId(meseroId) : '';
+  // Registro de venta para el corte. Cerrar desde el panel es el atajo de siempre: nadie
+  // capturó si fue efectivo o tarjeta, así que NO lo adivinamos — va como 'sin anotar' y
+  // aparece en «otra forma de pago», donde se ve que falta el dato. Igual con la propina
+  // cobrada: dejamos 0 porque nadie la confirmó, y conservamos la sugerida como referencia.
+  const cobroPanel = {
+    restaurante_id: RID, sucursal: sucM, mesa: mesaN,
+    mesero: meseroNom, mesero_id: meseroId,
+    total: abiertasMesa.reduce((s, o) => s + (+o.total || 0), 0),
+    propina: 0, propina_sugerida: (amarre && amarre.propina_sugerida) || 0,
+    metodo: 'sin anotar', folios: abiertasMesa.map(o => o.folio).filter(Boolean),
+    cobrado_at: new Date().toISOString(),
+  };
   const porCliente = {};
   for(const o of abiertasMesa){
     if(o.cliente_id != null) porCliente[o.cliente_id] = (porCliente[o.cliente_id] || 0) + (+o.total || 0);
   }
   ordenesCache.forEach(o => { if(o.mesa === mesaN && (o.sucursal || '') === sucM) o.cerrada = true; });
   mesasAbiertasCache = mesasAbiertasCache.filter(x => !(x.mesa === mesaN && (x.sucursal || '') === sucM));
+  // Se refleja de una vez en los reportes; el sondeo de 4 s lo vuelve a leer del servidor
+  cobrosCache.unshift({ id: null, sucursal: sucM, mesa: mesaN, mesero: meseroNom, mesero_id: meseroId,
+    total: cobroPanel.total, propina: 0, propina_sugerida: cobroPanel.propina_sugerida,
+    metodo: 'sin anotar', folios: cobroPanel.folios, cobrado_at: Date.parse(cobroPanel.cobrado_at) });
   render();
   try{
     let puntosDados = 0;
@@ -2067,7 +2531,9 @@ async function cobrarMesa(mesaN, ts){
     await api(`menusbot_ordenes?restaurante_id=eq.${RID}&mesa=eq.${mesaN}&sucursal=eq.${encodeURIComponent(sucM)}&cerrada=eq.false`, { method:'PATCH', body: JSON.stringify({ cerrada: true }) });
     await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${mesaN}&sucursal=eq.${encodeURIComponent(sucM)}`, { method:'DELETE' });
     if(l && l.dbId) await api(`menusbot_llamadas?id=eq.${l.dbId}`, { method:'PATCH', body: JSON.stringify({ atendida: true }) });
-    toast(`Mesa ${String(mesaN).padStart(2,'0')} cobrada y cerrada${puntosDados ? ` — ${puntosDados} punto(s) abonados al cliente` : ''} — el comensal ya ve su cuenta pagada`);
+    // Sin este registro la mesa desaparecería del corte de caja como si nunca se hubiera vendido
+    if(cobroPanel.total > 0) await api('menusbot_cobros', { method:'POST', body: JSON.stringify(cobroPanel) });
+    toast(`Mesa ${String(mesaN).padStart(2,'0')} cobrada y cerrada${puntosDados ? ` — ${puntosDados} punto(s) abonados al cliente` : ''} — quedó en el corte sin forma de pago, porque se cerró desde aquí`);
   }catch(e){ toast('Sin conexión — inténtalo de nuevo'); }
 }
 async function atenderLlamada(ts){
@@ -2083,6 +2549,43 @@ function ordenesPeriodo(d, dias){
   const desde = dias === 1 ? new Date().setHours(0,0,0,0) : Date.now() - dias * 86400000;
   const sf = (document.getElementById('sucFiltro') || {}).value || 'todas';
   return d.ordenes.filter(o => o.creada >= desde && (sf === 'todas' || (o.sucursal || '') === sf));
+}
+/* Los cobros son la fuente del dinero: se registran cuando el mesero cobra y cierra la mesa.
+   Las órdenes siguen siendo la fuente de los platillos y los tiempos de cocina. */
+function cobrosPeriodo(dias){
+  const desde = dias === 1 ? new Date().setHours(0,0,0,0) : Date.now() - dias * 86400000;
+  const sf = (document.getElementById('sucFiltro') || {}).value || 'todas';
+  return cobrosCache.filter(c => c.cobrado_at != null && c.cobrado_at >= desde && (sf === 'todas' || c.sucursal === sf));
+}
+const esEfectivo = c => (c.metodo || '').toLowerCase() === 'efectivo';
+const esTarjeta = c => (c.metodo || '').toLowerCase() === 'tarjeta';
+// Agrupa los cobros por mesero. La fila del mesero manda; si el cobro no la trae, usamos el nombre suelto.
+function cobrosPorMesero(cobros){
+  const mapa = new Map();
+  for(const c of cobros){
+    const m = c.mesero_id != null ? meserosCache.find(x => x.id === c.mesero_id) : null;
+    const nombre = (m && m.nombre) || c.mesero || 'Sin mesero anotado';
+    if(!mapa.has(nombre)) mapa.set(nombre, { nombre, mesas:0, venta:0, efectivo:0, tarjeta:0, otro:0, propina:0, sugerida:0, propinaEfectivo:0, propinaTarjeta:0 });
+    const a = mapa.get(nombre);
+    a.mesas++;
+    a.venta += c.total;
+    a.propina += c.propina;
+    a.sugerida += c.propina_sugerida;
+    if(esEfectivo(c)){ a.efectivo += c.total; a.propinaEfectivo += c.propina; }
+    else if(esTarjeta(c)){ a.tarjeta += c.total; a.propinaTarjeta += c.propina; }
+    else a.otro += c.total;
+  }
+  return [...mapa.values()].sort((a,b) => b.venta - a.venta);
+}
+function totalesCaja(cobros){
+  const t = { ventaEfectivo:0, ventaTarjeta:0, ventaOtro:0, propinaEfectivo:0, propinaTarjeta:0, propinaOtro:0, sugerida:0, venta:0, propina:0, mesas: cobros.length };
+  for(const c of cobros){
+    t.venta += c.total; t.propina += c.propina; t.sugerida += c.propina_sugerida;
+    if(esEfectivo(c)){ t.ventaEfectivo += c.total; t.propinaEfectivo += c.propina; }
+    else if(esTarjeta(c)){ t.ventaTarjeta += c.total; t.propinaTarjeta += c.propina; }
+    else { t.ventaOtro += c.total; t.propinaOtro += c.propina; }
+  }
+  return t;
 }
 function pintarSucFiltro(d){
   const sel = document.getElementById('sucFiltro');
@@ -2131,40 +2634,124 @@ function renderReportes(d){
   $('#topPlatillos').innerHTML = top.length ? top.map(([n,v], i) =>
     `<div class="top-fila"><span class="t-pos">${i+1}.</span><span class="t-nom">${n}</span><span class="t-dato">${fmt(v.m)}<small>${v.u} uds</small></span></div>`).join('')
     : '<div style="color:var(--humo2);font-size:11px">Sin ventas en el periodo</div>';
-  // meseros
-  const porMesero = {};
+  // Desempeño por mesero: sale de los cobros, que es donde queda el dinero de verdad.
+  // Las entregas confirmadas en el tablero se quedan como dato de servicio, debajo del nombre.
+  const porEntregas = {};
   for(const o of entregadas){
-    porMesero[o.entregada_por] = porMesero[o.entregada_por] || { n:0, t:0 };
-    porMesero[o.entregada_por].n++;
-    porMesero[o.entregada_por].t += o.entregada_at - o.creada;
+    const k = o.entregada_por || 'Sin anotar';
+    porEntregas[k] = porEntregas[k] || { n:0, t:0 };
+    porEntregas[k].n++;
+    porEntregas[k].t += o.entregada_at - o.creada;
   }
-  const ms = Object.entries(porMesero).sort((a,b) => b[1].n - a[1].n);
-  $('#topMeseros').innerHTML = ms.length ? ms.map(([n,v], i) =>
-    `<div class="top-fila"><span class="t-pos">${i+1}.</span><span class="t-nom">${n}</span><span class="t-dato">${v.n} entregas<small>${Math.round(v.t/v.n/60000)} min prom.</small></span></div>`).join('')
-    : '<div style="color:var(--humo2);font-size:11px">Sin entregas confirmadas en el periodo</div>';
+  const cobros = cobrosPeriodo(dias);
+  const porMesero = cobrosPorMesero(cobros);
+  $('#tablaMeseros').innerHTML = porMesero.length ? porMesero.map(m => {
+    const dif = m.propina - m.sugerida;
+    const pct = m.venta ? (m.propina / m.venta * 100) : 0;
+    const difTxt = Math.abs(dif) < 0.5
+      ? '<small>igual a lo sugerido</small>'
+      : `<span style="color:${dif > 0 ? 'var(--basilico)' : 'var(--oro)'}">${dif > 0 ? '+' : '−'}${fmt(Math.abs(dif))}</span><small>${dif > 0 ? 'se registró más' : 'se registró menos'}</small>`;
+    const ent = porEntregas[m.nombre];
+    return `<tr>
+      <td class="serif">${escTxt(m.nombre)}${ent ? `<br><small>${ent.n} entrega(s) · ${Math.round(ent.t/ent.n/60000)} min prom.</small>` : ''}</td>
+      <td class="der">${m.mesas}</td>
+      <td class="der rep-num">${fmt(m.venta)}</td>
+      <td class="der rep-num">${fmt(m.efectivo)}${m.otro ? `<br><small>+ ${fmt(m.otro)} en otra forma</small>` : ''}</td>
+      <td class="der rep-num">${fmt(m.tarjeta)}</td>
+      <td class="der rep-num">${fmt(m.propina)}</td>
+      <td class="der rep-num">${fmt(m.sugerida)}</td>
+      <td class="der">${difTxt}</td>
+      <td class="der rep-num">${pct.toFixed(1)}%</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--humo2)">Todavía no hay mesas cobradas en este periodo</td></tr>';
+
+  // Para cuadrar la caja. Sobre las propinas en efectivo no adivinamos: mostramos las dos cifras
+  // por separado y que el restaurante aplique su costumbre.
+  const t = totalesCaja(cobros);
+  $('#cajaEsperada').innerHTML = `
+    <div class="caja-fila"><span class="cj-txt">Ventas cobradas en efectivo<small>Este dinero sí tiene que estar en la caja.</small></span><span class="cj-num">${fmt(t.ventaEfectivo)}</span></div>
+    <div class="caja-fila"><span class="cj-txt">Propinas en efectivo que anotaron los meseros<small>Búscalas en la caja solo si en tu restaurante las propinas en efectivo se juntan y se reparten después. Si cada mesero se queda con la suya, esta cifra no debe aparecer en el conteo.</small></span><span class="cj-num">${fmt(t.propinaEfectivo)}</span></div>
+    <div class="caja-fila fuerte"><span class="cj-txt">Efectivo esperado en caja — solo ventas<small>Cuenta esto si las propinas en efectivo se las lleva el mesero.</small></span><span class="cj-num">${fmt(t.ventaEfectivo)}</span></div>
+    <div class="caja-fila fuerte"><span class="cj-txt">Efectivo esperado en caja — ventas más propinas<small>Cuenta esto si las propinas en efectivo entran a la caja y se reparten al cierre.</small></span><span class="cj-num">${fmt(t.ventaEfectivo + t.propinaEfectivo)}</span></div>
+    <div class="caja-fila"><span class="cj-txt">Ventas con tarjeta<small>No están en la caja: llegan por la terminal.</small></span><span class="cj-num">${fmt(t.ventaTarjeta)}</span></div>
+    <div class="caja-fila"><span class="cj-txt">Propinas con tarjeta<small>También llegan por la terminal, para repartir según tu costumbre.</small></span><span class="cj-num">${fmt(t.propinaTarjeta)}</span></div>
+    ${t.ventaOtro ? `<div class="caja-fila"><span class="cj-txt">Cobrado en otra forma de pago<small>Transferencia, vale o lo que el mesero haya anotado distinto de efectivo y tarjeta. Aquí también caen las mesas que cerraste desde el panel con «Cobrada — cerrar mesa»: ahí nadie alcanzó a anotar cómo se pagó.</small></span><span class="cj-num">${fmt(t.ventaOtro)}</span></div>` : ''}
+    <div class="caja-fila"><span class="cj-txt">Mesas cobradas en el periodo</span><span class="cj-num">${t.mesas}</span></div>`;
 }
 function imprimirCorte(){
   const d = dbLeer();
   const dias = +$('#periodo').value;
   const os = ordenesPeriodo(d, dias).sort((a,b) => a.creada - b.creada);
   const vendido = os.reduce((s,o) => s + (+o.total||0), 0);
+  // El dinero del corte sale de los cobros; las comandas quedan como detalle de lo que salió de cocina
+  const cobros = cobrosPeriodo(dias).sort((a,b) => (a.cobrado_at||0) - (b.cobrado_at||0));
+  const porMesero = cobrosPorMesero(cobros);
+  const t = totalesCaja(cobros);
   const titulo = dias === 1 ? 'Corte del día' : `Reporte — últimos ${dias} días`;
   const w = window.open('', '_blank');
-  w.document.write(`<html><head><title>${titulo} · ${marcaDe().nombre}</title><style>
-    body{font-family:Georgia,serif;max-width:640px;margin:30px auto;color:#241F18;padding:0 20px}
-    h1{font-style:italic;font-weight:500} .caps{font-family:Arial;font-size:10px;letter-spacing:2px;color:#777}
-    table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}
-    th{font-family:Arial;font-size:9px;letter-spacing:1.5px;text-align:left;border-bottom:1px solid #999;padding:7px 6px}
-    td{border-bottom:1px dotted #bbb;padding:7px 6px;vertical-align:top}
+  if(!w){ toast('El navegador bloqueó la ventana de impresión — permite las ventanas emergentes'); return; }
+  // La columna de «otra forma» solo aparece si en el periodo hubo cobros que no fueron
+  // efectivo ni tarjeta; si no, el papel queda más limpio. Sin ella, efectivo + tarjeta
+  // no sumaría lo vendido y quien cuadra la caja se quedaría buscando la diferencia.
+  const hayOtro = t.ventaOtro > 0;
+  const filaMesero = m => {
+    const dif = m.propina - m.sugerida;
+    const difTxt = Math.abs(dif) < 0.5 ? 'igual' : (dif > 0 ? '+' : '−') + fmt(Math.abs(dif));
+    return `<tr><td>${escTxt(m.nombre)}</td><td style="text-align:right">${m.mesas}</td>
+      <td style="text-align:right">${fmt(m.venta)}</td><td style="text-align:right">${fmt(m.efectivo)}</td>
+      <td style="text-align:right">${fmt(m.tarjeta)}</td>${hayOtro ? `<td style="text-align:right">${fmt(m.otro)}</td>` : ''}
+      <td style="text-align:right">${fmt(m.propina)}</td>
+      <td style="text-align:right">${fmt(m.sugerida)}</td><td style="text-align:right">${difTxt}</td></tr>`;
+  };
+  w.document.write(`<html><head><title>${escTxt(titulo)} · ${escTxt(marcaDe().nombre)}</title><style>
+    body{font-family:Georgia,serif;max-width:720px;margin:30px auto;color:#241F18;padding:0 20px}
+    h1{font-style:italic;font-weight:500} h2{font-style:italic;font-weight:500;font-size:17px;margin-top:30px}
+    .caps{font-family:Arial;font-size:10px;letter-spacing:2px;color:#777}
+    table{width:100%;border-collapse:collapse;margin-top:12px;font-size:12.5px}
+    th{font-family:Arial;font-size:8.5px;letter-spacing:1.2px;text-align:left;border-bottom:1px solid #999;padding:7px 5px}
+    td{border-bottom:1px dotted #bbb;padding:7px 5px;vertical-align:top}
     .tot{font-size:18px;margin-top:18px;border-top:2px solid #241F18;padding-top:10px;display:flex;justify-content:space-between}
+    .caja{margin-top:12px;font-size:13px}
+    .caja div{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dotted #bbb}
+    .caja div.fuerte{border-top:1.5px solid #241F18;border-bottom:none;font-weight:bold;padding-top:11px;margin-top:4px}
+    .caja em{display:block;font-size:10.5px;color:#666;font-style:normal;max-width:62%}
+    .aclara{font-family:Arial;font-size:10.5px;color:#555;line-height:1.65;margin-top:10px}
+    .vacio{font-family:Arial;font-size:11px;color:#777;margin-top:10px}
   </style></head><body>
-    <div class="caps">${((marcaDe().prefijo ? marcaDe().prefijo + ' ' : '') + marcaDe().nombre).toUpperCase()} · MENUSBOT</div>
-    <h1>${titulo}</h1>
-    <div class="caps">${new Date().toLocaleString('es-MX')} · ${os.length} comandas</div>
-    <table><tr><th>FOLIO</th><th>HORA</th><th>MESA</th><th>ARTÍCULOS</th><th>ENTREGÓ</th><th style="text-align:right">TOTAL</th></tr>
-    ${os.map(o => `<tr><td>${o.folio}</td><td>${hora(o.creada)}</td><td>${o.mesa}</td><td>${o.items.map(i => i.qty + '× ' + i.nombre).join('<br>')}</td><td>${o.entregada_por || '—'}</td><td style="text-align:right"><b>${fmt(o.total)}</b></td></tr>`).join('')}
+    <div class="caps">${escTxt(((marcaDe().prefijo ? marcaDe().prefijo + ' ' : '') + marcaDe().nombre).toUpperCase())} · MENUSBOT</div>
+    <h1>${escTxt(titulo)}</h1>
+    <div class="caps">${new Date().toLocaleString('es-MX')} · ${os.length} comandas · ${cobros.length} mesas cobradas</div>
+
+    <h2>Para cuadrar la caja</h2>
+    <div class="caja">
+      <div><span>Ventas cobradas en efectivo<em>Este dinero tiene que estar en la caja.</em></span><b>${fmt(t.ventaEfectivo)}</b></div>
+      <div><span>Propinas en efectivo anotadas por los meseros<em>Aparecen en la caja solo si en este restaurante se juntan y se reparten al cierre.</em></span><b>${fmt(t.propinaEfectivo)}</b></div>
+      <div class="fuerte"><span>Efectivo esperado — solo ventas<em>Si las propinas en efectivo se las lleva el mesero.</em></span><b>${fmt(t.ventaEfectivo)}</b></div>
+      <div class="fuerte"><span>Efectivo esperado — ventas más propinas<em>Si las propinas en efectivo entran a la caja.</em></span><b>${fmt(t.ventaEfectivo + t.propinaEfectivo)}</b></div>
+      <div><span>Ventas con tarjeta<em>Llegan por la terminal, no a la caja.</em></span><b>${fmt(t.ventaTarjeta)}</b></div>
+      <div><span>Propinas con tarjeta</span><b>${fmt(t.propinaTarjeta)}</b></div>
+      ${t.ventaOtro ? `<div><span>Otra forma de pago o sin anotar</span><b>${fmt(t.ventaOtro)}</b></div>` : ''}
+    </div>
+
+    <h2>Por mesero</h2>
+    ${porMesero.length ? `<table>
+      <tr><th>MESERO</th><th style="text-align:right">MESAS</th><th style="text-align:right">VENDIDO</th>
+      <th style="text-align:right">EFECTIVO</th><th style="text-align:right">TARJETA</th>${hayOtro ? '<th style="text-align:right">OTRA FORMA</th>' : ''}
+      <th style="text-align:right">PROPINA REGISTRADA</th><th style="text-align:right">PROPINA QUE ELIGIÓ EL CLIENTE</th><th style="text-align:right">DIFERENCIA</th></tr>
+      ${porMesero.map(filaMesero).join('')}
+      <tr><td><b>Total</b></td><td style="text-align:right"><b>${t.mesas}</b></td><td style="text-align:right"><b>${fmt(t.venta)}</b></td>
+      <td style="text-align:right"><b>${fmt(t.ventaEfectivo)}</b></td><td style="text-align:right"><b>${fmt(t.ventaTarjeta)}</b></td>${hayOtro ? `<td style="text-align:right"><b>${fmt(t.ventaOtro)}</b></td>` : ''}
+      <td style="text-align:right"><b>${fmt(t.propina)}</b></td><td style="text-align:right"><b>${fmt(t.sugerida)}</b></td><td></td></tr>
     </table>
-    <div class="tot"><span>TOTAL VENDIDO</span><b>${fmt(vendido)} MXN</b></div>
+    <div class="aclara">«Propina que eligió el cliente» es lo que el comensal marcó en su teléfono al pedir la cuenta; «propina registrada» es lo que el mesero anotó al cobrar. La diferencia suele explicarse sola: el cliente cambió de opinión al pagar, dejó otro monto en efectivo o repartió el pago. Sirve para platicarlo, no para acusar a nadie.</div>`
+    : '<div class="vacio">No hay mesas cobradas en este periodo. El dinero se registra cuando el mesero cobra y cierra la mesa.</div>'}
+
+    <h2>Comandas del periodo</h2>
+    <table><tr><th>FOLIO</th><th>HORA</th><th>MESA</th><th>ARTÍCULOS</th><th>ENTREGÓ</th><th style="text-align:right">TOTAL</th></tr>
+    ${os.map(o => `<tr><td>${escTxt(o.folio)}</td><td>${hora(o.creada)}</td><td>${o.mesa}</td><td>${o.items.map(i => i.qty + '× ' + escTxt(i.nombre)).join('<br>')}</td><td>${escTxt(o.entregada_por || '—')}</td><td style="text-align:right"><b>${fmt(o.total)}</b></td></tr>`).join('')}
+    </table>
+    <div class="tot"><span>TOTAL EN COMANDAS</span><b>${fmt(vendido)} MXN</b></div>
+    <div class="aclara">El total en comandas es lo que salió de cocina; el total cobrado (${fmt(t.venta)}) es lo que se registró al cerrar mesas. Si no coinciden, hay mesas abiertas sin cobrar o cobros hechos fuera del sistema.</div>
   </body></html>`);
   w.document.close();
   setTimeout(() => { try{ w.print(); }catch(e){} }, 400);

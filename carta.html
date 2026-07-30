@@ -361,6 +361,32 @@
     /* 3 columnas en escritorio */
     #lista{grid-template-columns:repeat(3,1fr)}
   }
+
+  /* ---------- Código de la mesa: grande, legible de un vistazo y fácil de dictar ---------- */
+  .cod-caja{margin-top:18px;border:1px solid var(--linea2);border-radius:3px;padding:20px 16px 18px;text-align:center;background:rgba(201,162,39,.07)}
+  .cod-caja .cod-rot{font-family:var(--grot);font-size:9px;font-weight:700;letter-spacing:2.6px;text-transform:uppercase;color:var(--oro)}
+  .cod-caja .cod-num{font-family:var(--grot);font-weight:700;font-size:52px;line-height:1;letter-spacing:12px;color:var(--crema);margin:12px 0 4px;padding-left:12px}
+  .cod-caja .cod-pie{font-family:var(--grot);font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--humo2);line-height:1.7}
+  /* Tira discreta: conserva el código a la vista sin estorbar, para quien llega tarde */
+  .cod-tira{display:flex;align-items:center;gap:13px;margin:0 20px 14px;border:1px solid var(--linea);border-left:3px solid var(--oro);border-radius:2px;padding:11px 13px;background:transparent;width:calc(100% - 40px);text-align:left;cursor:pointer;font-family:var(--grot);color:var(--humo)}
+  .cod-tira b{font-family:var(--grot);font-weight:700;font-size:21px;letter-spacing:4px;color:var(--oro);flex-shrink:0}
+  .cod-tira span{font-size:9px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;line-height:1.65}
+  .cod-tira em{display:block;font-style:normal;color:var(--humo2)}
+  /* ---------- Propina sugerida (el monto en pesos manda sobre el porcentaje) ---------- */
+  .prop-ops{display:flex;flex-direction:column;gap:9px;margin-top:16px}
+  .prop-btn{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;border:1px solid var(--linea2);background:transparent;border-radius:2px;padding:15px 16px;cursor:pointer;font-family:var(--grot);color:var(--crema);text-align:left;transition:.18s;min-height:56px}
+  .prop-btn:hover,.prop-btn:active{border-color:var(--oro)}
+  .prop-btn .pb-pct{font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase}
+  /* El monto nunca se parte: «Sin propina» y «Tú decides» se leían en dos renglones. */
+  .prop-btn .pb-mto{font-family:var(--serif);font-style:italic;font-size:21px;color:var(--oro);white-space:nowrap;flex-shrink:0}
+  /* Sin propina: mismo tamaño y mismo peso visual que las demás. Nada de castigo visual. */
+  .prop-btn.neutro .pb-pct{color:var(--humo)}
+  .prop-btn.neutro .pb-mto{color:var(--humo2);font-size:17px}
+  /* Cinco pasos caben en un teléfono con la etiqueta un poco más chica */
+  /* Cinco etiquetas en el ancho de un teléfono: sin este hueco mínimo se pegan unas a otras
+     y la fila se lee como una sola frase corrida en vez de cinco pasos. */
+  .p-etiq.cinco{font-size:7px;letter-spacing:.6px;gap:7px}
+  .p-etiq.cinco span{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -467,8 +493,8 @@
       <div class="caps" style="color:var(--pomodoro);letter-spacing:3px;font-family:var(--grot);font-weight:700;font-size:10px">CÓMO ORDENAR DESDE TU CELULAR</div>
       <div class="g-paso"><b>1</b><div><h4>Toca cualquier platillo</h4><p>Verás su foto en grande, ingredientes, calorías y alérgenos.</p></div></div>
       <div class="g-paso"><b>2</b><div><h4>Agrégalo con el botón +</h4><p>Suma todo lo que se te antoje; puedes ajustar cantidades después.</p></div></div>
-      <div class="g-paso"><b>3</b><div><h4>Envía tu orden a cocina</h4><p>Con la barra que aparece abajo al agregar. Luego sigue su avance en la pestaña «Cuenta».</p></div></div>
-      <div class="g-nota">Ordena las veces que quieras durante tu visita — todo se va sumando y se paga junto al final.</div>
+      <div class="g-paso"><b>3</b><div><h4>Manda tu orden cuando quieras</h4><p>Tu mesero pasa a la mesa a confirmarla contigo y de ahí se va a la cocina. Sigue su avance en «Cuenta».</p></div></div>
+      <div class="g-nota">Nadie te apura: ve la carta con calma y ordena las veces que quieras — todo se va sumando y se paga junto al final.</div>
       <button class="btn-primario" onclick="cerrarGuia()">Empezar a ordenar</button>
     </div>
   </div>
@@ -482,6 +508,8 @@
 <div class="hoja" id="hojaConf"></div>
 <div class="hoja" id="hojaResena"></div>
 <div class="hoja" id="hojaMesa"></div>
+<div class="hoja" id="hojaBienvenida"></div>
+<div class="hoja" id="hojaPropina"></div>
 <div class="hoja" id="hojaSucursal"></div>
 <div class="hoja" id="hojaAyuda">
   <div class="confirmacion" style="text-align:left">
@@ -489,6 +517,7 @@
     <div class="acciones-orden" style="padding:16px 0 0">
       <button class="btn-primario" onclick="cerrarSheets();llamarMesero()">Llamar al mesero a mi mesa</button>
       <button class="btn-fantasma" onclick="cerrarSheets();pedirCuenta()">Pedir la cuenta para pagar</button>
+      <button class="btn-fantasma" onclick="abrirHojaBienvenida()">Ver el código de mi mesa</button>
       <button class="btn-fantasma" onclick="abrirHojaCliente()">Mi cuenta de puntos</button>
       <button class="btn-fantasma" onclick="cerrarSheets();mostrarGuia(true)">¿Cómo funciona esta carta?</button>
       <button class="btn-fantasma" onclick="cerrarSheets();cambiarMesa()">Cambiar de mesa</button>
@@ -709,6 +738,19 @@ async function api(ruta, opc = {}){
   const tx = await r.text();
   return tx ? JSON.parse(tx) : null;
 }
+/* Aviso al teléfono del mesero. Cuatro momentos: 'orden' (orden nueva por confirmar),
+   'cuenta' (pidió la cuenta), 'tiempo' (quiere el siguiente tiempo), 'mesero' (lo llaman
+   a la mesa). A propósito NO se espera y a propósito se traga el error: si el aviso falla,
+   el comensal no se puede quedar mirando una rueda girando ni perder su orden. */
+function avisarMesero(tipo, extra){
+  try{
+    fetch(SUPA_URL + '/functions/v1/mb-avisar', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY },
+      body: JSON.stringify({ restaurante_id: RID, sucursal: SUC, mesa: mesa ?? 0, tipo, extra: extra || '' }),
+    }).catch(() => {});
+  }catch(e){}
+}
 let dbCache = { config:{ tema:'editoriale', meseros:[] }, precios:{}, ocultos:[], platillos:[], fotos:{}, adminVisto:0 };
 /* `config` es la configuración que el restaurante guarda desde su panel. Va como getter y no como
    copia porque cada sincronización REEMPLAZA dbCache completo: una copia quedaría apuntando a un
@@ -718,6 +760,8 @@ Object.defineProperty(window, 'config', {
   get(){ if(!dbCache.config) dbCache.config = {}; return dbCache.config; },
 });
 let sinConexion = false;
+/* Se enciende cuando ya leímos la configuración del restaurante al menos una vez */
+let configCargada = false;
 const adminActivo = () => (Date.now() - (dbCache.adminVisto || 0)) < 30000;
 
 /* ---------- Temas (el restaurante los elige desde su panel) ---------- */
@@ -803,9 +847,15 @@ async function sincronizar(){
       return;
     }
     sinConexion = false;
+    configCargada = true;
     aplicarTema((dbCache.config && dbCache.config.tema) || 'editoriale');
     aplicarMarca();
     ofrecerSucursal();
+    /* Apartar la mesa en cuanto sabemos en qué sucursal está. Los guardas de dentro hacen
+       que esto corra una sola vez; si la bienvenida no pudo salir (guía abierta, otra hoja
+       encima), en el siguiente sondeo lo vuelve a intentar. */
+    abrirMesaAlLlegar();
+    if(bienvenidaPend) ofrecerBienvenida();
     const h = JSON.stringify([dbCache.precios, dbCache.ocultos, dbCache.platillos || [], Object.keys(dbCache.fotos || {}), dbCache.config && dbCache.config.categorias, dbCache.config && dbCache.config.menuPropio]);
     if(h !== hashCarta){
       hashCarta = h;
@@ -841,20 +891,24 @@ async function sincronizar(){
       for(const o of ordenes){
         const rem = (filas || []).find(x => x.id === o.dbId);
         if(!rem) continue;
-        // Verificación de mesa: el restaurante puede confirmar o rechazar la orden
-        const verRem = rem.verificacion || 'ok';
+        // El mesero confirma la orden en la mesa (o la rechaza si algo no cuadró)
+        const verRem = rem.verificacion || 'pendiente';
         if(verRem === 'rechazada'){
           ordenes = ordenes.filter(x => x !== o);
           misIds = misIds.filter(id => id !== o.dbId);
-          toast(`Orden ${o.folio} no fue aceptada — un mesero te atiende en tu mesa`);
           guardarSesion();
           refrescarEstadoUI();
+          /* Nunca dejarlo mirando una orden congelada sin explicación: se le dice qué pasó
+             y qué puede hacer ahora mismo. */
+          mostrarOrdenRechazada(o);
           continue;
         }
-        if((o.verificacion || 'ok') === 'pendiente' && verRem === 'ok'){
+        if(esPendiente(o) && verRem === 'ok'){
           o.verificacion = 'ok';
-          toast(`Orden ${o.folio} — confirmada por el restaurante`);
+          /* Se nota el avance: el paso «por confirmar» se cierra y entra a la cocina */
+          toast(`Orden ${o.folio} confirmada — ya está en la cocina`);
           guardarSesion();
+          refrescarEstadoUI();
         }
         // Entrega por partidas: el estado de cada platillo vive en el jsonb items
         if(rem.items && JSON.stringify(rem.items) !== JSON.stringify(o.items)){
@@ -915,7 +969,7 @@ function guardarSesion(){
     if(!pedido.length && !ordenes.length && !cuentaPedida){ localStorage.removeItem(LSK('mb_sesion_v1')); return; }
     /* mesaFila viaja en la sesión para que una recarga no le esconda su código al dueño de
        la mesa; el permiso real se vuelve a verificar contra la nube en cada envío. */
-    localStorage.setItem(LSK('mb_sesion_v1'), JSON.stringify({ mesa, suc: SUC, pedido, ordenes, misIds, cuentaPedida, resenaOfrecida, mesaFila, ts: Date.now() }));
+    localStorage.setItem(LSK('mb_sesion_v1'), JSON.stringify({ mesa, suc: SUC, pedido, ordenes, misIds, cuentaPedida, resenaOfrecida, mesaFila, propinaSugerida, ts: Date.now() }));
   }catch(e){}
 }
 function restaurarSesion(mesaURL){
@@ -928,6 +982,7 @@ function restaurarSesion(mesaURL){
     misIds = g.misIds || [];
     cuentaPedida = !!g.cuentaPedida;
     resenaOfrecida = !!g.resenaOfrecida;
+    propinaSugerida = (g.propinaSugerida == null) ? null : +g.propinaSugerida;
     mesaFila = g.mesaFila || null;
     mesaEsMia = !!(mesaFila && (mesaFila.dispositivo_id === DISP
       || (Array.isArray(mesaFila.invitados) && mesaFila.invitados.includes(DISP))));
@@ -945,17 +1000,30 @@ function iniciarMesa(){
     return;
   }
   if(restaurarSesion(null)){ pintarIndicadores(); if(mesa != null) return; }
-  $('#gridMesas').innerHTML = [1,2,3,4,5,6,7,8,9,10,11,12].map(n =>
+  pintarGridMesas();
+}
+/* Rejilla de mesas del splash. Se pinta también al pedir «cambiar de mesa»: quien entró por
+   el QR nunca la había pintado y se quedaba mirando un splash sin botones. */
+function pintarGridMesas(){
+  const g = $('#gridMesas');
+  if(!g || g.children.length) return;
+  g.innerHTML = [1,2,3,4,5,6,7,8,9,10,11,12].map(n =>
     `<button class="mesa-btn" onclick="asignarMesa(${n})">${n}<small>MESA</small></button>`).join('');
 }
 function asignarMesa(n, silencioso){
+  /* Cambió de mesa de verdad: lo que sabíamos de la anterior ya no aplica */
+  if(mesa != null && mesa !== n){
+    mesaChequeada = false; mesaFila = null; mesaEsMia = false; bienvenidaPend = false;
+  }
   mesa = n;
   $('#mesaNum').textContent = String(n).padStart(2,'0');
   $('#splash').classList.add('oculto');
   if(!silencioso) toast(`Bienvenido — mesa ${String(n).padStart(2,'0')}`);
   mostrarGuia();
+  /* La mesa se aparta en cuanto sabemos la sucursal; el sondeo se encarga si aún no llega */
+  abrirMesaAlLlegar();
 }
-function cambiarMesa(){ $('#splash').classList.remove('oculto'); }
+function cambiarMesa(){ pintarGridMesas(); $('#splash').classList.remove('oculto'); }
 
 /* ================================================================
    DUEÑO DE LA MESA — una mesa la ordena UN dispositivo
@@ -1119,32 +1187,168 @@ function latirMesa(){
   }).catch(() => {});
 }
 
-/* Línea discreta para que el dueño comparta su código con los de su mesa */
-function lineaCodigoMesa(){
-  if(!mesaEsMia || !mesaFila || mesaFila.dispositivo_id !== DISP) return '';
+/* Código de la mesa tal como se puede pintar: solo dígitos, y solo si este teléfono
+   pertenece de verdad a la mesa (dueño o invitado que ya entró con el código). */
+function codigoVisible(){
+  if(!mesaEsMia || !mesaFila) return '';
   const cod = String(mesaFila.codigo || '').replace(/\D/g, '').slice(0, 4); // solo dígitos al DOM
-  if(cod.length !== 4) return '';
-  return `<div style="margin:0 20px 14px;font-family:var(--grot);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--humo2);line-height:1.8">Código de tu mesa: <b style="color:var(--oro)">${cod}</b> — dáselo a quien más quiera ordenar desde su propio teléfono</div>`;
+  return cod.length === 4 ? cod : '';
+}
+/* Tira discreta que conserva el código a la vista en Orden y en Cuenta: el que llega tarde
+   a la mesa lo encuentra sin preguntar, y tocarla vuelve a abrir la explicación completa.
+   La ven todos los teléfonos de la mesa, no solo el primero: así cualquiera puede dictarlo. */
+function lineaCodigoMesa(){
+  const cod = codigoVisible();
+  if(!cod) return '';
+  return `<button class="cod-tira" onclick="abrirHojaBienvenida()"><b>${cod}</b><span>Código de tu mesa<em>¿Alguien más se sienta contigo? Tócalo para compartirlo</em></span></button>`;
+}
+/* Sin repintar la vista completa: solo refresca la tira si ya está a la vista */
+function refrescarCodigoVisible(){
+  if(vistaActual === 'orden') pintarVistaOrden();
+  else if(vistaActual === 'cuenta') pintarVistaCuenta();
 }
 
-/* ---------- Pantalla de bloqueo: la mesa ya es de otro dispositivo ---------- */
+/* ---------- Bienvenida: la mesa quedó a su nombre y este es su código ---------- */
+/* Se muestra una sola vez por visita, con una llave propia en el almacenamiento para que
+   una recarga no la repita. cerrarVisita() la borra: mesa nueva, bienvenida nueva. */
+function saludoDado(){
+  try{ return localStorage.getItem(LSK('mb_mesa_saludo')) === String(mesa); }catch(e){ return false; }
+}
+function marcarSaludoDado(){
+  try{ localStorage.setItem(LSK('mb_mesa_saludo'), String(mesa)); }catch(e){}
+}
+function pintarHojaBienvenida(){
+  const n = mesa != null ? String(mesa).padStart(2, '0') : '—';
+  const cod = codigoVisible();
+  const soyDuenio = !!(mesaFila && mesaFila.dispositivo_id === DISP);
+  $('#hojaBienvenida').innerHTML = `
+    <div class="confirmacion" style="text-align:left">
+      <div class="caps" style="color:var(--basilico);letter-spacing:2.6px">MESA ${n} · LISTA</div>
+      <h2 style="text-align:left;margin-top:8px">${soyDuenio ? 'Esta mesa ya es tuya' : 'Ya estás en la mesa ' + n}</h2>
+      <div class="nota-pie" style="margin:10px 0 0">La mesa ${n} quedó apartada en ${soyDuenio ? 'este teléfono' : 'tu teléfono'}. Nadie de otra mesa puede ordenar a tu nombre, y todo lo que pidan aquí se junta en <b style="color:var(--crema)">una sola cuenta</b> que se paga al final.</div>
+      ${cod ? `<div class="cod-caja">
+        <div class="cod-rot">CÓDIGO DE TU MESA</div>
+        <div class="cod-num">${cod}</div>
+        <div class="cod-pie">Dilo en voz alta o compártelo</div>
+      </div>
+      <div class="nota-pie" style="margin:12px 0 0">¿Vienen acompañados y cada quien quiere ver la carta en su propio teléfono? Que escaneen <b style="color:var(--crema)">el mismo código QR de esta mesa</b> y escriban estos cuatro números. Con eso entran a la misma cuenta.</div>
+      <div class="acciones-orden" style="padding:16px 0 0">
+        <button class="btn-fantasma" onclick="compartirCodigoMesa()">Compartir el código con mi mesa</button>
+      </div>` : ''}
+      <div class="nota-pie" style="margin:${cod ? '4px' : '12px'} 0 0;border-left-color:var(--basilico)">Y lo más importante: <b style="color:var(--crema)">nadie te va a apurar</b>. Ve la carta con toda la calma, platica, y manda tu orden cuando ustedes quieran. Puedes ordenar las veces que se te antoje durante la comida.</div>
+      <div class="acciones-orden" style="padding:18px 0 0">
+        <button class="btn-primario" onclick="cerrarBienvenida()">Ver la carta con calma</button>
+      </div>
+    </div>`;
+}
+function abrirHojaBienvenida(){
+  pintarHojaBienvenida();
+  cerrarSheets();
+  abrirVelo();
+  $('#hojaBienvenida').classList.add('abierta');
+  history.pushState({ v: vistaActual, capa: 'bienvenida' }, '');
+}
+function cerrarBienvenida(){
+  cerrarSheets();
+  ofrecerCuentaPuntos(); // la invitación a los puntos espera su turno detrás de la bienvenida
+}
+/* Espera su turno: nunca le tapa la guía de bienvenida ni otra hoja que ya esté leyendo */
+let bienvenidaPend = false;
+function ofrecerBienvenida(){
+  if(saludoDado()) return;
+  if($('#guia').classList.contains('visible') || document.querySelector('.hoja.abierta') || !$('#splash').classList.contains('oculto')){
+    bienvenidaPend = true;
+    return;
+  }
+  bienvenidaPend = false;
+  marcarSaludoDado();
+  abrirHojaBienvenida();
+}
+/* Mensaje ya redactado: quien lo recibe solo tiene que abrir el enlace y teclear el código */
+async function compartirCodigoMesa(){
+  const cod = codigoVisible();
+  if(!cod) return;
+  const n = mesa != null ? String(mesa).padStart(2, '0') : '—';
+  const url = location.href;
+  const texto = `Estamos en la mesa ${n} de ${RESTAURANTE.nombre}. Abre la carta en tu teléfono y escribe el código ${cod} para unirte a nuestra cuenta y ordenar: ${url}`;
+  if(navigator.share){
+    /* Cancelar el compartir del sistema no es un error: si lo cierra, no hacemos nada más */
+    try{ await navigator.share({ title: RESTAURANTE.nombre, text: texto }); }catch(e){}
+    return;
+  }
+  try{
+    await navigator.clipboard.writeText(texto);
+    toast('Mensaje copiado — pégalo en tu WhatsApp');
+    return;
+  }catch(e){}
+  /* Sin portapapeles moderno (o sin permiso): el truco viejo del campo oculto */
+  try{
+    const t = document.createElement('textarea');
+    t.value = texto;
+    t.setAttribute('readonly', '');
+    t.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+    document.body.appendChild(t);
+    t.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(t);
+    toast(ok ? 'Mensaje copiado — pégalo en tu WhatsApp' : `Dícelo así: el código es ${cod}`);
+  }catch(e){ toast(`Dícelo así: el código es ${cod}`); }
+}
+
+/* ---------- Al llegar a la mesa: se aparta y se explica ----------
+   La mesa se toma al escanear el QR, no al enviar la primera orden: así el comensal ve
+   su código desde el primer segundo y puede pasárselo a los suyos mientras leen la carta. */
+let mesaChequeada = false;
+let abriendoMesa = false;
+const faltaElegirSucursal = () => !SUC
+  && ((dbCache.config && dbCache.config.sucursales) || []).filter(Boolean).length > 0;
+async function abrirMesaAlLlegar(){
+  if(mesa == null || mesaChequeada || abriendoMesa) return;
+  /* Hasta no leer la configuración del restaurante no sabemos si tiene sucursales, y apartar
+     la mesa con la sucursal equivocada sería peor que esperar dos segundos. */
+  if(!configCargada) return;
+  /* Sin sucursal elegida la mesa 5 de la sucursal Centro y la de Roma son la misma fila:
+     mejor esperar a que conteste en qué sucursal está. */
+  if(faltaElegirSucursal()) return;
+  abriendoMesa = true;
+  let r;
+  try{ r = await asegurarMesa(); }
+  catch(e){ r = { ok:false, motivo:'sinred' }; }
+  finally{ abriendoMesa = false; }
+  if(r.ok){
+    mesaChequeada = true;
+    ofrecerBienvenida();
+    refrescarCodigoVisible();
+  } else if(r.motivo === 'bloqueada'){
+    mesaChequeada = true;
+    abrirHojaMesa();
+  }
+  /* 'sinred': no lo molestamos con un error mientras lee la carta. Se reintenta en el
+     siguiente sondeo y, de todos modos, la mesa se vuelve a verificar al enviar la orden. */
+}
+
+/* ---------- Segundo teléfono: la mesa ya la abrió alguien más ----------
+   No es un error y no es culpa suya: hay que contarle qué pasó, por qué le pedimos un código,
+   de dónde lo saca, y darle siempre una salida (no es su mesa / que lo ayude el mesero). */
 function pintarHojaMesa(){
   const n = mesa != null ? String(mesa).padStart(2, '0') : '—';
   const agotado = mesaIntentos >= MESA_MAX_INTENTOS;
   $('#hojaMesa').innerHTML = `
     <div class="confirmacion" style="text-align:left">
       <div class="caps" style="color:var(--oro);letter-spacing:2.6px">MESA ${n}</div>
-      <h2 style="text-align:left;margin-top:8px">Esta mesa ya está ordenando</h2>
-      <div class="nota-pie" style="margin:10px 0 0">Alguien más en la mesa ${n} ya abrió la cuenta desde su teléfono. Para no mandar la misma comanda dos veces a cocina, solo ese equipo envía las órdenes de la mesa.</div>
+      <h2 style="text-align:left;margin-top:8px">Alguien de tu mesa ya abrió la cuenta</h2>
+      <div class="nota-pie" style="margin:10px 0 0">Otro teléfono escaneó el QR de la mesa ${n} antes que tú y la cuenta quedó abierta ahí. Todo bien: así evitamos que la misma orden salga dos veces a la cocina.</div>
       ${agotado
-        ? `<div class="nota-pie" style="margin:12px 0 0;border-left-color:var(--pomodoro)">Probamos varios códigos y ninguno coincidió. Lo más rápido ahora es que un mesero te ayude en tu mesa.</div>`
-        : `<div class="nota-pie" style="margin:12px 0 0">Si están juntos, pídele el <b style="color:var(--crema)">código de 4 dígitos</b> que aparece en su pantalla y escríbelo aquí para ordenar desde tu propio teléfono.</div>
-      <input class="notas-inp" id="mesaCodigo" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="Código de 4 dígitos" style="margin-top:12px;text-align:center;letter-spacing:4px;font-size:15px">
+        ? `<div class="nota-pie" style="margin:12px 0 0;border-left-color:var(--pomodoro)">Ya probamos varios códigos y ninguno coincidió. Lo más fácil ahora es que te ayude un mesero: toca el botón y en un momento está en tu mesa.</div>`
+        : `<div class="nota-pie" style="margin:12px 0 0">Para ordenar desde tu propio teléfono necesitas el <b style="color:var(--crema)">código de 4 dígitos de la mesa</b>. Pídeselo a quien escaneó primero — lo tiene en su pantalla, igual que todos los que ya se unieron.</div>
+      <input class="notas-inp" id="mesaCodigo" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4 dígitos" style="margin-top:14px;text-align:center;letter-spacing:8px;font-size:22px;font-weight:700;padding:16px 15px">
       <div class="nota-pie" id="mesaError" style="margin:10px 0 0;border-left-color:var(--pomodoro);display:none"></div>`}
       <div class="acciones-orden" style="padding:18px 0 0">
-        ${agotado ? '' : `<button class="btn-primario" onclick="unirmeAMesa()">Unirme a la mesa</button>`}
-        <button class="btn-fantasma" onclick="cerrarSheets();llamarMesero('mesa')">Que me ayude el mesero</button>
+        ${agotado ? '' : `<button class="btn-primario" onclick="unirmeAMesa()">Unirme a esta mesa</button>`}
+        <button class="btn-fantasma" onclick="cerrarSheets();llamarMesero('mesa')">Pide ayuda al mesero</button>
+        <button class="btn-fantasma" onclick="cerrarSheets();cambiarMesa()">No es mi mesa · escanear otro QR</button>
       </div>
+      <div class="nota-pie" style="margin:14px 0 0;border-left-color:var(--linea2)">Mientras tanto puedes ver la carta con calma: cierra esta ventana tocando fuera y sigue explorando. Solo necesitas el código a la hora de mandar tu orden.</div>
     </div>`;
 }
 function abrirHojaMesa(){
@@ -1178,27 +1382,29 @@ function avisarMesaNoConfirmada(){
   abrirVelo();
   $('#hojaMesa').classList.add('abierta');
 }
-/* Unirse con el código: queda como invitado autorizado y su orden sale sola */
+/* Unirse con el código: queda como invitado autorizado de la misma cuenta */
 async function unirmeAMesa(){
   if(mesaIntentos >= MESA_MAX_INTENTOS){ pintarHojaMesa(); return; }
   const inp = $('#mesaCodigo');
   const cod = ((inp && inp.value) || '').replace(/\D/g, '');
-  if(cod.length !== 4){ errorMesa('Escribe los 4 dígitos del código de tu mesa.'); return; }
+  if(cod.length !== 4){ errorMesa('Faltan dígitos: el código de la mesa son 4 números.'); return; }
   let f;
   try{
     /* Fila fresca antes de escribir: los invitados los agrega cualquier teléfono de la
        mesa, y un array leído hace rato borraría a los que entraron mientras tanto. */
     const filas = await api(rutaMesa() + '&' + MESA_SEL);
     f = (filas && filas[0]) || null;
-  }catch(e){ errorMesa('No pudimos confirmar tu mesa — revisa tu internet.'); return; }
-  /* La mesa se cerró mientras leía la pantalla: ahora la puede tomar él, reintentamos */
-  if(!f){ cerrarSheets(); enviarOrden(); return; }
+  }catch(e){ errorMesa('No pudimos confirmar tu mesa — revisa tu internet y vuelve a intentar.'); return; }
+  /* La mesa se liberó mientras leía la pantalla: ahora sí la puede tomar él */
+  if(!f){ cerrarSheets(); mesaChequeada = false; abrirMesaAlLlegar(); seguirTrasUnirse(); return; }
   if(String(f.codigo || '') !== cod){
     mesaIntentos++;
     guardarIntentosMesa();
     if(mesaIntentos >= MESA_MAX_INTENTOS){ pintarHojaMesa(); return; }
     const quedan = MESA_MAX_INTENTOS - mesaIntentos;
-    errorMesa(`Ese código no coincide. Te ${quedan === 1 ? 'queda 1 intento' : 'quedan ' + quedan + ' intentos'}.`);
+    /* Sin regañar: pudo oír mal un número. Se dice qué pasó y se puede volver a intentar. */
+    errorMesa(`Ese no es el código de la mesa. Vuelve a pedírselo a quien lo tiene en pantalla y escríbelo otra vez — ${quedan === 1 ? 'te queda 1 intento' : 'te quedan ' + quedan + ' intentos'}.`);
+    if(inp){ inp.value = ''; inp.focus(); }
     return;
   }
   const invitados = Array.isArray(f.invitados) ? f.invitados.slice() : [];
@@ -1209,12 +1415,21 @@ async function unirmeAMesa(){
       body: JSON.stringify({ invitados }),
     });
     mesaFila = (r && r[0]) || Object.assign({}, f, { invitados });
-  }catch(e){ errorMesa('No pudimos confirmar tu mesa — revisa tu internet.'); return; }
+  }catch(e){ errorMesa('No pudimos confirmar tu mesa — revisa tu internet y vuelve a intentar.'); return; }
   mesaEsMia = true;
+  mesaChequeada = true;
   guardarSesion();
   cerrarSheets();
-  toast('Listo — ya puedes ordenar desde tu teléfono');
-  enviarOrden();
+  toast('Listo — ya estás en la cuenta de tu mesa');
+  seguirTrasUnirse();
+}
+/* Después de unirse: si ya tenía una orden armada la mandamos, y si no, le explicamos
+   con calma dónde está parado (y le dejamos el código a la vista). */
+function seguirTrasUnirse(){
+  refrescarCodigoVisible();
+  if(pedido.length){ enviarOrden(); return; }
+  marcarSaludoDado();
+  abrirHojaBienvenida();
 }
 
 /* Historial: el botón back navega entre vistas / cierra fichas en vez de salir */
@@ -1255,6 +1470,15 @@ function mostrarVista(v){
 
 const ESTADOS_TXT = ['Recibida en cocina','En preparación','En servicio en tu mesa','Entregada en tu mesa'];
 const ESTADOS_COLOR = ['#C9A227','#D96C2F','#3E8ED0','#5FA05A'];
+/* Una orden nace 'pendiente' y ahí se queda hasta que el mesero la confirma en la mesa */
+const esPendiente = o => (o.verificacion || 'pendiente') === 'pendiente';
+/* Total de la mesa: el del servidor manda (es el mismo «por cobrar» que ve el restaurante);
+   si todavía no lo tenemos, se suma lo que sabemos desde este teléfono. */
+const totalMesaActual = () => totalMesaSrv != null
+  ? totalMesaSrv
+  : ordenes.reduce((s, o) => s + o.total, 0) + mesaOtras.reduce((s, x) => s + (+x.total || 0), 0);
+/* Propina que el comensal sugirió al pedir la cuenta (null = todavía no ha elegido) */
+let propinaSugerida = null;
 function pintarIndicadores(){
   guardarSesion();
   const n = pedido.reduce((s,i) => s + i.qty, 0);
@@ -1267,14 +1491,14 @@ function pintarIndicadores(){
       // Modo CTA: hay artículos por enviar
       barra.classList.remove('modo-estado');
       $('#boNum').textContent = n;
-      $('#boTxt').innerHTML = '<b>Enviar a cocina</b>';
+      $('#boTxt').innerHTML = '<b>Enviar mi orden</b>';
       $('#boTotal').textContent = fmt(totalPedido());
       barra.classList.toggle('visible', vistaActual !== 'orden');
     } else if(ordenes.length && vistaActual === 'menu'){
       // Modo estatus: órdenes en curso y carrito vacío
       const act = ordenes.filter(o => o.estado < 3);
       barra.classList.add('modo-estado');
-      const cortos = ['recibida','preparando','en servicio','entregada'];
+      const corto = o => esPendiente(o) ? 'por confirmar' : ['en cocina','preparando','en servicio','entregada'][o.estado];
       if(cuentaPedida){
         $('#boNum').innerHTML = '<i></i>';
         $('#boTxt').innerHTML = '<b>Cuenta solicitada</b> — mesero en camino';
@@ -1284,7 +1508,7 @@ function pintarIndicadores(){
       } else {
         const o = act[0] || ordenes[ordenes.length - 1];
         $('#boNum').innerHTML = '<i></i>';
-        $('#boTxt').innerHTML = `Nº ${o.num} — <b>${cortos[o.estado]}</b>`;
+        $('#boTxt').innerHTML = `Nº ${o.num} — <b>${corto(o)}</b>`;
       }
       $('#boTotal').textContent = 'VER';
       barra.classList.add('visible');
@@ -1297,7 +1521,7 @@ function pintarIndicadores(){
   if(ordenes.length){
     const o = ordenes[ordenes.length - 1];
     pill.classList.add('visible');
-    $('#pillEstadoTxt').innerHTML = `<b>ORDEN Nº ${o.num} — ${ESTADOS_TXT[o.estado].toUpperCase()}</b><small>${ordenes.length} orden(es) en curso · toca para ver tu cuenta</small>`;
+    $('#pillEstadoTxt').innerHTML = `<b>ORDEN Nº ${o.num} — ${esPendiente(o) ? 'POR CONFIRMAR CON TU MESERO' : ESTADOS_TXT[o.estado].toUpperCase()}</b><small>${ordenes.length} orden(es) en curso · toca para ver tu cuenta</small>`;
   } else pill.classList.remove('visible');
 }
 
@@ -1524,6 +1748,8 @@ function cerrarSheets(){
   $('#hojaConf').classList.remove('abierta');
   $('#hojaResena').classList.remove('abierta');
   $('#hojaMesa').classList.remove('abierta');
+  $('#hojaBienvenida').classList.remove('abierta');
+  $('#hojaPropina').classList.remove('abierta');
   $('#hojaAyuda').classList.remove('abierta');
   $('#hojaCliente').classList.remove('abierta');
   $('#hojaSucursal').classList.remove('abierta');
@@ -1555,6 +1781,7 @@ function elegirSucursal(x){
   guardarSesion();
   cerrarSheets();
   toast('Sucursal ' + x + ' — benvenuto');
+  abrirMesaAlLlegar(); // ya sabemos dónde está: ahora sí se puede apartar su mesa
 }
 function abrirAyuda(){
   cerrarSheets();
@@ -1598,7 +1825,7 @@ function pintarVistaOrden(){
   html += lineaCodigoMesa();
   if(!pedido.length){
     if(ordenes.length){
-      html += `<div class="vacio">Tu orden ya está en cocina.<br><br>Puedes seguir su avance en tu cuenta<br>o agregar algo más de la carta.</div>
+      html += `<div class="vacio">Ya mandaste tu orden.<br><br>Sigue su avance en tu cuenta<br>o agrega algo más de la carta, sin prisa.</div>
         <div class="acciones-orden">
           <button class="btn-primario" onclick="mostrarVista('cuenta')">Ver el estado de mi orden</button>
           <button class="btn-fantasma" onclick="mostrarVista('menu')">Ordenar algo más</button>
@@ -1628,28 +1855,31 @@ function pintarVistaOrden(){
   const sugs = sugerenciasComanda(3);
   if(sugs.length) html += `<div class="bloque" style="margin-top:20px;padding:0 18px"><div class="b-cab"><span class="caps">La casa sugiere</span><i></i></div>${sugCardsHTML(sugs)}</div>`;
   html += `<div class="acciones-orden">
-    <button class="btn-primario" onclick="enviarOrden()">Enviar a cocina — Mesa ${String(mesa).padStart(2,'0')}</button>
+    <button class="btn-primario" onclick="enviarOrden()">Enviar mi orden — Mesa ${String(mesa).padStart(2,'0')}</button>
     <button class="btn-fantasma" onclick="mostrarVista('menu')">Seguir explorando la carta</button>
-  </div>`;
+  </div>
+  <div class="nota-pie">Cuando la mandes, tu mesero viene a la mesa a confirmarla contigo antes de que entre a la cocina. Puedes revisarla con calma hasta entonces.</div>`;
   v.innerHTML = html;
   v.querySelectorAll('.sug-cards').forEach(arrastrable);
 }
+/* Cinco pasos, no cuatro: «por confirmar» es un paso de verdad en la vida del comensal y tiene
+   que verse antes de «en cocina». Mientras la orden está pendiente el primer punto parpadea;
+   cuando el mesero la autoriza, el avance se nota solo. */
+const PROG_PASOS = ['Por confirmar','En cocina','Preparando','En camino','Entregada'];
+function pasoOrden(o){
+  return (o.verificacion || 'pendiente') === 'pendiente' ? 0 : (o.estado || 0) + 1;
+}
 function progresoHTML(o){
-  const dot = i => o.estado > i ? 'hecho' : o.estado === i ? (i === 3 ? 'hecho' : 'activo') : '';
-  const seg = i => o.estado >= i ? 'hecha' : '';
+  const p = pasoOrden(o);
+  const ultimo = PROG_PASOS.length - 1;
+  const dot = i => p > i ? 'hecho' : p === i ? (i === ultimo ? 'hecho' : 'activo') : '';
+  const seg = i => p >= i ? 'hecha' : '';
+  let linea = `<span class="p-dot ${dot(0)}"></span>`;
+  for(let i = 1; i <= ultimo; i++) linea += `<span class="p-seg ${seg(i)}"></span><span class="p-dot ${dot(i)}"></span>`;
   return `<div class="prog">
-    <div class="p-linea-cont">
-      <span class="p-dot hecho"></span><span class="p-seg ${seg(1)}"></span>
-      <span class="p-dot ${dot(1)}"></span><span class="p-seg ${seg(2)}"></span>
-      <span class="p-dot ${dot(2)}"></span><span class="p-seg ${seg(3)}"></span>
-      <span class="p-dot ${dot(3)}"></span>
-    </div>
-    <div class="p-etiq">
-      <span class="${o.estado>=0?'on':''}">Recibida</span>
-      <span class="${o.estado>=1?'on':''}">Preparando</span>
-      <span class="${o.estado>=2?'on':''}">En servicio</span>
-      <span class="${o.estado>=3?'on':''}">Entregada</span>
-    </div></div>
+    <div class="p-linea-cont">${linea}</div>
+    <div class="p-etiq cinco">${PROG_PASOS.map((t, i) => `<span class="${p >= i ? 'on' : ''}">${t}</span>`).join('')}</div></div>
+    ${p === 0 ? `<div style="margin-top:10px;font-family:var(--grot);font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:#8A7D69;line-height:1.7">Tu mesero viene a confirmarla contigo · en cuanto lo haga, entra a la cocina</div>` : ''}
     ${o.estado===3 && o.entregada_por ? `<div style="margin-top:10px;font-family:var(--grot);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:#8A7D69">Confirmada por ${o.entregada_por} · ${o.entregada_at ? new Date(o.entregada_at).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : ''}</div>` : ''}`;
 }
 function pintarVistaCuenta(){
@@ -1659,11 +1889,21 @@ function pintarVistaCuenta(){
     <div class="nota-pie" style="margin-top:10px">Aquí vive la cuenta de tu mesa: cada orden que envíes se suma y su estado se actualiza solo. <b style="color:var(--crema)">Todo se paga junto al final.</b></div></div>`;
   html += lineaCodigoMesa();
   const activas = ordenes.filter(o => o.estado < 3);
-  const totalMesa = totalMesaSrv != null ? totalMesaSrv : ordenes.reduce((s,o) => s + o.total, 0) + mesaOtras.reduce((s,x) => s + (+x.total || 0), 0);
+  const porConfirmar = ordenes.filter(esPendiente);
+  const totalMesa = totalMesaActual();
   if(cuentaPedida){
     html += `<div class="banner-estado" style="--ce:#5FA05A"><span class="be-dot"></span><div><b>CUENTA SOLICITADA</b><small>El mesero viene a tu mesa a cobrar · Total ${fmt(totalMesa)} ${RESTAURANTE.moneda}</small></div></div>`;
+    if(propinaSugerida != null){
+      html += `<div class="nota-pie" style="margin:-6px 20px 14px;border-left-color:var(--oro)">${propinaSugerida > 0
+        ? `Le avisamos a tu mesero que piensas dejar <b style="color:var(--crema)">${fmt(propinaSugerida)}</b> de propina. Se la entregas a él cuando llegue a cobrar — puedes cambiar de idea sin problema.`
+        : `Le avisamos a tu mesero que esta vez no dejas propina. Todo en orden — gracias por venir.`}</div>`;
+    }
     /* Mientras espera al mesero: si cerró la invitación sin querer, aquí la vuelve a encontrar */
     if(resenasActivas()) html += `<div style="margin:-4px 20px 12px;font-family:var(--grot);font-size:9.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--oro);cursor:pointer" onclick="abrirHojaResena()">Dejar una reseña</div>`;
+  } else if(porConfirmar.length){
+    /* Manda lo que está esperando al mesero: es lo que el comensal quiere saber ahora */
+    const u = porConfirmar[porConfirmar.length - 1];
+    html += `<div class="banner-estado" style="--ce:var(--oro)"><span class="be-dot"></span><div><b>ESPERANDO CONFIRMACIÓN</b><small>Orden Nº ${u.num} · tu mesero viene a la mesa a confirmarla contigo</small></div></div>`;
   } else if(activas.length){
     const u = activas[activas.length - 1];
     html += `<div class="banner-estado" style="--ce:${ESTADOS_COLOR[u.estado]}"><span class="be-dot"></span><div><b>${ESTADOS_TXT[u.estado].toUpperCase()}</b><small>Orden Nº ${u.num}${activas.length > 1 ? ` · ${activas.length} órdenes en curso` : ''}</small></div></div>`;
@@ -1675,7 +1915,7 @@ function pintarVistaCuenta(){
   }
   for(const o of [...ordenes].reverse()){
     html += `<div class="ticket"><div class="t-int">
-      <div class="t-cab"><div class="t-marca">Nº ${o.num}</div><div class="chip-estado" style="--ce:${ESTADOS_COLOR[o.estado]}"><i></i>${ESTADOS_TXT[o.estado]}</div></div>
+      <div class="t-cab"><div class="t-marca">Nº ${o.num}</div><div class="chip-estado" style="--ce:${esPendiente(o) ? 'var(--oro)' : ESTADOS_COLOR[o.estado]}"><i></i>${esPendiente(o) ? 'Por confirmar' : ESTADOS_TXT[o.estado]}</div></div>
       ${o.items.map(i => {
         const d = PLATILLOS.find(x => x.id === i.id);
         const nombre = d ? d.nombre : (i.nombre || '');
@@ -1684,7 +1924,9 @@ function pintarVistaCuenta(){
         const quien = i.entregado_por || o.entregada_por || '';
         const part = servido
           ? `<small class="part ok">✓ Entregado${quien ? ` <em>· ${quien}</em>` : ''}</small>`
-          : `<small class="part pend"><i></i>Pendiente</small>`;
+          // «Por servir», no «Pendiente»: en el mismo ticket ya hay un «Por confirmar»
+          // que habla del mesero, y dos «pendientes» distintos confunden al comensal.
+          : `<small class="part pend"><i></i>Por servir</small>`;
         return `<div class="t-item"><span class="t-qty">${i.qty}×</span><span class="t-nom">${nombre}${part}</span><span class="leader"></span><span class="t-precio">${fmt(precio*i.qty)}</span></div>`;
       }).join('')}
       <div class="t-tot"><span class="caps">Subtotal</span><span class="leader"></span><b>${fmt(o.total)}</b></div>
@@ -1713,7 +1955,7 @@ function pintarVistaCuenta(){
       <button class="btn-primario" onclick="pedirCuenta()">Pedir la cuenta para pagar</button>
       <button class="btn-fantasma" onclick="llamarMesero()">Llamar al mesero a mi mesa</button>
     </div>
-    <div class="nota-pie">En el producto real, este estado se actualiza en vivo desde el panel de cocina vía la nube (Supabase Realtime). Aquí el avance está simulado.</div>`;
+    <div class="nota-pie">El avance de tus órdenes se actualiza solo, sin que tengas que recargar nada. Tómate tu tiempo — nadie te va a apurar.</div>`;
   v.innerHTML = html;
 }
 let sinBebidasOk = false;
@@ -1727,8 +1969,8 @@ function mostrarSugerenciaBebidas(){
       <div class="nota-pie" style="margin:10px 0 16px">Tu orden aún no lleva bebidas. Agrega una con el botón <b style="color:var(--pomodoro)">+</b> o envíala así.</div>
       ${sugCardsHTML(bebidas)}
       <div class="acciones-orden" style="padding:20px 0 0">
-        <button class="btn-primario" onclick="cerrarSheets();enviarOrden()">Enviar a cocina</button>
-        <button class="btn-fantasma" onclick="sinBebidasOk=true;cerrarSheets();enviarOrden()">Enviar sin bebidas</button>
+        <button class="btn-primario" onclick="cerrarSheets();enviarOrden()">Enviar mi orden</button>
+        <button class="btn-fantasma" onclick="sinBebidasOk=true;cerrarSheets();enviarOrden()">Enviarla sin bebidas</button>
       </div>
     </div>`;
   abrirVelo();
@@ -1752,9 +1994,10 @@ async function enviarOrden(){
     else { avisarMesaNoConfirmada(); }
     return;
   }
-  /* Tomar la mesa por ordenar NO verifica la orden: 'ok' solo cuando el restaurante abrió la
-     mesa a propósito desde su panel (autorizada). Lo demás sigue pidiendo confirmación. */
-  const verificacion = (permiso.fila && permiso.fila.autorizada === true) ? 'ok' : 'pendiente';
+  /* TODA orden nueva nace 'pendiente', sin excepción: el mesero va a la mesa, la confirma de
+     viva voz con el comensal y él la autoriza. Cocina no la ve hasta entonces. Ya no se decide
+     aquí en el teléfono si la mesa estaba autorizada — esa decisión es del mesero. */
+  const verificacion = 'pendiente';
   let fila;
   try{
     const filas = await api('menusbot_ordenes', {
@@ -1770,6 +2013,7 @@ async function enviarOrden(){
      frenó por la mesa, al reintentar no lo volvemos a interrogar sobre lo mismo. */
   sinBebidasOk = false;
   latirMesa(); // la mesa sigue viva: que nadie la tome por abandono
+  avisarMesero('orden'); // le suena al mesero de esta mesa: tiene una orden por confirmar
   const folioN = iniciales(MARCA.nombre) + '-' + (1000 + fila.id);
   const o = { num: folioN, folio: folioN, dbId: fila.id, items: pedido.slice(), total, estado: 0, mesa: mesa ?? '–', verificacion };
   misIds.push(fila.id);
@@ -1793,20 +2037,24 @@ function refrescarEstadoUI(){
   pintarIndicadores();
   if(vistaActual === 'cuenta') pintarVistaCuenta();
 }
+/* Lo que ve el comensal al mandar su orden. El significado cambió y hay que decirlo bien:
+   la orden NO está en cocina todavía. Un mesero viene a la mesa a confirmarla de viva voz.
+   Si no se dice claro, el comensal se queda esperando comida que nadie empezó a hacer. */
 function mostrarConfirmacion(o){
   clearTimeout(toastTimer);
   $('#toast').classList.remove('visible');
-  const pend = o.verificacion === 'pendiente';
+  const pend = (o.verificacion || 'pendiente') === 'pendiente';
   $('#hojaConf').innerHTML = `
     <div class="confirmacion">
-      <div class="conf-sello"><div class="interior">${pend ? '<b>ENVIADA</b><span>por confirmar</span>' : '<b>RECIBIDO</b><span>en cocina</span>'}</div></div>
-      <h2>¡Orden enviada!</h2>
+      <div class="conf-sello"><div class="interior">${pend ? '<b>ANOTADA</b><span>tu orden</span>' : '<b>RECIBIDO</b><span>en cocina</span>'}</div></div>
+      <h2>${pend ? 'Ya quedó anotada' : '¡Orden enviada!'}</h2>
       <div class="folio">Nº <b>${o.num}</b> · Mesa ${String(o.mesa).padStart(2,'0')} · ${fmt(o.total)} ${RESTAURANTE.moneda}</div>
-      ${pend ? `<div class="nota-pie" style="margin:18px 0 0;text-align:left;border-left-color:var(--oro)">Tu orden llegó al restaurante — <b style="color:var(--crema)">un mesero la confirmará en un momento</b>. En cuanto la acepte, pasa directo a cocina.</div>` : ''}
-      <div class="nota-pie" style="margin:${pend ? '12px' : '22px'} 0 0;text-align:left">Sigue su avance en cualquier momento desde la pestaña <b style="color:var(--crema)">Cuenta</b> — recibida, preparando, en camino.<br><br>¿Se te antoja algo más después? Puedes ordenar las veces que quieras: todo se va sumando a tu cuenta y <b style="color:var(--crema)">se paga junto al final</b>.</div>
+      ${pend ? `<div class="nota-pie" style="margin:18px 0 0;text-align:left;border-left-color:var(--oro)">Tu orden ya se anotó y <b style="color:var(--crema)">tu mesero viene a la mesa a confirmarla contigo</b>. La repasan juntos en voz alta —los términos, lo que va sin algo, lo que quieren primero— y en ese momento pasa a la cocina.</div>
+      <div class="nota-pie" style="margin:12px 0 0;text-align:left">Es parte del servicio: preferimos que alguien te vea a la cara antes de encender la estufa. <b style="color:var(--crema)">No tienes que hacer nada más</b> — quédate cómodo, ya va para allá.</div>` : ''}
+      <div class="nota-pie" style="margin:${pend ? '12px' : '22px'} 0 0;text-align:left">Puedes seguirla en la pestaña <b style="color:var(--crema)">Cuenta</b> paso por paso: por confirmar, en cocina, preparando y en camino a tu mesa.<br><br>¿Se te antoja algo más después? Ordena las veces que quieras, sin prisa: todo se va sumando y <b style="color:var(--crema)">se paga junto al final</b>.</div>
       <div class="acciones-orden" style="padding:22px 0 0">
         <button class="btn-primario" onclick="cerrarSheets();mostrarVista('cuenta')">Ver el estado de mi orden</button>
-        <button class="btn-fantasma" onclick="cerrarSheets();mostrarVista('menu')">Ordenar algo más</button>
+        <button class="btn-fantasma" onclick="cerrarSheets();mostrarVista('menu')">Seguir viendo la carta</button>
       </div>
     </div>`;
   abrirVelo();
@@ -1822,6 +2070,9 @@ let resenaOfrecida = false;
 function llamarMesero(motivo){
   if(Date.now() - ultimaLlamada < 30000){ toast('Ya avisamos a tu mesero — está en camino'); return; }
   ultimaLlamada = Date.now();
+  /* El aviso al teléfono del mesero va aparte y sin esperar: si falla, la llamada de siempre
+     (la que ve el restaurante en su panel) igual queda registrada. */
+  avisarMesero('mesero', motivo || '');
   api('menusbot_llamadas', { method:'POST', body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, motivo: motivo || 'mesero', sucursal: SUC }) })
     .then(() => toast(`Listo — un mesero viene a tu mesa ${String(mesa).padStart(2,'0')}`))
     .catch(() => toast('Sin conexión — inténtalo de nuevo'));
@@ -1829,13 +2080,77 @@ function llamarMesero(motivo){
 function pedirSiguienteTiempo(){
   if(Date.now() - ultimaLlamada < 30000){ toast('Ya avisamos en cocina — tu siguiente tiempo va en camino'); return; }
   ultimaLlamada = Date.now();
+  avisarMesero('tiempo');
   api('menusbot_llamadas', { method:'POST', body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, motivo:'tiempo', sucursal: SUC }) })
     .then(() => toast('Avisamos a cocina — tu siguiente tiempo sale a tu mesa'))
     .catch(() => toast('Sin conexión — inténtalo de nuevo'));
 }
+
+/* ---------- Propina sugerida: antes de llamar al mesero a cobrar ----------
+   Se muestra el monto en pesos de cada opción porque la gente decide con el número, no con el
+   porcentaje. «Prefiero no dejar propina» está a la vista y con el mismo peso visual que las
+   demás: cobrar de más por vergüenza social no es un buen producto. */
+const PROP_PCTS = [10, 15, 20];
+const montoPropina = pct => Math.round(totalMesaActual() * pct / 100);
+function pintarHojaPropina(otra){
+  const total = totalMesaActual();
+  $('#hojaPropina').innerHTML = `
+    <div class="confirmacion" style="text-align:left">
+      <div class="caps" style="color:var(--oro);letter-spacing:2.6px">ANTES DE LLAMAR AL MESERO</div>
+      <h2 style="text-align:left;margin-top:8px">¿Quieres dejar propina?</h2>
+      <div class="ticket" style="margin-top:16px"><div class="t-int">
+        <div class="t-tot" style="padding-top:0"><span class="caps">Total de tu mesa</span><span class="leader"></span><b>${fmt(total)} ${RESTAURANTE.moneda}</b></div>
+      </div></div>
+      <div class="nota-pie" style="margin:14px 0 0">La propina la decides tú y no se paga aquí: <b style="color:var(--crema)">se la entregas a tu mesero</b> cuando llegue a cobrar, en efectivo o con tarjeta. Esto es solo para avisarle cuánto piensas dejar.</div>
+      ${otra ? `
+      <div class="nota-pie" style="margin:14px 0 0">Escribe la cantidad que quieras dejar, en pesos.</div>
+      <input class="notas-inp" id="propOtra" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Cantidad en pesos" style="margin-top:12px;text-align:center;letter-spacing:2px;font-size:20px;font-weight:700;padding:16px 15px">
+      <div class="acciones-orden" style="padding:16px 0 0">
+        <button class="btn-primario" onclick="elegirPropinaOtra()">Dejar esta propina</button>
+        <button class="btn-fantasma" onclick="abrirHojaPropina()">Volver a las sugerencias</button>
+      </div>`
+      : `
+      <div class="prop-ops">
+        ${PROP_PCTS.map(p => `<button class="prop-btn" onclick="elegirPropina(${montoPropina(p)})"><span class="pb-pct">${p}% de propina</span><span class="pb-mto">${fmt(montoPropina(p))}</span></button>`).join('')}
+        <button class="prop-btn" onclick="pintarHojaPropina(true)"><span class="pb-pct">Otra cantidad</span><span class="pb-mto">Tú decides</span></button>
+        <button class="prop-btn neutro" onclick="elegirPropina(0)"><span class="pb-pct">Prefiero no dejar propina</span><span class="pb-mto">Sin propina</span></button>
+      </div>
+      <div class="nota-pie" style="margin:16px 0 0;border-left-color:var(--linea2)">Cualquiera de las opciones está bien y nadie se va a enterar de cuál elegiste más que tu mesero. Elige con confianza.</div>`}
+    </div>`;
+}
+function abrirHojaPropina(){
+  pintarHojaPropina(false);
+  cerrarSheets();
+  abrirVelo();
+  $('#hojaPropina').classList.add('abierta');
+  history.pushState({ v: vistaActual, capa: 'propina' }, '');
+}
+function elegirPropinaOtra(){
+  const inp = $('#propOtra');
+  const n = Math.round(+((inp && inp.value) || '').replace(/[^\d]/g, ''));
+  if(!(n >= 0) || !isFinite(n)){ toast('Escribe la cantidad en números, por ejemplo 150'); return; }
+  elegirPropina(n);
+}
+/* La sugerencia es solo eso: el mesero confirma después lo que de verdad recibió */
+function elegirPropina(monto){
+  propinaSugerida = Math.max(0, Math.round(+monto || 0));
+  guardarSesion();
+  if(mesa != null){
+    api(rutaMesa(), { method:'PATCH', body: JSON.stringify({ propina_sugerida: propinaSugerida }) }).catch(() => {});
+  }
+  cerrarSheets();
+  confirmarPedirCuenta();
+}
 function pedirCuenta(){
+  if(cuentaPedida){ toast('Ya pedimos tu cuenta — el mesero viene a cobrar a tu mesa'); return; }
   if(Date.now() - ultimaLlamada < 30000){ toast('Ya avisamos — tu mesero está en camino'); return; }
+  abrirHojaPropina();
+}
+/* Después de elegir la propina sigue el flujo de siempre: el aviso y la invitación a reseñar */
+function confirmarPedirCuenta(){
+  if(Date.now() - ultimaLlamada < 30000 && cuentaPedida){ return; }
   ultimaLlamada = Date.now();
+  avisarMesero('cuenta');
   api('menusbot_llamadas', { method:'POST', body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, motivo:'cuenta', sucursal: SUC }) })
     .then(() => {
       cuentaPedida = true;
@@ -1849,6 +2164,41 @@ function pedirCuenta(){
     })
     .catch(() => toast('Sin conexión — inténtalo de nuevo'));
 }
+
+/* ---------- El mesero no pudo pasar la orden ---------- */
+let ordenRechazada = null;
+function mostrarOrdenRechazada(o){
+  ordenRechazada = o;
+  const reponible = (o.items || []).some(i => PLATILLOS.some(p => p.id === i.id));
+  $('#hojaConf').innerHTML = `
+    <div class="confirmacion" style="text-align:left">
+      <div class="caps" style="color:var(--pomodoro);letter-spacing:2.6px">ORDEN Nº ${o.num}</div>
+      <h2 style="text-align:left;margin-top:8px">Esta orden no pudo pasar</h2>
+      <div class="nota-pie" style="margin:10px 0 0">Tu mesero la revisó y no la mandó a la cocina. Suele ser porque algo se acabó o porque hubo un cambio de última hora en la mesa. <b style="color:var(--crema)">No entró a la cocina y no se te cobra nada.</b></div>
+      <div class="nota-pie" style="margin:12px 0 0;border-left-color:var(--oro)">Lo más rápido: pregúntale a tu mesero qué pasó — él ya sabe. Y si quieres, vuelves a armar tu orden aquí mismo con toda calma.</div>
+      <div class="acciones-orden" style="padding:18px 0 0">
+        ${reponible ? `<button class="btn-primario" onclick="reponerOrdenRechazada()">Volver a ordenar lo mismo</button>` : ''}
+        <button class="btn-fantasma" onclick="cerrarSheets();llamarMesero('mesa')">Llamar al mesero a mi mesa</button>
+        <button class="btn-fantasma" onclick="cerrarSheets();mostrarVista('menu')">Volver a la carta</button>
+      </div>
+    </div>`;
+  cerrarSheets();
+  abrirVelo();
+  $('#hojaConf').classList.add('abierta');
+}
+/* Que no tenga que buscar plato por plato otra vez lo que ya había elegido */
+function reponerOrdenRechazada(){
+  const o = ordenRechazada;
+  if(!o){ cerrarSheets(); return; }
+  for(const i of (o.items || [])){
+    if(!PLATILLOS.some(p => p.id === i.id)) continue;
+    agregarAlPedido(i.id, Math.max(1, +i.qty || 1), i.notas || '');
+  }
+  ordenRechazada = null;
+  cerrarSheets();
+  mostrarVista('orden');
+  toast('Ahí está tu orden otra vez — revísala y mándala cuando quieras');
+}
 function cerrarVisita(){
   ordenes = []; misIds = []; pedido = []; cuentaPedida = false;
   /* Visita nueva, cortesía nueva: la siguiente mesa sí vuelve a ver la invitación a reseñar */
@@ -1856,7 +2206,9 @@ function cerrarVisita(){
   mesaOtras = []; totalMesaSrv = null; hashMesa = '';
   /* Visita nueva: esta pantalla ya no es dueña de nada y los intentos de código se reinician */
   mesaFila = null; mesaEsMia = false; mesaIntentos = 0;
-  try{ localStorage.removeItem(LSK('mb_sesion_v1')); localStorage.removeItem(LSK('mb_mesa_intentos')); }catch(e){}
+  /* Mesa nueva, código nuevo y bienvenida nueva: la siguiente visita vuelve a ver su código */
+  mesaChequeada = false; bienvenidaPend = false; propinaSugerida = null; ordenRechazada = null;
+  try{ localStorage.removeItem(LSK('mb_sesion_v1')); localStorage.removeItem(LSK('mb_mesa_intentos')); localStorage.removeItem(LSK('mb_mesa_saludo')); }catch(e){}
   pintarIndicadores();
   const pideResena = resenasActivas();
   $('#hojaConf').innerHTML = `
@@ -1946,6 +2298,9 @@ function mostrarGuia(forzar){
 function cerrarGuia(){
   $('#guia').classList.remove('visible');
   try{ localStorage.setItem(LSK('mb_guia_v1'),'1'); }catch(e){}
+  /* La bienvenida de la mesa (su código) va antes que la invitación a los puntos: es
+     información que necesita ya. Los puntos se ofrecen al cerrar la bienvenida. */
+  if(bienvenidaPend){ ofrecerBienvenida(); return; }
   ofrecerCuentaPuntos();
 }
 
