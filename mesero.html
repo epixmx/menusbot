@@ -516,7 +516,18 @@ function haceHumano(ts){
   const h = Math.floor(min / 60), r = min % 60;
   return 'hace ' + h + ' h' + (r ? ' ' + r + ' min' : '');
 }
+/* El índice 2 dejó de ser un solo momento: cocina marca «lista» y avisa, pero la orden no va
+   camino a la mesa hasta que el mesero confirma que la levantó del pase. Mientras nadie la
+   recoge sigue en la barra enfriándose, y decirle «en camino» al que la ve en pantalla era
+   justo la mentira que hacía que nadie fuera por ella. El arreglo se queda como respaldo
+   (índice 2 = el caso de siempre, ya recogida) para cualquier estado que no sea el 2. */
 const ESTADO_TXT = ['En cocina, recibida', 'En preparación', 'En camino a la mesa', 'Entregada'];
+/* Se pide la orden entera, no el número de estado: sin recogida_at no se puede distinguir y
+   pintar «En camino» de oficio sería inventarle un viaje que nadie hizo. */
+const estadoTxt = o => {
+  const e = Math.max(0, Math.min(3, +((o && o.estado) || 0)));
+  return e === 2 ? ((o && o.recogida_at) ? 'En camino a la mesa' : 'Lista para recoger') : ESTADO_TXT[e];
+};
 
 /* ---------- El folio que también ve el comensal ----------
    En el teléfono de la mesa dice «Orden BV-1024» y aquí decía «Orden 24»: el mismo pedido con
@@ -840,6 +851,10 @@ async function sondear(){
   if(!sesion) return;
   try{
     const [ords, mesas, lls] = await Promise.all([
+      /* Sin select= a propósito: es la única lectura de órdenes de esta pantalla y trae la fila
+         completa, así que recogida_at y recogida_por llegan solos. Si alguien le pone un select=
+         para ahorrar bytes, que no se le olviden esos dos: sin ellos toda orden lista se pintaría
+         «Lista para recoger» para siempre y el mesero iría al pase por una charola que ya trae. */
       api('menusbot_ordenes?restaurante_id=eq.' + encodeURIComponent(RID) + '&cerrada=eq.false&order=creada.desc'),
       /* order= explícito: sin él PostgREST no promete un orden estable y dos filas de la misma
          mesa se alternan entre peticiones. La fila viva (latido más nuevo) va primero. */
@@ -926,7 +941,11 @@ function estadoMesas(){
   return Object.values(porMesa).map(m => {
     m.pendientes = m.ordenes.filter(o => o.verificacion === 'pendiente');
     m.autorizadas = m.ordenes.filter(o => o.verificacion === 'ok');
-    m.listas = m.autorizadas.filter(o => +o.estado === 2);
+    /* «Listas por llevar» siempre quiso decir las que están en el pase esperando a que alguien
+       vaya por ellas. Una que el mesero ya trae en la charola no le queda pendiente de recoger,
+       y contarla ahí lo mandaba de vuelta a la cocina por algo que ya traía en la mano. De aquí
+       cuelgan también la urgencia de la tarjeta y el tono de aviso, y los tres quieren lo mismo. */
+    m.listas = m.autorizadas.filter(o => +o.estado === 2 && !o.recogida_at);
     m.total = m.ordenes.filter(o => o.verificacion === 'ok').reduce((s,o) => s + (+o.total || 0), 0);
     m.totalConPendientes = m.ordenes.reduce((s,o) => s + (+o.total || 0), 0);
     m.pidioCuenta = m.llamadas.some(l => l.motivo === 'cuenta') || +((m.abierta && m.abierta.propina_sugerida) || 0) > 0;
@@ -1140,11 +1159,22 @@ function pintarDetalle(n){
       const conPartidas = e === 1 || e === 2;
       html += '<div class="bloque"><div class="bl-cab"><span class="caps" style="color:var(--humo)">Orden ' + esc(folio(o.id)) + ' &middot; Mesa ' + String(m.mesa).padStart(2,'0') + '</span>' +
         '<span class="hh">' + esc(hora(o.creada)) + '</span></div>' +
-        '<div class="estado-cocina e' + e + '" style="margin-top:9px"><i></i>' + ESTADO_TXT[e] + '</div>' +
+        '<div class="estado-cocina e' + e + '" style="margin-top:9px"><i></i>' + estadoTxt(o) +
+          /* Quién la levantó importa cuando son dos meseros en el mismo turno: si la trae otro,
+             que no salga un segundo al pase a buscar una charola que ya no está. */
+          (e === 2 && o.recogida_at && o.recogida_por ? ' &middot; la trae ' + esc(o.recogida_por) : '') + '</div>' +
         renglones(o, conPartidas) +
         '<div class="tot-linea"><span class="caps">' + (o.autorizada_por ? 'Autorizó ' + esc(o.autorizada_por) : 'Total') + '</span><b>' + fmt(o.total) + '</b></div>' +
-        (e === 2 ? '<div class="acciones"><button class="btn-primario" data-entregar="' + o.id + '">Marcar toda la orden entregada</button></div>' :
-         e === 3 ? '<div class="estado-cocina e3" style="margin-top:11px"><i></i>Entregada' + (o.entregada_por ? ' por ' + esc(o.entregada_por) : '') + '</div>' : '') +
+        /* Los dos botones conviven a propósito mientras nadie la ha recogido. Lo normal es
+           «La recogí» y entregar al llegar a la mesa, por eso va de primario; pero el viaje
+           en el que levanta y sirve de una sola vez es igual de común, y esconderle «entregada»
+           hasta después del primer toque le cobraría dos toques por el mismo viaje. Ya recogida
+           solo queda entregarla, y ese pasa a primario. */
+        (e === 2 && !o.recogida_at
+          ? '<div class="acciones"><button class="btn-primario" data-recogi="' + o.id + '">La recogí</button>' +
+            '<button class="btn-fantasma" data-entregar="' + o.id + '">Marcar toda la orden entregada</button></div>'
+         : e === 2 ? '<div class="acciones"><button class="btn-primario" data-entregar="' + o.id + '">Marcar toda la orden entregada</button></div>'
+         : e === 3 ? '<div class="estado-cocina e3" style="margin-top:11px"><i></i>Entregada' + (o.entregada_por ? ' por ' + esc(o.entregada_por) : '') + '</div>' : '') +
         '</div>';
     });
   }
@@ -1183,6 +1213,7 @@ function pintarDetalle(n){
   h.querySelectorAll('[data-cerrar]').forEach(b => b.addEventListener('click', cerrarSheets));
   h.querySelectorAll('[data-ok]').forEach(b => b.addEventListener('click', () => autorizar(+b.dataset.ok, m.mesa)));
   h.querySelectorAll('[data-rech]').forEach(b => b.addEventListener('click', () => rechazar(+b.dataset.rech, m.mesa)));
+  h.querySelectorAll('[data-recogi]').forEach(b => b.addEventListener('click', () => recogiOrden(+b.dataset.recogi)));
   h.querySelectorAll('[data-entregar]').forEach(b => b.addEventListener('click', () => entregarOrden(+b.dataset.entregar)));
   h.querySelectorAll('[data-part]').forEach(b => b.addEventListener('click', () => {
     const [id, ix] = b.dataset.part.split(':');
@@ -1223,6 +1254,29 @@ async function rechazar(id, mesa){
   }
 }
 
+/* Un solo toque, sin armar el botón como los destructivos: recoger es lo que más veces al día
+   hace un mesero y equivocarse no rompe nada (se arregla marcándola entregada, o el siguiente
+   sondeo trae la verdad). Dos toques por comanda en hora pico se vuelven odiosos y terminan en
+   nadie tocando nada. El estado NO se mueve: sigue en 2, lo que cambia es de qué mitad del 2. */
+async function recogiOrden(id){
+  const o = ordenes.find(x => +x.id === id);
+  if(!o || o.recogida_at) return;
+  const ahora = new Date().toISOString();
+  const antes = { recogida_at: o.recogida_at, recogida_por: o.recogida_por };
+  o.recogida_at = ahora; o.recogida_por = sesion.nombre;   /* pintado optimista: el mesero ya se va */
+  pintarMesas(); if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
+  try{
+    await api('menusbot_ordenes?id=eq.' + id, { method:'PATCH', body: JSON.stringify({ recogida_at: ahora, recogida_por: sesion.nombre }) });
+    toast('Orden ' + folio(id) + ' va en camino a la mesa.');
+  }catch(e){
+    /* Se deshace en pantalla: dejarla como recogida sin que la base lo sepa la borraría del
+       contador de todos los demás teléfonos menos de este, y la charola se queda en el pase. */
+    o.recogida_at = antes.recogida_at; o.recogida_por = antes.recogida_por;
+    pintarMesas(); if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
+    toast('No se pudo marcar como recogida. Revisa el internet y vuelve a intentar.');
+  }
+}
+
 async function entregarOrden(id){
   const o = ordenes.find(x => +x.id === id);
   if(!o) return;
@@ -1249,6 +1303,10 @@ async function entregarPartida(id, ix){
   const cuerpo = { items };
   if(todos){ cuerpo.estado = 3; cuerpo.entregada_por = sesion.nombre; cuerpo.entregada_at = ahora; }
   else if(+o.estado === 1){ cuerpo.estado = 2; }
+  /* Quien ya sirvió un renglón obviamente pasó por el pase: sin esto la comanda caía en el 2
+     sin recoger y le pedía «La recogí» por una charola que acababa de vaciar en la mesa. Solo
+     se estampa si nadie lo hizo antes, para no borrar quién la levantó de verdad. */
+  if(!todos && !o.recogida_at){ cuerpo.recogida_at = ahora; cuerpo.recogida_por = sesion.nombre; }
   Object.assign(o, cuerpo);
   pintarMesas(); if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
   toast(todos ? 'Orden ' + folio(id) + ' entregada completa.' : 'Renglón entregado.');

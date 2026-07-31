@@ -120,9 +120,12 @@
   .c-item .nom em{display:block;font-family:var(--serif);font-style:italic;font-weight:500;font-size:18px;color:#8A5A12;margin-top:4px;line-height:1.45}
   .c-item.servido .nom,.c-item.servido b{opacity:.5;text-decoration:line-through;text-decoration-thickness:1px}
   .c-item.servido .nom em{text-decoration:none}
-  .p-btn{margin-left:auto;flex-shrink:0;align-self:center;display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid rgba(36,31,24,.35);background:transparent;color:var(--ink);font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:9px 13px;border-radius:2px;cursor:pointer;line-height:1.4}
-  .p-btn:hover{background:var(--pomodoro);border-color:var(--pomodoro);color:var(--papel)}
   .p-ok{margin-left:auto;flex-shrink:0;align-self:center;background:var(--al-verde);color:var(--al-txt);font-size:14px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:8px 11px;border-radius:2px;white-space:nowrap;line-height:1.4}
+  /* Distintivo del pase (columna 03): el cuerpo de .p-ok, pero suelto en su propio renglón —
+     fuera de la fila de un platillo el margin-left:auto no empuja nada— y en azul mientras la
+     comanda sigue esperando: el verde se reserva para lo que ya se movió. */
+  .p-ok.pase{display:inline-block;margin-left:0}
+  .p-ok.pase.espera{background:var(--al-azul)}
   .c-pie{margin-top:12px;padding-top:12px;border-top:1px dotted rgba(36,31,24,.25)}
   /* Botón de avanzar: ocupa todo el ancho de la tarjeta. Se aprieta con el dorso del dedo,
      con las manos ocupadas y sin mirar. */
@@ -214,10 +217,12 @@
       <div class="col-cuerpo" id="col1"></div>
     </div>
     <div class="columna">
-      <div class="col-cab"><span class="caps">03 · En camino a la mesa</span><span class="cuenta-col" id="n2">0</span></div>
-      <!-- Aquí no hay botones a propósito: el plato ya salió de este cuarto y la entrega la
-           firma quien la hace. Sin esta línea, el pase busca el botón y cree que se rompió. -->
-      <div class="col-vacia" style="padding:12px 14px 0">La comanda ya salió de la cocina — la entrega la firma el mesero</div>
+      <div class="col-cab"><span class="caps">03 · Lista, esperando al mesero</span><span class="cuenta-col" id="n2">0</span></div>
+      <!-- Aquí no hay botones a propósito: el plato ya salió de este cuarto y la recogida la
+           firma quien la hace. Sin esta línea, el pase busca el botón y cree que se rompió.
+           Nace escondida: con la columna vacía se apilaba encima del "Nada por servir" y
+           parecían dos avisos peleados. La enciende pintar(). -->
+      <div class="col-vacia" id="nota2" style="padding:12px 14px 0;display:none">Ya salió de la cocina — el mesero la recoge y firma la entrega</div>
       <div class="col-cuerpo" id="col2"></div>
     </div>
   </main>
@@ -400,7 +405,7 @@ function pantalla(id){ $$('.pantalla').forEach(p => p.classList.toggle('activa',
    ================================================================== */
 let cfg = {};            // el blob de configuración del restaurante
 let cfgOk = false;       // ¿alcanzamos a leerlo?
-let PIN_COCINA = '';     // cfg.cocina_pin
+let PIN_COCINA = '';     // el de esta sucursal si lo hay, si no el de la raíz
 let sinPin = false;      // el dueño todavía no configura PIN: se entra igual
 let sesion = null;
 try{ sesion = JSON.parse(localStorage.getItem(LSK('mb_cocina')) || 'null'); }catch(e){}
@@ -494,13 +499,26 @@ function revisarPin(){
   }
 }
 
+/* Un PIN (y un nombre de pase) por sucursal: cfg.cocinas['LANDMARK'] = {pin,nombre}.
+   La raíz cfg.cocina_pin / cfg.cocina_nombre sigue viva a propósito y no se va a borrar: los
+   restaurantes de una sola sucursal jamás escribieron cfg.cocinas, y si la raíz dejara de
+   valer se quedarían fuera de su propia cocina hasta que alguien les migre el blob. Primero
+   manda la sucursal del enlace; si esa sucursal no tiene lo suyo, cae al de siempre. */
+function cocinaDeSucursal(){
+  return (cfg.cocinas && SUC && cfg.cocinas[SUC]) || null;
+}
+function hayCocinasPorSucursal(){
+  return !!(cfg.cocinas && Object.keys(cfg.cocinas).length);
+}
+
 async function cargarConfig(){
   try{
     const cfgs = await api('menusbot_config?id=eq.' + encodeURIComponent(RID) + '&select=data');
     cfg = (cfgs && cfgs[0] && cfgs[0].data) || {};
     cfgOk = true;
   }catch(e){ cfgOk = false; }
-  PIN_COCINA = String(cfg.cocina_pin == null ? '' : cfg.cocina_pin).trim();
+  const ent = cocinaDeSucursal();
+  PIN_COCINA = String((ent && ent.pin != null ? ent.pin : cfg.cocina_pin) ?? '').trim();
   sinPin = !/^\d{4}$/.test(PIN_COCINA);
 }
 
@@ -549,11 +567,18 @@ const destellando = new Map();      // id -> timeout que apaga el destello
 
 function entrarApp(){
   pantalla('app');
-  const nom = cfg.cocina_nombre || 'Cocina';
+  const ent = cocinaDeSucursal();
+  const nom = (ent && ent.nombre) || cfg.cocina_nombre || 'Cocina';
   $('#marcaCocina').innerHTML = escTxt(nom) + '<small>' + escTxt(nombreDelLugar() + (SUC ? ' · ' + SUC : '')) + '</small>';
-  $('#pieAviso').innerHTML = sinPin
-    ? '<span class="aviso-pin">Sin PIN de cocina — configúralo en Panel &rarr; Equipo</span>'
-    : '';
+  /* Con varias sucursales, "configúralo en Equipo" deja al dueño buscando a ciegas: hay un PIN
+     por sucursal y el aviso tiene que decir cuál es la que quedó abierta. */
+  let avisoPin = 'Sin PIN de cocina — configúralo en Panel &rarr; Equipo';
+  if(hayCocinasPorSucursal()){
+    avisoPin = SUC
+      ? 'Sin PIN de cocina para ' + escTxt(SUC) + ' — configúralo en Panel &rarr; Equipo'
+      : 'Sin PIN de cocina — a este enlace le falta la sucursal';
+  }
+  $('#pieAviso').innerHTML = sinPin ? '<span class="aviso-pin">' + avisoPin + '</span>' : '';
   pintarBtnSonido();
   pantallaViva();
   arrancarSondeo();
@@ -594,7 +619,7 @@ async function sondear(){
     /* Solo se piden las columnas que trae esta pantalla (estado menor a 3) y nunca la
        columna de totales: los precios no tienen por qué llegar siquiera al navegador. */
     const filas = await api('menusbot_ordenes?restaurante_id=eq.' + encodeURIComponent(RID) +
-      '&estado=lt.3&order=creada.asc&limit=300&select=id,mesa,items,estado,creada,sucursal,cerrada,verificacion');
+      '&estado=lt.3&order=creada.asc&limit=300&select=id,mesa,items,estado,creada,sucursal,cerrada,verificacion,recogida_at,recogida_por');
     ordenes = (filas || []).map(f => ({
       dbId: f.id,
       folio: iniciales((cfg.config && cfg.config.marca && cfg.config.marca.nombre) || '') + '-' + (1000 + f.id),
@@ -605,6 +630,10 @@ async function sondear(){
       sucursal: f.sucursal || '',
       cerrada: !!f.cerrada,
       verificacion: f.verificacion || 'ok',
+      /* Las firma el mesero desde su teléfono, no esta pantalla. Vienen nulas hasta que
+         alguien levanta el plato, y eso es justo lo que parte el estado 2 en dos momentos. */
+      recogidaAt: f.recogida_at || null,
+      recogidaPor: f.recogida_por || '',
     }));
     enLinea = true;
   }catch(e){ enLinea = false; }
@@ -646,6 +675,9 @@ function pintar(){
   [0,1,2].forEach(est => {
     const grupo = lista.filter(o => o.estado === est);
     $('#n' + est).textContent = grupo.length;
+    /* La nota de la 03 explica quién firma la entrega; sin comandas no hay nada que explicar
+       y solo estorbaría encima del "Nada por servir". */
+    if(est === 2) $('#nota2').style.display = grupo.length ? '' : 'none';
     cols[est].innerHTML = grupo.length
       ? grupo.map(o => tarjeta(o)).join('')
       : '<div class="col-vacia">' + ['Nada por empezar','Nada en el fuego','Nada por servir'][est] + '</div>';
@@ -684,13 +716,21 @@ function tarjeta(o){
   }).join('');
   let pie = '';
   if(o.estado === 0) pie = '<div class="c-pie"><button class="btn-avanza" data-act="avanzar" data-id="' + o.dbId + '">Empezar preparación</button></div>';
-  if(o.estado === 1) pie = '<div class="c-pie"><button class="btn-avanza" data-act="avanzar" data-id="' + o.dbId + '">Sale a la mesa</button></div>';
+  if(o.estado === 1) pie = '<div class="c-pie"><button class="btn-avanza" data-act="avanzar" data-id="' + o.dbId + '">Lista — avisar al mesero</button></div>';
+  /* En la columna 03 la cocina ya no tiene nada que apretar, pero sí necesita distinguir el
+     plato que sigue en la barra del que ya va caminando: uno hay que volver a gritarlo, el
+     otro no. El nombre lo escribe el mesero, así que va escapado. */
+  let pase = '';
+  if(o.estado === 2) pase = o.recogidaAt
+    ? '<div class="c-folio"><span class="p-ok pase">En camino · ' + escTxt(o.recogidaPor || 'mesero') + '</span></div>'
+    : '<div class="c-folio"><span class="p-ok pase espera">Lista para recoger</span></div>';
   return '<div class="comanda' + (destellando.has(o.dbId) ? ' nueva' : '') + '">' +
     '<div class="c-top">' +
       '<span class="c-mesa"><small>Mesa</small><b>' + escTxt(String(o.mesa).padStart(2,'0')) + '</b></span>' +
       '<span class="reloj' + claseReloj(min, o.estado) + '">' + min + ' min</span>' +
     '</div>' +
     '<div class="c-folio">' + escTxt(o.folio) + (o.sucursal ? ' · ' + escTxt(o.sucursal) : '') + '</div>' +
+    pase +
     '<div class="c-items">' + items + '</div>' +
     pie + '</div>';
 }
@@ -729,9 +769,10 @@ async function avanzar(id){
   }
 }
 
-/* Esta pantalla escribe dos cosas y nada más: 0→1 y 1→2. La entrega al comensal no se firma
-   desde la cocina —quien la hace es el mesero, y la firma tiene que decir la verdad—, así que
-   aquí no hay forma de llegar al estado 3. cfg.cocina_nombre se quedó solo para el encabezado. */
+/* Esta pantalla escribe dos cosas y nada más: 0→1 y 1→2. Ni la recogida ni la entrega se firman
+   desde la cocina —quien las hace es el mesero, y la firma tiene que decir la verdad—, así que
+   aquí no hay forma de tocar recogida_at ni de llegar al estado 3. El nombre del pase es puro
+   encabezado. */
 
 arrancar();
 </script>

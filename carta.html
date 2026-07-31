@@ -1031,7 +1031,9 @@ async function sincronizar(){
       if(vistaActual === 'orden') pintarVistaOrden();
     }
     if(misIds.length){
-      const filas = await api(`menusbot_ordenes?id=in.(${misIds.join(',')})&select=id,estado,entregada_por,entregada_at,cerrada,items,verificacion`);
+      /* recogida_at viaja siempre: sin ella el estado 2 se lee a medias y el comensal se
+         queda en «lista en cocina» aunque el mesero ya vaya con su plato en la mano. */
+      const filas = await api(`menusbot_ordenes?id=in.(${misIds.join(',')})&select=id,estado,recogida_at,entregada_por,entregada_at,cerrada,items,verificacion`);
       for(const o of ordenes){
         const rem = (filas || []).find(x => x.id === o.dbId);
         if(!rem) continue;
@@ -1060,12 +1062,20 @@ async function sincronizar(){
           guardarSesion();
           if(vistaActual === 'cuenta') pintarVistaCuenta();
         }
-        if(rem && rem.estado !== o.estado){
+        /* El plato sale de la cocina y ahí se queda hasta que un mesero lo levanta: son dos
+           momentos distintos y sólo el segundo mueve `recogida_at`, nunca el estado. Si aquí
+           siguiéramos vigilando sólo `estado`, la recogida no llegaría jamás a la pantalla. */
+        const recRem = rem.recogida_at || null;
+        if(rem && (rem.estado !== o.estado || (o.recogida_at || null) !== recRem)){
+          const antes = avisoEstado(o);
           o.estado = rem.estado;
+          o.recogida_at = recRem;
           o.entregada_por = rem.entregada_por;
           o.entregada_at = rem.entregada_at ? Date.parse(rem.entregada_at) : null;
-          const avisos = ['recibida en cocina','en preparación','va en camino a tu mesa','entregada — ¡provecho!'];
-          toast(`Orden ${o.folio} — ${avisos[o.estado]}`);
+          /* Se avisa por lo que el comensal LEE, no por lo que cambió en la base: si el dato
+             se movió pero la frase es la misma, un toast repetido sólo sería ruido. */
+          const ahora = avisoEstado(o);
+          if(ahora !== antes) toast(`Orden ${o.folio} — ${ahora}`);
           refrescarEstadoUI();
         }
       }
@@ -1078,10 +1088,12 @@ async function sincronizar(){
     // Cuenta de la MESA: todas las órdenes no cobradas de esta mesa (de cualquier teléfono),
     // para que el total del comensal sea el mismo que el "por cobrar" del panel.
     if(mesa != null){
-      const om = await api(`menusbot_ordenes?restaurante_id=eq.${RID}&mesa=eq.${mesa}&sucursal=eq.${encodeURIComponent(SUC)}&cerrada=eq.false&verificacion=neq.rechazada&select=id,total,estado,creada&order=creada.asc`);
+      const om = await api(`menusbot_ordenes?restaurante_id=eq.${RID}&mesa=eq.${mesa}&sucursal=eq.${encodeURIComponent(SUC)}&cerrada=eq.false&verificacion=neq.rechazada&select=id,total,estado,recogida_at,creada&order=creada.asc`);
       const otras = (om || []).filter(x => !misIds.includes(x.id));
       const totalSrv = (om || []).reduce((s, x) => s + (+x.total || 0), 0);
-      const hM = JSON.stringify([otras.map(x => [x.id, x.estado]), totalSrv]);
+      /* La recogida entra en la huella: es un cambio visible (de «lista» a «en camino») que
+         no mueve el estado, y sin ella la lista de la mesa se quedaría pintada como estaba. */
+      const hM = JSON.stringify([otras.map(x => [x.id, x.estado, x.recogida_at || null]), totalSrv]);
       if(hM !== hashMesa){
         hashMesa = hM;
         mesaOtras = otras;
@@ -1712,6 +1724,25 @@ function mostrarVista(v){
 }
 
 const ESTADOS_TXT = ['Recibida en cocina','En preparación','En camino a tu mesa','Entregada en tu mesa'];
+/* El estado 2 dejó de ser un solo momento. Antes, en cuanto la cocina tocaba el botón le
+   decíamos «en camino» aunque el plato llevara diez minutos parado en la barra esperando a
+   que pasara un mesero — y el comensal miraba la puerta de la cocina para nada. Ahora la
+   frase depende de si alguien ya lo levantó (`recogida_at`), que es el único dato que
+   distingue «cocinado» de «viajando». Todo lo demás sigue saliendo del arreglo de siempre.
+   Se recibe la ORDEN entera, no el número: el número solo ya no alcanza para decir la verdad.
+   Y ojo, aquí se le habla al comensal: es «a TU mesa», no «a la mesa» como en el personal. */
+function txtEstado(o){
+  if(!o) return '';
+  if(o.estado === 2) return o.recogida_at ? 'En camino a tu mesa' : 'Lista en cocina';
+  return ESTADOS_TXT[o.estado] || '';
+}
+/* Misma regla, en minúsculas y en tono de aviso pasajero (los toast del sondeo) */
+function avisoEstado(o){
+  const avisos = ['recibida en cocina','en preparación','va en camino a tu mesa','entregada — ¡provecho!'];
+  if(!o) return '';
+  if(o.estado === 2) return o.recogida_at ? 'va en camino a tu mesa' : 'lista en cocina';
+  return avisos[o.estado] || '';
+}
 /* Mismo nombre de siempre (lo leen las vistas), pero ahora apuntan a la paleta de alertas:
    azul = dato / en marcha, verde = listo. Nunca cambian con el tema. */
 const ESTADOS_COLOR = ['var(--al-azul)','var(--al-azul)','var(--al-azul)','var(--al-verde)'];
@@ -1749,7 +1780,14 @@ function pintarIndicadores(){
          algo espera al mesero, azul cuando todo va en marcha. */
       barra.classList.toggle('cuenta', !!cuentaPedida);
       barra.classList.toggle('espera', !cuentaPedida && act.some(esPendiente));
-      const corto = o => esPendiente(o) ? 'por confirmar' : ['en cocina','preparando','en camino','entregada'][o.estado];
+      /* Misma regla de dos momentos, pero aquí el espacio manda: .bo-txt es nowrap con
+         ellipsis y «Nº XX-1001 — LISTA EN COCINA» se corta a la mitad en un teléfono de
+         390px. «Lista» sola cabe, dice lo único que importa (ya está hecha) y va en el
+         mismo registro de una palabra que «preparando» y «entregada»; el detalle completo
+         lo lee un dedazo más allá, en la pestaña Cuenta. */
+      const corto = o => esPendiente(o) ? 'por confirmar'
+        : o.estado === 2 ? (o.recogida_at ? 'en camino' : 'lista')
+        : ['en cocina','preparando','','entregada'][o.estado] || '';
       if(cuentaPedida){
         $('#boNum').innerHTML = '<i></i>';
         $('#boTxt').innerHTML = '<b>Cuenta solicitada</b> — mesero en camino';
@@ -1776,7 +1814,7 @@ function pintarIndicadores(){
     /* Aviso sólido: ámbar si espera al mesero, verde si ya se entregó, azul mientras avanza */
     pill.style.setProperty('--ce', cuentaPedida ? 'var(--al-verde)'
       : esPendiente(o) ? COLOR_PENDIENTE : ESTADOS_COLOR[o.estado]);
-    $('#pillEstadoTxt').innerHTML = `<b>ORDEN Nº ${o.num} — ${esPendiente(o) ? 'POR CONFIRMAR CON TU MESERO' : ESTADOS_TXT[o.estado].toUpperCase()}</b><small>${ordenes.length} orden(es) en curso · toca para ver tu cuenta</small>`;
+    $('#pillEstadoTxt').innerHTML = `<b>ORDEN Nº ${o.num} — ${esPendiente(o) ? 'POR CONFIRMAR CON TU MESERO' : txtEstado(o).toUpperCase()}</b><small>${ordenes.length} orden(es) en curso · toca para ver tu cuenta</small>`;
   } else pill.classList.remove('visible');
 }
 
@@ -2121,6 +2159,16 @@ function pintarVistaOrden(){
    que verse antes de «en cocina». Mientras la orden está pendiente el primer punto parpadea;
    cuando el mesero la autoriza, el avance se nota solo. */
 const PROG_PASOS = ['Por confirmar','En cocina','Preparando','En camino','Entregada'];
+/* Siguen siendo CINCO puntos aunque el estado 2 ahora tenga dos momentos, y es a propósito.
+   Los puntos cuentan hitos que cambian lo que el comensal debe esperar; «lista en barra» y
+   «la levantó un mesero» son el mismo hito visto por dentro de la casa: en los dos casos su
+   comida ya está hecha y viene para allá. Lo que cambia es la frase, no la geometría — y la
+   barra sólo nombra el paso en el que va, así que un nombre distinto sale gratis mientras
+   que un sexto punto reacomodaría todas las órdenes por una diferencia que, cuando el
+   servicio va bien, dura segundos. Además `recogida_at` es NULL en toda orden anterior a
+   hoy: con seis puntos esas órdenes se verían saltándose un paso que sí ocurrió; con cinco
+   y el nombre variable no se nota nada raro. */
+const nombrePaso = (o, i) => i === 3 ? (o.recogida_at ? 'En camino' : 'Lista en cocina') : PROG_PASOS[i];
 function pasoOrden(o){
   return (o.verificacion || 'pendiente') === 'pendiente' ? 0 : (o.estado || 0) + 1;
 }
@@ -2133,7 +2181,7 @@ function progresoHTML(o){
   for(let i = 1; i <= ultimo; i++) linea += `<span class="p-seg ${seg(i)}"></span><span class="p-dot ${dot(i)}"></span>`;
   return `<div class="prog">
     <div class="p-linea-cont">${linea}</div>
-    <div class="p-etiq cinco">Paso ${Math.min(p, ultimo) + 1} de ${PROG_PASOS.length}<span class="p-cual ${p < ultimo ? 'on' : ''}">${PROG_PASOS[Math.min(p, ultimo)]}</span></div></div>
+    <div class="p-etiq cinco">Paso ${Math.min(p, ultimo) + 1} de ${PROG_PASOS.length}<span class="p-cual ${p < ultimo ? 'on' : ''}">${nombrePaso(o, Math.min(p, ultimo))}</span></div></div>
     ${p === 0 ? `<div style="margin-top:10px;font-family:var(--grot);font-size:12.5px;letter-spacing:1.4px;text-transform:uppercase;color:#8A7D69;line-height:1.7">Tu mesero viene a confirmarla contigo · en cuanto lo haga, entra a la cocina</div>` : ''}
     ${o.estado===3 && o.entregada_por ? `<div style="margin-top:10px;font-family:var(--grot);font-size:12.5px;letter-spacing:1.6px;text-transform:uppercase;color:#8A7D69">Confirmada por ${o.entregada_por} · ${o.entregada_at ? new Date(o.entregada_at).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : ''}</div>` : ''}`;
 }
@@ -2163,7 +2211,7 @@ function pintarVistaCuenta(){
     html += `<div class="banner-estado" style="--ce:${COLOR_PENDIENTE}"><span class="be-dot"></span><div><b>ESPERANDO CONFIRMACIÓN</b><small>Orden Nº ${u.num} · tu mesero viene a la mesa a confirmarla contigo</small></div></div>`;
   } else if(activas.length){
     const u = activas[activas.length - 1];
-    html += `<div class="banner-estado" style="--ce:${ESTADOS_COLOR[u.estado]}"><span class="be-dot"></span><div><b>${ESTADOS_TXT[u.estado].toUpperCase()}</b><small>Orden Nº ${u.num}${activas.length > 1 ? ` · ${activas.length} órdenes en curso` : ''}</small></div></div>`;
+    html += `<div class="banner-estado" style="--ce:${ESTADOS_COLOR[u.estado]}"><span class="be-dot"></span><div><b>${txtEstado(u).toUpperCase()}</b><small>Orden Nº ${u.num}${activas.length > 1 ? ` · ${activas.length} órdenes en curso` : ''}</small></div></div>`;
   }
   if(!ordenes.length && !mesaOtras.length){
     html += `<div class="vacio">Aún no has enviado órdenes a cocina.<br><br>Cuando envíes una, aquí verás su avance<br>en todo momento.</div>
@@ -2172,7 +2220,7 @@ function pintarVistaCuenta(){
   }
   for(const o of [...ordenes].reverse()){
     html += `<div class="ticket"><div class="t-int">
-      <div class="t-cab"><div class="t-marca">Nº ${o.num}</div><div class="chip-estado" style="--ce:${esPendiente(o) ? COLOR_PENDIENTE : ESTADOS_COLOR[o.estado]}"><i></i>${esPendiente(o) ? 'Por confirmar' : ESTADOS_TXT[o.estado]}</div></div>
+      <div class="t-cab"><div class="t-marca">Nº ${o.num}</div><div class="chip-estado" style="--ce:${esPendiente(o) ? COLOR_PENDIENTE : ESTADOS_COLOR[o.estado]}"><i></i>${esPendiente(o) ? 'Por confirmar' : txtEstado(o)}</div></div>
       ${o.items.map(i => {
         const d = PLATILLOS.find(x => x.id === i.id);
         const nombre = d ? d.nombre : (i.nombre || '');
@@ -2194,7 +2242,7 @@ function pintarVistaCuenta(){
     html += `<div class="bloque" style="padding:0 18px;margin:6px 0 14px"><div class="b-cab"><span class="caps">Otras órdenes de tu mesa</span><i></i></div>
       ${mesaOtras.map(x => `<div class="t-item" style="padding:8px 0">
         <span class="t-nom" style="font-family:var(--grot);font-size:14px;letter-spacing:.5px">Nº ${iniciales(MARCA.nombre)}-${1000 + x.id}</span>
-        <span class="chip-estado" style="--ce:${ESTADOS_COLOR[x.estado] || ESTADOS_COLOR[0]};margin-left:10px"><i></i>${ESTADOS_TXT[x.estado] || ''}</span>
+        <span class="chip-estado" style="--ce:${ESTADOS_COLOR[x.estado] || ESTADOS_COLOR[0]};margin-left:10px"><i></i>${txtEstado(x)}</span>
         <span class="leader"></span><span class="t-precio" style="font-family:var(--grot)">${fmt(+x.total || 0)}</span>
       </div>`).join('')}
       <div class="nota-pie" style="margin-top:8px">Pedidas desde otro teléfono en tu misma mesa — también entran en el total.</div>
@@ -2310,7 +2358,7 @@ function mostrarConfirmacion(o){
       <div class="folio">Nº <b>${o.num}</b> · Mesa ${String(o.mesa).padStart(2,'0')}${SUC ? ' · ' + SUC : ''} · ${fmt(o.total)} ${RESTAURANTE.moneda}</div>
       ${pend ? `<div class="nota-pie" style="margin:18px 0 0;text-align:left;border-left-color:var(--oro)">Tu orden ya se anotó y <b style="color:var(--crema)">tu mesero viene a la mesa a confirmarla contigo</b>. La repasan juntos en voz alta —los términos, lo que va sin algo, lo que quieren primero— y en ese momento pasa a la cocina.</div>
       <div class="nota-pie" style="margin:12px 0 0;text-align:left">Es parte del servicio: preferimos que alguien te vea a la cara antes de encender la estufa. <b style="color:var(--crema)">No tienes que hacer nada más</b> — quédate cómodo, ya va para allá.</div>` : ''}
-      <div class="nota-pie" style="margin:${pend ? '12px' : '22px'} 0 0;text-align:left">Puedes seguirla en la pestaña <b style="color:var(--crema)">Cuenta</b> paso por paso: por confirmar, en cocina, preparando y en camino a tu mesa.<br><br>¿Se te antoja algo más después? Ordena las veces que quieras, sin prisa: todo se va sumando y <b style="color:var(--crema)">se paga junto al final</b>.</div>
+      <div class="nota-pie" style="margin:${pend ? '12px' : '22px'} 0 0;text-align:left">Puedes seguirla en la pestaña <b style="color:var(--crema)">Cuenta</b> paso por paso: por confirmar, en cocina, preparando, lista en cocina y en camino a tu mesa.<br><br>¿Se te antoja algo más después? Ordena las veces que quieras, sin prisa: todo se va sumando y <b style="color:var(--crema)">se paga junto al final</b>.</div>
       <div class="acciones-orden" style="padding:22px 0 0">
         <button class="btn-primario" onclick="cerrarSheets();mostrarVista('cuenta')">Ver el estado de mi orden</button>
         <button class="btn-fantasma" onclick="cerrarSheets();mostrarVista('menu')">Seguir viendo la carta</button>

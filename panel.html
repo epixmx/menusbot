@@ -383,6 +383,44 @@
   .cf-foto{width:44px;height:44px;border-radius:3px;overflow:hidden;background:var(--esp);border:1px solid var(--linea);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--humo2);font-size:12.5px}
   .cf-foto img{width:100%;height:100%;object-fit:cover}
 
+  /* ---------- Primeros pasos ----------
+     Lista de verificación de arranque. Nombres con prefijo pp- para no chocar con nada de aquí.
+     La tipografía y las cajas son las mismas de .eq-caja / .md-tag: es otra pantalla del mismo
+     panel, no un folleto aparte. */
+  .pp-cab{border:1px solid var(--linea);border-left:3px solid var(--pomodoro);border-radius:3px;background:var(--esp2);padding:16px 18px;max-width:920px;margin-bottom:24px}
+  .pp-cab.listo{border-left-color:var(--al-verde)}
+  .pp-cab b{font-family:var(--serif);font-style:italic;font-weight:500;font-size:23px;letter-spacing:-.3px;display:block;margin-bottom:6px;line-height:1.3}
+  .pp-cab p{font-size:14px;color:var(--humo);line-height:1.75;max-width:74ch}
+  .pp-grupo{max-width:920px;margin-bottom:26px}
+  .pp-grupo-tit{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .pp-grupo-tit .n{font-family:var(--serif);font-style:italic;font-size:26px;color:var(--pomodoro);line-height:1}
+  .pp-grupo-tit .t{font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--crema)}
+  .pp-paso{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;padding:15px 0;border-top:1px solid var(--linea)}
+  .pp-txt{flex:1 1 320px;min-width:0}
+  .pp-tit{font-size:16.5px;font-weight:600;letter-spacing:.2px;line-height:1.4;margin-bottom:4px}
+  .pp-que{font-size:14px;color:var(--humo);line-height:1.7;max-width:74ch}
+  .pp-dato{font-family:var(--grot);font-size:13.5px;font-weight:600;letter-spacing:.3px;color:var(--crema);line-height:1.7;margin-top:5px;word-break:break-word}
+  .pp-ojo{font-size:13.5px;color:var(--al-ambar);font-weight:600;line-height:1.7;margin-top:5px;max-width:74ch}
+  html.claro .pp-ojo{color:#9A3412}
+  /* El ancho fijo del sello y de la columna del botón es a propósito: así los LISTO / FALTA caen
+     todos en la misma vertical y la lista se lee de un vistazo, sin ir persiguiendo la palabra. */
+  .pp-tag{font-family:var(--grot);font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:6px 9px;border-radius:2px;white-space:nowrap;line-height:1.5;flex-shrink:0;color:var(--al-txt);min-width:94px;text-align:center}
+  .pp-tag.ok{background:var(--al-verde);border:1px solid var(--al-verde)}
+  .pp-tag.falta{background:var(--al-roja);border:1px solid var(--al-roja)}
+  .pp-tag.opc{background:transparent;border:1px solid var(--linea2);color:var(--humo)}
+  .pp-acc{flex-shrink:0;margin-left:auto;min-width:180px;display:flex;justify-content:flex-end}
+  .pp-acc .btn-mini{min-height:40px}
+  /* El aviso permanente de la vista principal: discreto, del ancho del contenido, sin animación */
+  .pp-aviso{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid var(--linea);border-left:3px solid var(--al-ambar);border-radius:3px;background:var(--esp2);padding:12px 15px;margin-bottom:16px}
+  .pp-aviso span{font-size:14px;color:var(--humo);line-height:1.6;flex:1 1 240px;min-width:0}
+  .pp-aviso b{color:var(--crema);font-weight:700}
+  .pp-aviso .btn-sec{min-height:38px;padding:8px 13px;font-size:12.5px}
+  @media(max-width:520px){
+    .pp-acc{margin-left:0;flex-basis:100%;min-width:0}
+    .pp-acc .btn-mini{width:100%}
+    .pp-cab b{font-size:20px}
+  }
+
   .toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,30px);background:var(--papel);color:var(--ink);font-family:var(--grot);font-size:14px;font-weight:600;letter-spacing:.6px;line-height:1.55;padding:13px 20px;border-radius:2px;z-index:300;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 16px 44px rgba(0,0,0,.55);max-width:min(680px,90vw)}
   .toast.visible{opacity:1;transform:translate(-50%,0)}
   /* Un aviso normal es neutro; solo el que reporta una falla se pinta de rojo sólido */
@@ -423,6 +461,9 @@
         <button class="tab" data-v="equipo">Equipo</button>
         <button class="tab" data-v="temas">Temas</button>
         <button class="tab" data-v="qr">QR</button>
+        <!-- Va al final a propósito: el día a día es Comandas. Quien todavía no termina de
+             configurar llega aquí por el aviso de la vista principal, no por buscar la pestaña. -->
+        <button class="tab" data-v="pasos">Primeros pasos<span class="mini-badge" id="badgePasos">0</span></button>
       </div>
       <div id="urlPublica" class="carta-publica" style="display:none">
         <span class="caps">Tu carta pública</span>
@@ -438,6 +479,8 @@
   <!-- COMANDAS -->
   <div class="vista activa" id="v-comandas">
     <div class="vista-titulo"><h1>Comandas en vivo</h1><span class="caps" id="resumenHoy"></span></div>
+    <!-- Aviso permanente de configuración pendiente; desaparece solo cuando ya no falta nada -->
+    <div id="ppAvisoZona"></div>
     <div id="llamadasZona"></div>
     <div id="porConfirmarZona"></div>
     <div id="rechazadasZona"></div>
@@ -453,7 +496,7 @@
         <div class="col-cuerpo" id="col1"></div>
       </div>
       <div class="columna">
-        <div class="col-cab"><span class="caps">03 · En camino a la mesa — entrega por partidas</span><span class="cuenta-col" id="n2">0</span></div>
+        <div class="col-cab"><span class="caps">03 · Listas o en camino — entrega por partidas</span><span class="cuenta-col" id="n2">0</span></div>
         <div class="col-cuerpo" id="col2"></div>
       </div>
     </div>
@@ -474,7 +517,7 @@
         <option value="todas">Todos los estados</option>
         <option value="0">Recibidas</option>
         <option value="1">En preparación</option>
-        <option value="2">En camino a la mesa</option>
+        <option value="2">Listas o en camino</option>
         <option value="3">Entregadas</option>
       </select>
       <select class="filtro" id="filtroMesa" title="Deja solo las comandas de una mesa. Las mesas son las que tienes configuradas, más cualquier otra que aparezca en las comandas">
@@ -634,18 +677,19 @@
     <!-- COCINA — la pantalla del pase vive aquí y no en Identidad porque es gente trabajando, no decoración -->
     <div class="eq-caja" id="cocinaZona" style="margin-top:26px">
       <div class="caps" style="color:var(--pomodoro);margin-bottom:16px">Cocina</div>
+      <!-- La sucursal va primero a propósito: es la que decide QUÉ cocina se está editando abajo -->
       <div class="eq-form">
-        <div><div class="caps lbl">PIN de cocina</div>
+        <div><div class="caps lbl">Qué cocina estás configurando</div>
+          <select class="filtro" id="ckSucursal" style="width:100%" onchange="cambiarSucCocina()"><option value="">Sin sucursal</option></select>
+        </div>
+        <div><div class="caps lbl">PIN de esta cocina</div>
           <div style="display:flex;gap:8px">
             <input class="filtro" id="ckPin" inputmode="numeric" maxlength="4" placeholder="Sin PIN" autocomplete="off" style="letter-spacing:5px;text-align:center">
             <button class="btn-mini" onclick="pinCocinaAlAzar()" title="Poner un PIN al azar">Al azar</button>
           </div>
         </div>
-        <div><div class="caps lbl">Cómo firma la cocina</div>
+        <div><div class="caps lbl">Cómo firma esta cocina</div>
           <input class="filtro" id="ckNombre" maxlength="24" placeholder="Cocina" autocomplete="off">
-        </div>
-        <div><div class="caps lbl">Sucursal del enlace</div>
-          <select class="filtro" id="ckSucursal" style="width:100%" onchange="pintarEnlaceCocina()"><option value="">Sin sucursal</option></select>
         </div>
       </div>
       <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
@@ -657,9 +701,13 @@
         <a id="ckLink" href="#" target="_blank"></a>
         <button class="btn-sec" onclick="copiarUrlCocina()" style="padding:6px 10px;font-size:12px">COPIAR</button>
       </div>
-      <div class="nota-pie" style="margin-top:14px">El PIN son cuatro dígitos; si lo dejas vacío la pantalla no pide nada para entrar.
-      Abre ese enlace en la pantalla o la tableta del pase y déjalo ahí: se ve a pantalla completa, suena cuando entra una comanda nueva y no muestra ni precios ni totales ni nombres de clientes — solo mesa, platillos y notas.
-      El PIN es para que nadie de fuera mueva las comandas desde su teléfono, no es una contraseña fuerte. Si lo dejas vacío entra cualquiera que tenga el enlace, y la pantalla lo avisa de pie de página hasta que le pongas uno. «Cómo firma la cocina» es el nombre que queda escrito cuando el pase marca un platillo como salido; si lo dejas vacío dice «Cocina».</div>
+      <!-- El vistazo: con tres sucursales nadie recuerda cuál cocina ya tiene PIN. Solo aparece si hay sucursales. -->
+      <div id="cocinaSucLista" style="margin-top:22px"></div>
+      <div class="nota-pie" style="margin-top:14px">Cada sucursal tiene su propia cocina: su propio PIN, su propia firma y su propio enlace. Elige arriba de cuál estás hablando y los campos se llenan con lo de esa sucursal.
+      Si dejas el PIN de una sucursal vacío, esa cocina hereda el PIN y la firma de la cocina general (la opción «Cocina general» del selector) — así el restaurante de una sola sucursal no tiene que configurar nada por sucursal.
+      El PIN son cuatro dígitos. Si queda vacío en la sucursal Y en el general, la cocina entra sin protección: cualquiera con el enlace mueve las comandas, y la pantalla lo avisa de pie de página hasta que le pongas uno.
+      Abre el enlace de cada sucursal en la pantalla o la tableta de ESE pase y déjalo ahí: se ve a pantalla completa, suena cuando entra una comanda nueva y no muestra ni precios ni totales ni nombres de clientes — solo mesa, platillos y notas.
+      El PIN es para que nadie de fuera mueva las comandas desde su teléfono, no es una contraseña fuerte. «Cómo firma esta cocina» es el nombre que queda escrito cuando el pase marca un platillo como salido; si lo dejas vacío dice «Cocina».</div>
     </div>
   </div>
 
@@ -672,6 +720,10 @@
         <div><div class="caps lbl">Nombre del restaurante</div><input class="filtro" id="mNombre" placeholder="Bella Vita"></div>
         <div><div class="caps lbl">Lema / eslogan</div><input class="filtro" id="mLema" placeholder="Est. 1987"></div>
         <div><div class="caps lbl">Sucursales (separadas por coma)</div><input class="filtro" id="mSucursales" placeholder="Centro, Zona Río, Otay — vacío si solo hay una"></div>
+        <!-- Cuántas mesas: hasta hoy este número se sembraba al darse de alta y no había forma de
+             cambiarlo desde el panel. De él salen los QR imprimibles, los chips de mesas abiertas
+             y la rejilla con la que se le asignan mesas a cada mesero. -->
+        <div><div class="caps lbl">Cuántas mesas tienes</div><input class="filtro" type="number" id="mMesas" min="1" max="200" step="1" inputmode="numeric" placeholder="12"></div>
         <div><div class="caps lbl">Logo</div>
           <div style="display:flex;align-items:center;gap:10px">
             <img id="mLogoPrev" alt="" style="height:42px;width:auto;max-width:130px;object-fit:contain;display:none">
@@ -758,6 +810,13 @@
       </div>
     </div>
     <div class="temas-grid" id="qrResenasZona" style="grid-template-columns:repeat(2,1fr);max-width:520px"></div>
+  </div>
+
+  <!-- PRIMEROS PASOS — lista de verificación de arranque, se llena sola -->
+  <div class="vista" id="v-pasos">
+    <div class="vista-titulo"><h1>Primeros pasos</h1><span class="caps">Lo que falta para poder abrir — se revisa solo</span></div>
+    <div id="ppLista"></div>
+    <div class="nota-pie">Esta lista se llena sola con lo que ya configuraste: no hay nada que palomear a mano. Se vuelve a revisar cada pocos segundos, así que en cuanto guardes algo en otra pestaña, aquí cambia. Los pasos marcados como opcionales no te detienen para abrir.</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -921,6 +980,9 @@ async function cargar(){
       dbId: f.id, folio: iniciales(marcaDe().nombre) + '-' + (1000 + f.id), mesa: f.mesa, items: f.items || [], total: +f.total,
       estado: f.estado, creada: Date.parse(f.creada), sucursal: f.sucursal || '', cerrada: !!f.cerrada,
       entregada_at: f.entregada_at ? Date.parse(f.entregada_at) : null, entregada_por: f.entregada_por,
+      // La cocina marca «lista» y el mesero confirma que la recogió: entre esas dos cosas el plato
+      // sigue en la barra. Sin estas dos columnas el panel no puede distinguir un momento del otro.
+      recogida_at: f.recogida_at ? Date.parse(f.recogida_at) : null, recogida_por: f.recogida_por || '',
       verificacion: f.verificacion || 'ok', cliente_id: f.cliente_id != null ? f.cliente_id : null,
       autorizada_por: f.autorizada_por || '', autorizada_at: f.autorizada_at ? Date.parse(f.autorizada_at) : null,
     }));
@@ -1065,17 +1127,31 @@ function llenarFormMarca(forzar){
   const zona = document.getElementById('marcaZona');
   if(!zona || !document.getElementById('mNombre')) return;
   const m = marcaDe();
-  const hash = JSON.stringify([m, (cfgCache.config && cfgCache.config.sucursales) || []]);
+  const hash = JSON.stringify([m, (cfgCache.config && cfgCache.config.sucursales) || [], nMesasConfig()]);
   if(!forzar && (hash === marcaFormHash || zona.contains(document.activeElement))) return;
   marcaFormHash = hash;
   $('#mPrefijo').value = m.prefijo; $('#mNombre').value = m.nombre; $('#mLema').value = m.lema;
   $('#mSucursales').value = ((cfgCache.config && cfgCache.config.sucursales) || []).join(', ');
+  $('#mMesas').value = nMesasConfig();
   $('#mAcento').value = m.acento || '#E4593B'; $('#mSecundario').value = m.secundario || '#C9A227';
   const prev = $('#mLogoPrev'), q = $('#mLogoQuitar');
   if(m.logo){ prev.src = m.logo; prev.style.display = 'block'; q.style.display = 'inline-block'; }
   else{ prev.style.display = 'none'; q.style.display = 'none'; }
 }
 function guardarMarca(){
+  /* El número de mesas se valida ANTES de tocar nada: si viene mal no se guarda tampoco el resto,
+     porque guardar la identidad a medias y avisar de las mesas aparte confunde más que ayuda. */
+  const crudo = $('#mMesas').value.trim();
+  const nMesas = Math.round(Number(crudo));
+  if(crudo === '' || !isFinite(nMesas) || nMesas < 1 || nMesas > 200){
+    toast('Escribe cuántas mesas tienes: un número entre 1 y 200', true);
+    $('#mMesas').focus();
+    return;
+  }
+  /* Bajar el número no borra las mesas que ya están asignadas ni las que están abiertas: siguen
+     apareciendo marcadas como «fuera de tu cuenta» en Comandas. Se avisa para que no sorprenda. */
+  const antes = nMesasConfig();
+  const masAlta = Math.max(0, ...meserosActivos().map(m => Math.max(0, ...m.mesas)));
   configEscribir(d => {
     d.config.marca = { ...marcaDe(),
       prefijo: $('#mPrefijo').value.trim(),
@@ -1084,9 +1160,15 @@ function guardarMarca(){
       acento: $('#mAcento').value,
       secundario: $('#mSecundario').value };
     d.config.sucursales = $('#mSucursales').value.split(',').map(x => x.trim()).filter(Boolean);
+    d.config.mesas = nMesas;
   });
   aplicarMarcaPanel(); llenarFormMarca(true);
-  toast('Identidad guardada — la carta del comensal y el panel ya la usan');
+  if(nMesas !== antes && masAlta > nMesas)
+    toast('Guardado con ' + nMesas + ' mesas. Ojo: alguien de tu equipo tiene asignada la mesa ' + masAlta + ', que ya no entra en la cuenta — revísalo en Equipo.');
+  else if(nMesas !== antes)
+    toast('Identidad guardada — ahora son ' + nMesas + ' mesas: vuelve a imprimir tus QR');
+  else
+    toast('Identidad guardada — la carta del comensal y el panel ya la usan');
 }
 /* ---------- Reseñas (Google / Facebook) ----------
    La forma de config.resenas es un contrato con la pantalla del comensal: no cambies las llaves.
@@ -1394,7 +1476,19 @@ const TEMAS = {
   giorno:{ nombre:'Giorno', fondo:'#F5EFE4', texto:'#2A241C', acento:'#C94A2F', papel:'#FFFFFF' },
   mare:{ nombre:'Mare', fondo:'#0D1B22', texto:'#EAF3F1', acento:'#43AEC5', papel:'#EEF5F2' },
 };
-const ESTADOS_TXT = ['Recibida','En preparación','En camino a la mesa','Entregada'];
+/* El estado 2 dejó de ser un solo momento. La cocina lo marca listo y el mesero confirma que lo
+   recogió; mientras no haya recogida_at el plato está en la barra enfriándose, no en camino. Decirle
+   «en camino a la mesa» a algo que nadie ha levantado es justo el dato que el dueño no puede creer.
+   El arreglo se queda para lo que solo tiene un número a la mano — los filtros del registro, que
+   abarcan los dos momentos a la vez y por eso dicen «lista o en camino». */
+const ESTADOS_TXT = ['Recibida','En preparación','Lista o en camino','Entregada'];
+function estadoTxt(o){
+  if(o && typeof o === 'object'){
+    if(o.estado === 2) return o.recogida_at ? 'En camino a la mesa' : 'Lista, esperando al mesero';
+    return ESTADOS_TXT[o.estado] || '';
+  }
+  return ESTADOS_TXT[+o] || '';
+}
 
 /* ---------- vistas ---------- */
 let vista = 'comandas';
@@ -1474,11 +1568,17 @@ async function confirmarPartida(folio, idx, mesero){
   o.items[idx] = { ...o.items[idx], entregado: true, entregado_por: mesero, entregado_at: ahora };
   const todos = o.items.every(i => i.entregado);
   const cuerpo = { items: o.items };
+  /* Quien sirve una partida está en la mesa con el plato en la mano: eso ES la recogida. Sin
+     marcarla aquí, el tablero seguiría diciendo «esperando al mesero» de algo que ya se sirvió. */
+  if(!o.recogida_at){
+    cuerpo.recogida_at = ahora; cuerpo.recogida_por = mesero;
+    o.recogida_at = Date.now(); o.recogida_por = mesero;
+  }
   if(todos){
     cuerpo.estado = 3; cuerpo.entregada_por = mesero; cuerpo.entregada_at = ahora;
     o.estado = 3; o.entregada_por = mesero; o.entregada_at = Date.now();
   } else if(o.estado === 1){
-    cuerpo.estado = 2; // con la primera partida servida, la comanda pasa a "En camino a la mesa"
+    cuerpo.estado = 2; // con la primera partida servida, la comanda pasa a "lista o en camino"
     o.estado = 2;
     // Aquí no mandamos el aviso de «listo»: el mesero acaba de servir esa partida en la mesa,
     // ya está ahí. El aviso se manda cuando cocina la marca lista desde el tablero (avanzar).
@@ -1495,7 +1595,12 @@ function tarjetaComanda(o, d){
   let acciones = '';
   if(o.estado === 0) acciones = `<div class="c-pie"><span class="c-total">${fmt(o.total)}</span><button class="btn-avanza" onclick="avanzar('${o.folio}')">Empezar preparación</button></div>`;
   if(o.estado === 1) acciones = `<div class="c-pie"><span class="c-total">${fmt(o.total)}</span><button class="btn-avanza" onclick="avanzar('${o.folio}')">Sale a la mesa</button></div>`;
-  if(o.estado === 2) acciones = `<div class="c-pie"><span class="c-total">${fmt(o.total)}</span></div>`;
+  // Estado 2 con dos caras: si nadie la ha recogido, el plato está en la barra y eso hay que verlo
+  // desde el tablero, que es donde el dueño mira cuando algo se está tardando.
+  if(o.estado === 2) acciones = `<div class="c-pie"><span class="c-total">${fmt(o.total)}</span>
+    <span class="md-tag ${o.recogida_at ? 'ok' : 'libre'}" style="margin-left:auto">${o.recogida_at
+      ? 'La recogió ' + escTxt(o.recogida_por || 'el mesero')
+      : 'Lista — esperando al mesero'}</span></div>`;
   if(conPartidas && pidiendoMesero && pidiendoMesero.folio === o.folio){
     // Los nombres salen de la tabla del equipo; la lista vieja de la configuración solo sirve de respaldo
     const nombres = nombresMeseros();
@@ -1524,6 +1629,12 @@ function render(){
   $('#badgeNuevas').classList.toggle('visible', activas.length > 0);
   // La pestaña se ensancha sólo cuando el globo está puesto, si no el número se come la última letra
   $('#badgeNuevas').closest('.tab').classList.toggle('con-globo', activas.length > 0);
+
+  /* Primeros pasos se revisa en cada vuelta, esté o no a la vista: de ahí sale el globo de su
+     pestaña y el aviso permanente de la vista principal. Ambos se van solos cuando ya no falta nada. */
+  const ppGr = ppGrupos();
+  ppAviso(ppFaltantes(ppGr));
+  if(vista === 'pasos') ppPintar(ppGr);
 
   if(vista === 'comandas'){
     const llamadas = (d.llamadas || []).filter(l => !l.atendida && Date.now() - l.ts < 30*60000);
@@ -1658,8 +1769,11 @@ function render(){
       <td>Mesa ${String(o.mesa).padStart(2,'0')}${o.sucursal ? '<br><small>' + o.sucursal + '</small>' : ''}</td>
       <td>${o.items.map(i => `${i.qty}× ${i.nombre}`).join('<br>')}${o.items.some(i=>i.notas) ? '<br><small>'+o.items.filter(i=>i.notas).map(i=>'— '+i.notas).join(' · ')+'</small>' : ''}</td>
       <td><b>${fmt(o.total)}</b></td>
-      <td><span class="pill-est e${o.estado}">${ESTADOS_TXT[o.estado]}</span></td>
-      <td>${o.entregada_por || '<small>—</small>'}</td>
+      <td><span class="pill-est e${o.estado}">${escTxt(estadoTxt(o))}</span></td>
+      <td>${escTxt(o.entregada_por || '') || '<small>—</small>'}${
+        // Solo cuando recogió alguien distinto de quien entregó: repetir el mismo nombre dos veces
+        // no informa de nada y engorda una tabla que ya trae ocho columnas
+        o.recogida_por && o.recogida_por !== o.entregada_por ? '<br><small>la recogió ' + escTxt(o.recogida_por) + '</small>' : ''}</td>
       <td>${o.entregada_at ? mm(o.entregada_at - o.creada) : '<small>en curso</small>'}</td>
     </tr>`).join('') : `<tr><td colspan="8" style="text-align:center;color:var(--humo2);line-height:1.55">${escTxt(mensajeVacioRegistro(f, d))}</td></tr>`;
   }
@@ -2830,11 +2944,30 @@ function pintarEquipo(d){
 }
 
 /* ---------- La pantalla de cocina ----------
-   El PIN y el nombre viven en la raíz del documento de configuración (no dentro de .config)
-   porque cocina.html los lee de ahí con una sola lectura y sin conocer el resto del panel. */
-function urlCocina(){
-  const sel = document.getElementById('ckSucursal');
-  const s = (sel && sel.value) || '';
+   Un restaurante con tres sucursales tiene tres cocinas físicas, y hasta hoy las tres compartían
+   PIN y firma porque ambos vivían sueltos en la raíz del documento. Ahora lo de cada sucursal vive
+   en data.cocinas['<nombre exacto de la sucursal>'] = { pin, nombre }, y la raíz
+   (data.cocina_pin / data.cocina_nombre) se queda como respaldo: el restaurante de una sola
+   sucursal sigue funcionando sin migrar nada, y la sucursal a la que nadie le puso PIN hereda el
+   general en vez de quedarse abierta. cocina.html resuelve exactamente con esa misma regla.
+   Todo esto vive fuera de .config porque cocina.html lee el documento de una sola vez y sin
+   conocer el resto del panel. */
+const sucsCfg = () => ((cfgCache.config && cfgCache.config.sucursales) || []).filter(Boolean);
+const cocinasMapa = () => (cfgCache.cocinas && typeof cfgCache.cocinas === 'object') ? cfgCache.cocinas : {};
+/* Lo GUARDADO para esa sucursal, sin heredar. Quien está editando necesita ver el campo vacío
+   cuando la sucursal no tiene nada propio; si le pintáramos el PIN general creería que ya es suyo
+   y al guardar lo convertiría en propio sin querer. */
+function cocinaDe(suc){
+  if(!suc) return {
+    pin: String(cfgCache.cocina_pin == null ? '' : cfgCache.cocina_pin),
+    nombre: String(cfgCache.cocina_nombre == null ? '' : cfgCache.cocina_nombre),
+  };
+  const e = cocinasMapa()[suc];
+  return { pin: String(e && e.pin != null ? e.pin : ''), nombre: String((e && e.nombre) || '') };
+}
+const sucCocinaSel = () => { const s = document.getElementById('ckSucursal'); return (s && s.value) || ''; };
+function urlCocina(suc){
+  const s = suc == null ? sucCocinaSel() : suc;
   return new URL('cocina.html', location.href).href + '?r=' + encodeURIComponent(RID) + (s ? '&s=' + encodeURIComponent(s) : '');
 }
 function pintarEnlaceCocina(){
@@ -2845,12 +2978,14 @@ function pintarEnlaceCocina(){
   a.textContent = u.replace(/^https?:\/\//, '');
 }
 /* Mismo patrón de guardia que el selector de sucursales del equipo: solo se reconstruye
-   si de verdad cambió la lista, para no perder lo que ya estaba elegido */
+   si de verdad cambió la lista, para no perder lo que ya estaba elegido.
+   La opción vacía dice «Cocina general» y no «Todas las sucursales» porque ya no es un filtro:
+   es la cocina de respaldo, la que se usa donde no hay una propia. */
 function pintarSucCocina(){
   const sel = document.getElementById('ckSucursal');
   if(!sel) return;
-  const sucs = ((cfgCache.config && cfgCache.config.sucursales) || []).filter(Boolean);
-  const quiere = '<option value="">' + (sucs.length ? 'Todas las sucursales' : 'Sin sucursal') + '</option>'
+  const sucs = sucsCfg();
+  const quiere = '<option value="">' + (sucs.length ? 'Cocina general (la que heredan las demás)' : 'Sin sucursal') + '</option>'
     + sucs.map(x => `<option value="${escTxt(x)}">${escTxt(x)}</option>`).join('');
   if(sel.dataset.opts !== quiere){
     const a = sel.value;
@@ -2860,21 +2995,98 @@ function pintarSucCocina(){
   }
 }
 let cocinaFormHash = null;
+let cocinaSucPintada = '';   // de qué sucursal son los valores que están hoy en los campos
 function pintarCocina(){
   const zona = document.getElementById('cocinaZona');
   if(!zona) return;
   pintarSucCocina();
-  const pin = String(cfgCache.cocina_pin == null ? '' : cfgCache.cocina_pin);
-  const nom = String(cfgCache.cocina_nombre == null ? '' : cfgCache.cocina_nombre);
-  const hash = pin + '\n' + nom;
+  const suc = sucCocinaSel();
+  const v = cocinaDe(suc);
+  const hash = suc + '\n' + v.pin + '\n' + v.nombre;
   /* Los campos no se repintan mientras alguien está escribiendo en ellos: el reloj del panel
      da vuelta cada pocos segundos y le borraría el PIN a medio teclear. */
   if(hash !== cocinaFormHash && !zona.contains(document.activeElement)){
     cocinaFormHash = hash;
-    $('#ckPin').value = pin;
-    $('#ckNombre').value = nom;
+    cocinaSucPintada = suc;
+    $('#ckPin').value = v.pin;
+    $('#ckNombre').value = v.nombre;
   }
   pintarEnlaceCocina();
+  pintarListaCocinas();
+}
+/* Cambiar de sucursal es cambiar de cocina, así que los campos tienen que traer los datos de la
+   nueva. La guardia de arriba no sirve aquí: el selector vive dentro de la zona, o sea que al
+   cambiarlo el foco ESTÁ dentro y el repintado normal se abstendría para siempre. */
+function cambiarSucCocina(){
+  const antes = cocinaSucPintada;
+  const vAntes = cocinaDe(antes);
+  const sinGuardar = $('#ckPin').value.trim() !== vAntes.pin || $('#ckNombre').value.trim() !== vAntes.nombre;
+  const suc = sucCocinaSel();
+  const v = cocinaDe(suc);
+  cocinaSucPintada = suc;
+  cocinaFormHash = suc + '\n' + v.pin + '\n' + v.nombre;
+  $('#ckPin').value = v.pin;
+  $('#ckNombre').value = v.nombre;
+  pintarEnlaceCocina();
+  pintarListaCocinas();
+  // Perder un PIN a medio teclear en silencio es peor que el cambio de sucursal mismo
+  if(sinGuardar) toast('Se descartó lo que estabas escribiendo para ' + (antes || 'la cocina general') + ' — no le habías dado Guardar');
+}
+/* El vistazo: una línea por sucursal con si tiene PIN propio o hereda el general, con qué firma
+   sale y con qué enlace se abre. Solo tiene sentido cuando hay sucursales. */
+let listaCocinasHtml = null;
+function pintarListaCocinas(){
+  const z = document.getElementById('cocinaSucLista');
+  if(!z) return;
+  const sucs = sucsCfg();
+  if(!sucs.length){ if(listaCocinasHtml !== ''){ listaCocinasHtml = ''; z.innerHTML = ''; } return; }
+  const gen = String(cfgCache.cocina_pin == null ? '' : cfgCache.cocina_pin);
+  const genNom = String(cfgCache.cocina_nombre || '') || 'Cocina';
+  const map = cocinasMapa();
+  const elegida = sucCocinaSel();
+  const filas = sucs.map((s, i) => {
+    const e = map[s];
+    const propio = !!(e && e.pin);
+    const nom = (e && e.nombre) || genNom;
+    const tag = propio
+      ? `<span class="md-tag ok">PIN PROPIO ${escTxt(e.pin)}</span>`
+      : (gen ? `<span class="md-tag dato">HEREDA EL GENERAL ${escTxt(gen)}</span>`
+             : `<span class="md-tag libre">SIN PIN — ENTRA CUALQUIERA</span>`);
+    const u = urlCocina(s);
+    return `<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--linea)${elegida === s ? ';background:rgba(228,89,59,.06)' : ''}">
+      <span class="md-suc">${escTxt(s)}</span>${tag}
+      <span class="md-meta">firma «${escTxt(nom)}»</span>
+      <button class="btn-mini" style="margin-left:auto" onclick="editarCocinaSuc(${i})" title="Trae el PIN y la firma de esta sucursal al formulario de arriba">${elegida === s ? 'La estás editando' : 'Editar'}</button>
+      <div class="eq-link">
+        <a href="${escTxt(u)}" target="_blank">${escTxt(u.replace(/^https?:\/\//, ''))}</a>
+        <button class="btn-sec" onclick="copiarUrlCocinaDe(${i})" style="padding:6px 10px;font-size:12px">COPIAR</button>
+      </div>
+    </div>`;
+  }).join('');
+  const html = `<div class="caps lbl" style="color:var(--humo);margin-bottom:4px">Una cocina por sucursal</div>${filas}
+    <div class="nota-pie" style="margin-top:12px;border-left:none;padding-left:0">${gen
+      ? 'La cocina general firma «' + escTxt(genNom) + '» y su PIN es ' + escTxt(gen) + ': es lo que usa toda sucursal sin PIN propio.'
+      : 'La cocina general no tiene PIN, así que toda sucursal sin PIN propio se abre sin pedir nada.'}</div>`;
+  /* Se reescribe solo cuando de verdad cambió: el panel repinta cada pocos segundos y volar el
+     HTML le quitaría el foco a quien está a media copia del enlace. */
+  if(listaCocinasHtml !== html){ listaCocinasHtml = html; z.innerHTML = html; }
+}
+function editarCocinaSuc(i){
+  const s = sucsCfg()[i];
+  const sel = document.getElementById('ckSucursal');
+  if(s == null || !sel || ![...sel.options].some(o => o.value === s)) return;
+  if(sel.value === s) return;
+  sel.value = s;
+  cambiarSucCocina();
+}
+function copiarUrlCocinaDe(i){
+  const s = sucsCfg()[i];
+  if(s == null) return;
+  const u = urlCocina(s);
+  (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject())
+    .then(() => toast('Enlace de la cocina de ' + s + ' copiado'))
+    // Igual que los otros enlaces: sin permiso de portapapeles no usamos prompt(), se copia a mano
+    .catch(() => toast('Copia el enlace a mano desde el texto en rojo de esa línea'));
 }
 function pinCocinaAlAzar(){
   $('#ckPin').value = pinAlAzar();
@@ -2882,17 +3094,42 @@ function pinCocinaAlAzar(){
 }
 function quitarPinCocina(){
   $('#ckPin').value = '';
-  toast('Campo vacío — dale Guardar para dejar la cocina sin PIN');
+  const suc = sucCocinaSel();
+  toast(suc
+    ? 'Campo vacío — dale Guardar y ' + suc + ' volverá a usar la cocina general'
+    : 'Campo vacío — dale Guardar para dejar la cocina sin PIN');
 }
 function guardarCocina(){
+  const suc = sucCocinaSel();
   const pin = $('#ckPin').value.replace(/\D/g, '').slice(0, 4);
   if(pin && pin.length !== 4){ toast('El PIN de cocina son 4 dígitos, ni uno más ni uno menos'); return; }
-  const nom = $('#ckNombre').value.trim().slice(0, 24);
+  const escrito = $('#ckNombre').value.trim().slice(0, 24);
+  /* Una sucursal sin PIN propio no deja entrada guardada (ver abajo), y sin entrada tampoco tiene
+     firma propia: el formulario se vacía de una vez en lugar de dejar escrito algo que ya no existe. */
+  const nom = (suc && !pin) ? '' : escrito;
   $('#ckPin').value = pin;
   $('#ckNombre').value = nom;
-  cocinaFormHash = pin + '\n' + nom;
+  cocinaSucPintada = suc;
+  cocinaFormHash = suc + '\n' + pin + '\n' + nom;
+  if(suc){
+    configEscribir(d => {
+      if(!d.cocinas || typeof d.cocinas !== 'object') d.cocinas = {};
+      /* Sin PIN propio se BORRA la entrada, no se guarda vacía: en cocina.html una entrada con el
+         PIN en blanco le gana al general y dejaría esa cocina abierta de par en par. Borrarla es
+         lo que la hace volver a heredar. */
+      if(pin) d.cocinas[suc] = { pin: pin, nombre: nom };
+      else delete d.cocinas[suc];
+    });
+    if(pin) toast('Cocina de ' + suc + ' guardada — su PIN es ' + pin);
+    else if(escrito) toast(suc + ' se queda sin cocina propia: hereda el PIN y la firma de la cocina general');
+    else toast(suc + ' vuelve a la cocina general — hereda su PIN y su firma');
+    return;
+  }
   configEscribir(d => { d.cocina_pin = pin; d.cocina_nombre = nom; });
-  toast(pin ? 'Cocina guardada — su PIN es ' + pin : 'Cocina guardada sin PIN: entra cualquiera que tenga el enlace');
+  const hayHerederas = sucsCfg().some(s => !(cocinasMapa()[s] || {}).pin);
+  toast(pin
+    ? 'Cocina general guardada — su PIN es ' + pin + (hayHerederas ? ' (y el de las sucursales sin PIN propio)' : '')
+    : 'Cocina general guardada sin PIN: entra cualquiera que tenga el enlace' + (hayHerederas ? ', también en las sucursales que la heredan' : ''));
 }
 function copiarUrlCocina(){
   const u = urlCocina();
@@ -2900,6 +3137,325 @@ function copiarUrlCocina(){
     .then(() => toast('Enlace de la cocina copiado — ábrelo en la pantalla del pase'))
     // Igual que los otros enlaces: sin permiso de portapapeles no usamos prompt(), se copia a mano
     .catch(() => { pintarEnlaceCocina(); toast('Copia el enlace desde el texto en rojo de aquí abajo'); });
+}
+
+/* ================================================================
+   PRIMEROS PASOS — la lista de verificación de arranque
+   Se llena SOLA leyendo lo que el panel ya trae cargado: la configuración
+   (marca, sucursales, mesas, carta, reseñas, cocinas) y las tablas de
+   meseros, órdenes y cobros. Aquí no hay nada que palomear a mano: si
+   dice LISTO es porque el dato está, y se muestra cuál.
+   Los onclick de esta pantalla solo llevan nombres de vista e ids fijos
+   escritos aquí — nunca texto del restaurante — y todo lo que se pinta
+   pasa por escTxt().
+   ================================================================ */
+
+/* Navegación: se reusa el click de la pestaña para no duplicar la lógica de vistas */
+function ppIr(v, ancla){
+  const t = document.querySelector('.tab[data-v="' + v + '"]');
+  if(!t) return;
+  t.click();
+  setTimeout(() => {
+    const e = ancla ? document.getElementById(ancla) : null;
+    if(!e){ window.scrollTo({ top:0, behavior:'smooth' }); return; }
+    // 130px de aire: el encabezado va pegado arriba y si no se le resta, tapa lo que se busca
+    window.scrollTo({ top: Math.max(0, e.getBoundingClientRect().top + window.scrollY - 130), behavior:'smooth' });
+  }, 60);
+}
+
+/* La carta tal como la ve el comensal: los platillos propios más, si el restaurante nunca pasó a
+   carta propia, los de ejemplo. Misma regla de foto que la vista Carta (los de ejemplo traen la
+   suya del almacén), mismo precio efectivo, y los agotados no cuentan porque el comensal no los ve. */
+function ppCarta(){
+  const d = dbLeer();
+  const menuPropio = !!(d.config && d.config.menuPropio);
+  const fotos = d.fotos || {};
+  const ocultos = d.ocultos || [];
+  const propios = (d.platillos || []).map(p => ({ id:p.id, extra:true, precio:p.precio }));
+  const ejemplo = menuPropio ? [] : CARTA.map(p => ({ id:p.id, extra:false, precio:p.precio }));
+  const visibles = [...ejemplo, ...propios].filter(p => !ocultos.includes(p.id));
+  const conFoto = visibles.filter(p => fotos[p.id] || !p.extra).length;
+  const precioDe = p => (d.precios && d.precios[p.id] != null) ? +d.precios[p.id] : +p.precio;
+  const sinPrecio = visibles.filter(p => !(precioDe(p) > 0)).length;
+  return {
+    total: visibles.length, conFoto, sinPrecio,
+    propios: propios.length,
+    ejemplo: visibles.filter(p => !p.extra).length,
+    menuPropio,
+  };
+}
+/* Un mesero «ya entró» cuando hay rastro suyo trabajando: entregó una comanda, cobró una mesa o
+   tiene una mesa abierta a su nombre. Es lo más cerca que el panel puede estar de saber si de
+   verdad le llegó su enlace — no hay forma de comprobar un mensaje de WhatsApp. */
+function ppMeserosEnUso(){
+  const act = meserosActivos();
+  if(!act.length) return [];
+  const ids = new Set(), noms = new Set();
+  for(const c of cobrosCache){ if(c.mesero_id != null) ids.add(c.mesero_id); if(c.mesero) noms.add(c.mesero); }
+  for(const x of mesasAbiertasCache) if(x.mesero_id != null) ids.add(x.mesero_id);
+  for(const o of ordenesCache){ if(o.entregada_por) noms.add(o.entregada_por); if(o.recogida_por) noms.add(o.recogida_por); }
+  return act.filter(m => ids.has(m.id) || noms.has(m.nombre));
+}
+const ppFecha = ts => { try{ return new Date(ts).toLocaleDateString('es-MX', { day:'numeric', month:'long' }); }catch(e){ return ''; } };
+const ppPlural = (n, uno, varios) => n === 1 ? ('1 ' + uno) : (n + ' ' + varios);
+
+/* El corazón: devuelve los grupos con sus pasos ya resueltos. Cada paso trae
+   estado 'ok' | 'falta' | 'opc', el dato que lo comprueba y, si aplica, una advertencia. */
+function ppGrupos(){
+  const d = dbLeer();
+  const cfg = d.config || {};
+  const m = marcaDe();
+  const sucs = sucsCfg();
+  const act = meserosActivos();
+  const car = ppCarta();
+
+  /* --- 1 · Configurar el restaurante --- */
+  const nombreOk = !!(m.nombre || '').trim() && m.nombre !== MARCA_DEF.nombre;
+  const pIdentidad = {
+    tit: 'La identidad de tu restaurante',
+    que: 'El nombre y el logo con los que tu carta se le presenta al comensal, y con los que sale tu panel y tus hojas de QR.',
+    estado: nombreOk ? 'ok' : 'falta',
+    dato: nombreOk ? ((m.prefijo ? m.prefijo + ' ' : '') + m.nombre) + (m.logo ? ' · con logo' : '') : '',
+    ojo: nombreOk && !m.logo ? 'Todavía sin logo: donde iría, el comensal ve tu nombre escrito. Súbelo cuando lo tengas a la mano.' : '',
+    falta: 'Escribe el nombre de tu restaurante y guarda la identidad.',
+    btn: 'Ir a Identidad', ir: ['temas', 'marcaZona'],
+  };
+  let cartaEstado = 'ok', cartaFalta = '';
+  if(!car.total){ cartaEstado = 'falta'; cartaFalta = 'Tu carta está vacía. Captura tus platillos a mano o importa tu menú desde un PDF o una foto.'; }
+  else if(!car.conFoto){ cartaEstado = 'falta'; cartaFalta = 'Tienes ' + ppPlural(car.total, 'platillo', 'platillos') + ' pero ninguno con foto. La carta sin fotos se ve pobre y se vende menos: empieza por los que más salen.'; }
+  const cartaOjos = [];
+  if(cartaEstado === 'ok' && car.conFoto < car.total) cartaOjos.push('A ' + ppPlural(car.total - car.conFoto, 'platillo le falta', 'platillos les falta') + ' su foto.');
+  if(car.sinPrecio) cartaOjos.push(ppPlural(car.sinPrecio, 'platillo está', 'platillos están') + ' sin precio: el comensal los ve en cero.');
+  if(car.ejemplo) cartaOjos.push('De esos, ' + car.ejemplo + ' son de la carta de ejemplo que trae el sistema, no tuyos, y el comensal los está viendo. Bórralos o escóndelos desde la vista Carta.');
+  const pCarta = {
+    tit: 'Tu carta, con fotos y precios',
+    que: 'Es lo único que ve el comensal cuando escanea el QR de su mesa: cada platillo con su precio y su foto.',
+    estado: cartaEstado,
+    dato: car.total ? (ppPlural(car.total, 'platillo', 'platillos') + ', ' + car.conFoto + ' con foto') : '',
+    ojo: cartaOjos.join(' '),
+    falta: cartaFalta,
+    btn: 'Ir a la Carta', ir: ['carta', ''],
+  };
+  const bajas = meserosCache.length - act.length;
+  const pEquipo = {
+    tit: 'Da de alta a tus meseros',
+    que: 'Cada mesero necesita estar en la lista para poder entrar desde su teléfono, autorizar las órdenes en la mesa y registrar lo que cobra.',
+    estado: act.length ? 'ok' : 'falta',
+    dato: act.length ? (ppPlural(act.length, 'mesero dado de alta', 'meseros dados de alta') + (bajas > 0 ? ' (y ' + bajas + ' dados de baja)' : '')) : '',
+    ojo: '',
+    falta: 'Todavía no hay nadie en el equipo. Da de alta al primero con su nombre y su PIN.',
+    btn: 'Ir a Equipo', ir: ['equipo', 'equipoFormZona'],
+  };
+  /* Sin sucursales NO es un error: el restaurante de un solo local es el caso normal. */
+  const pSucursales = {
+    tit: 'Tus sucursales',
+    que: 'Si tienes más de un local, cada uno es una sucursal: sus mesas, sus meseros y su cocina van por separado.',
+    estado: 'ok',
+    dato: sucs.length ? (ppPlural(sucs.length, 'sucursal', 'sucursales') + ': ' + sucs.join(', ')) : 'Un solo local — así está bien, no tienes que dar de alta ninguna sucursal.',
+    ojo: '', falta: '',
+    btn: 'Ir a Identidad', ir: ['temas', 'marcaZona'],
+  };
+
+  /* --- 2 · Mesas y sus QR --- */
+  const nMesas = nMesasConfig();
+  const mesasPuestas = !!(cfg.mesas && +cfg.mesas >= 1);
+  const pMesas = {
+    tit: 'Cuántas mesas tienes',
+    que: 'De este número salen tus hojas de QR, la rejilla con la que le repartes mesas a cada mesero y los cuadritos de mesas abiertas de la pantalla principal.',
+    estado: mesasPuestas ? 'ok' : 'falta',
+    dato: mesasPuestas ? ppPlural(nMesas, 'mesa', 'mesas') : '',
+    ojo: '',
+    falta: 'Nadie ha dicho cuántas mesas tienes; mientras tanto el panel trabaja con ' + nMesas + '. Escribe el número real en Identidad, en el campo «Cuántas mesas tienes», y guarda.',
+    btn: 'Ir a Identidad', ir: ['temas', 'marcaZona'],
+  };
+  const imp = (cfg.qr_impresos && typeof cfg.qr_impresos === 'object') ? cfg.qr_impresos : null;
+  const impN = imp ? +imp.mesas || 0 : 0;
+  let qrEstado = 'falta', qrOjo = '';
+  if(imp && impN >= nMesas) qrEstado = 'ok';
+  if(imp && impN > nMesas) qrOjo = 'La hoja que imprimiste traía ' + impN + ' mesas y ahora tienes ' + nMesas + ': los QR de sobra no estorban, pero ya no los uses.';
+  if(imp && impN < nMesas) qrOjo = 'La hoja que imprimiste traía ' + impN + ' mesas y ahora tienes ' + nMesas + ': te faltan ' + (nMesas - impN) + ' por imprimir.';
+  const pQR = {
+    tit: 'Imprime los QR de tus mesas',
+    que: 'Un QR por mesa, pegado en la mesa. El comensal lo escanea y su comanda te llega aquí ya con el número de mesa puesto.',
+    estado: qrEstado,
+    dato: qrEstado === 'ok' ? ('Hoja impresa el ' + ppFecha(imp.at) + ', con ' + ppPlural(impN, 'mesa', 'mesas')) : '',
+    ojo: qrOjo,
+    falta: imp
+      ? 'Cambiaste el número de mesas después de imprimir: manda la hoja de nuevo a la impresora para tener los ' + nMesas + ' QR.'
+      : 'Todavía no mandas la hoja de QR a la impresora. Sin el QR en la mesa, el comensal no tiene cómo entrar a tu carta.',
+    btn: 'Ir a QR', ir: ['qr', ''],
+  };
+
+  /* --- 3 · Los accesos de tus meseros --- */
+  const sinPin = act.filter(x => !/^\d{4}$/.test(String(x.pin || '')));
+  const sinMesas = act.filter(x => !x.mesas.length);
+  let accEstado = 'falta', accFalta = '', accDato = '', accOjo = '';
+  if(!act.length) accFalta = 'Primero da de alta a tu equipo en el paso de arriba; luego les pones PIN y mesas.';
+  else if(sinPin.length) accFalta = ppPlural(sinPin.length, 'mesero no tiene', 'meseros no tienen') + ' un PIN de 4 dígitos, así que no ' + (sinPin.length === 1 ? 'puede' : 'pueden') + ' entrar desde su teléfono. Edítalos en Equipo y ponles uno.';
+  else{
+    accEstado = 'ok';
+    accDato = ppPlural(act.length, 'mesero con PIN', 'meseros con PIN') + ' · ' + (act.length - sinMesas.length) + ' con mesas asignadas';
+    if(sinMesas.length) accOjo = 'A ' + ppPlural(sinMesas.length, 'mesero no le tocaron', 'meseros no les tocaron') + ' mesas: ' + (sinMesas.length === 1 ? 'verá' : 'verán') + ' los avisos de todas las mesas que nadie tiene. Está bien si así lo quieres.';
+  }
+  const pAccesos = {
+    tit: 'Su PIN y las mesas que le tocan',
+    que: 'El PIN de 4 dígitos es la llave con la que cada quien abre su pantalla; las mesas son las que va a ver, atender y cobrar.',
+    estado: accEstado, dato: accDato, ojo: accOjo, falta: accFalta,
+    btn: 'Ir a Equipo', ir: ['equipo', 'equipoFormZona'],
+  };
+  const enUso = ppMeserosEnUso();
+  const pCompartir = {
+    tit: 'Mándales su enlace',
+    que: 'Cada mesero tiene su propio enlace. Se lo mandas por mensaje y él lo deja guardado en la pantalla de inicio de su teléfono: de ahí en adelante entra con su PIN.',
+    estado: act.length && enUso.length ? 'ok' : 'falta',
+    dato: enUso.length ? (enUso.length + ' de ' + act.length + ' ya trabajaron desde su teléfono') : '',
+    ojo: enUso.length && enUso.length < act.length
+      ? 'A ' + ppPlural(act.length - enUso.length, 'mesero todavía no lo vemos entrar', 'meseros todavía no los vemos entrar') + ' — puede que no les haya llegado su enlace.'
+      : '',
+    falta: !act.length
+      ? 'Primero da de alta a tu equipo; en cuanto existan, cada uno tendrá su enlace para copiar.'
+      : 'Ninguno de tus meseros ha entregado ni cobrado desde su teléfono todavía. Copia el enlace de cada quien en Equipo y mándaselo por mensaje.',
+    btn: 'Ir a Equipo', ir: ['equipo', ''],
+  };
+
+  /* --- 4 · La cocina, una por sucursal --- */
+  const mapa = cocinasMapa();
+  const gen = String(cfgCache.cocina_pin == null ? '' : cfgCache.cocina_pin);
+  const propias = sucs.filter(s => !!(mapa[s] && mapa[s].pin));
+  const heredan = sucs.filter(s => !(mapa[s] && mapa[s].pin));
+  let coEstado, coDato = '', coOjo = '', coFalta = '';
+  if(!sucs.length){
+    coEstado = gen ? 'ok' : 'falta';
+    coDato = gen ? ('Cocina configurada, entra con el PIN ' + gen) : '';
+    coFalta = 'Tu cocina no tiene PIN: cualquiera que tenga el enlace puede mover tus comandas desde su teléfono. Ponle cuatro dígitos.';
+  }else if(propias.length === sucs.length){
+    coEstado = 'ok';
+    coDato = 'Cocina configurada en ' + sucs.length + ' de ' + sucs.length + ' sucursales';
+  }else if(gen){
+    /* Advertencia, no error: heredar el general funciona, pero el dueño puede no saber que la
+       cocina de esa sucursal se abre con el mismo PIN que las demás. */
+    coEstado = 'ok';
+    coDato = 'Cocina configurada en ' + propias.length + ' de ' + sucs.length + ' sucursales';
+    coOjo = (heredan.length === 1 ? 'La sucursal ' : 'Las sucursales ') + heredan.join(', ')
+      + ' no ' + (heredan.length === 1 ? 'tiene' : 'tienen') + ' cocina propia: ' + (heredan.length === 1 ? 'se abre' : 'se abren')
+      + ' con el PIN general ' + gen + ', el mismo de las demás. Funciona, pero si quieres que cada pase tenga su propia llave, dale un PIN a cada una.';
+  }else{
+    coEstado = 'falta';
+    coFalta = (heredan.length === 1 ? 'La cocina de ' : 'Las cocinas de ') + heredan.join(', ')
+      + ' no tiene' + (heredan.length === 1 ? '' : 'n') + ' PIN, ni propio ni general: se abre'
+      + (heredan.length === 1 ? '' : 'n') + ' sin pedir nada y cualquiera con el enlace mueve tus comandas.';
+    if(propias.length) coDato = 'Cocina configurada en ' + propias.length + ' de ' + sucs.length + ' sucursales';
+  }
+  const pCocina = {
+    tit: sucs.length ? 'Una cocina por sucursal' : 'El acceso de tu cocina',
+    que: 'Es la pantalla del pase: ve las comandas que entran, suena cuando llega una nueva y no muestra precios ni totales ni nombres de clientes. Se abre en la tableta de la cocina y se queda ahí.',
+    estado: coEstado, dato: coDato, ojo: coOjo, falta: coFalta,
+    btn: 'Ir a Cocina', ir: ['equipo', 'cocinaZona'],
+  };
+
+  /* --- Opcionales --- */
+  const r = resenasDe();
+  const rLinks = [r.google ? 'Google' : '', r.facebook ? 'Facebook' : ''].filter(Boolean);
+  const pResenas = {
+    tit: 'Enlaces de reseñas de Google y Facebook',
+    que: 'Cuando el comensal pide la cuenta se le puede ofrecer dejarte una reseña. Es lo más barato que hay para que te encuentren.',
+    estado: 'opc',
+    dato: rLinks.length
+      ? (rLinks.join(' y ') + ' · la invitación está ' + (r.activo ? 'encendida' : 'apagada'))
+      : 'Sin enlaces todavía — el comensal no ve ninguna invitación.',
+    ojo: rLinks.length && !r.activo ? 'Tienes los enlaces puestos pero la invitación está apagada: nadie la está viendo. Préndela con el interruptor de arriba de esa sección.' : '',
+    falta: '',
+    btn: 'Ir a Reseñas', ir: ['temas', 'resenasZona'],
+  };
+  const correo = (SESION && SESION.email) || '';
+  const pAcceso = {
+    tit: 'Tu correo y tu contraseña del panel',
+    que: 'Con eso entras tú a este panel. Si alguien más la vio, cámbiala; y si alguna vez se te olvida, se recupera por correo.',
+    estado: 'opc',
+    dato: correo
+      ? ('Entras con ' + correo)
+      : 'Estás viendo el panel de ejemplo — este restaurante no es una cuenta tuya.',
+    ojo: '', falta: '',
+    btn: 'Ir a Contraseña', ir: ['temas', 'passZona'],
+  };
+
+  return [
+    { n:'1', tit:'Configura tu restaurante', pasos:[pIdentidad, pCarta, pEquipo, pSucursales] },
+    { n:'2', tit:'Tus mesas y sus códigos QR', pasos:[pMesas, pQR] },
+    { n:'3', tit:'El acceso de tus meseros', pasos:[pAccesos, pCompartir] },
+    { n:'4', tit:'La cocina', pasos:[pCocina] },
+    { n:'—', tit:'Opcionales — no te detienen para abrir', pasos:[pResenas, pAcceso] },
+  ];
+}
+/* Cuántos pasos obligatorios siguen pendientes. Los opcionales nunca cuentan. */
+function ppFaltantes(grupos){
+  let n = 0;
+  for(const g of (grupos || ppGrupos())) for(const p of g.pasos) if(p.estado === 'falta') n++;
+  return n;
+}
+const PP_TAG = { ok:'LISTO', falta:'FALTA', opc:'OPCIONAL' };
+function ppFilaHtml(p, gi, pi){
+  const cuerpo = p.estado === 'falta' ? p.falta : p.dato;
+  return `<div class="pp-paso">
+    <div class="pp-txt">
+      <div class="pp-tit">${escTxt(p.tit)}</div>
+      <div class="pp-que">${escTxt(p.que)}</div>
+      ${cuerpo ? `<div class="pp-dato">${escTxt(cuerpo)}</div>` : ''}
+      ${p.ojo ? `<div class="pp-ojo">${escTxt(p.ojo)}</div>` : ''}
+    </div>
+    <span class="pp-tag ${p.estado === 'ok' ? 'ok' : p.estado === 'falta' ? 'falta' : 'opc'}">${PP_TAG[p.estado]}</span>
+    <div class="pp-acc"><button class="btn-mini" onclick="ppPasoIr(${gi},${pi})">${escTxt(p.btn)}</button></div>
+  </div>`;
+}
+/* El botón manda ÍNDICES, no nombres: nada de texto del restaurante dentro de un atributo */
+function ppPasoIr(gi, pi){
+  const g = ppGrupos()[gi];
+  const p = g && g.pasos[pi];
+  if(!p) return;
+  ppIr(p.ir[0], p.ir[1]);
+}
+let ppListaHtml = null;
+function ppPintar(gr){
+  const z = document.getElementById('ppLista');
+  if(!z) return;
+  const grupos = gr || ppGrupos();
+  const faltan = ppFaltantes(grupos);
+  const cab = faltan
+    ? `<div class="pp-cab">
+         <b>Te ${faltan === 1 ? 'falta 1 paso' : 'faltan ' + faltan + ' pasos'} para poder operar</b>
+         <p>Ve de arriba hacia abajo: cada renglón dice qué es, por qué importa y te lleva de un botón a donde se arregla. Lo marcado como opcional puede esperar.</p>
+       </div>`
+    : `<div class="pp-cab listo">
+         <b>Todo listo — tu restaurante puede abrir</b>
+         <p>No queda ningún paso obligatorio pendiente. Esta pantalla se queda aquí para que la revises cuando cambies algo: si mañana das de alta una sucursal nueva o cambias el número de mesas, aquí vas a ver lo que quedó suelto.</p>
+       </div>`;
+  const html = cab + grupos.map((g, gi) => `<div class="pp-grupo">
+    <div class="pp-grupo-tit"><span class="n">${escTxt(g.n)}</span><span class="t">${escTxt(g.tit)}</span></div>
+    ${g.pasos.map((p, pi) => ppFilaHtml(p, gi, pi)).join('')}
+  </div>`).join('');
+  /* Solo se reescribe cuando de verdad cambió: el panel repinta cada pocos segundos y volar el
+     HTML le quitaría el foco a quien está a media lectura o con el dedo encima de un botón. */
+  if(ppListaHtml !== html){ ppListaHtml = html; z.innerHTML = html; }
+}
+/* El aviso permanente de la vista principal. Cuando ya no falta nada, desaparece solo. */
+let ppAvisoHtml = null;
+function ppAviso(faltan){
+  const z = document.getElementById('ppAvisoZona');
+  const b = document.getElementById('badgePasos');
+  if(b){
+    b.textContent = faltan;
+    b.classList.toggle('visible', faltan > 0);
+    const t = b.closest('.tab');
+    if(t) t.classList.toggle('con-globo', faltan > 0);
+  }
+  if(!z) return;
+  const html = faltan
+    ? `<div class="pp-aviso">
+         <span>Te <b>${faltan === 1 ? 'falta 1 paso' : 'faltan ' + faltan + ' pasos'}</b> para poder operar — todavía hay cosas sin configurar.</span>
+         <button class="btn-sec" onclick="ppIr('pasos','')">Ver primeros pasos</button>
+       </div>`
+    : '';
+  if(ppAvisoHtml !== html){ ppAvisoHtml = html; z.innerHTML = html; }
 }
 
 /* ---------- Mesas abiertas y amarre al dispositivo (seguridad) ---------- */
@@ -3783,7 +4339,7 @@ function descripcionFiltrosRegistro(f){
   const partes = [];
   if(f.mesa) partes.push(`solo la ${mesaTxtN(f.mesa)}`);
   if(f.mesero) partes.push(`solo lo de ${f.mesero}`);
-  if(f.est !== 'todas') partes.push(`solo ${String(ESTADOS_TXT[+f.est] || '').toLowerCase()}`);
+  if(f.est !== 'todas') partes.push(`solo ${estadoTxt(+f.est).toLowerCase()}`);
   if(f.r.txt) partes.push(f.r.txt);
   return partes;
 }
@@ -3791,7 +4347,7 @@ function mensajeVacioRegistro(f, d){
   const quitar = [];
   if(f.mesa) quitar.push(`el de mesa (${mesaTxtN(f.mesa)})`);
   if(f.mesero) quitar.push(`el de mesero (${f.mesero})`);
-  if(f.est !== 'todas') quitar.push(`el de estado (${ESTADOS_TXT[+f.est] || ''})`);
+  if(f.est !== 'todas') quitar.push(`el de estado (${estadoTxt(+f.est)})`);
   if(f.r.txt) quitar.push(`el de fecha (${f.r.txt})`);
   if(!quitar.length) return d.ordenes.length ? 'Sin comandas que mostrar.' : 'Todavía no hay ninguna comanda en este servicio.';
   return `Ninguna comanda cumple con todo eso a la vez. Quita ${quitar.length === 1 ? quitar[0] : quitar.join(' o ')} y volverás a ver comandas.`;
@@ -3849,14 +4405,14 @@ function exportarCSV(origen){
     toast(conFiltro ? 'No hay ninguna comanda con esos filtros, así que no hay nada que exportar — quita un filtro' : 'Todavía no hay comandas que exportar', true);
     return;
   }
-  const filas = [['Folio','Fecha','Hora','Mesa','Sucursal','Articulos','Notas','Total','Estado','EntregadaPor','AutorizadaPor','HoraEntrega','MinutosServicio']];
+  const filas = [['Folio','Fecha','Hora','Mesa','Sucursal','Articulos','Notas','Total','Estado','RecogidaPor','EntregadaPor','AutorizadaPor','HoraEntrega','MinutosServicio']];
   for(const o of [...cuales].sort((a,b) => a.creada - b.creada)){
     const fh = new Date(o.creada);
     filas.push([
       o.folio, fh.toLocaleDateString('es-MX'), hora(o.creada), o.mesa, o.sucursal || '',
       o.items.map(i => `${i.qty}x ${i.nombre}`).join(' | '),
       o.items.filter(i=>i.notas).map(i=>i.notas).join(' | '),
-      o.total, ESTADOS_TXT[o.estado], o.entregada_por || '', o.autorizada_por || '',
+      o.total, estadoTxt(o), o.recogida_por || '', o.entregada_por || '', o.autorizada_por || '',
       o.entregada_at ? hora(o.entregada_at) : '',
       o.entregada_at ? Math.round((o.entregada_at - o.creada)/60000) : '',
     ]);
@@ -3869,7 +4425,7 @@ function exportarCSV(origen){
   if(f){
     if(f.mesa) partes.push('mesa' + String(f.mesa).padStart(2,'0'));
     if(f.mesero) partes.push(limpio(f.mesero));
-    if(f.est !== 'todas') partes.push(limpio(ESTADOS_TXT[+f.est] || 'estado'));
+    if(f.est !== 'todas') partes.push(limpio(estadoTxt(+f.est) || 'estado'));
     if(f.r.txt) partes.push(limpio(f.r.txt));
   }
   const a = document.createElement('a');
@@ -4009,6 +4565,14 @@ function imprimirQRs(){
   w.document.write(`<html><head><title>QRs · ${marcaDe().nombre}</title></head><body style="text-align:center;font-family:Georgia"><h2 style="font-style:italic">${(marcaDe().prefijo ? marcaDe().prefijo + ' ' : '') + marcaDe().nombre}${(document.getElementById('sucQR')||{}).value ? ' — ' + document.getElementById('sucQR').value : ''}</h2>${imgs}</body></html>`);
   w.document.close();
   setTimeout(() => { try{ w.print(); }catch(e){} }, 500);
+  /* Se apunta que la hoja SÍ se mandó a imprimir, y con cuántas mesas. Primeros pasos lo usa para
+     no volver a pedir algo que ya se hizo, y para avisar cuando el número de mesas cambió después
+     (los QR ya impresos se quedan cortos). No es un palomeado a mano: es lo que acaba de pasar. */
+  if(MODO_DEMO) return;
+  const n = nMesasConfig();
+  const ya = (cfgCache.config && cfgCache.config.qr_impresos) || null;
+  if(ya && ya.mesas === n) return;   // ya estaba apuntado con este mismo número: nada que guardar
+  configEscribir(d => { d.config.qr_impresos = { at: Date.now(), mesas: n }; });
 }
 
 /* ---------- Acceso: PIN en modo demo, email + contraseña para cada restaurante ---------- */
