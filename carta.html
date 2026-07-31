@@ -320,6 +320,67 @@
   .confirmacion .folio{margin-top:8px;font-family:var(--grot);font-size:13px;letter-spacing:1.4px;text-transform:uppercase;color:var(--humo);font-weight:600}
   .confirmacion .folio b{color:var(--pomodoro)}
 
+  /* ---------- Despedida (la visita ya se pagó y se cerró) ----------
+     No es una hoja: es una pantalla de la que no se sale. Va por encima de todo —nav, barra,
+     velo, hojas, visor— y tapa el menú entero, porque si el comensal alcanza a volver a la
+     carta y ordena otra vez, el restaurante le abre una MESA NUEVA que nadie pidió. */
+  .despedida{position:fixed;inset:0;z-index:900;background:var(--esp);color:var(--crema);display:none;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .despedida.visible{display:block}
+  body.con-despedida .telefono,body.con-despedida .velo,body.con-despedida .hoja,body.con-despedida .visor{display:none}
+  .despedida .dp-caja{min-height:100%;box-sizing:border-box;max-width:520px;margin:0 auto;padding:calc(22px + env(safe-area-inset-top)) 24px calc(26px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  /* Reserva de altura fija: el logo entra donde ya estaba el nombre, sin que la pantalla
+     brinque cuando la imagen termina de dibujarse. */
+  .despedida .dp-marca{min-height:52px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .despedida .dp-marca img{max-width:200px;max-height:52px;object-fit:contain;display:block}
+  .despedida .dp-marca .dp-nombre{font-family:var(--serif);font-style:italic;font-weight:500;font-size:24px;line-height:1.25}
+  /* El sello de siempre, un punto más grande: aquí es el protagonista de la pantalla y lo
+     leen adultos con el teléfono a un brazo de distancia. */
+  .despedida .conf-sello{width:120px;height:120px;margin:0 auto 14px}
+  .despedida .conf-sello .interior{width:104px;height:104px}
+  .despedida .conf-sello .interior b{font-size:14px}
+  .despedida .conf-sello .interior span{font-size:19px}
+  .despedida h2{font-family:var(--serif);font-style:italic;font-weight:500;font-size:26px;line-height:1.2}
+  .despedida .dp-sub{margin-top:10px;font-family:var(--grot);font-size:15px;line-height:1.6;color:var(--humo);max-width:34ch}
+  .despedida .dp-cuenta{width:100%;margin-top:16px;padding:4px 0 2px;border-top:1px solid var(--linea2);border-bottom:1px solid var(--linea2)}
+  .despedida .dp-ren{display:flex;align-items:baseline;gap:10px;padding:8px 0;font-family:var(--grot);text-align:left}
+  .despedida .dp-ren .caps{font-size:14px;color:var(--humo);flex-shrink:0}
+  .despedida .dp-ren b{font-size:20px;font-weight:700;letter-spacing:.4px;white-space:nowrap;flex-shrink:0}
+  .despedida .dp-ren .dp-dicho{font-size:15px;font-weight:600;color:var(--crema);text-align:right}
+  .despedida .dp-puntos{width:100%;margin-top:14px;border:1px solid var(--oro);border-radius:2px;padding:12px 16px}
+  .despedida .dp-puntos .caps{font-size:14px;color:var(--oro)}
+  .despedida .dp-puntos .dp-gano{margin-top:8px;font-family:var(--serif);font-style:italic;font-size:22px;line-height:1.35}
+  .despedida .dp-puntos .dp-gano b{font-family:var(--grot);font-style:normal;font-weight:700;font-size:24px;color:var(--oro)}
+  .despedida .dp-puntos .dp-saldo{margin-top:7px;font-family:var(--grot);font-size:14px;letter-spacing:1.3px;text-transform:uppercase;color:var(--humo);line-height:1.6}
+  .despedida .dp-resena{width:100%;margin-top:16px}
+  .despedida .dp-resena .dp-r-tit{font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.3}
+  .despedida .dp-cierre{margin-top:18px;font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.45;color:var(--crema)}
+  .despedida .dp-pie{margin-top:12px;font-family:var(--grot);font-size:14px;line-height:1.65;color:var(--humo2);max-width:38ch}
+  /* El asterisco es sólo respiración tipográfica: en pantallas cortas estorba más de lo que
+     adorna, y prefiero que quepa «Ya puedes cerrar esta ventana» a que quepa el adorno. */
+  .despedida .dp-orn{display:none;margin-top:22px;color:var(--humo2);font-size:15px;letter-spacing:6px}
+  @media(min-height:940px){ .despedida .dp-orn{display:block} }
+  @media(min-width:700px){
+    .despedida .dp-caja{max-width:600px}
+    .despedida h2{font-size:34px}
+  }
+  /* El aire completo sólo cuando de verdad sobra el alto. Manda la altura, no el ancho: de nada
+     sirve un monitor anchísimo en una ventana baja —lo primero que se saldría de cuadro sería
+     justo el renglón que le dice al comensal que ya puede irse. */
+  @media(min-width:700px) and (min-height:940px){
+    .despedida .dp-caja{padding-top:44px;padding-bottom:42px}
+    .despedida .dp-marca{margin-bottom:26px}
+    .despedida .conf-sello{width:150px;height:150px;margin-bottom:24px}
+    .despedida .conf-sello .interior{width:130px;height:130px}
+    .despedida .conf-sello .interior span{font-size:20px}
+    .despedida .dp-sub{line-height:1.75}
+    .despedida .dp-cuenta{margin-top:28px}
+    .despedida .dp-ren{padding:12px 0}
+    .despedida .dp-puntos{margin-top:22px;padding:18px 16px}
+    .despedida .dp-resena{margin-top:26px}
+    .despedida .dp-cierre{margin-top:32px}
+    .despedida .dp-pie{line-height:1.8}
+  }
+
   /* ---------- Toast ---------- */
   .toast{position:fixed;bottom:calc(146px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,30px);background:var(--papel);color:var(--ink);font-family:var(--grot);font-size:14px;font-weight:600;letter-spacing:.6px;padding:13px 20px;border-radius:2px;z-index:150;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 16px 44px rgba(0,0,0,.55);max-width:86%;text-align:center}
   .toast.visible{opacity:1;transform:translate(-50%,0)}
@@ -533,6 +594,10 @@
 
   <div class="toast" id="toast"></div>
 </div>
+
+<!-- Despedida: la visita ya se pagó. Vive fuera de .telefono y sin botón de cerrar a propósito;
+     no es una hoja que se pueda apartar con el dedo, es donde termina el paso del comensal. -->
+<div class="despedida" id="despedida" role="status" aria-live="polite"></div>
 
 <!-- Sheets -->
 <div class="velo" id="velo"></div>
@@ -896,7 +961,12 @@ let hashMesa = '';
 let mesaOtras = [];        // órdenes de esta mesa enviadas desde otros teléfonos/sesiones
 let totalMesaSrv = null;   // total real de la mesa según el servidor (= "por cobrar" del panel)
 let misIds = [];
+/* Se levanta cuando la visita terminó (pagada y cerrada) y ya no se baja en esta carga de la
+   página. Es el freno de mano: mientras esté arriba, este teléfono no le pregunta nada a la
+   nube ni deja que ningún temporizador viejo escriba en una mesa que ya se cobró. */
+let visitaCerrada = false;
 async function sincronizar(){
+  if(visitaCerrada) return;
   try{
     const cfgs = await api(`menusbot_config?id=eq.${RID}&select=data`);
     /* El restaurante pudo haber cambiado su dirección pública. Los QR ya impresos y los
@@ -1053,7 +1123,11 @@ async function sincronizar(){
     if(!sinConexion){ sinConexion = true; }
   }
 }
-setInterval(sincronizar, 4000);
+/* El sondeo se guarda en una variable porque hay un momento en que hay que apagarlo de verdad:
+   cuando la mesa ya se cobró. Seguir preguntando cada 4 segundos por una cuenta cerrada es
+   gastarle datos al comensal y pegarle a la base por nada. */
+let sondeo = setInterval(sincronizar, 4000);
+function detenerSondeo(){ if(sondeo != null){ clearInterval(sondeo); sondeo = null; } }
 
 /* ---------- Sesión persistente (sobrevive back/recarga del navegador) ---------- */
 let SUC = new URLSearchParams(location.search).get('suc') || '';
@@ -1599,6 +1673,9 @@ function seguirTrasUnirse(){
 let navHistoria = false;
 history.replaceState({ v: 'menu' }, '');
 window.addEventListener('popstate', e => {
+  /* De la despedida no se sale con el botón «atrás»: se vuelve a plantar el estado y ya. Aunque
+     el navegador lograra sacarlo de la página, al volver a entrar el marcador lo devuelve aquí. */
+  if(visitaCerrada){ history.pushState({ v: 'despedida' }, ''); return; }
   if(document.querySelector('.hoja.abierta') || $('#visor').classList.contains('abierto') || $('#guia').classList.contains('visible')){
     cerrarSheets(); cerrarVisor(); $('#guia').classList.remove('visible');
     history.pushState({ v: vistaActual }, '');
@@ -2207,7 +2284,9 @@ async function enviarOrden(){
 /* Si el panel del restaurante no está atendido, la cocina se simula */
 function programarEstados(o){
   const avanza = nivel => async () => {
-    if(adminActivo() || !o.dbId) return;
+    /* Si entre tanto se cobró la mesa, este temporizador quedó colgando de una visita que ya
+       no existe: se vuelve inofensivo en vez de escribirle a una orden cerrada. */
+    if(visitaCerrada || adminActivo() || !o.dbId) return;
     try{ await api(`menusbot_ordenes?id=eq.${o.dbId}&estado=lt.${nivel}`, { method:'PATCH', body: JSON.stringify({ estado: nivel }) }); }catch(e){}
   };
   setTimeout(avanza(1), 9000);
@@ -2419,7 +2498,149 @@ function reponerOrdenRechazada(){
   mostrarVista('orden');
   toast('Ahí está tu orden otra vez — revísala y mándala cuando quieras');
 }
+/* ---------- La visita terminó: se paga, se agradece y se cierra ----------
+   Antes esto dejaba un botón «Volver a la carta» con la sesión ya limpia, y ahí estaba el
+   problema de fondo: el comensal tocaba el botón, ordenaba otra vez y el restaurante le abría
+   una MESA NUEVA que nadie había pedido. Ahora la visita se despide de verdad. */
+
+/* Media hora. Es lo que la despedida se queda pegada a ESTE teléfono aunque recargue o vuelva
+   a escanear el QR: alcanza de sobra para levantarse de la mesa y salir del restaurante, y es
+   lo bastante corto para que el mismo aparato —el que se presta, el de la casa, el del comensal
+   que regresa en la noche— vuelva a servir para ordenar sin que nadie tenga que repararlo. */
+const DESPEDIDA_MS = 30 * 60 * 1000;
+function guardarDespedida(d){
+  try{ localStorage.setItem(LSK('mb_visita_cerrada'), JSON.stringify(d)); }catch(e){}
+}
+/* La despedida vigente de este teléfono, o null si no hay o si ya se le pasó la hora. Una
+   despedida vencida se borra aquí mismo: si no, el marcador se queda de fantasma para siempre. */
+function leerDespedida(){
+  try{
+    const d = JSON.parse(localStorage.getItem(LSK('mb_visita_cerrada')) || 'null');
+    if(!d || !d.ts) return null;
+    if(Date.now() - (+d.ts || 0) > DESPEDIDA_MS){ localStorage.removeItem(LSK('mb_visita_cerrada')); return null; }
+    return d;
+  }catch(e){ return null; }
+}
+/* El logo, con el mismo criterio que el encabezado: se enseña cuando ya está DIBUJADO. La
+   diferencia es que aquí el hueco no se deja nunca en blanco —el nombre en tipografía ocupa
+   el lugar desde el primer cuadro— así que si la imagen no llega, no hay nada que reparar. */
+function pintarMarcaDespedida(cont){
+  const nombre = RESTAURANTE.nombre || ((MARCA.prefijo ? MARCA.prefijo + ' ' : '') + MARCA.nombre);
+  cont.innerHTML = `<div class="dp-nombre">${escResena(nombre)}</div>`;
+  if(!MARCA.logo) return;
+  const img = new Image();
+  img.alt = escResena(nombre);
+  const mostrar = () => { if(img.naturalWidth){ cont.innerHTML = ''; cont.appendChild(img); } };
+  img.src = MARCA.logo;
+  if(img.complete && img.naturalWidth) mostrar();
+  else if(img.decode) img.decode().then(mostrar).catch(() => {});
+  else img.onload = mostrar;
+}
+/* Todo lo que se pinta sale del marcador, nunca de la red: esta pantalla tiene que poder
+   repintarse igual tras una recarga, con el teléfono en modo avión si hace falta. */
+function pintarDespedida(d){
+  const cuenta = [];
+  if(d.total > 0) cuenta.push(`<div class="dp-ren"><span class="caps">Total pagado</span><span class="leader"></span><b>${fmt(d.total)} ${RESTAURANTE.moneda}</b></div>`);
+  /* propina null = nunca la marcó: no se inventa un renglón. propina 0 = eligió no dejar, y eso
+     sí se dice, pero con palabras: un «$0» en la despedida se lee como un reproche. */
+  if(d.propina != null){
+    cuenta.push(d.propina > 0
+      ? `<div class="dp-ren"><span class="caps">Propina</span><span class="leader"></span><b>${fmt(d.propina)} ${RESTAURANTE.moneda}</b></div>`
+      : `<div class="dp-ren"><span class="caps">Propina</span><span class="leader"></span><span class="dp-dicho">Esta vez preferiste no dejar</span></div>`);
+  }
+  /* Ni una palabra de puntos para quien vino como invitado: ofrecerle un saldo que no tiene
+     sería enseñarle una puerta cerrada justo cuando se está despidiendo. */
+  const puntos = d.conCliente ? `
+    <div class="dp-puntos">
+      <div class="caps">★ Tu cuenta de puntos</div>
+      <div class="dp-gano"><b>+${d.puntos || 0}</b> ${(d.puntos === 1) ? 'punto por esta visita' : 'puntos por esta visita'}</div>
+      <div class="dp-saldo">Llevas ${d.saldo || 0} en total</div>
+    </div>` : '';
+  const resena = d.resena ? `
+    <div class="dp-resena">
+      <div class="dp-r-tit">¿Nos regalas una reseña?</div>
+      ${bloqueResenaHTML(d.resena)}
+    </div>` : '';
+  $('#despedida').innerHTML = `
+    <div class="dp-caja">
+      <div class="dp-marca" id="dpMarca"></div>
+      <div class="conf-sello"><div class="interior"><b>GRACIAS</b><span>por tu visita</span></div></div>
+      <h2>${d.nombre ? 'Gracias, ' + escResena(d.nombre) : 'Tu cuenta quedó pagada'}</h2>
+      <div class="dp-sub">${d.nombre ? 'Tu cuenta quedó pagada y tu mesa cerrada.' : 'Todo quedó saldado con tu mesero.'} Fue un gusto atenderte.</div>
+      ${cuenta.length ? `<div class="dp-cuenta">${cuenta.join('')}</div>` : ''}
+      ${puntos}
+      ${resena}
+      <div class="dp-cierre">Ya puedes cerrar esta ventana.</div>
+      <div class="dp-pie">Si quieres ordenar otra vez, vuelve a escanear el código QR de tu mesa: se abre una cuenta nueva. No es una falla — ésta ya quedó pagada.</div>
+      <div class="dp-orn">✳</div>
+    </div>`;
+  pintarMarcaDespedida($('#dpMarca'));
+}
+/* La puerta de un solo sentido. De aquí no hay botón, ni enlace, ni «atrás» que regrese al
+   menú: mientras el marcador esté fresco, esta pantalla es todo lo que hay. */
+function entrarDespedida(d){
+  visitaCerrada = true;
+  detenerSondeo();
+  cerrarSheets();
+  cerrarVisor();
+  const g = $('#guia');
+  if(g) g.classList.remove('visible');
+  document.body.classList.add('con-despedida');
+  pintarDespedida(d);
+  $('#despedida').classList.add('visible');
+  window.scrollTo({ top: 0 });
+  try{ history.pushState({ v: 'despedida' }, ''); }catch(e){}
+}
+/* Los puntos los abona el panel de forma asíncrona en el mismo instante en que cobra, así que
+   esta lectura puede llegar antes que el abono y traer el saldo viejo. Se hace UNA sola vez y
+   se conserva el número mayor entre lo que dice la nube y lo que ya sabíamos sumado: nunca le
+   enseñamos menos puntos de los que le tocan. Sin reintentos en bucle — es una cortesía, no
+   un dato con el que se pague nada. */
+async function refrescarSaldoDespedida(d){
+  if(!cliente || cliente.id == null) return;
+  try{
+    const cf = await api(`menusbot_clientes?id=eq.${cliente.id}&select=puntos`);
+    const leido = (cf && cf[0]) ? (+cf[0].puntos || 0) : 0;
+    d.saldo = Math.max(leido, +d.saldo || 0);
+    cliente.puntos = d.saldo;
+    try{ localStorage.setItem(LSK('mb_cliente'), JSON.stringify(cliente)); }catch(e){}
+    guardarDespedida(d);
+    pintarDespedida(d);
+  }catch(e){}
+}
 function cerrarVisita(){
+  if(visitaCerrada) return;
+  /* El total y la propina se leen ANTES de limpiar nada: dos líneas más abajo `ordenes` y
+     `totalMesaSrv` quedan vacíos y el resumen ya no tendría de dónde sacarlos. */
+  const totalPagado = totalMesaActual();
+  const propinaMarcada = propinaSugerida;
+  /* Un punto por cada $10 de lo que consumió ESTE cliente. La fórmula de verdad la ejecuta el
+     panel al cobrar (Math.floor(suma/10), en panel.html); aquí sólo se repite para poder
+     enseñársela al comensal. Están escritas en dos lados: si allá cambia, hay que cambiarla
+     aquí también o el número de la despedida no cuadrará con su saldo real. */
+  const puntosGanados = cliente ? Math.floor(ordenes.reduce((s, o) => s + (+o.total || 0), 0) / 10) : 0;
+  /* La invitación a reseñar viaja con sus enlaces DENTRO del marcador: tras una recarga ya no
+     habrá sondeo que traiga la configuración del restaurante, y la despedida tiene que verse
+     idéntica. Si ya se le ofreció durante la visita, no se le insiste. */
+  const cfgR = (config && config.resenas) || {};
+  const despedida = {
+    ts: Date.now(),
+    mesa, suc: SUC,
+    total: totalPagado,
+    propina: propinaMarcada,
+    conCliente: !!cliente,
+    nombre: cliente ? (cliente.nombre || '') : '',
+    puntos: puntosGanados,
+    saldo: cliente ? (+cliente.puntos || 0) + puntosGanados : 0,
+    /* Aquí NO se mira `resenaOfrecida` a propósito. Esa bandera existe para que la hoja
+       deslizante no le brinque encima dos veces durante la comida; la despedida es otra cosa:
+       es la última pantalla que va a ver, ya pagó, ya se va, y es el momento en que de verdad
+       puede sentarse a escribir la reseña. En el camino más común la invitación ya salió al
+       elegir la propina —y aun así tiene que volver a estar aquí, quieta y sin empujar. */
+    resena: resenasActivas()
+      ? { activo:true, google: cfgR.google, facebook: cfgR.facebook, incentivo: cfgR.incentivo }
+      : null,
+  };
   ordenes = []; misIds = []; pedido = []; cuentaPedida = false;
   /* Visita nueva, cortesía nueva: la siguiente mesa sí vuelve a ver la invitación a reseñar */
   resenaOfrecida = false;
@@ -2430,22 +2651,14 @@ function cerrarVisita(){
   mesaChequeada = false; bienvenidaPend = false; propinaSugerida = null; ordenRechazada = null;
   /* Mesa nueva: si el mesero vuelve a pedir la propina, la hoja tiene que poder abrirse otra vez */
   propinaPedidaAtendida = false; propinaPend = false; propinaPorPeticion = false;
+  /* Se cierra la sesión de MESA y nada más. `mb_cliente` se queda intacto a propósito: su cuenta
+     de puntos no tiene por qué morirse porque haya pagado la comida — es justo lo que hace que
+     la próxima vez lo reconozcamos por su nombre. */
   try{ localStorage.removeItem(LSK('mb_sesion_v1')); localStorage.removeItem(LSK('mb_mesa_intentos')); localStorage.removeItem(LSK('mb_mesa_saludo')); }catch(e){}
+  guardarDespedida(despedida);
   pintarIndicadores();
-  const pideResena = resenasActivas();
-  $('#hojaConf').innerHTML = `
-    <div class="confirmacion">
-      <div class="conf-sello"><div class="interior"><b>GRACIAS</b><span>por tu visita</span></div></div>
-      <h2>Cuenta pagada</h2>
-      <div class="nota-pie" style="margin:18px 0 0;text-align:left">Tu cuenta quedó cerrada. Si ordenas de nuevo, empezará una cuenta nueva para tu mesa. ¡Hasta pronto!</div>
-      ${pideResena ? bloqueResenaHTML() : ''}
-      <div class="acciones-orden" style="padding:${pideResena ? '14px' : '22px'} 0 0">
-        <button class="${pideResena ? 'btn-fantasma' : 'btn-primario'}" onclick="cerrarSheets();mostrarVista('menu')">Volver a la carta</button>
-      </div>
-    </div>`;
-  abrirVelo();
-  $('#hojaConf').classList.add('abierta');
-  if(vistaActual === 'cuenta') pintarVistaCuenta();
+  entrarDespedida(despedida);
+  refrescarSaldoDespedida(despedida);
 }
 
 /* ---------- Invitación a reseñar en Google / Facebook (la enciende el restaurante) ---------- */
@@ -2460,9 +2673,11 @@ function resenasActivas(){
   const r = (config && config.resenas) || {};
   return r.activo === true && !!(linkResena(r.google) || linkResena(r.facebook));
 }
-/* Misma fila de botones en la hoja y en la pantalla de "Cuenta pagada": una sola verdad visual */
-function bloqueResenaHTML(){
-  const r = (config && config.resenas) || {};
+/* Misma fila de botones en la hoja y en la despedida: una sola verdad visual. Recibe los datos
+   por parámetro porque la despedida los pinta desde su marcador guardado —ahí ya no hay sondeo
+   que traiga `config`— y el resto de la carta los toma, como siempre, de la configuración viva. */
+function bloqueResenaHTML(datos){
+  const r = datos || (config && config.resenas) || {};
   const g = linkResena(r.google), f = linkResena(r.facebook);
   const incentivo = escResena((r.incentivo || '').trim());
   const btn = (href, txt, extra) => `<a href="${escResena(href)}" target="_blank" rel="noopener" class="btn-primario" style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;box-sizing:border-box;padding:16px 10px;letter-spacing:1.6px;line-height:1.45;${extra}">${txt}</a>`;
@@ -2470,7 +2685,7 @@ function bloqueResenaHTML(){
       ${g ? btn(g, 'Reseñar en Google', '') : ''}
       ${f ? btn(f, 'Reseñar en Facebook', 'background:var(--oro)') : ''}
     </div>
-    ${incentivo ? `<div style="margin-top:11px;font-family:var(--grot);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--humo2);line-height:1.7;text-align:left">${incentivo}</div>` : ''}`;
+    ${incentivo ? `<div style="margin-top:11px;font-family:var(--grot);font-size:14px;letter-spacing:1.5px;text-transform:uppercase;color:var(--humo2);line-height:1.7;text-align:left">${incentivo}</div>` : ''}`;
 }
 function pintarHojaResena(){
   const r = (config && config.resenas) || {};
@@ -2604,7 +2819,7 @@ function salirCliente(){
    Las claves de este teléfono llevan el slug pegado (ver LSK), así que al mudarse hay que
    llevárselas: si no, el comensal que está a media comida pierde su sesión, su mesa, su
    código y sus puntos, y la mesa se le queda amarrada a una dirección que ya no existe. */
-const CLAVES_MUDANZA = ['mb_cliente','mb_sesion_v1','mb_mesa_intentos','mb_mesa_saludo','mb_guia_v1','mb_invitado','mb_puntos_visto','mb_marca'];
+const CLAVES_MUDANZA = ['mb_cliente','mb_sesion_v1','mb_mesa_intentos','mb_mesa_saludo','mb_guia_v1','mb_invitado','mb_puntos_visto','mb_marca','mb_visita_cerrada'];
 function mudarse(nuevo){
   if(!/^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/.test(nuevo) || nuevo === RID) return;
   const nk = k => nuevo === 'bellavita' ? k : k + '::' + nuevo;
@@ -2628,8 +2843,15 @@ $('#buscar').addEventListener('input', pintarLista);
   const mem = marcaRecordada();
   if(mem && mem.nombre){ MARCA = Object.assign({}, MARCA, mem); aplicarMarca(); }
 }
-sincronizar();
-iniciarMesa();
+/* Antes que cualquier otra cosa: si este teléfono ya pagó y se despidió, se queda en la
+   despedida. No se abre mesa, no se restaura sesión, no se sondea la nube y ni el ?mesa=N del
+   QR se cuela — volver a entrar por el código es justamente lo que abriría la mesa nueva que
+   nadie pidió. Cuando el marcador caduca (media hora), el arranque vuelve a ser el de siempre. */
+{
+  const visitaTerminada = leerDespedida();
+  if(visitaTerminada) entrarDespedida(visitaTerminada);
+  else { sincronizar(); iniciarMesa(); }
+}
 pintarMarquee();
 pintarControles();
 pintarDestacados();
