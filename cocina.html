@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F6F1E7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cocina">
+<title>Cocina · MenusBot</title>
+<link rel="apple-touch-icon" href="icono-192.png">
+<!-- Las fuentes se piden sin bloquear el pintado (media=print y luego all): si la cocina se
+     queda sin internet, la pantalla sale igual con Georgia y la del sistema, sin esperar. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --esp:#151210; --esp2:#1D1915; --crema:#EFE7D8; --humo:#A79D8C; --humo2:#6E665A;
+    --pomodoro:#E4593B; --basilico:#8FAE8B; --oro:#C9A227; --papel:#F2EBDD; --ink:#241F18;
+    --linea:rgba(239,231,216,.14); --linea2:rgba(239,231,216,.28);
+    --serif:'Fraunces',Georgia,serif; --grot:'Space Grotesk',system-ui,sans-serif;
+    /* Alertas sólidas. NO cambian con el tema a propósito: el mismo rojo significa lo mismo
+       a las once de la mañana con la cortina abierta y a las once de la noche. */
+    --al-roja:#D92D20;    /* se pasó de veinte minutos */
+    --al-ambar:#C2410C;   /* se pasó de diez */
+    --al-verde:#15803D;   /* servido */
+    --al-azul:#1D4ED8;    /* dato neutro */
+    --al-txt:#FFFFFF;
+  }
+  /* Tema claro (predeterminado), igual que el panel y la pantalla del mesero. */
+  html.claro{
+    --esp:#F6F1E7; --esp2:#FFFFFF; --crema:#241F18; --humo:#6E6558; --humo2:#9C9081;
+    --basilico:#5F8A5B; --oro:#A8871D; --papel:#FBF7EE; --ink:#241F18;
+    --linea:rgba(36,31,24,.13); --linea2:rgba(36,31,24,.28);
+  }
+  html.claro .comanda{box-shadow:0 8px 20px rgba(36,31,24,.12);border:1px solid rgba(36,31,24,.1)}
+  html.claro .toast{background:var(--ink);color:#FBF7EE;box-shadow:0 16px 44px rgba(36,31,24,.3)}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  /* La página entera no se desplaza: solo las tres columnas. En una tele colgada nadie va a
+     hacer scroll de la ventana, y si la barra se mueve se pierde el encabezado. */
+  html,body{height:100%;overflow:hidden}
+  body{font-family:var(--grot);background:var(--esp);color:var(--crema);font-size:16px}
+  button{font-family:var(--grot)}
+
+  .caps{font-size:14px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;line-height:1.5}
+  .pantalla{display:none;height:100%}
+  .pantalla.activa{display:block}
+  #app.activa{display:flex;flex-direction:column}
+  #entrada.activa,#sinRid.activa{display:flex;align-items:center;justify-content:center;overflow-y:auto}
+
+  /* ---------- Sin restaurante / entrada ---------- */
+  .caja-centro{width:100%;max-width:520px;padding:34px 26px;text-align:center}
+  .caja-centro .sobre{font-size:14px;letter-spacing:1.6px;color:var(--humo);font-weight:700;text-transform:uppercase}
+  .caja-centro h1{font-family:var(--serif);font-style:italic;font-weight:500;font-size:42px;line-height:1.05;letter-spacing:-1px;margin-top:14px}
+  .caja-centro h1 em{font-style:normal;color:var(--pomodoro)}
+  .caja-centro p{margin-top:18px;font-size:16px;color:var(--humo);line-height:1.85}
+  .orn{margin:22px auto;display:flex;align-items:center;gap:12px;justify-content:center;color:var(--pomodoro)}
+  .orn i{display:block;width:44px;border-top:1px solid var(--linea2)}
+  #pinPuntos{display:flex;gap:18px;justify-content:center;margin:28px 0 6px}
+  #pinPuntos span{width:17px;height:17px;border-radius:50%;border:1px solid var(--linea2);transition:.18s}
+  #pinPuntos span.lleno{background:var(--pomodoro);border-color:var(--pomodoro);transform:scale(1.12)}
+  #pinPuntos.sacude{animation:sacude .42s}
+  @keyframes sacude{0%,100%{transform:translateX(0)}20%{transform:translateX(-11px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+  #pinAviso{min-height:28px;text-align:center;font-size:15px;line-height:1.6;color:var(--pomodoro);letter-spacing:.4px;margin-bottom:14px}
+  .teclado{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--linea);border:1px solid var(--linea)}
+  .tecla{min-height:72px;border:none;background:var(--esp2);color:var(--crema);font-family:var(--serif);font-size:29px;font-weight:500;cursor:pointer;transition:.1s}
+  .tecla:active{background:var(--pomodoro);color:var(--papel)}
+  .tecla.aux{font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:1.2px;color:var(--humo);text-transform:uppercase}
+  .tecla:disabled{opacity:.32;cursor:default}
+
+  /* ---------- Encabezado ---------- */
+  .barra-sup{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--linea);flex-shrink:0}
+  .marca{font-family:var(--serif);font-style:italic;font-size:26px;font-weight:500;line-height:1.1}
+  .marca small{display:block;font-family:var(--grot);font-style:normal;font-size:14px;letter-spacing:1.4px;color:var(--humo);font-weight:700;margin-top:2px;text-transform:uppercase}
+  .vivo{display:flex;align-items:center;gap:9px;font-size:14px;letter-spacing:1.4px;font-weight:700;color:var(--basilico);border:1px solid var(--linea2);padding:9px 14px;border-radius:2px;white-space:nowrap}
+  .vivo i{width:8px;height:8px;border-radius:50%;background:var(--basilico);animation:parp 1.6s infinite;flex-shrink:0}
+  /* Sin conexión: rojo sólido, no un texto gris. Si la cocina dejó de recibir tiene que
+     enterarse desde el otro lado del pasillo, no leyendo letras chicas. */
+  .vivo.caido{background:var(--al-roja);border-color:var(--al-roja);color:var(--al-txt)}
+  .vivo.caido i{background:var(--al-txt);animation:none}
+  @keyframes parp{0%,100%{opacity:1}50%{opacity:.25}}
+  .acciones-sup{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  .btn-sec{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid var(--linea2);background:transparent;color:var(--crema);font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:10px 14px;border-radius:2px;cursor:pointer;line-height:1.4;white-space:nowrap}
+  .btn-sec:hover{border-color:var(--pomodoro);color:var(--pomodoro)}
+  .btn-sec.armado{background:var(--oro);border-color:var(--oro);color:var(--ink);animation:pulso 1s infinite}
+  @keyframes pulso{0%,100%{opacity:1}50%{opacity:.72}}
+  .btn-sec.apagado{opacity:.55}
+
+  /* ---------- Tablero de tres columnas a alto completo ---------- */
+  .tablero{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:12px 12px 0}
+  .columna{display:flex;flex-direction:column;min-height:0;border:1px solid var(--linea);border-radius:3px;background:var(--esp2)}
+  .col-cab{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--linea);flex-shrink:0}
+  .col-cab .caps{color:var(--crema);font-size:17px;letter-spacing:1.6px}
+  .col-cab .cuenta-col{margin-left:auto;font-family:var(--serif);font-style:italic;font-size:34px;line-height:1;color:var(--pomodoro)}
+  /* Cada columna se desplaza sola: la 01 puede tener quince comandas y la 03 ninguna. */
+  .col-cuerpo{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px;display:flex;flex-direction:column;gap:12px}
+  .col-vacia{text-align:center;color:var(--humo2);font-size:15px;letter-spacing:1.6px;text-transform:uppercase;font-weight:700;padding:38px 10px;line-height:1.7}
+
+  /* ---------- La comanda: papel de ticket, se lee de lejos ---------- */
+  .comanda{background:var(--papel);color:var(--ink);border-radius:3px;padding:14px 16px 16px;box-shadow:0 10px 26px rgba(0,0,0,.35);position:relative;outline:0 solid transparent}
+  .comanda::before{content:'';position:absolute;left:0;right:0;top:-6px;height:7px;background-image:radial-gradient(circle at 7px 7px, transparent 4px, var(--papel) 4.5px);background-size:14px 7px}
+  /* Destello de comanda nueva: tres segundos de marco rojo. Con el ruido de la cocina el
+     tono se pierde, así que el aviso también tiene que entrar por los ojos. */
+  .comanda.nueva{animation:destello .9s ease-in-out 4}
+  @keyframes destello{0%,100%{outline:4px solid transparent;outline-offset:0}50%{outline:4px solid var(--al-roja);outline-offset:2px}}
+  .c-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .c-mesa{display:flex;flex-direction:column;line-height:1}
+  .c-mesa small{font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:1.6px;color:#8A7D69;text-transform:uppercase}
+  .c-mesa b{font-family:var(--serif);font-style:italic;font-weight:500;font-size:46px;letter-spacing:-1.5px;margin-top:2px}
+  /* El reloj es la única cifra grande además de la mesa: es lo que decide qué se cocina primero */
+  .reloj{margin-left:auto;font-family:var(--grot);font-size:19px;font-weight:700;letter-spacing:.6px;padding:9px 13px;border-radius:2px;border:1px solid rgba(36,31,24,.28);color:#5E5445;white-space:nowrap}
+  .reloj.ambar{background:var(--al-ambar);border-color:var(--al-ambar);color:var(--al-txt)}
+  .reloj.roja{background:var(--al-roja);border-color:var(--al-roja);color:var(--al-txt)}
+  .c-folio{font-family:var(--grot);font-size:15px;font-weight:700;letter-spacing:1.2px;color:#8A7D69;text-transform:uppercase;margin-top:8px}
+  .c-items{margin-top:10px;border-top:1px dashed rgba(36,31,24,.3);padding-top:8px}
+  .c-item{display:flex;align-items:flex-start;gap:12px;padding:8px 0;border-bottom:1px dotted rgba(36,31,24,.22)}
+  .c-item:last-child{border-bottom:none}
+  .c-item b{font-family:var(--grot);font-size:22px;font-weight:700;color:var(--pomodoro);min-width:44px;line-height:1.35}
+  .c-item .nom{flex:1 1 140px;min-width:0;font-size:22px;font-weight:600;line-height:1.35;letter-spacing:-.2px}
+  /* Las notas del comensal en itálica y en oro: es lo que más se equivoca la cocina si no salta */
+  .c-item .nom em{display:block;font-family:var(--serif);font-style:italic;font-weight:500;font-size:18px;color:#8A5A12;margin-top:4px;line-height:1.45}
+  .c-item.servido .nom,.c-item.servido b{opacity:.5;text-decoration:line-through;text-decoration-thickness:1px}
+  .c-item.servido .nom em{text-decoration:none}
+  .p-btn{margin-left:auto;flex-shrink:0;align-self:center;display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid rgba(36,31,24,.35);background:transparent;color:var(--ink);font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:9px 13px;border-radius:2px;cursor:pointer;line-height:1.4}
+  .p-btn:hover{background:var(--pomodoro);border-color:var(--pomodoro);color:var(--papel)}
+  .p-ok{margin-left:auto;flex-shrink:0;align-self:center;background:var(--al-verde);color:var(--al-txt);font-size:14px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:8px 11px;border-radius:2px;white-space:nowrap;line-height:1.4}
+  .c-pie{margin-top:12px;padding-top:12px;border-top:1px dotted rgba(36,31,24,.25)}
+  /* Botón de avanzar: ocupa todo el ancho de la tarjeta. Se aprieta con el dorso del dedo,
+     con las manos ocupadas y sin mirar. */
+  .btn-avanza{width:100%;min-height:60px;border:none;background:var(--ink);color:var(--papel);font-family:var(--grot);font-size:16px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;padding:14px;border-radius:2px;cursor:pointer;line-height:1.4}
+  .btn-avanza:hover{background:var(--pomodoro)}
+  .btn-avanza:active{transform:scale(.99)}
+
+  /* ---------- Pie ---------- */
+  .pie{flex-shrink:0;padding:11px 18px;border-top:1px solid var(--linea);display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--humo2);letter-spacing:.4px;line-height:1.6}
+  .pie .aviso-pin{background:var(--al-ambar);color:var(--al-txt);font-weight:700;font-size:14px;letter-spacing:1.2px;text-transform:uppercase;padding:9px 13px;border-radius:2px;line-height:1.4}
+
+  /* ---------- Toast ---------- */
+  .toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,30px);background:var(--papel);color:var(--ink);font-size:16px;font-weight:600;letter-spacing:.4px;padding:15px 22px;border-radius:2px;z-index:200;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 16px 44px rgba(0,0,0,.55);max-width:80%;text-align:center;line-height:1.55}
+  .toast.visible{opacity:1;transform:translate(-50%,0)}
+  .toast.falla{background:var(--al-roja);color:var(--al-txt)}
+
+  /* En la tele de la cocina sobra ancho y falta distancia: todo lo que se lee de lejos
+     (mesa, platillo, cantidad, reloj) sube de tamaño. En la tablet se queda como está,
+     porque ahí la pantalla se mira a un brazo. */
+  @media(min-width:1400px){
+    .c-mesa b{font-size:60px}
+    .c-mesa small{font-size:15px}
+    .c-item b,.c-item .nom{font-size:26px}
+    .c-item .nom em{font-size:21px}
+    .reloj{font-size:22px;padding:10px 15px}
+    .btn-avanza{font-size:18px;min-height:66px}
+    .col-cab .caps{font-size:19px}
+    .col-cab .cuenta-col{font-size:40px}
+  }
+  /* En tablet vertical las tres columnas no caben: se apilan y se desplaza el tablero.
+     Sigue siendo la misma pantalla, nada más que en fila india. */
+  @media(max-width:760px){
+    .tablero{grid-template-columns:1fr;overflow-y:auto;padding-bottom:12px}
+    .columna{min-height:220px}
+    .col-cuerpo{overflow:visible}
+  }
+</style>
+<script>if((localStorage.getItem('mb_cocina_tema')||'claro')==='claro')document.documentElement.classList.add('claro')</script>
+</head>
+<body>
+
+<!-- ============ Sin restaurante en la URL ============ -->
+<section class="pantalla" id="sinRid">
+  <div class="caja-centro">
+    <div class="sobre">MenusBot · Cocina</div>
+    <h1>Te falta<br><em>el enlace</em></h1>
+    <div class="orn"><i></i>&#10022;<i></i></div>
+    <p>Esta pantalla recibe las comandas de un restaurante en particular, y necesita saber de cuál.</p>
+    <p>Abre el enlace que te dio el restaurante. El dueño lo encuentra en su panel, en la sección Equipo, junto al PIN de cocina.</p>
+  </div>
+</section>
+
+<!-- ============ Entrada con PIN de cocina ============ -->
+<section class="pantalla" id="entrada">
+  <div class="caja-centro">
+    <div class="sobre">MenusBot · Cocina</div>
+    <h1>Comandas de <em>cocina</em></h1>
+    <p id="entradaSub">Cargando&hellip;</p>
+    <div id="pinPuntos"><span></span><span></span><span></span><span></span></div>
+    <div id="pinAviso"></div>
+    <div class="teclado" id="teclado"></div>
+    <div style="margin-top:18px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button class="btn-sec" id="btnTemaEntrada">TEMA OSCURO</button>
+      <button class="btn-sec" id="btnReintentar" style="display:none">REINTENTAR</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ La pantalla de trabajo ============ -->
+<section class="pantalla" id="app">
+  <header class="barra-sup">
+    <div class="marca" id="marcaCocina">Cocina<small id="marcaSub">MenusBot</small></div>
+    <div class="vivo" id="chipVivo"><i></i><span id="chipVivoTxt">EN VIVO</span></div>
+    <div class="acciones-sup">
+      <button class="btn-sec" id="btnSonido">SONIDO</button>
+      <button class="btn-sec" id="btnCompleta">PANTALLA COMPLETA</button>
+      <button class="btn-sec" id="btnTema">TEMA OSCURO</button>
+      <button class="btn-sec" id="btnSalir">SALIR</button>
+    </div>
+  </header>
+
+  <main class="tablero">
+    <div class="columna">
+      <div class="col-cab"><span class="caps">01 · Recibidas</span><span class="cuenta-col" id="n0">0</span></div>
+      <div class="col-cuerpo" id="col0"></div>
+    </div>
+    <div class="columna">
+      <div class="col-cab"><span class="caps">02 · En preparación</span><span class="cuenta-col" id="n1">0</span></div>
+      <div class="col-cuerpo" id="col1"></div>
+    </div>
+    <div class="columna">
+      <div class="col-cab"><span class="caps">03 · En servicio</span><span class="cuenta-col" id="n2">0</span></div>
+      <div class="col-cuerpo" id="col2"></div>
+    </div>
+  </main>
+
+  <footer class="pie">
+    <span id="pieAviso"></span>
+    <span id="pieResumen" style="margin-left:auto"></span>
+  </footer>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==================================================================
+   MENUSBOT — PANTALLA DE COCINA
+   Una tele colgada en la cocina. Solo recibe y despacha: aquí no hay
+   precios, ni totales, ni nombres de clientes, ni reportes. Lo que no
+   sirve para sacar un plato, no está.
+   ================================================================== */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+/* Copiado del panel: todo lo que viene de la base pasa por aquí antes de tocar el DOM.
+   Las notas del comensal son texto libre que él escribe desde su teléfono. */
+function escTxt(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ---------- Tema: claro por omisión, igual que el resto del proyecto ---------- */
+function pintarBtnTema(){
+  const claro = document.documentElement.classList.contains('claro');
+  const txt = claro ? 'TEMA OSCURO' : 'TEMA CLARO';
+  ['#btnTema','#btnTemaEntrada'].forEach(s => { const b = $(s); if(b) b.textContent = txt; });
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', claro ? '#F6F1E7' : '#151210');
+}
+function alternarTema(){
+  const claro = document.documentElement.classList.toggle('claro');
+  try{ localStorage.setItem('mb_cocina_tema', claro ? 'claro' : 'oscuro'); }catch(e){}
+  pintarBtnTema();
+}
+pintarBtnTema();
+
+/* ---------- El enlace del restaurante manda ---------- */
+const PARAMS = new URLSearchParams(location.search);
+const RID = (PARAMS.get('r') || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+/* La carta usa ?suc= y los enlaces del equipo ?s=. Se aceptan las dos para que nadie
+   se pelee con la URL a media hora pico. */
+const SUC = PARAMS.get('s') || PARAMS.get('suc') || '';
+/* Espacio de nombres por restaurante: dos restaurantes abiertos en el mismo navegador
+   (el celular del que instala, por ejemplo) no se pisan la sesión. */
+const LSK = k => k + '::' + RID;
+
+const SUPA_URL = 'https://xwcgqhlsubyfmpdjabjt.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3Y2dxaGxzdWJ5Zm1wZGphYmp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMTc5NjYsImV4cCI6MjA5Nzg5Mzk2Nn0.DK4oPmMcNA0xLwkAkxGigiudIZUobxB_UYFurrMCc9g';
+
+/* Declaración de función a propósito (no const): las pruebas la sustituyen.
+   El status viaja en el error porque no es lo mismo un 409 que una caída de red. */
+async function api(ruta, opc = {}){
+  const r = await fetch(SUPA_URL + '/rest/v1/' + ruta, {
+    ...opc,
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', ...(opc.headers || {}) },
+  });
+  if(!r.ok){ const e = new Error(await r.text()); e.status = r.status; throw e; }
+  const tx = await r.text();
+  return tx ? JSON.parse(tx) : null;
+}
+/* Avisos al teléfono del mesero (misma forma que en panel.html): la función de la nube decide
+   a quién le suena. Nunca se espera su respuesta ni se deja que un aviso fallido detenga el
+   cambio que ya se guardó. */
+function avisar(cuerpo){
+  try{
+    fetch(SUPA_URL + '/functions/v1/mb-avisar', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', apikey: SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY },
+      body: JSON.stringify(cuerpo),
+    }).catch(()=>{});
+  }catch(e){}
+}
+
+/* ---------- Toast ----------
+   Las ventanas nativas (alert/confirm/prompt) están prohibidas en el proyecto: congelan el
+   navegador con el que se opera esto. Todo aviso sale por aquí. */
+let toastTimer = null;
+function toast(txt, falla){
+  const t = $('#toast');
+  t.textContent = txt;
+  t.classList.toggle('falla', !!falla || /sin conexi[oó]n|no se guard|no pude|error|fall[oó]/i.test(String(txt)));
+  t.classList.add('visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('visible'), 2800);
+}
+
+/* ---------- Doble toque para lo irreversible ----------
+   Mismo patrón del resto del proyecto: el primer toque arma el botón 4.5 s, el segundo
+   ejecuta. Aquí solo lo usa SALIR; avanzar una comanda es el trabajo de todos los días y
+   pedirle dos toques a cada plato sería estorbar. */
+const armados = {};
+function armar(clave){
+  if(armados[clave]){ clearTimeout(armados[clave]); delete armados[clave]; repintarArmados(); return true; }
+  armados[clave] = setTimeout(() => { delete armados[clave]; repintarArmados(); }, 4500);
+  repintarArmados();
+  return false;
+}
+function repintarArmados(){
+  const b = $('#btnSalir');
+  const on = !!armados.salir;
+  b.textContent = on ? '¿SEGURO?' : 'SALIR';
+  b.classList.toggle('armado', on);
+}
+
+/* ---------- Sonido: un tono corto hecho al momento, sin archivos ----------
+   El navegador no deja sonar nada antes del primer gesto del usuario, así que el
+   AudioContext se despierta en la entrada con PIN (que ya es un montón de toques) y en
+   cualquier toque posterior. */
+let sonidoOn = true;
+try{ const v = localStorage.getItem(LSK('mb_cocina_sonido')); if(v !== null) sonidoOn = v === '1'; }catch(e){}
+let ctxAudio = null;
+function arrancarAudio(){
+  if(ctxAudio){ if(ctxAudio.state === 'suspended') ctxAudio.resume().catch(()=>{}); return; }
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if(!AC) return;
+  try{ ctxAudio = new AC(); }catch(e){ ctxAudio = null; }
+}
+document.addEventListener('pointerdown', arrancarAudio, { passive:true });
+document.addEventListener('touchstart', arrancarAudio, { passive:true });
+document.addEventListener('keydown', arrancarAudio);
+function tono(){
+  if(!sonidoOn || !ctxAudio) return;
+  try{
+    const t0 = ctxAudio.currentTime;
+    /* Dos notas cortas y agudas: se cuelan por encima de la campana extractora sin
+       sonar a alarma de incendio. */
+    [[880, 0], [1245, .17]].forEach(([hz, off]) => {
+      const o = ctxAudio.createOscillator(), g = ctxAudio.createGain();
+      o.type = 'sine'; o.frequency.value = hz;
+      g.gain.setValueAtTime(0, t0 + off);
+      g.gain.linearRampToValueAtTime(.25, t0 + off + .02);
+      g.gain.exponentialRampToValueAtTime(.0008, t0 + off + .15);
+      o.connect(g); g.connect(ctxAudio.destination);
+      o.start(t0 + off); o.stop(t0 + off + .17);
+    });
+  }catch(e){}
+}
+function pintarBtnSonido(){
+  const b = $('#btnSonido');
+  b.textContent = sonidoOn ? 'SONIDO' : 'SILENCIO';
+  b.classList.toggle('apagado', !sonidoOn);
+}
+
+/* ---------- Que la pantalla no se apague ----------
+   Una tele o una tablet colgada se va a negro a los dos minutos y la cocina deja de ver las
+   comandas. Si el navegador no sabe de wakeLock, se sigue sin quejarse: no es indispensable. */
+let candado = null;
+async function pantallaViva(){
+  try{
+    if(!navigator.wakeLock || candado) return;
+    candado = await navigator.wakeLock.request('screen');
+    candado.addEventListener('release', () => { candado = null; });
+  }catch(e){ candado = null; }
+}
+document.addEventListener('visibilitychange', () => {
+  /* El sistema suelta el candado al minimizar; hay que volver a pedirlo al regresar. */
+  if(!document.hidden){ pantallaViva(); sondear(); }
+});
+
+function pantallaCompleta(){
+  try{
+    if(document.fullscreenElement){ document.exitFullscreen(); return; }
+    const p = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+    if(p && p.catch) p.catch(() => toast('El navegador no dejó entrar a pantalla completa'));
+  }catch(e){ toast('El navegador no dejó entrar a pantalla completa'); }
+}
+
+/* ---------- Tiempos ---------- */
+const minutosDe = ts => Math.max(0, Math.floor((Date.now() - ts) / 60000));
+const iniciales = n => (n || 'BV').split(/\s+/).filter(Boolean).slice(0,2).map(w => w[0].toUpperCase()).join('') || 'BV';
+
+function pantalla(id){ $$('.pantalla').forEach(p => p.classList.toggle('activa', p.id === id)); }
+
+/* ==================================================================
+   1. ENTRADA
+   ================================================================== */
+let cfg = {};            // el blob de configuración del restaurante
+let cfgOk = false;       // ¿alcanzamos a leerlo?
+let PIN_COCINA = '';     // cfg.cocina_pin
+let sinPin = false;      // el dueño todavía no configura PIN: se entra igual
+let sesion = null;
+try{ sesion = JSON.parse(localStorage.getItem(LSK('mb_cocina')) || 'null'); }catch(e){}
+
+const TECLAS = ['1','2','3','4','5','6','7','8','9','borrar','0','entrar'];
+$('#teclado').innerHTML = TECLAS.map(t => {
+  if(t === 'borrar') return '<button class="tecla aux" data-t="borrar">Borrar</button>';
+  if(t === 'entrar') return '<button class="tecla aux" data-t="entrar">Entrar</button>';
+  return '<button class="tecla" data-t="' + t + '">' + t + '</button>';
+}).join('');
+
+let pinBuf = '', fallos = 0, bloqueoHasta = 0, bloqueoTimer = null;
+try{ fallos = +localStorage.getItem(LSK('mb_cocina_fallos')) || 0; }catch(e){}
+try{ bloqueoHasta = +localStorage.getItem(LSK('mb_cocina_bloqueo')) || 0; }catch(e){}
+
+function pintarPin(){ $$('#pinPuntos span').forEach((s, i) => s.classList.toggle('lleno', i < pinBuf.length)); }
+function bloqueado(){ return Date.now() < bloqueoHasta; }
+function vigilarBloqueo(){
+  clearInterval(bloqueoTimer);
+  const paso = () => {
+    const teclas = $$('#teclado .tecla');
+    if(bloqueado()){
+      const seg = Math.ceil((bloqueoHasta - Date.now()) / 1000);
+      $('#pinAviso').textContent = 'Espera ' + seg + ' segundo' + (seg === 1 ? '' : 's') + ' para volver a intentar.';
+      teclas.forEach(t => t.disabled = true);
+    } else {
+      teclas.forEach(t => t.disabled = false);
+      clearInterval(bloqueoTimer);
+      if($('#pinAviso').textContent.indexOf('Espera') === 0) $('#pinAviso').textContent = '';
+    }
+  };
+  paso();
+  if(bloqueado()) bloqueoTimer = setInterval(paso, 250);
+}
+
+$('#teclado').addEventListener('click', e => {
+  const b = e.target.closest('.tecla');
+  if(!b || b.disabled) return;
+  arrancarAudio();
+  const t = b.dataset.t;
+  if(t === 'borrar'){ pinBuf = pinBuf.slice(0, -1); pintarPin(); return; }
+  if(t === 'entrar'){ if(pinBuf.length === 4) revisarPin(); else $('#pinAviso').textContent = 'Faltan dígitos.'; return; }
+  if(pinBuf.length >= 4) return;
+  pinBuf += t;
+  pintarPin();
+  if(pinBuf.length === 4) setTimeout(revisarPin, 140);
+});
+/* El teclado físico también sirve: muchas cocinas tienen una laptop vieja con teclado. */
+document.addEventListener('keydown', e => {
+  if(!$('#entrada').classList.contains('activa')) return;
+  if(/^[0-9]$/.test(e.key)){
+    if(bloqueado() || pinBuf.length >= 4) return;
+    pinBuf += e.key; pintarPin();
+    if(pinBuf.length === 4) setTimeout(revisarPin, 140);
+  } else if(e.key === 'Backspace'){ pinBuf = pinBuf.slice(0, -1); pintarPin(); }
+  else if(e.key === 'Enter' && pinBuf.length === 4) revisarPin();
+});
+
+/* El PIN se valida aquí, en el navegador, igual que el del mesero: es una compuerta de
+   interfaz para que el enlace no quede abierto de par en par, no un candado criptográfico.
+   El piloto todavía corre con las reglas de la base abiertas y no vale la pena fingir que
+   esto es más de lo que es. */
+function revisarPin(){
+  if(bloqueado()) return;
+  if(PIN_COCINA && pinBuf === PIN_COCINA){
+    fallos = 0;
+    try{ localStorage.removeItem(LSK('mb_cocina_fallos')); localStorage.removeItem(LSK('mb_cocina_bloqueo')); }catch(e){}
+    sesion = { ts: Date.now() };
+    try{ localStorage.setItem(LSK('mb_cocina'), JSON.stringify(sesion)); }catch(e){}
+    arrancarAudio();
+    entrarApp();
+    return;
+  }
+  pinBuf = '';
+  pintarPin();
+  const p = $('#pinPuntos');
+  p.classList.remove('sacude');
+  void p.offsetWidth;
+  p.classList.add('sacude');
+  if(navigator.vibrate) try{ navigator.vibrate(110); }catch(e){}
+  fallos++;
+  try{ localStorage.setItem(LSK('mb_cocina_fallos'), String(fallos)); }catch(e){}
+  if(fallos >= 5){
+    fallos = 0;
+    bloqueoHasta = Date.now() + 30000;
+    try{ localStorage.setItem(LSK('mb_cocina_fallos'), '0'); localStorage.setItem(LSK('mb_cocina_bloqueo'), String(bloqueoHasta)); }catch(e){}
+    toast('Cinco intentos fallidos. Espera medio minuto.');
+    vigilarBloqueo();
+  } else {
+    $('#pinAviso').textContent = 'Ese PIN no es. Te quedan ' + (5 - fallos) + '.';
+  }
+}
+
+async function cargarConfig(){
+  try{
+    const cfgs = await api('menusbot_config?id=eq.' + encodeURIComponent(RID) + '&select=data');
+    cfg = (cfgs && cfgs[0] && cfgs[0].data) || {};
+    cfgOk = true;
+  }catch(e){ cfgOk = false; }
+  PIN_COCINA = String(cfg.cocina_pin == null ? '' : cfg.cocina_pin).trim();
+  sinPin = !/^\d{4}$/.test(PIN_COCINA);
+}
+
+function nombreDelLugar(){
+  const m = (cfg.config && cfg.config.marca) || {};
+  return [m.prefijo, m.nombre].filter(Boolean).join(' ') || RID;
+}
+
+async function arrancar(){
+  if(!RID){ pantalla('sinRid'); return; }
+  pantalla('entrada');
+  $('#teclado').style.display = 'none';
+  $('#pinPuntos').style.display = 'none';
+  $('#entradaSub').textContent = 'Conectando con el restaurante…';
+  await cargarConfig();
+
+  /* Si la nube no contestó pero esta pantalla ya había entrado antes, se entra igual: dejar
+     la cocina a ciegas por un parpadeo de internet es peor que cualquier otra cosa. */
+  if(!cfgOk && !sesion){
+    $('#entradaSub').textContent = 'No se pudo conectar con el restaurante. Revisa el internet del lugar.';
+    $('#btnReintentar').style.display = 'inline-flex';
+    return;
+  }
+  $('#btnReintentar').style.display = 'none';
+
+  /* Sin PIN configurado se entra derecho, y el pie lo dice todo el tiempo: si no, el dueño
+     no podría ni probar la pantalla antes de ponerle llave. */
+  if(sinPin || sesion){ entrarApp(); return; }
+
+  $('#teclado').style.display = 'grid';
+  $('#pinPuntos').style.display = 'flex';
+  $('#entradaSub').textContent = 'Teclea el PIN de cocina de ' + nombreDelLugar() + '.';
+  pinBuf = ''; pintarPin();
+  vigilarBloqueo();
+}
+
+/* ==================================================================
+   2. LA PANTALLA DE TRABAJO
+   ================================================================== */
+let ordenes = [];
+let enLinea = false;
+let primerSondeo = true;
+let timerSondeo = null;
+let vistos = null;                  // ids ya vistos, para saber qué es nuevo
+const destellando = new Map();      // id -> timeout que apaga el destello
+
+function entrarApp(){
+  pantalla('app');
+  const nom = cfg.cocina_nombre || 'Cocina';
+  $('#marcaCocina').innerHTML = escTxt(nom) + '<small>' + escTxt(nombreDelLugar() + (SUC ? ' · ' + SUC : '')) + '</small>';
+  $('#pieAviso').innerHTML = sinPin
+    ? '<span class="aviso-pin">Sin PIN de cocina — configúralo en Panel &rarr; Equipo</span>'
+    : '';
+  pintarBtnSonido();
+  pantallaViva();
+  arrancarSondeo();
+}
+
+$('#btnTema').addEventListener('click', alternarTema);
+$('#btnTemaEntrada').addEventListener('click', alternarTema);
+$('#btnReintentar').addEventListener('click', () => { arrancar(); });
+$('#btnCompleta').addEventListener('click', () => { pantallaCompleta(); pantallaViva(); });
+$('#btnSonido').addEventListener('click', () => {
+  sonidoOn = !sonidoOn;
+  try{ localStorage.setItem(LSK('mb_cocina_sonido'), sonidoOn ? '1' : '0'); }catch(e){}
+  pintarBtnSonido();
+  if(sonidoOn){ arrancarAudio(); tono(); toast('Así se va a oír una comanda nueva'); }
+  else toast('Sonido apagado — el destello de la tarjeta sigue');
+});
+$('#btnSalir').addEventListener('click', () => {
+  if(!armar('salir')){ toast('Toca otra vez para cerrar esta pantalla'); return; }
+  try{ localStorage.removeItem(LSK('mb_cocina')); }catch(e){}
+  clearInterval(timerSondeo); timerSondeo = null;
+  sesion = null; ordenes = []; vistos = null;
+  location.reload();
+});
+
+/* ---------- Sondeo cada 4 s ----------
+   No se pausa al ocultar la pestaña: esta pantalla vive encendida y lo que no se ve son
+   segundos de comida enfriándose. El navegador ya frena solo los temporizadores en segundo
+   plano; con eso basta. */
+function arrancarSondeo(){
+  if(timerSondeo) return;
+  sondear();
+  timerSondeo = setInterval(sondear, 4000);
+}
+
+async function sondear(){
+  if(!RID || !$('#app').classList.contains('activa')) return;
+  try{
+    /* Solo se piden las columnas que trae esta pantalla (estado menor a 3) y nunca la
+       columna de totales: los precios no tienen por qué llegar siquiera al navegador. */
+    const filas = await api('menusbot_ordenes?restaurante_id=eq.' + encodeURIComponent(RID) +
+      '&estado=lt.3&order=creada.asc&limit=300&select=id,mesa,items,estado,creada,sucursal,cerrada,verificacion');
+    ordenes = (filas || []).map(f => ({
+      dbId: f.id,
+      folio: iniciales((cfg.config && cfg.config.marca && cfg.config.marca.nombre) || '') + '-' + (1000 + f.id),
+      mesa: f.mesa,
+      items: Array.isArray(f.items) ? f.items : [],
+      estado: f.estado,
+      creada: Date.parse(f.creada),
+      sucursal: f.sucursal || '',
+      cerrada: !!f.cerrada,
+      verificacion: f.verificacion || 'ok',
+    }));
+    enLinea = true;
+  }catch(e){ enLinea = false; }
+  detectarNuevas();
+  pintar();
+}
+
+/* Lo que la cocina tiene derecho a ver: autorizado por el mesero, sin cerrar y de su
+   sucursal. Una comanda que el mesero todavía no confirma no se empieza a cocinar. */
+function visibles(){
+  return ordenes.filter(o =>
+    o.verificacion === 'ok' && !o.cerrada && o.estado < 3 &&
+    (!SUC || (o.sucursal || '') === SUC));
+}
+
+function detectarNuevas(){
+  const ahora = new Set(visibles().filter(o => o.estado === 0).map(o => o.dbId));
+  if(vistos === null){ vistos = ahora; primerSondeo = false; return; }
+  let hubo = 0;
+  ahora.forEach(id => {
+    if(vistos.has(id)) return;
+    hubo++;
+    /* Tres segundos y medio de destello: lo suficiente para que alguien voltee, no tanto
+       como para que la pantalla parezca un árbol de navidad en hora pico. */
+    if(destellando.has(id)) clearTimeout(destellando.get(id));
+    destellando.set(id, setTimeout(() => { destellando.delete(id); pintar(); }, 3600));
+  });
+  vistos = ahora;
+  if(hubo) tono();
+}
+
+/* ---------- Pintado ---------- */
+function pintar(){
+  const lista = visibles();
+  const cols = [0,1,2].map(i => $('#col' + i));
+  /* Se repinta entero cada 4 segundos; sin esto, la columna llena se regresaba sola hasta
+     arriba cada vez y no se podía leer el final de la fila. */
+  const tops = cols.map(c => c.scrollTop);
+  [0,1,2].forEach(est => {
+    const grupo = lista.filter(o => o.estado === est);
+    $('#n' + est).textContent = grupo.length;
+    cols[est].innerHTML = grupo.length
+      ? grupo.map(o => tarjeta(o)).join('')
+      : '<div class="col-vacia">' + ['Nada por empezar','Nada en el fuego','Nada por servir'][est] + '</div>';
+  });
+  cols.forEach((c, i) => { c.scrollTop = tops[i]; });
+
+  const chip = $('#chipVivo');
+  chip.classList.toggle('caido', !enLinea);
+  $('#chipVivoTxt').textContent = enLinea ? 'EN VIVO' : 'SIN CONEXIÓN — REVISA EL INTERNET';
+  const platos = lista.filter(o => o.estado < 2).reduce((s, o) => s + o.items.reduce((x, i) => x + (+i.qty || 0), 0), 0);
+  $('#pieResumen').textContent = lista.length
+    ? lista.length + (lista.length === 1 ? ' comanda abierta · ' : ' comandas abiertas · ') + platos + (platos === 1 ? ' platillo por salir' : ' platillos por salir')
+    : 'Todo despachado';
+  repintarArmados();
+}
+
+/* La clase del reloj solo se pone en las columnas 01 y 02: en la 03 el plato ya salió de la
+   cocina y el minutero ahí sería regañar a alguien por algo que ya no depende de este cuarto. */
+function claseReloj(min, estado){
+  if(estado >= 2) return '';
+  if(min > 20) return ' roja';
+  if(min > 10) return ' ambar';
+  return '';
+}
+
+function tarjeta(o){
+  const min = minutosDe(o.creada);
+  const conPartidas = o.estado === 2;
+  const items = o.items.map((i, ix) => {
+    const marca = !conPartidas ? '' : (i.entregado
+      ? '<span class="p-ok">Servido</span>'
+      : '<button class="p-btn" data-act="partida" data-id="' + o.dbId + '" data-ix="' + ix + '">Servido</button>');
+    return '<div class="c-item' + (i.entregado ? ' servido' : '') + '">' +
+      '<b>' + escTxt(i.qty) + '&times;</b>' +
+      '<span class="nom">' + escTxt(i.nombre) + (i.notas ? '<em>' + escTxt(i.notas) + '</em>' : '') + '</span>' +
+      marca + '</div>';
+  }).join('');
+  let pie = '';
+  if(o.estado === 0) pie = '<div class="c-pie"><button class="btn-avanza" data-act="avanzar" data-id="' + o.dbId + '">Empezar preparación</button></div>';
+  if(o.estado === 1) pie = '<div class="c-pie"><button class="btn-avanza" data-act="avanzar" data-id="' + o.dbId + '">Sale a la mesa</button></div>';
+  return '<div class="comanda' + (destellando.has(o.dbId) ? ' nueva' : '') + '">' +
+    '<div class="c-top">' +
+      '<span class="c-mesa"><small>Mesa</small><b>' + escTxt(String(o.mesa).padStart(2,'0')) + '</b></span>' +
+      '<span class="reloj' + claseReloj(min, o.estado) + '">' + min + ' min</span>' +
+    '</div>' +
+    '<div class="c-folio">' + escTxt(o.folio) + (o.sucursal ? ' · ' + escTxt(o.sucursal) : '') + '</div>' +
+    '<div class="c-items">' + items + '</div>' +
+    pie + '</div>';
+}
+
+/* Un solo escucha para todo el tablero: las tarjetas se rehacen cada 4 segundos y colgarles
+   escuchas una por una sería tirarlas y volverlas a poner quince veces por minuto. */
+$('.tablero').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if(!b) return;
+  arrancarAudio();
+  if(b.dataset.act === 'avanzar') avanzar(+b.dataset.id);
+  if(b.dataset.act === 'partida') marcarPartida(+b.dataset.id, +b.dataset.ix);
+});
+
+/* ==================================================================
+   3. ESCRITURA — misma lógica que el tablero del panel
+   La pantalla se mueve de inmediato y el siguiente sondeo reconcilia. Si la escritura
+   falla, se revierte y se avisa: una comanda que aparenta haber avanzado y no avanzó es
+   peor que una que no se movió.
+   ================================================================== */
+async function avanzar(id){
+  const o = ordenes.find(x => x.dbId === id);
+  if(!o || o.estado >= 2) return;
+  const antes = o.estado;
+  o.estado = antes + 1;
+  pintar();
+  // Estado 2 = el platillo está listo: le suena el teléfono al mesero de esa mesa para que lo
+  // recoja. El aviso va suelto y con el error tragado: si falla, el cambio se guarda igual.
+  if(o.estado === 2) avisar({ restaurante_id: RID, sucursal: o.sucursal || '', mesa: o.mesa, tipo:'listo' });
+  try{
+    await api('menusbot_ordenes?id=eq.' + o.dbId, { method:'PATCH', body: JSON.stringify({ estado: o.estado }) });
+    toast(o.estado === 1 ? 'Mesa ' + o.mesa + ' — en preparación' : 'Mesa ' + o.mesa + ' — lista, ya le avisamos al mesero');
+  }catch(e){
+    o.estado = antes;
+    pintar();
+    toast('Sin conexión — no se guardó, vuelve a intentar', true);
+  }
+}
+
+/* Entrega por partidas, igual que en el panel: al marcar el primer renglón la comanda pasa a
+   "En servicio", y cuando ya no queda ninguno pendiente se cierra como entregada.
+   Aquí no se pregunta quién la entrega —esta pantalla no tiene ni tiene por qué tener la
+   lista del equipo—, así que queda firmada por el nombre de la propia pantalla. */
+async function marcarPartida(id, ix){
+  const o = ordenes.find(x => x.dbId === id);
+  if(!o || !o.items[ix] || o.items[ix].entregado) return;
+  const quien = cfg.cocina_nombre || 'Cocina';
+  const ahora = new Date().toISOString();
+  const antesItems = o.items.slice();
+  const antesEstado = o.estado;
+  o.items = o.items.slice();
+  o.items[ix] = { ...o.items[ix], entregado: true, entregado_por: quien, entregado_at: ahora };
+  const todos = o.items.every(i => i.entregado);
+  const cuerpo = { items: o.items };
+  if(todos){
+    cuerpo.estado = 3; cuerpo.entregada_por = quien; cuerpo.entregada_at = ahora;
+    o.estado = 3;
+  } else if(o.estado === 1){
+    cuerpo.estado = 2; // con la primera partida servida, la comanda pasa a "En servicio"
+    o.estado = 2;
+  }
+  pintar();
+  try{
+    await api('menusbot_ordenes?id=eq.' + o.dbId, { method:'PATCH', body: JSON.stringify(cuerpo) });
+    toast(todos ? 'Mesa ' + o.mesa + ' — servida completa' : 'Mesa ' + o.mesa + ' — renglón servido');
+  }catch(e){
+    o.items = antesItems; o.estado = antesEstado;
+    pintar();
+    toast('Sin conexión — no se guardó, vuelve a intentar', true);
+  }
+}
+
+arrancar();
+</script>
+</body>
+</html>

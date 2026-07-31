@@ -39,20 +39,67 @@
   .cont{max-width:1120px;margin:0 auto;padding:0 22px 60px}
 
   header{border-bottom:1px solid var(--linea);position:sticky;top:0;background:rgba(21,18,16,.96);backdrop-filter:blur(12px);z-index:50}
-  .head-int{max-width:1120px;margin:0 auto;padding:16px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  /* El encabezado se arma en dos bandas apiladas dentro del MISMO ancho y margen que .cont.
+     Antes era una sola fila con flex-wrap: cada pieza caía donde alcanzaba y nada compartía
+     margen con el contenido de abajo, que es lo que se leía como «fuera de estructura». */
+  .head-int{max-width:1120px;margin:0 auto;padding:10px 22px 0;display:flex;flex-direction:column;gap:8px}
+  /* Banda 1 — de quién es el panel (izquierda) y en qué estado está la sesión (derecha) */
+  .head-identidad{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  .head-marca{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}
   .marca{font-family:var(--serif);font-style:italic;font-size:24px;font-weight:500}
   .marca small{display:block;font-family:var(--grot);font-style:normal;font-size:12.5px;letter-spacing:1.4px;color:var(--humo);font-weight:700;margin-top:2px}
-  .vivo{display:flex;align-items:center;gap:8px;font-size:12.5px;letter-spacing:1.4px;font-weight:700;color:var(--basilico);border:1px solid var(--linea2);padding:8px 13px;border-radius:2px}
-  .vivo i{width:7px;height:7px;border-radius:50%;background:var(--basilico);animation:parp 1.6s infinite}
+  /* Estado y sesión van juntos y a la misma altura: se leen como un solo bloque y no como
+     tres controles sueltos flotando a media línea. */
+  .head-sesion{display:flex;align-items:center;gap:12px;flex-shrink:0}
+  .head-sesion .sep{width:1px;height:22px;background:var(--linea2);flex-shrink:0}
+  .head-acciones{display:flex;align-items:stretch;border:1px solid var(--linea2);border-radius:2px;overflow:hidden}
+  .head-acciones .btn-sec{border:none;border-radius:0;padding:10px 14px;font-size:12.5px;letter-spacing:1.2px}
+  .head-acciones .btn-sec+.btn-sec{border-left:1px solid var(--linea2)}
+  .head-acciones .btn-sec:hover{background:var(--linea);color:var(--crema)}
+  /* La conexión es un dato, no un control: punto y palabra, sin caja que pese como un botón */
+  .vivo{display:flex;align-items:center;gap:7px;font-size:12.5px;letter-spacing:1.4px;font-weight:700;color:var(--basilico);white-space:nowrap}
+  .vivo i{width:8px;height:8px;border-radius:50%;background:currentColor;animation:parp 1.6s infinite;flex-shrink:0}
   @keyframes parp{0%,100%{opacity:1}50%{opacity:.25}}
-  .tabs{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+  /* Banda 2 — navegación pegada al margen izquierdo del contenido; la carta pública, compacta,
+     ocupa el hueco de la derecha en vez de quedarse con una franja entera para ella sola. */
+  .head-nav{display:flex;align-items:center;justify-content:space-between;column-gap:16px;row-gap:4px;flex-wrap:wrap;border-top:1px solid var(--linea)}
+  /* En pantallas angostas las pestañas se corren de lado en vez de apilarse en tres renglones */
+  .tabs{display:flex;gap:2px;min-width:0;flex:0 1 auto;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+  .tabs::-webkit-scrollbar{display:none}
   /* 14px es el mínimo legible que pidió el usuario; el espaciado y el relleno bajan para que
      las siete pestañas sigan cabiendo en una sola línea sin partirse. */
-  .tab{font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:12px 11px;min-height:44px;background:transparent;border:none;color:var(--humo2);cursor:pointer;position:relative;white-space:nowrap}
+  .tab{font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:12px 9px;min-height:44px;background:transparent;border:none;color:var(--humo2);cursor:pointer;position:relative;white-space:nowrap;flex-shrink:0}
+  /* Sin relleno a la izquierda en la primera: su texto y su subrayado arrancan justo en el
+     mismo margen donde arranca el título de la vista de abajo. */
+  .tabs .tab:first-child{padding-left:0}
   .tab .mini-badge{position:absolute;top:50%;transform:translateY(-50%);right:4px;min-width:20px;height:20px;border-radius:10px;background:var(--al-roja);color:var(--al-txt);font-weight:700;font-size:12px;display:none;align-items:center;justify-content:center;padding:0 5px;letter-spacing:0;line-height:1}
   .tab.con-globo{padding-right:30px}
   .tab .mini-badge.visible{display:flex}
   .tab.activo{color:var(--crema);border-bottom:2px solid var(--pomodoro)}
+  /* Carta pública compacta: comparte renglón con las pestañas cuando el ancho da, y cuando no,
+     baja entera y pegada al mismo margen. Ya no se le reserva una franja de ancho completo ni se
+     parte la dirección a media palabra: si acaso sobra largo, se recorta con puntos suspensivos. */
+  .carta-publica{display:flex;align-items:center;gap:9px;min-width:0;flex:0 1 auto;padding-bottom:9px}
+  /* --humo y no --humo2: a 12.5px ese segundo gris no alcanza contraste contra el fondo del
+     encabezado en ninguno de los dos temas, y el usuario ya se quejó de textos difíciles de leer. */
+  .carta-publica .caps{color:var(--humo);font-size:12.5px;letter-spacing:1px;white-space:nowrap;flex-shrink:0}
+  .carta-publica a{color:var(--pomodoro);font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0;max-width:min(460px,42vw)}
+  .carta-publica a:hover{text-decoration:underline}
+  .carta-publica .btn-sec{min-height:34px;padding:7px 11px;font-size:12.5px;flex-shrink:0}
+  /* En el teléfono el rótulo se pone de renglón aparte para que la dirección se lea completa
+     en vez de quedarse en tres caracteres y unos puntos suspensivos. */
+  @media(max-width:520px){
+    .carta-publica{flex-wrap:wrap;row-gap:3px}
+    .carta-publica .caps{width:100%}
+    .carta-publica a{max-width:none;flex:1 1 auto}
+  }
+  /* En el teléfono la identidad se queda arriba sola y el bloque de sesión baja completo */
+  @media(max-width:600px){
+    .head-int{padding-top:8px;gap:6px}
+    .marca{font-size:20px}
+    .head-sesion{width:100%;justify-content:space-between;gap:9px}
+    .head-acciones .btn-sec{padding:10px 11px;letter-spacing:.8px}
+  }
 
   .vista{display:none;padding-top:26px}
   .vista.activa{display:block}
@@ -97,13 +144,24 @@
   .p-btn:hover{background:var(--pomodoro);border-color:var(--pomodoro);color:var(--papel)}
   .p-ok{margin-left:auto;color:#3E7A39;font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:.8px;white-space:nowrap;flex-shrink:0;align-self:center;text-transform:uppercase}
   /* mesas abiertas (seguridad) */
-  .mesas-abiertas{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:1px solid var(--linea);border-radius:3px;background:var(--esp2);padding:12px 16px;margin-bottom:16px}
-  .mesas-abiertas .caps{color:var(--humo);margin-right:6px}
+  /* Título con su leyenda al lado arriba, y las fichas abajo en su propio renglón: antes la
+     leyenda colgaba a la derecha de las fichas y se leía como un texto suelto sin dueño. */
+  .mesas-abiertas{border:1px solid var(--linea);border-radius:3px;background:var(--esp2);padding:12px 16px;margin-bottom:16px}
+  .ma-cab{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:10px}
+  .ma-chips{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .mesas-abiertas .caps{color:var(--crema)}
+  .ma-m{width:13px;height:13px;border-radius:2px;flex-shrink:0;display:inline-block;transform:translateY(2px)}
+  .ma-m.verde{background:var(--al-verde)}
+  .ma-m.ambar{background:var(--al-ambar)}
+  .ma-m.fuera{background:transparent;border:2px dotted var(--al-ambar)}
   .chip-mesa{width:44px;height:44px;border:1px solid var(--linea2);border-radius:2px;background:transparent;color:var(--humo2);font-family:var(--grot);font-weight:700;font-size:14.5px;cursor:pointer;transition:.15s}
   .chip-mesa:hover{border-color:var(--basilico);color:var(--basilico)}
   /* Alerta sólida: verde = mesa al día. Se lee igual en claro y en oscuro. */
   .chip-mesa.abierta{background:var(--al-verde);border-color:var(--al-verde);color:var(--al-txt);font-weight:700}
-  .mesas-abiertas .hint{font-size:12.5px;letter-spacing:1.4px;color:var(--humo2);text-transform:uppercase;font-weight:700;margin-left:auto;line-height:1.5}
+  /* La leyenda va en minúsculas y chica para quedar por debajo del título. Se usa --humo y no
+     --humo2 porque a 12.5px ese gris no alcanza contraste sobre --esp2 en ninguno de los dos temas. */
+  .mesas-abiertas .hint{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;font-size:12.5px;letter-spacing:.2px;color:var(--humo);text-transform:none;font-weight:400;line-height:1.5;margin-left:0}
+  .mesas-abiertas .hint span{display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap}
   /* Amarre de mesa: una mesa la toma el primer dispositivo que ordena, el resto entra con código.
      Ámbar sólido = la tomó el comensal (autorizada:false) y sus órdenes siguen pidiendo confirmación. */
   .chip-mesa.tomada{background:var(--al-ambar);border-color:var(--al-ambar);color:var(--al-txt);font-weight:700}
@@ -336,28 +394,41 @@
 
 <header>
   <div class="head-int">
-    <div style="display:flex;flex-direction:column;align-items:flex-start;gap:3px">
-      <img id="logoHead" alt="" style="display:none;height:40px;width:auto;max-width:150px;object-fit:contain">
-      <!-- Sin nombre escrito a mano: lo pone marcaTemprana() antes del primer pintado, con lo
-           que este navegador ya sabe. Si aquí hubiera un nombre, se alcanzaría a leer. -->
-      <div class="marca" id="marcaHead"><small>PANEL DEL RESTAURANTE</small></div>
+
+    <!-- Banda 1 · identidad a la izquierda, estado y sesión a la derecha -->
+    <div class="head-identidad">
+      <div class="head-marca">
+        <img id="logoHead" alt="" style="display:none;height:38px;width:auto;max-width:150px;object-fit:contain">
+        <!-- Sin nombre escrito a mano: lo pone marcaTemprana() antes del primer pintado, con lo
+             que este navegador ya sabe. Si aquí hubiera un nombre, se alcanzaría a leer. -->
+        <div class="marca" id="marcaHead"><small>PANEL DEL RESTAURANTE</small></div>
+      </div>
+      <div class="head-sesion">
+        <div class="vivo" id="chipVivo"><i></i> EN VIVO</div>
+        <span class="sep"></span>
+        <div class="head-acciones">
+          <button class="btn-sec" id="btnTema" onclick="alternarTemaPanel()" title="Cambiar tema del panel">TEMA OSCURO</button>
+          <button class="btn-sec" id="btnSalir" onclick="salirPanel()" style="display:none" title="Cerrar sesión">SALIR</button>
+        </div>
+      </div>
     </div>
-    <div class="vivo" id="chipVivo"><i></i> EN VIVO</div>
-    <button class="btn-sec" id="btnTema" onclick="alternarTemaPanel()" style="padding:9px 13px;font-size:12.5px" title="Cambiar tema del panel">TEMA OSCURO</button>
-    <button class="btn-sec" id="btnSalir" onclick="salirPanel()" style="padding:9px 13px;font-size:12.5px;display:none" title="Cerrar sesión">SALIR</button>
-    <div id="urlPublica" style="display:none;align-items:center;gap:8px;flex-basis:100%;padding-top:2px">
-      <span class="caps" style="color:var(--humo2)">TU CARTA PÚBLICA</span>
-      <a id="urlPublicaLink" href="#" target="_blank" style="color:var(--pomodoro);font-size:14px;font-weight:600;text-decoration:none;word-break:break-all"></a>
-      <button class="btn-sec" onclick="copiarUrlPublica()" style="padding:6px 10px;font-size:12px">COPIAR</button>
-    </div>
-    <div class="tabs">
-      <button class="tab activo" data-v="comandas">Comandas<span class="mini-badge" id="badgeNuevas">0</span></button>
-      <button class="tab" data-v="registro">Registro</button>
-      <button class="tab" data-v="reportes">Reportes</button>
-      <button class="tab" data-v="carta">Carta</button>
-      <button class="tab" data-v="equipo">Equipo</button>
-      <button class="tab" data-v="temas">Temas</button>
-      <button class="tab" data-v="qr">QR</button>
+
+    <!-- Banda 2 · pestañas al mismo margen que el contenido; carta pública compacta a la derecha -->
+    <div class="head-nav">
+      <div class="tabs">
+        <button class="tab activo" data-v="comandas">Comandas<span class="mini-badge" id="badgeNuevas">0</span></button>
+        <button class="tab" data-v="registro">Registro</button>
+        <button class="tab" data-v="reportes">Reportes</button>
+        <button class="tab" data-v="carta">Carta</button>
+        <button class="tab" data-v="equipo">Equipo</button>
+        <button class="tab" data-v="temas">Temas</button>
+        <button class="tab" data-v="qr">QR</button>
+      </div>
+      <div id="urlPublica" class="carta-publica" style="display:none">
+        <span class="caps">Tu carta pública</span>
+        <a id="urlPublicaLink" href="#" target="_blank"></a>
+        <button class="btn-sec" onclick="copiarUrlPublica()">Copiar</button>
+      </div>
     </div>
   </div>
 </header>
@@ -559,6 +630,37 @@
     <div class="carta-lista" id="equipoLista" style="max-width:780px;margin-top:20px"></div>
     <div class="nota-pie">Cada mesero abre su enlace en el teléfono, elige su nombre de la lista y teclea su PIN: de ahí en adelante ve solo las mesas que le asignaste, autoriza las órdenes de viva voz en la mesa y registra lo que cobra.
     El PIN es apenas una llave de casa: sirve para separar las mesas de cada quien y para que quede constancia de quién autorizó una orden y quién cobró una mesa. No es una contraseña fuerte, así que cámbialo si alguien lo vio o si el mesero deja de trabajar contigo.</div>
+
+    <!-- COCINA — la pantalla del pase vive aquí y no en Identidad porque es gente trabajando, no decoración -->
+    <div class="eq-caja" id="cocinaZona" style="margin-top:26px">
+      <div class="caps" style="color:var(--pomodoro);margin-bottom:16px">Cocina</div>
+      <div class="eq-form">
+        <div><div class="caps lbl">PIN de cocina</div>
+          <div style="display:flex;gap:8px">
+            <input class="filtro" id="ckPin" inputmode="numeric" maxlength="4" placeholder="Sin PIN" autocomplete="off" style="letter-spacing:5px;text-align:center">
+            <button class="btn-mini" onclick="pinCocinaAlAzar()" title="Poner un PIN al azar">Al azar</button>
+          </div>
+        </div>
+        <div><div class="caps lbl">Cómo firma la cocina</div>
+          <input class="filtro" id="ckNombre" maxlength="24" placeholder="Cocina" autocomplete="off">
+        </div>
+        <div><div class="caps lbl">Sucursal del enlace</div>
+          <select class="filtro" id="ckSucursal" style="width:100%" onchange="pintarEnlaceCocina()"><option value="">Sin sucursal</option></select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
+        <button class="btn-sec" style="border-color:var(--pomodoro);color:var(--pomodoro)" onclick="guardarCocina()">Guardar la cocina</button>
+        <button class="btn-mini" onclick="quitarPinCocina()">Quitar el PIN</button>
+      </div>
+      <div class="eq-link" style="margin-top:18px">
+        <span class="caps" style="color:var(--humo2)">ENLACE DE LA COCINA</span>
+        <a id="ckLink" href="#" target="_blank"></a>
+        <button class="btn-sec" onclick="copiarUrlCocina()" style="padding:6px 10px;font-size:12px">COPIAR</button>
+      </div>
+      <div class="nota-pie" style="margin-top:14px">El PIN son cuatro dígitos; si lo dejas vacío la pantalla no pide nada para entrar.
+      Abre ese enlace en la pantalla o la tableta del pase y déjalo ahí: se ve a pantalla completa, suena cuando entra una comanda nueva y no muestra ni precios ni totales ni nombres de clientes — solo mesa, platillos y notas.
+      El PIN es para que nadie de fuera mueva las comandas desde su teléfono, no es una contraseña fuerte. Si lo dejas vacío entra cualquiera que tenga el enlace, y la pantalla lo avisa de pie de página hasta que le pongas uno. «Cómo firma la cocina» es el nombre que queda escrito cuando el pase marca un platillo como salido; si lo dejas vacío dice «Cocina».</div>
+    </div>
   </div>
 
   <!-- TEMAS E IDENTIDAD -->
@@ -1505,7 +1607,16 @@ function render(){
     const zonaMesas = $('#mesasAbiertasZona');
     const act = document.activeElement;
     const enfocado = act && act.tagName === 'SELECT' && zonaMesas.contains(act);
-    if(!enfocado) zonaMesas.innerHTML = `<div class="mesas-abiertas"><span class="caps">Mesas abiertas</span>${chipsMesas}<span class="hint">Verde = con comensales · borde punteado = abierta fuera de tu cuenta de mesas</span></div>`
+    // Leyenda con muestras de color en vez de una oración larga en mayúsculas: el dueño
+    // compara la ficha contra el cuadrito de al lado sin tener que leer una frase entera.
+    if(!enfocado) zonaMesas.innerHTML = `<div class="mesas-abiertas">`
+      + `<div class="ma-cab"><span class="caps">Mesas abiertas</span>`
+      + `<span class="hint">`
+      + `<span><i class="ma-m verde"></i>con comensales</span>`
+      + `<span><i class="ma-m ambar"></i>la abrió el comensal</span>`
+      + `<span><i class="ma-m fuera"></i>fuera de tu cuenta</span>`
+      + `</span></div>`
+      + `<div class="ma-chips">${chipsMesas}</div></div>`
       + pintarAmarresMesas();
     for(const e of [0,1,2]){
       // Cocina solo ve lo autorizado: 'ok' y nada más. Ni 'pendiente' ni 'rechazada' ni ningún valor raro.
@@ -1580,6 +1691,7 @@ function render(){
   if(vista === 'qr'){ renderQRs(d); renderQRResenas(); }
 
   if(vista === 'equipo') pintarEquipo(d);
+  if(vista === 'equipo') pintarCocina();
 
   if(vista === 'temas'){
     $('#temasGrid').innerHTML = Object.entries(TEMAS).map(([k,t]) => `
@@ -2715,6 +2827,79 @@ function pintarEquipo(d){
       </div>
     </div>`;
   }).join('') : '<div class="eq-fila"><div class="eq-nom" style="color:var(--humo2);font-size:16px">Todavía no hay nadie en el equipo — da de alta al primero en el formulario de arriba.</div></div>';
+}
+
+/* ---------- La pantalla de cocina ----------
+   El PIN y el nombre viven en la raíz del documento de configuración (no dentro de .config)
+   porque cocina.html los lee de ahí con una sola lectura y sin conocer el resto del panel. */
+function urlCocina(){
+  const sel = document.getElementById('ckSucursal');
+  const s = (sel && sel.value) || '';
+  return new URL('cocina.html', location.href).href + '?r=' + encodeURIComponent(RID) + (s ? '&s=' + encodeURIComponent(s) : '');
+}
+function pintarEnlaceCocina(){
+  const a = document.getElementById('ckLink');
+  if(!a || !RID) return;
+  const u = urlCocina();
+  a.href = u;
+  a.textContent = u.replace(/^https?:\/\//, '');
+}
+/* Mismo patrón de guardia que el selector de sucursales del equipo: solo se reconstruye
+   si de verdad cambió la lista, para no perder lo que ya estaba elegido */
+function pintarSucCocina(){
+  const sel = document.getElementById('ckSucursal');
+  if(!sel) return;
+  const sucs = ((cfgCache.config && cfgCache.config.sucursales) || []).filter(Boolean);
+  const quiere = '<option value="">' + (sucs.length ? 'Todas las sucursales' : 'Sin sucursal') + '</option>'
+    + sucs.map(x => `<option value="${escTxt(x)}">${escTxt(x)}</option>`).join('');
+  if(sel.dataset.opts !== quiere){
+    const a = sel.value;
+    sel.dataset.opts = quiere;
+    sel.innerHTML = quiere;
+    sel.value = a && [...sel.options].some(o => o.value === a) ? a : '';
+  }
+}
+let cocinaFormHash = null;
+function pintarCocina(){
+  const zona = document.getElementById('cocinaZona');
+  if(!zona) return;
+  pintarSucCocina();
+  const pin = String(cfgCache.cocina_pin == null ? '' : cfgCache.cocina_pin);
+  const nom = String(cfgCache.cocina_nombre == null ? '' : cfgCache.cocina_nombre);
+  const hash = pin + '\n' + nom;
+  /* Los campos no se repintan mientras alguien está escribiendo en ellos: el reloj del panel
+     da vuelta cada pocos segundos y le borraría el PIN a medio teclear. */
+  if(hash !== cocinaFormHash && !zona.contains(document.activeElement)){
+    cocinaFormHash = hash;
+    $('#ckPin').value = pin;
+    $('#ckNombre').value = nom;
+  }
+  pintarEnlaceCocina();
+}
+function pinCocinaAlAzar(){
+  $('#ckPin').value = pinAlAzar();
+  toast('PIN nuevo puesto en el formulario — recuerda guardar');
+}
+function quitarPinCocina(){
+  $('#ckPin').value = '';
+  toast('Campo vacío — dale Guardar para dejar la cocina sin PIN');
+}
+function guardarCocina(){
+  const pin = $('#ckPin').value.replace(/\D/g, '').slice(0, 4);
+  if(pin && pin.length !== 4){ toast('El PIN de cocina son 4 dígitos, ni uno más ni uno menos'); return; }
+  const nom = $('#ckNombre').value.trim().slice(0, 24);
+  $('#ckPin').value = pin;
+  $('#ckNombre').value = nom;
+  cocinaFormHash = pin + '\n' + nom;
+  configEscribir(d => { d.cocina_pin = pin; d.cocina_nombre = nom; });
+  toast(pin ? 'Cocina guardada — su PIN es ' + pin : 'Cocina guardada sin PIN: entra cualquiera que tenga el enlace');
+}
+function copiarUrlCocina(){
+  const u = urlCocina();
+  (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject())
+    .then(() => toast('Enlace de la cocina copiado — ábrelo en la pantalla del pase'))
+    // Igual que los otros enlaces: sin permiso de portapapeles no usamos prompt(), se copia a mano
+    .catch(() => { pintarEnlaceCocina(); toast('Copia el enlace desde el texto en rojo de aquí abajo'); });
 }
 
 /* ---------- Mesas abiertas y amarre al dispositivo (seguridad) ---------- */
