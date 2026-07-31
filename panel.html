@@ -453,7 +453,7 @@
         <div class="col-cuerpo" id="col1"></div>
       </div>
       <div class="columna">
-        <div class="col-cab"><span class="caps">03 · En servicio — entrega por partidas</span><span class="cuenta-col" id="n2">0</span></div>
+        <div class="col-cab"><span class="caps">03 · En camino a la mesa — entrega por partidas</span><span class="cuenta-col" id="n2">0</span></div>
         <div class="col-cuerpo" id="col2"></div>
       </div>
     </div>
@@ -474,7 +474,7 @@
         <option value="todas">Todos los estados</option>
         <option value="0">Recibidas</option>
         <option value="1">En preparación</option>
-        <option value="2">En servicio</option>
+        <option value="2">En camino a la mesa</option>
         <option value="3">Entregadas</option>
       </select>
       <select class="filtro" id="filtroMesa" title="Deja solo las comandas de una mesa. Las mesas son las que tienes configuradas, más cualquier otra que aparezca en las comandas">
@@ -1394,7 +1394,7 @@ const TEMAS = {
   giorno:{ nombre:'Giorno', fondo:'#F5EFE4', texto:'#2A241C', acento:'#C94A2F', papel:'#FFFFFF' },
   mare:{ nombre:'Mare', fondo:'#0D1B22', texto:'#EAF3F1', acento:'#43AEC5', papel:'#EEF5F2' },
 };
-const ESTADOS_TXT = ['Recibida','En preparación','En servicio','Entregada'];
+const ESTADOS_TXT = ['Recibida','En preparación','En camino a la mesa','Entregada'];
 
 /* ---------- vistas ---------- */
 let vista = 'comandas';
@@ -1478,7 +1478,7 @@ async function confirmarPartida(folio, idx, mesero){
     cuerpo.estado = 3; cuerpo.entregada_por = mesero; cuerpo.entregada_at = ahora;
     o.estado = 3; o.entregada_por = mesero; o.entregada_at = Date.now();
   } else if(o.estado === 1){
-    cuerpo.estado = 2; // con la primera partida servida, la comanda pasa a "En servicio"
+    cuerpo.estado = 2; // con la primera partida servida, la comanda pasa a "En camino a la mesa"
     o.estado = 2;
     // Aquí no mandamos el aviso de «listo»: el mesero acaba de servir esa partida en la mesa,
     // ya está ahí. El aviso se manda cuando cocina la marca lista desde el tablero (avanzar).
@@ -1630,7 +1630,7 @@ function render(){
     $('#resumenHoy').textContent = `${deHoy.length} comandas hoy · ${entregadasHoy.length} entregadas`;
     const conEntrega = d.ordenes.filter(o => o.estado === 3 && o.entregada_at).sort((a,b) => a.entregada_at - b.entregada_at);
     $('#ultimasEntregas').textContent = conEntrega.length
-      ? conEntrega.slice(-3).reverse().map(o => `${o.folio} → Mesa ${o.mesa} (${o.entregada_por}, ${hora(o.entregada_at)})`).join('  ·  ')
+      ? conEntrega.slice(-3).reverse().map(o => `${o.folio} → Mesa ${o.mesa}${o.sucursal ? ' · ' + o.sucursal : ''} (${o.entregada_por}, ${hora(o.entregada_at)})`).join('  ·  ')
       : 'Aún no hay entregas en este servicio';
   }
 
@@ -3704,8 +3704,8 @@ function imprimirCorte(){
     : '<div class="vacio">No hay mesas cobradas en este periodo. El dinero se registra cuando el mesero cobra y cierra la mesa.</div>'}
 
     <h2>Comandas del periodo</h2>
-    <table><tr><th>FOLIO</th><th>HORA</th><th>MESA</th><th>ARTÍCULOS</th><th>ENTREGÓ</th><th style="text-align:right">TOTAL</th></tr>
-    ${os.map(o => `<tr><td>${escTxt(o.folio)}</td><td>${hora(o.creada)}</td><td>${o.mesa}</td><td>${o.items.map(i => i.qty + '× ' + escTxt(i.nombre)).join('<br>')}</td><td>${escTxt(o.entregada_por || '—')}</td><td style="text-align:right"><b>${fmt(o.total)}</b></td></tr>`).join('')}
+    <table><tr><th>FOLIO</th><th>HORA</th><th>MESA</th><th>SUCURSAL</th><th>ARTÍCULOS</th><th>ENTREGÓ</th><th style="text-align:right">TOTAL</th></tr>
+    ${os.map(o => `<tr><td>${escTxt(o.folio)}</td><td>${hora(o.creada)}</td><td>${o.mesa}</td><td>${escTxt(o.sucursal || '—')}</td><td>${o.items.map(i => i.qty + '× ' + escTxt(i.nombre)).join('<br>')}</td><td>${escTxt(o.entregada_por || '—')}</td><td style="text-align:right"><b>${fmt(o.total)}</b></td></tr>`).join('')}
     </table>
     <div class="tot"><span>TOTAL EN COMANDAS</span><b>${fmt(vendido)} MXN</b></div>
     <div class="aclara">El total en comandas es lo que salió de cocina; el total cobrado (${fmt(t.venta)}) es lo que se registró al cerrar mesas. Si no coinciden, hay mesas abiertas sin cobrar o cobros hechos fuera del sistema.</div>

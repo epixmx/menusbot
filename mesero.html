@@ -516,7 +516,18 @@ function haceHumano(ts){
   const h = Math.floor(min / 60), r = min % 60;
   return 'hace ' + h + ' h' + (r ? ' ' + r + ' min' : '');
 }
-const ESTADO_TXT = ['En cocina, recibida', 'En preparación', 'Lista para llevar', 'Entregada'];
+const ESTADO_TXT = ['En cocina, recibida', 'En preparación', 'En camino a la mesa', 'Entregada'];
+
+/* ---------- El folio que también ve el comensal ----------
+   En el teléfono de la mesa dice «Orden BV-1024» y aquí decía «Orden 24»: el mismo pedido con
+   dos nombres, y cuando el comensal preguntaba por el suyo el mesero no lo encontraba. Se arma
+   igual que en cocina, panel y carta. El id crudo NO se toca: sigue siendo la llave que viaja
+   a la base y la que llevan los data-*; esto es solo lo que lee el humano. */
+const iniciales = n => (n || 'BV').split(/\s+/).filter(Boolean).slice(0,2).map(w => w[0].toUpperCase()).join('') || 'BV';
+/* La llena revisarMudanza() de paso, con el mismo config que ya pide. Si la nube no contesta se
+   queda vacía y las iniciales caen a BV: un folio raro se lee, un «undefined-1024» no. */
+let MARCA = '';
+const folio = id => iniciales(MARCA) + '-' + (1000 + (+id || 0));
 
 /* ==================================================================
    ARRANQUE
@@ -558,7 +569,15 @@ function mudarse(nuevo){
 async function revisarMudanza(){
   try{
     const cfgs = await api('menusbot_config?id=eq.' + encodeURIComponent(RID) + '&select=data');
-    const destino = cfgs && cfgs[0] && cfgs[0].data && cfgs[0].data.redirige_a;
+    const data = cfgs && cfgs[0] && cfgs[0].data;
+    /* Ya viene el blob entero: de aquí sale el nombre de la marca para el folio, en lugar de
+       gastar un segundo viaje a la nube en el arranque solo por dos letras. */
+    /* `data.config.marca.nombre`, no `data.marca.nombre`: el blob guarda la identidad UN NIVEL
+       más adentro, y es la misma ruta exacta que ya leen cocina, panel y carta. Con la ruta
+       corta esto devolvía siempre vacío, las iniciales caían a BV y el mesero volvía a ver un
+       folio distinto al del comensal — que es justo el error que este cambio venía a matar. */
+    MARCA = (data && data.config && data.config.marca && data.config.marca.nombre) || '';
+    const destino = data && data.redirige_a;
     return !!(destino && mudarse(destino));
   }catch(e){ return false; }
 }
@@ -1068,10 +1087,19 @@ function pintarDetalle(n){
   const m = estadoMesas().find(x => x.mesa === n);
   if(!m){ cerrarSheets(); return; }
   const propina = +((m.abierta && m.abierta.propina_sugerida) || 0);
+  /* La sucursal que manda es la DE LA FILA, no la del mesero: si él no tiene sucursal y se
+     manda la vacía, en la base se buscaría otra mesa 02, la de la sucursal equivocada.
+     Se saca una sola vez arriba porque también se pinta en el encabezado: un restaurante con
+     dos sucursales tiene dos «mesa 03» y desde aquí no se distinguían. */
+  const sucMesa = m.abierta ? (m.abierta.sucursal || '') : (sesion.sucursal || '');
   let html = '<div class="asa"></div><div class="cuerpo">' +
     '<div class="h-top"><div><div class="caps" style="color:var(--pomodoro)">' +
       (m.abierta ? 'Abierta ' + esc(haceHumano(m.abierta.abierta_at)) : 'Sin mesa abierta') +
-      '</div><h2>Mesa ' + String(m.mesa).padStart(2,'0') + '</h2></div>' +
+      '</div><h2>Mesa ' + String(m.mesa).padStart(2,'0') + '</h2>' +
+      /* Sin sucursal no se pinta nada: el local de una sola dirección no tiene por qué cargar
+         con un «·» colgando sin texto detrás. */
+      (sucMesa ? '<div class="caps" style="color:var(--humo);margin-top:7px">Sucursal ' + esc(sucMesa) + '</div>' : '') +
+      '</div>' +
     '<button class="cerrar" data-cerrar="1">&#10005;</button></div>';
 
   /* Que sepa desde el primer renglón que esta mesa no es suya, antes de tocar cualquier botón. */
@@ -1091,7 +1119,7 @@ function pintarDetalle(n){
     html += '<div class="grupo-tit"><em>' + m.pendientes.length + '</em><h2>Por autorizar</h2><i></i></div>';
     html += '<div class="nota-pie" style="margin-top:0">Lee la lista en voz alta con el comensal antes de mandarla a cocina. Cocina no la ve hasta que tú la autorizas.</div>';
     m.pendientes.forEach(o => {
-      html += '<div class="bloque pend"><div class="bl-cab"><span class="caps">Orden ' + o.id + '</span>' +
+      html += '<div class="bloque pend"><div class="bl-cab"><span class="caps">Orden ' + esc(folio(o.id)) + ' &middot; Mesa ' + String(m.mesa).padStart(2,'0') + '</span>' +
         '<span class="hh">' + esc(hora(o.creada)) + ' &middot; ' + esc(haceHumano(o.creada)) + '</span></div>' +
         renglones(o, false) +
         '<div class="tot-linea"><span class="caps">Total de esta orden</span><b>' + fmt(o.total) + '</b></div>' +
@@ -1110,7 +1138,7 @@ function pintarDetalle(n){
          conforme salen, no todos de golpe. Se ofrece cuando la comanda ya está en preparación
          o lista; además queda el atajo de cerrar la comanda completa. */
       const conPartidas = e === 1 || e === 2;
-      html += '<div class="bloque"><div class="bl-cab"><span class="caps" style="color:var(--humo)">Orden ' + o.id + '</span>' +
+      html += '<div class="bloque"><div class="bl-cab"><span class="caps" style="color:var(--humo)">Orden ' + esc(folio(o.id)) + ' &middot; Mesa ' + String(m.mesa).padStart(2,'0') + '</span>' +
         '<span class="hh">' + esc(hora(o.creada)) + '</span></div>' +
         '<div class="estado-cocina e' + e + '" style="margin-top:9px"><i></i>' + ESTADO_TXT[e] + '</div>' +
         renglones(o, conPartidas) +
@@ -1128,9 +1156,6 @@ function pintarDetalle(n){
   if(m.ocupada){
     html += '<div class="tot-linea" style="margin-top:22px"><span class="caps">Total de la mesa</span><b>' + fmt(m.total) + '</b></div>';
     if(m.pendientes.length) html += '<div class="nota-pie">Hay ' + m.pendientes.length + ' orden' + (m.pendientes.length === 1 ? '' : 'es') + ' sin autorizar por ' + fmt(m.totalConPendientes - m.total) + ' que no entran en el total hasta que las confirmes.</div>';
-    /* La sucursal que manda es la DE LA FILA, no la del mesero: si él no tiene sucursal y se
-       manda la vacía, en la base se buscaría otra mesa 02, la de la sucursal equivocada. */
-    const sucMesa = m.abierta ? (m.abierta.sucursal || '') : (sesion.sucursal || '');
     if(m.autorizadas.length || m.pendientes.length){
       /* Con algo que cobrar todo sigue igual que siempre. Si hay pendientes, el botón lleva al
          mismo recordatorio de siempre: primero se autoriza o se rechaza. */
@@ -1192,7 +1217,7 @@ async function rechazar(id, mesa){
     await api('menusbot_ordenes?id=eq.' + id, { method:'PATCH', body: JSON.stringify(cuerpo) });
     ordenes = ordenes.filter(x => +x.id !== id);
     pintarMesas(); if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
-    toast('Orden ' + id + ' rechazada. No llegó a cocina.');
+    toast('Orden ' + folio(id) + ' rechazada. No llegó a cocina.');
   }catch(e){
     toast('No se pudo rechazar. Revisa el internet y vuelve a intentar.');
   }
@@ -1207,7 +1232,7 @@ async function entregarOrden(id){
   pintarMesas(); if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
   try{
     await api('menusbot_ordenes?id=eq.' + id, { method:'PATCH', body: JSON.stringify({ estado:3, entregada_at: ahora, entregada_por: sesion.nombre, items }) });
-    toast('Orden ' + id + ' entregada.');
+    toast('Orden ' + folio(id) + ' entregada.');
   }catch(e){ toast('Quedó marcada aquí, pero no se pudo guardar. Vuelve a intentar.'); }
 }
 
@@ -1226,7 +1251,7 @@ async function entregarPartida(id, ix){
   else if(+o.estado === 1){ cuerpo.estado = 2; }
   Object.assign(o, cuerpo);
   pintarMesas(); if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
-  toast(todos ? 'Orden ' + id + ' entregada completa.' : 'Renglón entregado.');
+  toast(todos ? 'Orden ' + folio(id) + ' entregada completa.' : 'Renglón entregado.');
   try{ await api('menusbot_ordenes?id=eq.' + id, { method:'PATCH', body: JSON.stringify(cuerpo) }); }
   catch(e){ toast('Quedó marcado aquí, pero no se pudo guardar. Vuelve a intentar.'); }
 }

@@ -214,7 +214,10 @@
       <div class="col-cuerpo" id="col1"></div>
     </div>
     <div class="columna">
-      <div class="col-cab"><span class="caps">03 · En servicio</span><span class="cuenta-col" id="n2">0</span></div>
+      <div class="col-cab"><span class="caps">03 · En camino a la mesa</span><span class="cuenta-col" id="n2">0</span></div>
+      <!-- Aquí no hay botones a propósito: el plato ya salió de este cuarto y la entrega la
+           firma quien la hace. Sin esta línea, el pase busca el botón y cree que se rompió. -->
+      <div class="col-vacia" style="padding:12px 14px 0">La comanda ya salió de la cocina — la entrega la firma el mesero</div>
       <div class="col-cuerpo" id="col2"></div>
     </div>
   </main>
@@ -670,11 +673,10 @@ function claseReloj(min, estado){
 
 function tarjeta(o){
   const min = minutosDe(o.creada);
-  const conPartidas = o.estado === 2;
-  const items = o.items.map((i, ix) => {
-    const marca = !conPartidas ? '' : (i.entregado
-      ? '<span class="p-ok">Servido</span>'
-      : '<button class="p-btn" data-act="partida" data-id="' + o.dbId + '" data-ix="' + ix + '">Servido</button>');
+  /* "Servido" es una marca de lectura, no un botón: lo escriben el mesero y el panel, que son
+     quienes están en la mesa. Al pase le sirve para saber qué le falta a esa comanda. */
+  const items = o.items.map(i => {
+    const marca = i.entregado ? '<span class="p-ok">Servido</span>' : '';
     return '<div class="c-item' + (i.entregado ? ' servido' : '') + '">' +
       '<b>' + escTxt(i.qty) + '&times;</b>' +
       '<span class="nom">' + escTxt(i.nombre) + (i.notas ? '<em>' + escTxt(i.notas) + '</em>' : '') + '</span>' +
@@ -700,7 +702,6 @@ $('.tablero').addEventListener('click', e => {
   if(!b) return;
   arrancarAudio();
   if(b.dataset.act === 'avanzar') avanzar(+b.dataset.id);
-  if(b.dataset.act === 'partida') marcarPartida(+b.dataset.id, +b.dataset.ix);
 });
 
 /* ==================================================================
@@ -728,38 +729,9 @@ async function avanzar(id){
   }
 }
 
-/* Entrega por partidas, igual que en el panel: al marcar el primer renglón la comanda pasa a
-   "En servicio", y cuando ya no queda ninguno pendiente se cierra como entregada.
-   Aquí no se pregunta quién la entrega —esta pantalla no tiene ni tiene por qué tener la
-   lista del equipo—, así que queda firmada por el nombre de la propia pantalla. */
-async function marcarPartida(id, ix){
-  const o = ordenes.find(x => x.dbId === id);
-  if(!o || !o.items[ix] || o.items[ix].entregado) return;
-  const quien = cfg.cocina_nombre || 'Cocina';
-  const ahora = new Date().toISOString();
-  const antesItems = o.items.slice();
-  const antesEstado = o.estado;
-  o.items = o.items.slice();
-  o.items[ix] = { ...o.items[ix], entregado: true, entregado_por: quien, entregado_at: ahora };
-  const todos = o.items.every(i => i.entregado);
-  const cuerpo = { items: o.items };
-  if(todos){
-    cuerpo.estado = 3; cuerpo.entregada_por = quien; cuerpo.entregada_at = ahora;
-    o.estado = 3;
-  } else if(o.estado === 1){
-    cuerpo.estado = 2; // con la primera partida servida, la comanda pasa a "En servicio"
-    o.estado = 2;
-  }
-  pintar();
-  try{
-    await api('menusbot_ordenes?id=eq.' + o.dbId, { method:'PATCH', body: JSON.stringify(cuerpo) });
-    toast(todos ? 'Mesa ' + o.mesa + ' — servida completa' : 'Mesa ' + o.mesa + ' — renglón servido');
-  }catch(e){
-    o.items = antesItems; o.estado = antesEstado;
-    pintar();
-    toast('Sin conexión — no se guardó, vuelve a intentar', true);
-  }
-}
+/* Esta pantalla escribe dos cosas y nada más: 0→1 y 1→2. La entrega al comensal no se firma
+   desde la cocina —quien la hace es el mesero, y la firma tiene que decir la verdad—, así que
+   aquí no hay forma de llegar al estado 3. cfg.cocina_nombre se quedó solo para el encabezado. */
 
 arrancar();
 </script>

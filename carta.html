@@ -1711,7 +1711,7 @@ function mostrarVista(v){
   window.scrollTo({top:0});
 }
 
-const ESTADOS_TXT = ['Recibida en cocina','En preparación','En servicio en tu mesa','Entregada en tu mesa'];
+const ESTADOS_TXT = ['Recibida en cocina','En preparación','En camino a tu mesa','Entregada en tu mesa'];
 /* Mismo nombre de siempre (lo leen las vistas), pero ahora apuntan a la paleta de alertas:
    azul = dato / en marcha, verde = listo. Nunca cambian con el tema. */
 const ESTADOS_COLOR = ['var(--al-azul)','var(--al-azul)','var(--al-azul)','var(--al-verde)'];
@@ -1749,7 +1749,7 @@ function pintarIndicadores(){
          algo espera al mesero, azul cuando todo va en marcha. */
       barra.classList.toggle('cuenta', !!cuentaPedida);
       barra.classList.toggle('espera', !cuentaPedida && act.some(esPendiente));
-      const corto = o => esPendiente(o) ? 'por confirmar' : ['en cocina','preparando','en servicio','entregada'][o.estado];
+      const corto = o => esPendiente(o) ? 'por confirmar' : ['en cocina','preparando','en camino','entregada'][o.estado];
       if(cuentaPedida){
         $('#boNum').innerHTML = '<i></i>';
         $('#boTxt').innerHTML = '<b>Cuenta solicitada</b> — mesero en camino';
@@ -2076,7 +2076,7 @@ function cambiarQtyItem(idx, dif){
 }
 function pintarVistaOrden(){
   const v = $('#vistaOrden');
-  let html = `<div class="vista-head"><div class="caps">Mesa ${mesa ? String(mesa).padStart(2,'0') : '—'} · por enviar</div><h2>Tu orden</h2></div>`;
+  let html = `<div class="vista-head"><div class="caps">Mesa ${mesa ? String(mesa).padStart(2,'0') : '—'}${SUC ? ' · ' + SUC : ''} · por enviar</div><h2>Tu orden</h2></div>`;
   html += lineaCodigoMesa();
   if(!pedido.length){
     if(ordenes.length){
@@ -2092,7 +2092,7 @@ function pintarVistaOrden(){
     v.innerHTML = html; return;
   }
   html += `<div class="ticket"><div class="t-int">
-    <div class="t-cab"><div class="t-marca">${MARCA.nombre}</div><div class="caps">Orden · Mesa ${String(mesa).padStart(2,'0')}</div></div>`;
+    <div class="t-cab"><div class="t-marca">${MARCA.nombre}</div><div class="caps">Orden · Mesa ${String(mesa).padStart(2,'0')}${SUC ? ' · ' + SUC : ''}</div></div>`;
   html += pedido.map((i,idx) => {
     const d = PLATILLOS.find(x => x.id === i.id);
     return `<div class="t-item">
@@ -2307,7 +2307,7 @@ function mostrarConfirmacion(o){
     <div class="confirmacion">
       <div class="conf-sello"><div class="interior">${pend ? '<b>ANOTADA</b><span>tu orden</span>' : '<b>RECIBIDO</b><span>en cocina</span>'}</div></div>
       <h2>${pend ? 'Ya quedó anotada' : '¡Orden enviada!'}</h2>
-      <div class="folio">Nº <b>${o.num}</b> · Mesa ${String(o.mesa).padStart(2,'0')} · ${fmt(o.total)} ${RESTAURANTE.moneda}</div>
+      <div class="folio">Nº <b>${o.num}</b> · Mesa ${String(o.mesa).padStart(2,'0')}${SUC ? ' · ' + SUC : ''} · ${fmt(o.total)} ${RESTAURANTE.moneda}</div>
       ${pend ? `<div class="nota-pie" style="margin:18px 0 0;text-align:left;border-left-color:var(--oro)">Tu orden ya se anotó y <b style="color:var(--crema)">tu mesero viene a la mesa a confirmarla contigo</b>. La repasan juntos en voz alta —los términos, lo que va sin algo, lo que quieren primero— y en ese momento pasa a la cocina.</div>
       <div class="nota-pie" style="margin:12px 0 0;text-align:left">Es parte del servicio: preferimos que alguien te vea a la cara antes de encender la estufa. <b style="color:var(--crema)">No tienes que hacer nada más</b> — quédate cómodo, ya va para allá.</div>` : ''}
       <div class="nota-pie" style="margin:${pend ? '12px' : '22px'} 0 0;text-align:left">Puedes seguirla en la pestaña <b style="color:var(--crema)">Cuenta</b> paso por paso: por confirmar, en cocina, preparando y en camino a tu mesa.<br><br>¿Se te antoja algo más después? Ordena las veces que quieras, sin prisa: todo se va sumando y <b style="color:var(--crema)">se paga junto al final</b>.</div>
