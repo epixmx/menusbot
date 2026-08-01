@@ -516,29 +516,7 @@ function haceHumano(ts){
   const h = Math.floor(min / 60), r = min % 60;
   return 'hace ' + h + ' h' + (r ? ' ' + r + ' min' : '');
 }
-/* El índice 2 dejó de ser un solo momento: cocina marca «lista» y avisa, pero la orden no va
-   camino a la mesa hasta que el mesero confirma que la levantó del pase. Mientras nadie la
-   recoge sigue en la barra enfriándose, y decirle «en camino» al que la ve en pantalla era
-   justo la mentira que hacía que nadie fuera por ella. El arreglo se queda como respaldo
-   (índice 2 = el caso de siempre, ya recogida) para cualquier estado que no sea el 2. */
-const ESTADO_TXT = ['En cocina, recibida', 'En preparación', 'En camino a la mesa', 'Entregada'];
-/* Se pide la orden entera, no el número de estado: sin recogida_at no se puede distinguir y
-   pintar «En camino» de oficio sería inventarle un viaje que nadie hizo. */
-const estadoTxt = o => {
-  const e = Math.max(0, Math.min(3, +((o && o.estado) || 0)));
-  return e === 2 ? ((o && o.recogida_at) ? 'En camino a la mesa' : 'Lista para recoger') : ESTADO_TXT[e];
-};
-
-/* ---------- El folio que también ve el comensal ----------
-   En el teléfono de la mesa dice «Orden BV-1024» y aquí decía «Orden 24»: el mismo pedido con
-   dos nombres, y cuando el comensal preguntaba por el suyo el mesero no lo encontraba. Se arma
-   igual que en cocina, panel y carta. El id crudo NO se toca: sigue siendo la llave que viaja
-   a la base y la que llevan los data-*; esto es solo lo que lee el humano. */
-const iniciales = n => (n || 'BV').split(/\s+/).filter(Boolean).slice(0,2).map(w => w[0].toUpperCase()).join('') || 'BV';
-/* La llena revisarMudanza() de paso, con el mismo config que ya pide. Si la nube no contesta se
-   queda vacía y las iniciales caen a BV: un folio raro se lee, un «undefined-1024» no. */
-let MARCA = '';
-const folio = id => iniciales(MARCA) + '-' + (1000 + (+id || 0));
+const ESTADO_TXT = ['En cocina, recibida', 'En preparación', 'Lista para llevar', 'Entregada'];
 
 /* ==================================================================
    ARRANQUE
@@ -553,48 +531,8 @@ function pantalla(id){
 
 /* Se llama al final del archivo a propósito: entrarApp() toca variables que se declaran más
    abajo, y arrancar aquí mismo reventaría al recargar con la sesión ya guardada. */
-/* ---------- Mudanza de dirección pública ----------
-   El restaurante puede cambiar su dirección desde el panel. El mesero tiene el enlace viejo
-   guardado en la pantalla de inicio de su teléfono y no se va a enterar, así que la dirección
-   vieja queda respondiendo «me mudé aquí» y el teléfono sigue la mudanza solo. Sus claves de
-   este teléfono llevan el slug pegado (ver LSK): si no se las lleva, pierde su sesión a media
-   hora pico y tiene que volver a teclear su PIN. */
-const CLAVES_MUDANZA = ['mb_mesero','mb_mesero_fallos','mb_mesero_bloqueo','mb_mesero_sonido'];
-function mudarse(nuevo){
-  if(!/^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/.test(nuevo) || nuevo === RID) return false;
-  const nk = k => nuevo === 'bellavita' ? k : k + '::' + nuevo;
-  try{
-    CLAVES_MUDANZA.forEach(k => {
-      const v = localStorage.getItem(LSK(k));
-      /* Si en la dirección nueva ya hay algo, manda lo nuevo: no se pisa una sesión viva */
-      if(v != null && localStorage.getItem(nk(k)) == null) localStorage.setItem(nk(k), v);
-    });
-  }catch(e){}
-  const p = new URLSearchParams(location.search);
-  p.set('r', nuevo);
-  location.replace(location.pathname + '?' + p.toString());
-  return true;
-}
-/* Una sola consulta al arrancar. Si la nube no contesta, no se estorba: la app sigue con la
-   dirección que trae el enlace, que es la de siempre mientras nadie se haya mudado. */
-async function revisarMudanza(){
-  try{
-    const cfgs = await api('menusbot_config?id=eq.' + encodeURIComponent(RID) + '&select=data');
-    const data = cfgs && cfgs[0] && cfgs[0].data;
-    /* Ya viene el blob entero: de aquí sale el nombre de la marca para el folio, en lugar de
-       gastar un segundo viaje a la nube en el arranque solo por dos letras. */
-    /* `data.config.marca.nombre`, no `data.marca.nombre`: el blob guarda la identidad UN NIVEL
-       más adentro, y es la misma ruta exacta que ya leen cocina, panel y carta. Con la ruta
-       corta esto devolvía siempre vacío, las iniciales caían a BV y el mesero volvía a ver un
-       folio distinto al del comensal — que es justo el error que este cambio venía a matar. */
-    MARCA = (data && data.config && data.config.marca && data.config.marca.nombre) || '';
-    const destino = data && data.redirige_a;
-    return !!(destino && mudarse(destino));
-  }catch(e){ return false; }
-}
-async function arrancar(){
+function arrancar(){
   if(!RID){ pantalla('sinRid'); return; }
-  if(await revisarMudanza()) return; // la página se está recargando en la dirección nueva
   if(sesion && sesion.id != null){ entrarApp(); return; }
   pantalla('entrada');
   cargarMeseros();
@@ -706,15 +644,9 @@ function revisarPin(){
   if(String(elegido.pin == null ? '' : elegido.pin).trim() === pinBuf){
     fallos = 0;
     try{ localStorage.removeItem(LSK('mb_mesero_fallos')); localStorage.removeItem(LSK('mb_mesero_bloqueo')); }catch(e){}
-    /* El PIN se queda guardado en el teléfono del propio mesero, a propósito. No es un secreto
-       nuevo que se esté soltando: esta pantalla ya lee la lista de meseros con la llave pública
-       y el PIN viene en esa lista, o sea que ya lo tenía enfrente. Guardarlo aquí sirve para que
-       cuando pida soltar una mesa pueda decir en el servidor quién es. Así la regla de quién
-       puede cerrar una mesa vive en la base y no en un botón de esta página, que cualquiera
-       puede abrir. */
     sesion = {
       id: elegido.id, nombre: elegido.nombre, sucursal: elegido.sucursal || '',
-      mesas: normalizarMesas(elegido.mesas), pin: elegido.pin, ts: Date.now(),
+      mesas: normalizarMesas(elegido.mesas), ts: Date.now(),
     };
     try{ localStorage.setItem(LSK('mb_mesero'), JSON.stringify(sesion)); }catch(e){}
     entrarApp();
@@ -803,14 +735,10 @@ document.addEventListener('visibilitychange', () => {
    uno que sí — así nació la mesa perdida de v10.9. */
 const filtroSucDe = s => (s ? '&sucursal=eq.' + encodeURIComponent(s) : '&or=(sucursal.eq.,sucursal.is.null)');
 const filtroSuc = () => filtroSucDe(sesion.sucursal || '');
-/* «Está en mi piso» y «es mi mesa» son dos preguntas distintas y hacía falta separarlas: una
-   mesa que se abrió por error no está asignada a nadie, así que con la regla vieja NINGÚN
-   mesero la veía y el número quedaba apartado sin que nadie pudiera soltarlo. El mesero sin
-   sucursal asignada ve todo el local, que es como trabaja el restaurante de una sola dirección. */
-const enMiSucursal = fila => !sesion.sucursal || (fila.sucursal || '') === sesion.sucursal;
-const mias = fila => enMiSucursal(fila) && sesion.mesas.indexOf(+fila.mesa) !== -1;
-/* Abierta en mi piso pero de nadie: la mesa huérfana que hay que poder soltar. */
-const ajena = fila => enMiSucursal(fila) && sesion.mesas.indexOf(+fila.mesa) === -1;
+const mias = fila => {
+  if(sesion.sucursal && (fila.sucursal || '') !== sesion.sucursal) return false;
+  return sesion.mesas.indexOf(+fila.mesa) !== -1;
+};
 
 /* UNA MESA PUEDE TENER MÁS DE UNA FILA ABIERTA. El índice único es
    (restaurante_id, sucursal, mesa), así que la «mesa 02» existe una vez por sucursal, y las
@@ -819,11 +747,8 @@ const ajena = fila => enMiSucursal(fila) && sesion.mesas.indexOf(+fila.mesa) ===
    `order=` no promete un orden estable entre peticiones—, y por eso el cobro brincaba solo
    entre «marcó $164» y «esta mesa no marcó propina», con el total moviéndose entre $1,259 y
    $1,095 cada 4 segundos. Esta función elige SIEMPRE la misma fila, y deja dicho por qué gana. */
-/* Filtra por sucursal y no por «es mía»: como ya se está pidiendo UN número de mesa concreto,
-   para las mesas del mesero da exactamente el mismo resultado que antes, y de pilón las mesas
-   huérfanas también encuentran su fila viva en vez de quedarse sin nada que mostrar. */
 function filasAbiertasDe(n){
-  return (mesasAbiertas || []).filter(x => +x.mesa === +n && enMiSucursal(x));
+  return (mesasAbiertas || []).filter(x => +x.mesa === +n && mias(x));
 }
 const cuandoFila = f => Date.parse(f.latido_at || f.abierta_at || 0) || 0;
 /* Lo que decide NO es la sucursal, es qué fila está VIVA. Primero se puso la sucursal y salió
@@ -851,10 +776,6 @@ async function sondear(){
   if(!sesion) return;
   try{
     const [ords, mesas, lls] = await Promise.all([
-      /* Sin select= a propósito: es la única lectura de órdenes de esta pantalla y trae la fila
-         completa, así que recogida_at y recogida_por llegan solos. Si alguien le pone un select=
-         para ahorrar bytes, que no se le olviden esos dos: sin ellos toda orden lista se pintaría
-         «Lista para recoger» para siempre y el mesero iría al pase por una charola que ya trae. */
       api('menusbot_ordenes?restaurante_id=eq.' + encodeURIComponent(RID) + '&cerrada=eq.false&order=creada.desc'),
       /* order= explícito: sin él PostgREST no promete un orden estable y dos filas de la misma
          mesa se alternan entre peticiones. La fila viva (latido más nuevo) va primero. */
@@ -873,7 +794,6 @@ async function sondear(){
   tickLento++;
   detectarNovedades();
   pintarMesas();
-  barrerMesasCaducadas();   /* se cuelga del sondeo que ya corre: un reloj más sería otro que vigilar */
   if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
   refrescarPropinaDelCobro();
 }
@@ -892,11 +812,6 @@ async function refrescarMiFicha(){
     sesion.nombre = m.nombre;
     sesion.sucursal = m.sucursal || '';
     sesion.mesas = normalizarMesas(m.mesas);
-    /* Rescate del PIN para los teléfonos que ya traían sesión guardada de antes de que esto
-       existiera: sin él, soltar una mesa le respondería «sin permiso» sin que él entienda por
-       qué, y tendría que salirse y volver a teclearlo a media hora pico. Esta consulta ya lo
-       traía en el select, así que no cuesta un viaje más. */
-    if(m.pin != null) sesion.pin = m.pin;
     try{ localStorage.setItem(LSK('mb_mesero'), JSON.stringify(sesion)); }catch(e){}
     $('#miNombre').textContent = sesion.nombre;
     $('#miDonde').textContent = (sesion.sucursal ? 'Sucursal ' + sesion.sucursal + ' · ' : '') +
@@ -916,7 +831,7 @@ async function cargarCobrosHoy(){
 /* ---------- Estado de cada mesa ---------- */
 function estadoMesas(){
   const porMesa = {};
-  const tocar = n => (porMesa[n] = porMesa[n] || { mesa:+n, ordenes:[], abierta:null, llamadas:[], ajena:false });
+  const tocar = n => (porMesa[n] = porMesa[n] || { mesa:+n, ordenes:[], abierta:null, llamadas:[] });
   sesion.mesas.forEach(n => tocar(n));
   ordenes.filter(mias).forEach(o => tocar(+o.mesa).ordenes.push(o));
   /* Antes era `forEach(m => tocar(m.mesa).abierta = m)`: con dos filas para la misma mesa
@@ -924,28 +839,10 @@ function estadoMesas(){
   new Set(mesasAbiertas.filter(mias).map(m => +m.mesa)).forEach(n => { tocar(n).abierta = mesaAbiertaDe(n); });
   llamadas.filter(mias).forEach(l => tocar(+l.mesa).llamadas.push(l));
 
-  /* Las huérfanas entran después y marcadas: son mesas abiertas de su piso que no le tocan a
-     nadie, casi siempre alguien que escaneó el código de otra mesa y se fue. Sin esto el número
-     se queda apartado hasta que alguien entre al panel desde la computadora, que a media hora
-     pico no pasa. Van con su bandera para que ni el contador ni el tono de aviso las cuenten
-     como trabajo suyo: solo tiene que poder verlas y soltarlas. */
-  new Set(mesasAbiertas.filter(ajena).map(f => +f.mesa)).forEach(n => {
-    const m = tocar(n);
-    m.ajena = true;
-    m.abierta = mesaAbiertaDe(n);
-    /* Se le cuelgan también sus órdenes: si resulta que la mesa sí tiene gente comiendo, que se
-       vea de una vez y no se le ofrezca cerrarla como si estuviera vacía. */
-    ordenes.filter(o => +o.mesa === n && enMiSucursal(o)).forEach(o => m.ordenes.push(o));
-  });
-
   return Object.values(porMesa).map(m => {
     m.pendientes = m.ordenes.filter(o => o.verificacion === 'pendiente');
     m.autorizadas = m.ordenes.filter(o => o.verificacion === 'ok');
-    /* «Listas por llevar» siempre quiso decir las que están en el pase esperando a que alguien
-       vaya por ellas. Una que el mesero ya trae en la charola no le queda pendiente de recoger,
-       y contarla ahí lo mandaba de vuelta a la cocina por algo que ya traía en la mano. De aquí
-       cuelgan también la urgencia de la tarjeta y el tono de aviso, y los tres quieren lo mismo. */
-    m.listas = m.autorizadas.filter(o => +o.estado === 2 && !o.recogida_at);
+    m.listas = m.autorizadas.filter(o => +o.estado === 2);
     m.total = m.ordenes.filter(o => o.verificacion === 'ok').reduce((s,o) => s + (+o.total || 0), 0);
     m.totalConPendientes = m.ordenes.reduce((s,o) => s + (+o.total || 0), 0);
     m.pidioCuenta = m.llamadas.some(l => l.motivo === 'cuenta') || +((m.abierta && m.abierta.propina_sugerida) || 0) > 0;
@@ -958,42 +855,30 @@ function estadoMesas(){
 
 function pintarMesas(){
   const lista = estadoMesas();
-  /* Los dos números de arriba son SUYOS: las huérfanas las está viendo de favor, no son su
-     carga de trabajo, y meterlas en el marcador le mentiría sobre cómo va su turno. */
-  const propias = lista.filter(m => !m.ajena);
-  const huerfanas = lista.filter(m => m.ajena);
-  const ocupadas = propias.filter(m => m.ocupada).length;
+  const ocupadas = lista.filter(m => m.ocupada).length;
   const vendido = cobrosHoy.reduce((s,c) => s + (+c.total || 0), 0);
   $('#contadores').innerHTML =
     '<div class="cnt"><b>' + sesion.mesas.length + '</b><small>Mesas tuyas</small></div>' +
     '<div class="cnt"><b>' + ocupadas + '</b><small>Ocupadas ahora</small></div>' +
     '<div class="cnt venta"><b>' + fmt(vendido) + '</b><small>Vendido hoy</small></div>';
 
-  const pendTotal = propias.reduce((s,m) => s + m.pendientes.length, 0);
+  const pendTotal = lista.reduce((s,m) => s + m.pendientes.length, 0);
   const g = $('#globoMesas');
   g.style.display = pendTotal ? 'flex' : 'none';
   g.textContent = pendTotal;
 
   const cont = $('#listaMesas');
-  let html = '';
   if(!sesion.mesas.length){
-    /* Aunque no le hayan asignado nada, si hay una mesa huérfana en su piso se le pinta abajo:
-       es justo el caso del mesero nuevo al que le piden «cierra la 7 que se abrió sola». */
-    html += '<div class="aviso-caja"><b>Todavía no tienes mesas asignadas</b>' +
+    cont.innerHTML = '<div class="aviso-caja"><b>Todavía no tienes mesas asignadas</b>' +
       '<p>El administrador todavía no te asignó mesas desde Equipo. En cuanto lo haga aparecen aquí solitas, sin que tengas que volver a entrar.</p>' +
       '<p>Mientras tanto puedes activar tus avisos y revisar tu corte, que estará en ceros.</p></div>';
-  } else {
-    const urgentes = propias.filter(m => m.urgencia <= 3);
-    const tranquilas = propias.filter(m => m.urgencia === 4);
-    if(urgentes.length) html += '<div class="grupo-tit"><em>' + urgentes.length + '</em><h2>Te necesitan</h2><i></i></div>' + urgentes.map(tarjetaMesa).join('');
-    if(tranquilas.length) html += '<div class="grupo-tit"><em>' + tranquilas.length + '</em><h2>Tranquilas</h2><i></i></div>' + tranquilas.map(tarjetaMesa).join('');
+    return;
   }
-  /* Hasta el final y en su propio grupo, para que no se confundan con las suyas de un vistazo. */
-  if(huerfanas.length){
-    html += '<div class="grupo-tit"><em>' + huerfanas.length + '</em><h2>Sin asignar</h2><i></i></div>' +
-      '<div class="nota-pie" style="margin-top:0">Mesas abiertas que no trae nadie del equipo. Si alguna se abrió por error, ábrela y suéltala desde ahí.</div>' +
-      huerfanas.map(tarjetaMesa).join('');
-  }
+  const urgentes = lista.filter(m => m.urgencia <= 3);
+  const tranquilas = lista.filter(m => m.urgencia === 4);
+  let html = '';
+  if(urgentes.length) html += '<div class="grupo-tit"><em>' + urgentes.length + '</em><h2>Te necesitan</h2><i></i></div>' + urgentes.map(tarjetaMesa).join('');
+  if(tranquilas.length) html += '<div class="grupo-tit"><em>' + tranquilas.length + '</em><h2>Tranquilas</h2><i></i></div>' + tranquilas.map(tarjetaMesa).join('');
   cont.innerHTML = html;
   $$('#listaMesas .tarj-mesa').forEach(b => b.addEventListener('click', () => abrirDetalle(+b.dataset.mesa)));
 }
@@ -1001,8 +886,6 @@ function pintarMesas(){
 function tarjetaMesa(m){
   const clase = m.urgencia === 0 ? 'urge' : (m.urgencia <= 3 ? 'avisa' : (m.ocupada ? '' : 'libre'));
   const ets = [];
-  /* Primero la etiqueta que explica por qué esta mesa está en su pantalla si no es suya. */
-  if(m.ajena) ets.push('<span class="et azul">No es tuya</span>');
   if(m.pendientes.length) ets.push('<span class="et roja">' + m.pendientes.length + ' por autorizar</span>');
   if(m.pidioCuenta) ets.push('<span class="et roja">Pidió la cuenta</span>');
   if(m.listas.length) ets.push('<span class="et ambar">' + m.listas.length + ' lista' + (m.listas.length === 1 ? '' : 's') + ' por llevar</span>');
@@ -1061,9 +944,7 @@ function tono(){
 let vistos = null;
 function detectarNovedades(){
   const ahora = new Set();
-  /* Solo sus mesas hacen ruido: que le suene el teléfono por una mesa que no es suya sería
-     entrenarlo a ignorar el tono, y el tono es lo único que se oye en la cocina. */
-  estadoMesas().filter(m => !m.ajena).forEach(m => {
+  estadoMesas().forEach(m => {
     m.pendientes.forEach(o => ahora.add('p' + o.id));
     if(m.pidioCuenta) ahora.add('c' + m.mesa);
     m.listas.forEach(o => ahora.add('l' + o.id));
@@ -1106,23 +987,11 @@ function pintarDetalle(n){
   const m = estadoMesas().find(x => x.mesa === n);
   if(!m){ cerrarSheets(); return; }
   const propina = +((m.abierta && m.abierta.propina_sugerida) || 0);
-  /* La sucursal que manda es la DE LA FILA, no la del mesero: si él no tiene sucursal y se
-     manda la vacía, en la base se buscaría otra mesa 02, la de la sucursal equivocada.
-     Se saca una sola vez arriba porque también se pinta en el encabezado: un restaurante con
-     dos sucursales tiene dos «mesa 03» y desde aquí no se distinguían. */
-  const sucMesa = m.abierta ? (m.abierta.sucursal || '') : (sesion.sucursal || '');
   let html = '<div class="asa"></div><div class="cuerpo">' +
     '<div class="h-top"><div><div class="caps" style="color:var(--pomodoro)">' +
       (m.abierta ? 'Abierta ' + esc(haceHumano(m.abierta.abierta_at)) : 'Sin mesa abierta') +
-      '</div><h2>Mesa ' + String(m.mesa).padStart(2,'0') + '</h2>' +
-      /* Sin sucursal no se pinta nada: el local de una sola dirección no tiene por qué cargar
-         con un «·» colgando sin texto detrás. */
-      (sucMesa ? '<div class="caps" style="color:var(--humo);margin-top:7px">Sucursal ' + esc(sucMesa) + '</div>' : '') +
-      '</div>' +
+      '</div><h2>Mesa ' + String(m.mesa).padStart(2,'0') + '</h2></div>' +
     '<button class="cerrar" data-cerrar="1">&#10005;</button></div>';
-
-  /* Que sepa desde el primer renglón que esta mesa no es suya, antes de tocar cualquier botón. */
-  if(m.ajena) html += '<div class="nota-pie" style="margin-top:12px">Nadie del equipo trae esta mesa asignada. Aparece en tu pantalla para que puedas soltarla si se abrió por error.</div>';
 
   if(m.pidioCuenta) html += '<div class="aviso-caja roja"><b>Pidieron la cuenta</b><p>' +
     (propina > 0 ? 'El cliente marcó ' + fmt(propina) + ' de propina. Cóbrala con el botón de abajo.' : 'Ve a la mesa y cóbrala con el botón de abajo.') + '</p></div>';
@@ -1138,7 +1007,7 @@ function pintarDetalle(n){
     html += '<div class="grupo-tit"><em>' + m.pendientes.length + '</em><h2>Por autorizar</h2><i></i></div>';
     html += '<div class="nota-pie" style="margin-top:0">Lee la lista en voz alta con el comensal antes de mandarla a cocina. Cocina no la ve hasta que tú la autorizas.</div>';
     m.pendientes.forEach(o => {
-      html += '<div class="bloque pend"><div class="bl-cab"><span class="caps">Orden ' + esc(folio(o.id)) + ' &middot; Mesa ' + String(m.mesa).padStart(2,'0') + '</span>' +
+      html += '<div class="bloque pend"><div class="bl-cab"><span class="caps">Orden ' + o.id + '</span>' +
         '<span class="hh">' + esc(hora(o.creada)) + ' &middot; ' + esc(haceHumano(o.creada)) + '</span></div>' +
         renglones(o, false) +
         '<div class="tot-linea"><span class="caps">Total de esta orden</span><b>' + fmt(o.total) + '</b></div>' +
@@ -1157,24 +1026,13 @@ function pintarDetalle(n){
          conforme salen, no todos de golpe. Se ofrece cuando la comanda ya está en preparación
          o lista; además queda el atajo de cerrar la comanda completa. */
       const conPartidas = e === 1 || e === 2;
-      html += '<div class="bloque"><div class="bl-cab"><span class="caps" style="color:var(--humo)">Orden ' + esc(folio(o.id)) + ' &middot; Mesa ' + String(m.mesa).padStart(2,'0') + '</span>' +
+      html += '<div class="bloque"><div class="bl-cab"><span class="caps" style="color:var(--humo)">Orden ' + o.id + '</span>' +
         '<span class="hh">' + esc(hora(o.creada)) + '</span></div>' +
-        '<div class="estado-cocina e' + e + '" style="margin-top:9px"><i></i>' + estadoTxt(o) +
-          /* Quién la levantó importa cuando son dos meseros en el mismo turno: si la trae otro,
-             que no salga un segundo al pase a buscar una charola que ya no está. */
-          (e === 2 && o.recogida_at && o.recogida_por ? ' &middot; la trae ' + esc(o.recogida_por) : '') + '</div>' +
+        '<div class="estado-cocina e' + e + '" style="margin-top:9px"><i></i>' + ESTADO_TXT[e] + '</div>' +
         renglones(o, conPartidas) +
         '<div class="tot-linea"><span class="caps">' + (o.autorizada_por ? 'Autorizó ' + esc(o.autorizada_por) : 'Total') + '</span><b>' + fmt(o.total) + '</b></div>' +
-        /* Los dos botones conviven a propósito mientras nadie la ha recogido. Lo normal es
-           «La recogí» y entregar al llegar a la mesa, por eso va de primario; pero el viaje
-           en el que levanta y sirve de una sola vez es igual de común, y esconderle «entregada»
-           hasta después del primer toque le cobraría dos toques por el mismo viaje. Ya recogida
-           solo queda entregarla, y ese pasa a primario. */
-        (e === 2 && !o.recogida_at
-          ? '<div class="acciones"><button class="btn-primario" data-recogi="' + o.id + '">La recogí</button>' +
-            '<button class="btn-fantasma" data-entregar="' + o.id + '">Marcar toda la orden entregada</button></div>'
-         : e === 2 ? '<div class="acciones"><button class="btn-primario" data-entregar="' + o.id + '">Marcar toda la orden entregada</button></div>'
-         : e === 3 ? '<div class="estado-cocina e3" style="margin-top:11px"><i></i>Entregada' + (o.entregada_por ? ' por ' + esc(o.entregada_por) : '') + '</div>' : '') +
+        (e === 2 ? '<div class="acciones"><button class="btn-primario" data-entregar="' + o.id + '">Marcar toda la orden entregada</button></div>' :
+         e === 3 ? '<div class="estado-cocina e3" style="margin-top:11px"><i></i>Entregada' + (o.entregada_por ? ' por ' + esc(o.entregada_por) : '') + '</div>' : '') +
         '</div>';
     });
   }
@@ -1186,25 +1044,7 @@ function pintarDetalle(n){
   if(m.ocupada){
     html += '<div class="tot-linea" style="margin-top:22px"><span class="caps">Total de la mesa</span><b>' + fmt(m.total) + '</b></div>';
     if(m.pendientes.length) html += '<div class="nota-pie">Hay ' + m.pendientes.length + ' orden' + (m.pendientes.length === 1 ? '' : 'es') + ' sin autorizar por ' + fmt(m.totalConPendientes - m.total) + ' que no entran en el total hasta que las confirmes.</div>';
-    if(m.autorizadas.length || m.pendientes.length){
-      /* Con algo que cobrar todo sigue igual que siempre. Si hay pendientes, el botón lleva al
-         mismo recordatorio de siempre: primero se autoriza o se rechaza. */
-      html += '<div class="acciones" style="margin-top:16px"><button class="btn-primario" data-cobrar="' + m.mesa + '">Cobrar y cerrar la mesa</button></div>';
-    } else if(m.abierta){
-      /* Aquí estaba el callejón sin salida que reportó el dueño: la mesa se abría por error,
-         se pintaba «Cobrar y cerrar» y el botón contestaba «esta mesa no tiene nada que cobrar»
-         y ahí se acababa el asunto, con el número apartado toda la noche. */
-      html += '<div class="aviso-caja azul"><b>Esta mesa está apartada pero nadie ha ordenado nada</b>' +
-        '<p>Alguien abrió la carta en este número de mesa y no pidió nada. Puede ser que se hayan equivocado de código, o que ya se hayan ido.</p></div>';
-      html += '<div class="acciones" style="margin-top:16px">' +
-        (m.abierta.dispositivo_id
-          ? '<button class="btn-fantasma" data-soltar="liberar" data-mesa="' + m.mesa + '" data-suc="' + esc(sucMesa) + '"' +
-            ' data-armar="soltar' + m.mesa + 'liberar" data-normal="Liberar" data-armado="Toca otra vez para liberar">Liberar</button>'
-          : '') +
-        '<button class="btn-primario" data-soltar="cerrar" data-mesa="' + m.mesa + '" data-suc="' + esc(sucMesa) + '"' +
-        ' data-armar="soltar' + m.mesa + 'cerrar" data-normal="Cerrar mesa" data-armado="Toca otra vez para cerrar la mesa">Cerrar mesa</button></div>';
-      html += '<div class="nota-pie">Liberar suelta el teléfono que tiene apartada la mesa y deja el número esperando: el que se siente y ordene la vuelve a tomar. Cerrar mesa deja el número libre desde ya, como cuando terminas de cobrar.</div>';
-    }
+    html += '<div class="acciones" style="margin-top:16px"><button class="btn-primario" data-cobrar="' + m.mesa + '">Cobrar y cerrar la mesa</button></div>';
   }
   html += '</div>';
   $('#hojaDetalle').innerHTML = html;
@@ -1213,7 +1053,6 @@ function pintarDetalle(n){
   h.querySelectorAll('[data-cerrar]').forEach(b => b.addEventListener('click', cerrarSheets));
   h.querySelectorAll('[data-ok]').forEach(b => b.addEventListener('click', () => autorizar(+b.dataset.ok, m.mesa)));
   h.querySelectorAll('[data-rech]').forEach(b => b.addEventListener('click', () => rechazar(+b.dataset.rech, m.mesa)));
-  h.querySelectorAll('[data-recogi]').forEach(b => b.addEventListener('click', () => recogiOrden(+b.dataset.recogi)));
   h.querySelectorAll('[data-entregar]').forEach(b => b.addEventListener('click', () => entregarOrden(+b.dataset.entregar)));
   h.querySelectorAll('[data-part]').forEach(b => b.addEventListener('click', () => {
     const [id, ix] = b.dataset.part.split(':');
@@ -1221,7 +1060,6 @@ function pintarDetalle(n){
   }));
   h.querySelectorAll('[data-atendida]').forEach(b => b.addEventListener('click', () => atender(+b.dataset.atendida)));
   h.querySelectorAll('[data-cobrar]').forEach(b => b.addEventListener('click', () => abrirCobro(+b.dataset.cobrar)));
-  h.querySelectorAll('[data-soltar]').forEach(b => b.addEventListener('click', () => soltarMesa(+b.dataset.mesa, b.dataset.suc || '', b.dataset.soltar)));
   repintarArmados();
 }
 
@@ -1248,32 +1086,9 @@ async function rechazar(id, mesa){
     await api('menusbot_ordenes?id=eq.' + id, { method:'PATCH', body: JSON.stringify(cuerpo) });
     ordenes = ordenes.filter(x => +x.id !== id);
     pintarMesas(); if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
-    toast('Orden ' + folio(id) + ' rechazada. No llegó a cocina.');
+    toast('Orden ' + id + ' rechazada. No llegó a cocina.');
   }catch(e){
     toast('No se pudo rechazar. Revisa el internet y vuelve a intentar.');
-  }
-}
-
-/* Un solo toque, sin armar el botón como los destructivos: recoger es lo que más veces al día
-   hace un mesero y equivocarse no rompe nada (se arregla marcándola entregada, o el siguiente
-   sondeo trae la verdad). Dos toques por comanda en hora pico se vuelven odiosos y terminan en
-   nadie tocando nada. El estado NO se mueve: sigue en 2, lo que cambia es de qué mitad del 2. */
-async function recogiOrden(id){
-  const o = ordenes.find(x => +x.id === id);
-  if(!o || o.recogida_at) return;
-  const ahora = new Date().toISOString();
-  const antes = { recogida_at: o.recogida_at, recogida_por: o.recogida_por };
-  o.recogida_at = ahora; o.recogida_por = sesion.nombre;   /* pintado optimista: el mesero ya se va */
-  pintarMesas(); if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
-  try{
-    await api('menusbot_ordenes?id=eq.' + id, { method:'PATCH', body: JSON.stringify({ recogida_at: ahora, recogida_por: sesion.nombre }) });
-    toast('Orden ' + folio(id) + ' va en camino a la mesa.');
-  }catch(e){
-    /* Se deshace en pantalla: dejarla como recogida sin que la base lo sepa la borraría del
-       contador de todos los demás teléfonos menos de este, y la charola se queda en el pase. */
-    o.recogida_at = antes.recogida_at; o.recogida_por = antes.recogida_por;
-    pintarMesas(); if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
-    toast('No se pudo marcar como recogida. Revisa el internet y vuelve a intentar.');
   }
 }
 
@@ -1286,7 +1101,7 @@ async function entregarOrden(id){
   pintarMesas(); if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
   try{
     await api('menusbot_ordenes?id=eq.' + id, { method:'PATCH', body: JSON.stringify({ estado:3, entregada_at: ahora, entregada_por: sesion.nombre, items }) });
-    toast('Orden ' + folio(id) + ' entregada.');
+    toast('Orden ' + id + ' entregada.');
   }catch(e){ toast('Quedó marcada aquí, pero no se pudo guardar. Vuelve a intentar.'); }
 }
 
@@ -1303,13 +1118,9 @@ async function entregarPartida(id, ix){
   const cuerpo = { items };
   if(todos){ cuerpo.estado = 3; cuerpo.entregada_por = sesion.nombre; cuerpo.entregada_at = ahora; }
   else if(+o.estado === 1){ cuerpo.estado = 2; }
-  /* Quien ya sirvió un renglón obviamente pasó por el pase: sin esto la comanda caía en el 2
-     sin recoger y le pedía «La recogí» por una charola que acababa de vaciar en la mesa. Solo
-     se estampa si nadie lo hizo antes, para no borrar quién la levantó de verdad. */
-  if(!todos && !o.recogida_at){ cuerpo.recogida_at = ahora; cuerpo.recogida_por = sesion.nombre; }
   Object.assign(o, cuerpo);
   pintarMesas(); if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
-  toast(todos ? 'Orden ' + folio(id) + ' entregada completa.' : 'Renglón entregado.');
+  toast(todos ? 'Orden ' + id + ' entregada completa.' : 'Renglón entregado.');
   try{ await api('menusbot_ordenes?id=eq.' + id, { method:'PATCH', body: JSON.stringify(cuerpo) }); }
   catch(e){ toast('Quedó marcado aquí, pero no se pudo guardar. Vuelve a intentar.'); }
 }
@@ -1318,130 +1129,6 @@ async function atender(id){
   llamadas = llamadas.filter(l => +l.id !== id);
   pintarMesas(); if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
   try{ await api('menusbot_llamadas?id=eq.' + id, { method:'PATCH', body: JSON.stringify({ atendida:true }) }); }catch(e){}
-}
-/* ==================================================================
-   3b. SOLTAR UNA MESA QUE SE ABRIÓ POR ERROR
-   Pasa todos los días: alguien escanea el código de la mesa de junto mientras espera, o abre
-   la carta y se va. El número queda apartado y antes solo el dueño, desde la computadora,
-   podía destrabarlo. Quién puede hacerlo lo decide la base con menusbot_soltar_mesa(), no
-   esta pantalla: aquí solo se pregunta, y se manda el PIN para poder decir quién pregunta.
-   ================================================================== */
-const soltarEnVuelo = {};
-const soltarConfirmado = {};
-
-/* Todo lo que sale hacia la función vive aquí, con las mismas llaves y el mismo manejo de
-   errores que api() usa para el resto de la pantalla. */
-function rpcSoltarMesa(cuerpo){
-  return api('rpc/menusbot_soltar_mesa', { method:'POST', body: JSON.stringify({ p_rest: RID, ...cuerpo }) });
-}
-
-async function soltarMesa(mesa, suc, modo){
-  if(!sesion) return;
-  const clave = 'soltar' + mesa + modo;
-  /* Con el dedo mojado y el teléfono en la mano se toca doble sin querer: mientras una petición
-     va en camino, las demás se ignoran. */
-  if(soltarEnVuelo[clave]) return;
-  if(!armar(clave)){
-    toast(modo === 'liberar'
-      ? 'Toca otra vez para soltar el teléfono de la mesa ' + mesa
-      : 'Toca otra vez para cerrar la mesa ' + mesa);
-    return;
-  }
-  /* La segunda vuelta (la que se lleva órdenes por delante) solo vale si acaba de ver el aviso
-     con el monto. Si se guardó el teléfono y volvió media hora después, se le pregunta de nuevo. */
-  const confirmado = (Date.now() - (soltarConfirmado[clave] || 0)) < 60000;
-
-  soltarEnVuelo[clave] = true;
-  let d;
-  try{
-    d = await rpcSoltarMesa({
-      p_mesa: +mesa, p_modo: modo, p_suc: suc || '',
-      p_mesero_id: sesion.id, p_pin: sesion.pin || null, p_confirmado: confirmado,
-    });
-  }catch(e){
-    delete soltarEnVuelo[clave];
-    toast('No se pudo soltar la mesa ' + mesa + '. Revisa el internet del lugar y vuelve a intentar.');
-    return;
-  }
-  delete soltarEnVuelo[clave];
-  d = d || {};
-
-  if(!d.ok){
-    if(d.error === 'tiene_ordenes'){
-      /* Se le enseña el dinero ANTES de dejarlo cerrar: una mesa con consumo casi nunca se
-         cierra a la brava, se cobra. El botón se vuelve a armar para que la segunda vuelta ya
-         vaya confirmada y no tenga que empezar de cero. */
-      soltarConfirmado[clave] = Date.now();
-      armar(clave);
-      const cuantas = +d.ordenes || 0;
-      toast('Ojo: la mesa ' + mesa + ' tiene ' + cuantas + (cuantas === 1 ? ' orden' : ' órdenes') +
-        ' por ' + fmt(d.total) + '. Si tocas otra vez se cierran sin cobrarse.');
-      return;
-    }
-    if(d.error === 'sin_permiso'){
-      toast('El sistema no te reconoció. Sal de tu sesión y vuelve a entrar con tu PIN.');
-      return;
-    }
-    if(d.error === 'muy_pronto'){
-      toast('Esta mesa todavía puede estar viva. Faltan ' + (+d.faltan_min || 0) + ' min para poder soltarla sola.');
-      return;
-    }
-    toast('No se pudo soltar la mesa ' + mesa + '. Ciérrala desde el panel o avísale al administrador.');
-    return;
-  }
-
-  delete soltarConfirmado[clave];
-  /* Pintado optimista, igual que al autorizar: el mesero ya va caminando a otra mesa y no se
-     queda mirando la pantalla hasta el siguiente sondeo. */
-  if(modo === 'cerrar'){
-    mesasAbiertas = mesasAbiertas.filter(f => !(+f.mesa === +mesa && (f.sucursal || '') === (suc || '')));
-    ordenes = ordenes.filter(o => !(+o.mesa === +mesa && enMiSucursal(o)));
-  } else {
-    mesasAbiertas.filter(f => +f.mesa === +mesa && (f.sucursal || '') === (suc || ''))
-      .forEach(f => { f.dispositivo_id = null; f.codigo = null; });
-  }
-  pintarMesas();
-  /* Si la mesa dejó de existir, pintarDetalle cierra la hoja solo: el mesero no se queda
-     viendo el detalle de algo que ya no está. */
-  if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
-
-  if(d.error === 'no_existe' || d.ya_estaba){
-    toast('La mesa ' + mesa + ' ya estaba libre. Alguien se te adelantó.');
-  } else if(modo === 'liberar'){
-    toast('Mesa ' + mesa + ' liberada. El número sigue apartado hasta que alguien ordene.');
-  } else {
-    const cuantas = +d.ordenes || 0;
-    toast('Mesa ' + mesa + ' cerrada' + (cuantas ? ' con ' + cuantas + (cuantas === 1 ? ' orden' : ' órdenes') + ' por ' + fmt(d.total) : '') + '. Ya está libre.');
-  }
-  sondear();
-}
-
-/* ---------- Mesas que se quedaron abiertas solas ----------
-   La mesa mal escaneada no la va a reportar nadie: el que la abrió ya se fue. Con lo que esta
-   pantalla ya trae en memoria se señalan las candidatas —ni una comanda abierta y media hora
-   sin dar señales de vida— y se le pasan al servidor, que es quien vuelve a revisar y decide.
-   Si aquí nos equivocamos, allá no pasa nada. */
-const caducarIntentos = {};
-function barrerMesasCaducadas(){
-  if(!sesion) return;
-  const ahora = Date.now();
-  const limite = ahora - 30 * 60000;
-  /* Por número de mesa a secas, sin mirar sucursal: ante la duda, no se toca. Vale más dejar
-     una mesa apartada de más que apagarle la carta a alguien que está cenando. */
-  const conOrdenes = new Set((ordenes || []).map(o => +o.mesa));
-  (mesasAbiertas || []).filter(f => {
-    if(!enMiSucursal(f)) return false;
-    if(conOrdenes.has(+f.mesa)) return false;
-    const t = cuandoFila(f);
-    if(!t || t > limite) return false;
-    /* Ni dos llamadas encimadas por la misma fila, ni insistir cada 4 segundos sobre una que el
-       servidor ya dijo que no. */
-    return (ahora - (caducarIntentos[f.id] || 0)) > 120000;
-  }).slice(0, 3).forEach(f => {
-    caducarIntentos[f.id] = ahora;
-    /* Sin PIN a propósito: caducar no lo autoriza nadie, lo decide el reloj del servidor. */
-    rpcSoltarMesa({ p_mesa:+f.mesa, p_modo:'caducar', p_suc: f.sucursal || '' }).catch(() => {});
-  });
 }
 /* ==================================================================
    4. COBRAR Y CERRAR LA MESA

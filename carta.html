@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Menú digital</title>
+<title>Trattoria Bella Vita</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -320,67 +320,6 @@
   .confirmacion .folio{margin-top:8px;font-family:var(--grot);font-size:13px;letter-spacing:1.4px;text-transform:uppercase;color:var(--humo);font-weight:600}
   .confirmacion .folio b{color:var(--pomodoro)}
 
-  /* ---------- Despedida (la visita ya se pagó y se cerró) ----------
-     No es una hoja: es una pantalla de la que no se sale. Va por encima de todo —nav, barra,
-     velo, hojas, visor— y tapa el menú entero, porque si el comensal alcanza a volver a la
-     carta y ordena otra vez, el restaurante le abre una MESA NUEVA que nadie pidió. */
-  .despedida{position:fixed;inset:0;z-index:900;background:var(--esp);color:var(--crema);display:none;overflow-y:auto;-webkit-overflow-scrolling:touch}
-  .despedida.visible{display:block}
-  body.con-despedida .telefono,body.con-despedida .velo,body.con-despedida .hoja,body.con-despedida .visor{display:none}
-  .despedida .dp-caja{min-height:100%;box-sizing:border-box;max-width:520px;margin:0 auto;padding:calc(22px + env(safe-area-inset-top)) 24px calc(26px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-  /* Reserva de altura fija: el logo entra donde ya estaba el nombre, sin que la pantalla
-     brinque cuando la imagen termina de dibujarse. */
-  .despedida .dp-marca{min-height:52px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
-  .despedida .dp-marca img{max-width:200px;max-height:52px;object-fit:contain;display:block}
-  .despedida .dp-marca .dp-nombre{font-family:var(--serif);font-style:italic;font-weight:500;font-size:24px;line-height:1.25}
-  /* El sello de siempre, un punto más grande: aquí es el protagonista de la pantalla y lo
-     leen adultos con el teléfono a un brazo de distancia. */
-  .despedida .conf-sello{width:120px;height:120px;margin:0 auto 14px}
-  .despedida .conf-sello .interior{width:104px;height:104px}
-  .despedida .conf-sello .interior b{font-size:14px}
-  .despedida .conf-sello .interior span{font-size:19px}
-  .despedida h2{font-family:var(--serif);font-style:italic;font-weight:500;font-size:26px;line-height:1.2}
-  .despedida .dp-sub{margin-top:10px;font-family:var(--grot);font-size:15px;line-height:1.6;color:var(--humo);max-width:34ch}
-  .despedida .dp-cuenta{width:100%;margin-top:16px;padding:4px 0 2px;border-top:1px solid var(--linea2);border-bottom:1px solid var(--linea2)}
-  .despedida .dp-ren{display:flex;align-items:baseline;gap:10px;padding:8px 0;font-family:var(--grot);text-align:left}
-  .despedida .dp-ren .caps{font-size:14px;color:var(--humo);flex-shrink:0}
-  .despedida .dp-ren b{font-size:20px;font-weight:700;letter-spacing:.4px;white-space:nowrap;flex-shrink:0}
-  .despedida .dp-ren .dp-dicho{font-size:15px;font-weight:600;color:var(--crema);text-align:right}
-  .despedida .dp-puntos{width:100%;margin-top:14px;border:1px solid var(--oro);border-radius:2px;padding:12px 16px}
-  .despedida .dp-puntos .caps{font-size:14px;color:var(--oro)}
-  .despedida .dp-puntos .dp-gano{margin-top:8px;font-family:var(--serif);font-style:italic;font-size:22px;line-height:1.35}
-  .despedida .dp-puntos .dp-gano b{font-family:var(--grot);font-style:normal;font-weight:700;font-size:24px;color:var(--oro)}
-  .despedida .dp-puntos .dp-saldo{margin-top:7px;font-family:var(--grot);font-size:14px;letter-spacing:1.3px;text-transform:uppercase;color:var(--humo);line-height:1.6}
-  .despedida .dp-resena{width:100%;margin-top:16px}
-  .despedida .dp-resena .dp-r-tit{font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.3}
-  .despedida .dp-cierre{margin-top:18px;font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.45;color:var(--crema)}
-  .despedida .dp-pie{margin-top:12px;font-family:var(--grot);font-size:14px;line-height:1.65;color:var(--humo2);max-width:38ch}
-  /* El asterisco es sólo respiración tipográfica: en pantallas cortas estorba más de lo que
-     adorna, y prefiero que quepa «Ya puedes cerrar esta ventana» a que quepa el adorno. */
-  .despedida .dp-orn{display:none;margin-top:22px;color:var(--humo2);font-size:15px;letter-spacing:6px}
-  @media(min-height:940px){ .despedida .dp-orn{display:block} }
-  @media(min-width:700px){
-    .despedida .dp-caja{max-width:600px}
-    .despedida h2{font-size:34px}
-  }
-  /* El aire completo sólo cuando de verdad sobra el alto. Manda la altura, no el ancho: de nada
-     sirve un monitor anchísimo en una ventana baja —lo primero que se saldría de cuadro sería
-     justo el renglón que le dice al comensal que ya puede irse. */
-  @media(min-width:700px) and (min-height:940px){
-    .despedida .dp-caja{padding-top:44px;padding-bottom:42px}
-    .despedida .dp-marca{margin-bottom:26px}
-    .despedida .conf-sello{width:150px;height:150px;margin-bottom:24px}
-    .despedida .conf-sello .interior{width:130px;height:130px}
-    .despedida .conf-sello .interior span{font-size:20px}
-    .despedida .dp-sub{line-height:1.75}
-    .despedida .dp-cuenta{margin-top:28px}
-    .despedida .dp-ren{padding:12px 0}
-    .despedida .dp-puntos{margin-top:22px;padding:18px 16px}
-    .despedida .dp-resena{margin-top:26px}
-    .despedida .dp-cierre{margin-top:32px}
-    .despedida .dp-pie{line-height:1.8}
-  }
-
   /* ---------- Toast ---------- */
   .toast{position:fixed;bottom:calc(146px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,30px);background:var(--papel);color:var(--ink);font-family:var(--grot);font-size:14px;font-weight:600;letter-spacing:.6px;padding:13px 20px;border-radius:2px;z-index:150;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 16px 44px rgba(0,0,0,.55);max-width:86%;text-align:center}
   .toast.visible{opacity:1;transform:translate(-50%,0)}
@@ -485,9 +424,7 @@
   <div class="splash" id="splash">
     <div class="splash-caja">
       <div class="sobre">ORDENA DESDE TU CELULAR</div>
-      <!-- Sin nombre escrito a mano: lo pone la marca de verdad. Si aquí hubiera uno, el
-           comensal alcanzaría a leerlo antes de que llegue el del restaurante. -->
-      <h1 id="splashMarca"></h1>
+      <h1 id="splashMarca"><span>TRATTORIA</span>Bella Vita</h1>
       <div class="orn"><i></i>✳<i></i></div>
       <div class="pregunta">¿EN QUÉ MESA TE ENCUENTRAS?</div>
       <div class="mesas" id="gridMesas"></div>
@@ -504,7 +441,7 @@
       </div>
       <div class="titulo-zona">
         <div id="cabPrincipal">
-          <h1 id="cabTitulo"></h1>
+          <h1 id="cabTitulo">Trattoria<br><em>Bella Vita</em></h1>
           <img id="logoPrincipal" alt="" style="display:none">
           <div class="lema-cab" id="lemaCab"></div>
         </div>
@@ -512,8 +449,8 @@
           <defs><path id="circ" d="M 50,50 m -36,0 a 36,36 0 1,1 72,0 a 36,36 0 1,1 -72,0"/></defs>
           <!-- textLength ajusta la vuelta completa al perímetro del círculo: si no, el final
                del texto se monta encima del principio y no se lee ni una cosa ni la otra. -->
-          <text><textPath id="selloTexto" href="#circ" textLength="224" lengthAdjust="spacingAndGlyphs"></textPath></text>
-          <text class="centro" id="selloCentro" x="50" y="57" text-anchor="middle"></text>
+          <text><textPath id="selloTexto" href="#circ" textLength="224" lengthAdjust="spacingAndGlyphs">TRATTORIA BELLA VITA · EST. 1987 · </textPath></text>
+          <text class="centro" id="selloCentro" x="50" y="57" text-anchor="middle">B.V.</text>
         </svg>
         <img class="sello-logo" id="selloLogo" alt="" style="display:none">
       </div>
@@ -595,10 +532,6 @@
   <div class="toast" id="toast"></div>
 </div>
 
-<!-- Despedida: la visita ya se pagó. Vive fuera de .telefono y sin botón de cerrar a propósito;
-     no es una hoja que se pueda apartar con el dedo, es donde termina el paso del comensal. -->
-<div class="despedida" id="despedida" role="status" aria-live="polite"></div>
-
 <!-- Sheets -->
 <div class="velo" id="velo"></div>
 <div class="hoja" id="hoja"></div>
@@ -646,20 +579,10 @@ if(!RID){
 }
 /* Claves de almacenamiento separadas por restaurante (el demo conserva las suyas) */
 const LSK = k => RID === 'bellavita' ? k : k + '::' + RID;
-
-/* ---------- Que la marca no parpadee ----------
-   El HTML trae un nombre escrito porque algo tiene que haber antes de que la nube conteste.
-   El problema es que el comensal ALCANZA A LEERLO: ve un nombre en texto pelón y medio
-   segundo después lo ve saltar al logo. Se apaga siempre lo que viene escrito en el HTML —el
-   nombre del ejemplo no es el de nadie— y la marca de verdad se recuerda en este teléfono:
-   de la segunda visita en adelante se pinta la correcta de inmediato, sin esperar a nadie. */
-const marcaRecordada = () => { try{ return JSON.parse(localStorage.getItem(LSK('mb_marca')) || 'null'); }catch(e){ return null; } };
-const recordarMarca = m => { try{ localStorage.setItem(LSK('mb_marca'), JSON.stringify(m)); }catch(e){} };
-{
+/* Para restaurantes propios, nada de marca del demo mientras carga su identidad */
+if(RID !== 'bellavita'){
   const sm = document.getElementById('splashMarca'); if(sm) sm.innerHTML = '';
-  const ct = document.getElementById('cabTitulo');   if(ct) ct.innerHTML = '';
-  const st = document.getElementById('selloTexto');  if(st) st.textContent = '';
-  const sc = document.getElementById('selloCentro'); if(sc) sc.textContent = '';
+  const ct = document.getElementById('cabTitulo'); if(ct) ct.innerHTML = '';
   document.title = 'Menú digital';
 }
 
@@ -927,25 +850,12 @@ function aplicarMarca(){
   if(centro) centro.textContent = iniciales(m.nombre).split('').join('.') + '.';
   const titulo = $('#cabTitulo'), logoP = $('#logoPrincipal'), lemaEl = $('#lemaCab');
   if(titulo && logoP){
-    const enTexto = () => {
+    if(m.logo){
+      logoP.src = m.logo; logoP.style.display = 'block'; titulo.style.display = 'none';
+    } else {
       logoP.style.display = 'none'; titulo.style.display = 'block';
       titulo.innerHTML = (m.prefijo ? m.prefijo + '<br>' : '') + `<em>${m.nombre}</em>`;
-    };
-    if(m.logo){
-      /* El logo se enseña cuando ya está DIBUJADO, no cuando se le asigna el src. Si no,
-         queda primero un hueco del tamaño del logo y la imagen aparece de golpe encima. */
-      titulo.style.display = 'none';
-      if(logoP.getAttribute('src') !== m.logo){
-        logoP.style.display = 'none';
-        logoP.src = m.logo;
-        const mostrar = () => { titulo.style.display = 'none'; logoP.style.display = 'block'; };
-        if(logoP.decode) logoP.decode().then(mostrar).catch(mostrar);
-        else { logoP.onload = mostrar; logoP.onerror = mostrar; }
-        /* Y si la imagen nunca llega —enlace roto, red mala—, más vale el nombre en texto
-           que un encabezado en blanco para siempre. */
-        setTimeout(() => { if(logoP.style.display === 'none') enTexto(); }, 4000);
-      } else logoP.style.display = 'block';
-    } else enTexto();
+    }
     if(lemaEl) lemaEl.textContent = SUC ? 'Sucursal ' + SUC : (m.lema || '');
   }
   const base = TEMAS[temaActual] || TEMAS.editoriale;
@@ -961,19 +871,9 @@ let hashMesa = '';
 let mesaOtras = [];        // órdenes de esta mesa enviadas desde otros teléfonos/sesiones
 let totalMesaSrv = null;   // total real de la mesa según el servidor (= "por cobrar" del panel)
 let misIds = [];
-/* Se levanta cuando la visita terminó (pagada y cerrada) y ya no se baja en esta carga de la
-   página. Es el freno de mano: mientras esté arriba, este teléfono no le pregunta nada a la
-   nube ni deja que ningún temporizador viejo escriba en una mesa que ya se cobró. */
-let visitaCerrada = false;
 async function sincronizar(){
-  if(visitaCerrada) return;
   try{
     const cfgs = await api(`menusbot_config?id=eq.${RID}&select=data`);
-    /* El restaurante pudo haber cambiado su dirección pública. Los QR ya impresos y los
-       links compartidos siguen apuntando a la vieja, así que la vieja se queda como una
-       lápida que dice a dónde se mudó; aquí se sigue la mudanza y el comensal ni se entera. */
-    const mudanza = cfgs && cfgs[0] && cfgs[0].data && cfgs[0].data.redirige_a;
-    if(mudanza){ mudarse(mudanza); return; }
     if(cfgs && cfgs[0]) dbCache = cfgs[0].data || dbCache;
     /* Un slug que no existe (restaurante dado de baja) NO debe caer al menú demo */
     if(RID !== 'bellavita' && (!cfgs || !cfgs.length)){
@@ -991,8 +891,6 @@ async function sincronizar(){
     configCargada = true;
     aplicarTema((dbCache.config && dbCache.config.tema) || 'editoriale');
     aplicarMarca();
-    /* Ya que se sabe la marca de verdad, se guarda para que la próxima visita no espere */
-    recordarMarca(MARCA);
     ofrecerSucursal();
     /* Apartar la mesa en cuanto sabemos en qué sucursal está. Los guardas de dentro hacen
        que esto corra una sola vez; si la bienvenida no pudo salir (guía abierta, otra hoja
@@ -1031,9 +929,7 @@ async function sincronizar(){
       if(vistaActual === 'orden') pintarVistaOrden();
     }
     if(misIds.length){
-      /* recogida_at viaja siempre: sin ella el estado 2 se lee a medias y el comensal se
-         queda en «lista en cocina» aunque el mesero ya vaya con su plato en la mano. */
-      const filas = await api(`menusbot_ordenes?id=in.(${misIds.join(',')})&select=id,estado,recogida_at,entregada_por,entregada_at,cerrada,items,verificacion`);
+      const filas = await api(`menusbot_ordenes?id=in.(${misIds.join(',')})&select=id,estado,entregada_por,entregada_at,cerrada,items,verificacion`);
       for(const o of ordenes){
         const rem = (filas || []).find(x => x.id === o.dbId);
         if(!rem) continue;
@@ -1062,20 +958,12 @@ async function sincronizar(){
           guardarSesion();
           if(vistaActual === 'cuenta') pintarVistaCuenta();
         }
-        /* El plato sale de la cocina y ahí se queda hasta que un mesero lo levanta: son dos
-           momentos distintos y sólo el segundo mueve `recogida_at`, nunca el estado. Si aquí
-           siguiéramos vigilando sólo `estado`, la recogida no llegaría jamás a la pantalla. */
-        const recRem = rem.recogida_at || null;
-        if(rem && (rem.estado !== o.estado || (o.recogida_at || null) !== recRem)){
-          const antes = avisoEstado(o);
+        if(rem && rem.estado !== o.estado){
           o.estado = rem.estado;
-          o.recogida_at = recRem;
           o.entregada_por = rem.entregada_por;
           o.entregada_at = rem.entregada_at ? Date.parse(rem.entregada_at) : null;
-          /* Se avisa por lo que el comensal LEE, no por lo que cambió en la base: si el dato
-             se movió pero la frase es la misma, un toast repetido sólo sería ruido. */
-          const ahora = avisoEstado(o);
-          if(ahora !== antes) toast(`Orden ${o.folio} — ${ahora}`);
+          const avisos = ['recibida en cocina','en preparación','va en camino a tu mesa','entregada — ¡provecho!'];
+          toast(`Orden ${o.folio} — ${avisos[o.estado]}`);
           refrescarEstadoUI();
         }
       }
@@ -1088,12 +976,10 @@ async function sincronizar(){
     // Cuenta de la MESA: todas las órdenes no cobradas de esta mesa (de cualquier teléfono),
     // para que el total del comensal sea el mismo que el "por cobrar" del panel.
     if(mesa != null){
-      const om = await api(`menusbot_ordenes?restaurante_id=eq.${RID}&mesa=eq.${mesa}&sucursal=eq.${encodeURIComponent(SUC)}&cerrada=eq.false&verificacion=neq.rechazada&select=id,total,estado,recogida_at,creada&order=creada.asc`);
+      const om = await api(`menusbot_ordenes?restaurante_id=eq.${RID}&mesa=eq.${mesa}&sucursal=eq.${encodeURIComponent(SUC)}&cerrada=eq.false&verificacion=neq.rechazada&select=id,total,estado,creada&order=creada.asc`);
       const otras = (om || []).filter(x => !misIds.includes(x.id));
       const totalSrv = (om || []).reduce((s, x) => s + (+x.total || 0), 0);
-      /* La recogida entra en la huella: es un cambio visible (de «lista» a «en camino») que
-         no mueve el estado, y sin ella la lista de la mesa se quedaría pintada como estaba. */
-      const hM = JSON.stringify([otras.map(x => [x.id, x.estado, x.recogida_at || null]), totalSrv]);
+      const hM = JSON.stringify([otras.map(x => [x.id, x.estado]), totalSrv]);
       if(hM !== hashMesa){
         hashMesa = hM;
         mesaOtras = otras;
@@ -1135,11 +1021,7 @@ async function sincronizar(){
     if(!sinConexion){ sinConexion = true; }
   }
 }
-/* El sondeo se guarda en una variable porque hay un momento en que hay que apagarlo de verdad:
-   cuando la mesa ya se cobró. Seguir preguntando cada 4 segundos por una cuenta cerrada es
-   gastarle datos al comensal y pegarle a la base por nada. */
-let sondeo = setInterval(sincronizar, 4000);
-function detenerSondeo(){ if(sondeo != null){ clearInterval(sondeo); sondeo = null; } }
+setInterval(sincronizar, 4000);
 
 /* ---------- Sesión persistente (sobrevive back/recarga del navegador) ---------- */
 let SUC = new URLSearchParams(location.search).get('suc') || '';
@@ -1258,38 +1140,6 @@ function mesaAbandonada(f){
   return !!t && (Date.now() - t) > MESA_ABANDONO_MIN * 60000;
 }
 
-/* ---------- La mesa que alguien escaneó por error ----------
-   Las dos horas de arriba son para la mesa que SÍ estaba trabajando y se quedó a medias: ahí
-   conviene esperar, porque hay una cuenta viva de por medio. Pero la mesa que nadie usó nunca
-   —alguien pasó, escaneó el código de la mesa de junto mientras esperaba, y se fue— no tiene
-   nada que proteger, y dos horas apartada significa que el comensal que sí se sentó ahí no
-   puede ordenar en toda la comida.
-
-   Media hora sin señales y sin una sola comanda, y la mesa se suelta sola. Lo importante es
-   QUIÉN lo decide: no este teléfono. Aquí solo se señala una candidata; el servidor vuelve a
-   contar las comandas y a mirar el reloj con su propia hora antes de soltar nada, y si algo no
-   cuadra contesta que no. Por eso esta llamada no lleva credencial alguna y aun así no le sirve
-   de nada a quien quisiera tumbarle la mesa a otro: pedir no es poder. Soltar a propósito una
-   mesa viva sigue siendo cosa del mesero o del panel, nunca del comensal. */
-const MESA_CADUCA_MIN = 30;
-const caducarPedido = {};   // id de fila -> cuándo se lo pedimos, para no insistir cada 4 s
-function mesaSilenciosa(f){
-  const t = Date.parse(f.latido_at || f.abierta_at || '') || 0;
-  return !!t && (Date.now() - t) > MESA_CADUCA_MIN * 60000;
-}
-async function pedirCaducarMesa(f){
-  if(!f || f.id == null) return false;
-  if(Date.now() - (caducarPedido[f.id] || 0) < 120000) return false;
-  caducarPedido[f.id] = Date.now();
-  try{
-    const res = await api('rpc/menusbot_soltar_mesa', {
-      method:'POST',
-      body: JSON.stringify({ p_rest: RID, p_mesa: mesa, p_modo:'caducar', p_suc: SUC, p_minutos: MESA_CADUCA_MIN }),
-    });
-    return !!(res && res.ok);
-  }catch(e){ return false; }   // sin red o función vieja: la mesa se queda como estaba
-}
-
 /* Único punto de verdad sobre "¿puedo ordenar en esta mesa?".
    Devuelve { ok:true, fila } si este dispositivo está autorizado,
    { ok:false, motivo:'bloqueada', fila } si la mesa es de alguien más y está viva,
@@ -1379,13 +1229,7 @@ async function asegurarMesa(){
       continue; // el dueño volvió a la vida entre el GET y el PATCH: reevaluar
     }
 
-    /* 6) Antes de darse por vencido: puede que esta mesa no esté ocupada sino mal escaneada.
-       Se le propone al servidor que la deje caducar y, si acepta, se vuelve a dar la vuelta al
-       ciclo para tomarla ya libre por el caso 1. Si el servidor dice que no —tiene cuenta
-       abierta, o le falta tiempo— caemos al caso 7 exactamente igual que antes. */
-    if(mesaSilenciosa(f) && await pedirCaducarMesa(f)) continue;
-
-    /* 7) Es de alguien más y está viva */
+    /* 6) Es de alguien más y está viva */
     mesaFila = f; mesaEsMia = false; guardarSesion();
     return { ok:false, motivo:'bloqueada', fila:f };
   }
@@ -1517,25 +1361,6 @@ async function compartirCodigoMesa(){
    su código desde el primer segundo y puede pasárselo a los suyos mientras leen la carta. */
 let mesaChequeada = false;
 let abriendoMesa = false;
-/* Reintento silencioso de una mesa que quedó apartada sin uso. Tope de intentos a propósito:
-   pasada media hora esperando, si sigue trabada es que no está vacía y la salida ya no es
-   esperar, es el mesero. */
-let reintentandoMesa = false;
-let reintentosMesa = 0;
-function reintentarMesaLuego(){
-  if(reintentandoMesa || reintentosMesa >= 30) return;
-  reintentandoMesa = true;
-  setTimeout(async () => {
-    reintentosMesa++;
-    mesaChequeada = false;   // deja que la mesa se vuelva a evaluar
-    try{ await abrirMesaAlLlegar(); }catch(e){}
-    reintentandoMesa = false;
-    /* La siguiente vuelta se agenda aquí y no dentro de abrirMesaAlLlegar: mientras este
-       reintento estaba en curso el sondeo de cada 4 s pudo haber hecho la evaluación él
-       mismo, y si lo dejáramos a él la cadena se cortaría en silencio. */
-    if(!mesaEsMia && mesaFila && mesaSilenciosa(mesaFila)) reintentarMesaLuego();
-  }, 60000);
-}
 const faltaElegirSucursal = () => !SUC
   && ((dbCache.config && dbCache.config.sucursales) || []).filter(Boolean).length > 0;
 async function abrirMesaAlLlegar(){
@@ -1557,14 +1382,7 @@ async function abrirMesaAlLlegar(){
     refrescarCodigoVisible();
   } else if(r.motivo === 'bloqueada'){
     mesaChequeada = true;
-    /* La hoja se abre sola una sola vez: en los reintentos de abajo el comensal ya sabe qué
-       pasa y no hay por qué taparle la carta cada minuto. */
-    if(!reintentandoMesa) abrirHojaMesa();
-    /* La mesa apartada sin nadie ordenando se suelta sola, pero el comensal no tiene por qué
-       enterarse recargando la página: si la fila lleva rato callada, se vuelve a intentar cada
-       minuto. Cuando el servidor la suelte, este teléfono la toma y la hoja se cierra sin que
-       él haya tenido que hacer nada. */
-    if(r.fila && mesaSilenciosa(r.fila)) reintentarMesaLuego();
+    abrirHojaMesa();
   }
   /* 'sinred': no lo molestamos con un error mientras lee la carta. Se reintenta en el
      siguiente sondeo y, de todos modos, la mesa se vuelve a verificar al enviar la orden. */
@@ -1576,11 +1394,6 @@ async function abrirMesaAlLlegar(){
 function pintarHojaMesa(){
   const n = mesa != null ? String(mesa).padStart(2, '0') : '—';
   const agotado = mesaIntentos >= MESA_MAX_INTENTOS;
-  /* Si la fila lleva rato sin dar señales, lo más probable es que nadie esté ordenando ahí:
-     alguien escaneó de paso y se fue. No lo prometemos —el servidor tiene la última palabra y
-     puede haber una cuenta abierta que este teléfono no ve— pero sí le decimos que espere en
-     vez de dejarlo creyendo que la única salida es buscar a alguien. */
-  const quizaVacia = mesaFila && mesaSilenciosa(mesaFila);
   $('#hojaMesa').innerHTML = `
     <div class="confirmacion" style="text-align:left">
       <div class="caps al-etiq azul">MESA ${n}</div>
@@ -1596,7 +1409,6 @@ function pintarHojaMesa(){
         <button class="btn-fantasma" onclick="cerrarSheets();llamarMesero('mesa')">Pide ayuda al mesero</button>
         <button class="btn-fantasma" onclick="cerrarSheets();cambiarMesa()">No es mi mesa · escanear otro QR</button>
       </div>
-      ${quizaVacia ? `<div class="nota-pie" style="margin:12px 0 0">Parece que en esta mesa nadie ha ordenado nada. Si es así, se libera sola en unos minutos y podrás tomarla sin código: deja abierta la carta y vuelve a intentar.</div>` : ''}
       <div class="nota-pie" style="margin:14px 0 0;border-left-color:var(--linea2)">Mientras tanto puedes ver la carta con calma: cierra esta ventana tocando fuera y sigue explorando. Solo necesitas el código a la hora de mandar tu orden.</div>
     </div>`;
 }
@@ -1685,9 +1497,6 @@ function seguirTrasUnirse(){
 let navHistoria = false;
 history.replaceState({ v: 'menu' }, '');
 window.addEventListener('popstate', e => {
-  /* De la despedida no se sale con el botón «atrás»: se vuelve a plantar el estado y ya. Aunque
-     el navegador lograra sacarlo de la página, al volver a entrar el marcador lo devuelve aquí. */
-  if(visitaCerrada){ history.pushState({ v: 'despedida' }, ''); return; }
   if(document.querySelector('.hoja.abierta') || $('#visor').classList.contains('abierto') || $('#guia').classList.contains('visible')){
     cerrarSheets(); cerrarVisor(); $('#guia').classList.remove('visible');
     history.pushState({ v: vistaActual }, '');
@@ -1723,26 +1532,7 @@ function mostrarVista(v){
   window.scrollTo({top:0});
 }
 
-const ESTADOS_TXT = ['Recibida en cocina','En preparación','En camino a tu mesa','Entregada en tu mesa'];
-/* El estado 2 dejó de ser un solo momento. Antes, en cuanto la cocina tocaba el botón le
-   decíamos «en camino» aunque el plato llevara diez minutos parado en la barra esperando a
-   que pasara un mesero — y el comensal miraba la puerta de la cocina para nada. Ahora la
-   frase depende de si alguien ya lo levantó (`recogida_at`), que es el único dato que
-   distingue «cocinado» de «viajando». Todo lo demás sigue saliendo del arreglo de siempre.
-   Se recibe la ORDEN entera, no el número: el número solo ya no alcanza para decir la verdad.
-   Y ojo, aquí se le habla al comensal: es «a TU mesa», no «a la mesa» como en el personal. */
-function txtEstado(o){
-  if(!o) return '';
-  if(o.estado === 2) return o.recogida_at ? 'En camino a tu mesa' : 'Lista en cocina';
-  return ESTADOS_TXT[o.estado] || '';
-}
-/* Misma regla, en minúsculas y en tono de aviso pasajero (los toast del sondeo) */
-function avisoEstado(o){
-  const avisos = ['recibida en cocina','en preparación','va en camino a tu mesa','entregada — ¡provecho!'];
-  if(!o) return '';
-  if(o.estado === 2) return o.recogida_at ? 'va en camino a tu mesa' : 'lista en cocina';
-  return avisos[o.estado] || '';
-}
+const ESTADOS_TXT = ['Recibida en cocina','En preparación','En servicio en tu mesa','Entregada en tu mesa'];
 /* Mismo nombre de siempre (lo leen las vistas), pero ahora apuntan a la paleta de alertas:
    azul = dato / en marcha, verde = listo. Nunca cambian con el tema. */
 const ESTADOS_COLOR = ['var(--al-azul)','var(--al-azul)','var(--al-azul)','var(--al-verde)'];
@@ -1780,14 +1570,7 @@ function pintarIndicadores(){
          algo espera al mesero, azul cuando todo va en marcha. */
       barra.classList.toggle('cuenta', !!cuentaPedida);
       barra.classList.toggle('espera', !cuentaPedida && act.some(esPendiente));
-      /* Misma regla de dos momentos, pero aquí el espacio manda: .bo-txt es nowrap con
-         ellipsis y «Nº XX-1001 — LISTA EN COCINA» se corta a la mitad en un teléfono de
-         390px. «Lista» sola cabe, dice lo único que importa (ya está hecha) y va en el
-         mismo registro de una palabra que «preparando» y «entregada»; el detalle completo
-         lo lee un dedazo más allá, en la pestaña Cuenta. */
-      const corto = o => esPendiente(o) ? 'por confirmar'
-        : o.estado === 2 ? (o.recogida_at ? 'en camino' : 'lista')
-        : ['en cocina','preparando','','entregada'][o.estado] || '';
+      const corto = o => esPendiente(o) ? 'por confirmar' : ['en cocina','preparando','en servicio','entregada'][o.estado];
       if(cuentaPedida){
         $('#boNum').innerHTML = '<i></i>';
         $('#boTxt').innerHTML = '<b>Cuenta solicitada</b> — mesero en camino';
@@ -1814,7 +1597,7 @@ function pintarIndicadores(){
     /* Aviso sólido: ámbar si espera al mesero, verde si ya se entregó, azul mientras avanza */
     pill.style.setProperty('--ce', cuentaPedida ? 'var(--al-verde)'
       : esPendiente(o) ? COLOR_PENDIENTE : ESTADOS_COLOR[o.estado]);
-    $('#pillEstadoTxt').innerHTML = `<b>ORDEN Nº ${o.num} — ${esPendiente(o) ? 'POR CONFIRMAR CON TU MESERO' : txtEstado(o).toUpperCase()}</b><small>${ordenes.length} orden(es) en curso · toca para ver tu cuenta</small>`;
+    $('#pillEstadoTxt').innerHTML = `<b>ORDEN Nº ${o.num} — ${esPendiente(o) ? 'POR CONFIRMAR CON TU MESERO' : ESTADOS_TXT[o.estado].toUpperCase()}</b><small>${ordenes.length} orden(es) en curso · toca para ver tu cuenta</small>`;
   } else pill.classList.remove('visible');
 }
 
@@ -2114,7 +1897,7 @@ function cambiarQtyItem(idx, dif){
 }
 function pintarVistaOrden(){
   const v = $('#vistaOrden');
-  let html = `<div class="vista-head"><div class="caps">Mesa ${mesa ? String(mesa).padStart(2,'0') : '—'}${SUC ? ' · ' + SUC : ''} · por enviar</div><h2>Tu orden</h2></div>`;
+  let html = `<div class="vista-head"><div class="caps">Mesa ${mesa ? String(mesa).padStart(2,'0') : '—'} · por enviar</div><h2>Tu orden</h2></div>`;
   html += lineaCodigoMesa();
   if(!pedido.length){
     if(ordenes.length){
@@ -2130,7 +1913,7 @@ function pintarVistaOrden(){
     v.innerHTML = html; return;
   }
   html += `<div class="ticket"><div class="t-int">
-    <div class="t-cab"><div class="t-marca">${MARCA.nombre}</div><div class="caps">Orden · Mesa ${String(mesa).padStart(2,'0')}${SUC ? ' · ' + SUC : ''}</div></div>`;
+    <div class="t-cab"><div class="t-marca">${MARCA.nombre}</div><div class="caps">Orden · Mesa ${String(mesa).padStart(2,'0')}</div></div>`;
   html += pedido.map((i,idx) => {
     const d = PLATILLOS.find(x => x.id === i.id);
     return `<div class="t-item">
@@ -2159,16 +1942,6 @@ function pintarVistaOrden(){
    que verse antes de «en cocina». Mientras la orden está pendiente el primer punto parpadea;
    cuando el mesero la autoriza, el avance se nota solo. */
 const PROG_PASOS = ['Por confirmar','En cocina','Preparando','En camino','Entregada'];
-/* Siguen siendo CINCO puntos aunque el estado 2 ahora tenga dos momentos, y es a propósito.
-   Los puntos cuentan hitos que cambian lo que el comensal debe esperar; «lista en barra» y
-   «la levantó un mesero» son el mismo hito visto por dentro de la casa: en los dos casos su
-   comida ya está hecha y viene para allá. Lo que cambia es la frase, no la geometría — y la
-   barra sólo nombra el paso en el que va, así que un nombre distinto sale gratis mientras
-   que un sexto punto reacomodaría todas las órdenes por una diferencia que, cuando el
-   servicio va bien, dura segundos. Además `recogida_at` es NULL en toda orden anterior a
-   hoy: con seis puntos esas órdenes se verían saltándose un paso que sí ocurrió; con cinco
-   y el nombre variable no se nota nada raro. */
-const nombrePaso = (o, i) => i === 3 ? (o.recogida_at ? 'En camino' : 'Lista en cocina') : PROG_PASOS[i];
 function pasoOrden(o){
   return (o.verificacion || 'pendiente') === 'pendiente' ? 0 : (o.estado || 0) + 1;
 }
@@ -2181,7 +1954,7 @@ function progresoHTML(o){
   for(let i = 1; i <= ultimo; i++) linea += `<span class="p-seg ${seg(i)}"></span><span class="p-dot ${dot(i)}"></span>`;
   return `<div class="prog">
     <div class="p-linea-cont">${linea}</div>
-    <div class="p-etiq cinco">Paso ${Math.min(p, ultimo) + 1} de ${PROG_PASOS.length}<span class="p-cual ${p < ultimo ? 'on' : ''}">${nombrePaso(o, Math.min(p, ultimo))}</span></div></div>
+    <div class="p-etiq cinco">Paso ${Math.min(p, ultimo) + 1} de ${PROG_PASOS.length}<span class="p-cual ${p < ultimo ? 'on' : ''}">${PROG_PASOS[Math.min(p, ultimo)]}</span></div></div>
     ${p === 0 ? `<div style="margin-top:10px;font-family:var(--grot);font-size:12.5px;letter-spacing:1.4px;text-transform:uppercase;color:#8A7D69;line-height:1.7">Tu mesero viene a confirmarla contigo · en cuanto lo haga, entra a la cocina</div>` : ''}
     ${o.estado===3 && o.entregada_por ? `<div style="margin-top:10px;font-family:var(--grot);font-size:12.5px;letter-spacing:1.6px;text-transform:uppercase;color:#8A7D69">Confirmada por ${o.entregada_por} · ${o.entregada_at ? new Date(o.entregada_at).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : ''}</div>` : ''}`;
 }
@@ -2211,7 +1984,7 @@ function pintarVistaCuenta(){
     html += `<div class="banner-estado" style="--ce:${COLOR_PENDIENTE}"><span class="be-dot"></span><div><b>ESPERANDO CONFIRMACIÓN</b><small>Orden Nº ${u.num} · tu mesero viene a la mesa a confirmarla contigo</small></div></div>`;
   } else if(activas.length){
     const u = activas[activas.length - 1];
-    html += `<div class="banner-estado" style="--ce:${ESTADOS_COLOR[u.estado]}"><span class="be-dot"></span><div><b>${txtEstado(u).toUpperCase()}</b><small>Orden Nº ${u.num}${activas.length > 1 ? ` · ${activas.length} órdenes en curso` : ''}</small></div></div>`;
+    html += `<div class="banner-estado" style="--ce:${ESTADOS_COLOR[u.estado]}"><span class="be-dot"></span><div><b>${ESTADOS_TXT[u.estado].toUpperCase()}</b><small>Orden Nº ${u.num}${activas.length > 1 ? ` · ${activas.length} órdenes en curso` : ''}</small></div></div>`;
   }
   if(!ordenes.length && !mesaOtras.length){
     html += `<div class="vacio">Aún no has enviado órdenes a cocina.<br><br>Cuando envíes una, aquí verás su avance<br>en todo momento.</div>
@@ -2220,7 +1993,7 @@ function pintarVistaCuenta(){
   }
   for(const o of [...ordenes].reverse()){
     html += `<div class="ticket"><div class="t-int">
-      <div class="t-cab"><div class="t-marca">Nº ${o.num}</div><div class="chip-estado" style="--ce:${esPendiente(o) ? COLOR_PENDIENTE : ESTADOS_COLOR[o.estado]}"><i></i>${esPendiente(o) ? 'Por confirmar' : txtEstado(o)}</div></div>
+      <div class="t-cab"><div class="t-marca">Nº ${o.num}</div><div class="chip-estado" style="--ce:${esPendiente(o) ? COLOR_PENDIENTE : ESTADOS_COLOR[o.estado]}"><i></i>${esPendiente(o) ? 'Por confirmar' : ESTADOS_TXT[o.estado]}</div></div>
       ${o.items.map(i => {
         const d = PLATILLOS.find(x => x.id === i.id);
         const nombre = d ? d.nombre : (i.nombre || '');
@@ -2242,7 +2015,7 @@ function pintarVistaCuenta(){
     html += `<div class="bloque" style="padding:0 18px;margin:6px 0 14px"><div class="b-cab"><span class="caps">Otras órdenes de tu mesa</span><i></i></div>
       ${mesaOtras.map(x => `<div class="t-item" style="padding:8px 0">
         <span class="t-nom" style="font-family:var(--grot);font-size:14px;letter-spacing:.5px">Nº ${iniciales(MARCA.nombre)}-${1000 + x.id}</span>
-        <span class="chip-estado" style="--ce:${ESTADOS_COLOR[x.estado] || ESTADOS_COLOR[0]};margin-left:10px"><i></i>${txtEstado(x)}</span>
+        <span class="chip-estado" style="--ce:${ESTADOS_COLOR[x.estado] || ESTADOS_COLOR[0]};margin-left:10px"><i></i>${ESTADOS_TXT[x.estado] || ''}</span>
         <span class="leader"></span><span class="t-precio" style="font-family:var(--grot)">${fmt(+x.total || 0)}</span>
       </div>`).join('')}
       <div class="nota-pie" style="margin-top:8px">Pedidas desde otro teléfono en tu misma mesa — también entran en el total.</div>
@@ -2332,9 +2105,7 @@ async function enviarOrden(){
 /* Si el panel del restaurante no está atendido, la cocina se simula */
 function programarEstados(o){
   const avanza = nivel => async () => {
-    /* Si entre tanto se cobró la mesa, este temporizador quedó colgando de una visita que ya
-       no existe: se vuelve inofensivo en vez de escribirle a una orden cerrada. */
-    if(visitaCerrada || adminActivo() || !o.dbId) return;
+    if(adminActivo() || !o.dbId) return;
     try{ await api(`menusbot_ordenes?id=eq.${o.dbId}&estado=lt.${nivel}`, { method:'PATCH', body: JSON.stringify({ estado: nivel }) }); }catch(e){}
   };
   setTimeout(avanza(1), 9000);
@@ -2355,10 +2126,10 @@ function mostrarConfirmacion(o){
     <div class="confirmacion">
       <div class="conf-sello"><div class="interior">${pend ? '<b>ANOTADA</b><span>tu orden</span>' : '<b>RECIBIDO</b><span>en cocina</span>'}</div></div>
       <h2>${pend ? 'Ya quedó anotada' : '¡Orden enviada!'}</h2>
-      <div class="folio">Nº <b>${o.num}</b> · Mesa ${String(o.mesa).padStart(2,'0')}${SUC ? ' · ' + SUC : ''} · ${fmt(o.total)} ${RESTAURANTE.moneda}</div>
+      <div class="folio">Nº <b>${o.num}</b> · Mesa ${String(o.mesa).padStart(2,'0')} · ${fmt(o.total)} ${RESTAURANTE.moneda}</div>
       ${pend ? `<div class="nota-pie" style="margin:18px 0 0;text-align:left;border-left-color:var(--oro)">Tu orden ya se anotó y <b style="color:var(--crema)">tu mesero viene a la mesa a confirmarla contigo</b>. La repasan juntos en voz alta —los términos, lo que va sin algo, lo que quieren primero— y en ese momento pasa a la cocina.</div>
       <div class="nota-pie" style="margin:12px 0 0;text-align:left">Es parte del servicio: preferimos que alguien te vea a la cara antes de encender la estufa. <b style="color:var(--crema)">No tienes que hacer nada más</b> — quédate cómodo, ya va para allá.</div>` : ''}
-      <div class="nota-pie" style="margin:${pend ? '12px' : '22px'} 0 0;text-align:left">Puedes seguirla en la pestaña <b style="color:var(--crema)">Cuenta</b> paso por paso: por confirmar, en cocina, preparando, lista en cocina y en camino a tu mesa.<br><br>¿Se te antoja algo más después? Ordena las veces que quieras, sin prisa: todo se va sumando y <b style="color:var(--crema)">se paga junto al final</b>.</div>
+      <div class="nota-pie" style="margin:${pend ? '12px' : '22px'} 0 0;text-align:left">Puedes seguirla en la pestaña <b style="color:var(--crema)">Cuenta</b> paso por paso: por confirmar, en cocina, preparando y en camino a tu mesa.<br><br>¿Se te antoja algo más después? Ordena las veces que quieras, sin prisa: todo se va sumando y <b style="color:var(--crema)">se paga junto al final</b>.</div>
       <div class="acciones-orden" style="padding:22px 0 0">
         <button class="btn-primario" onclick="cerrarSheets();mostrarVista('cuenta')">Ver el estado de mi orden</button>
         <button class="btn-fantasma" onclick="cerrarSheets();mostrarVista('menu')">Seguir viendo la carta</button>
@@ -2546,149 +2317,7 @@ function reponerOrdenRechazada(){
   mostrarVista('orden');
   toast('Ahí está tu orden otra vez — revísala y mándala cuando quieras');
 }
-/* ---------- La visita terminó: se paga, se agradece y se cierra ----------
-   Antes esto dejaba un botón «Volver a la carta» con la sesión ya limpia, y ahí estaba el
-   problema de fondo: el comensal tocaba el botón, ordenaba otra vez y el restaurante le abría
-   una MESA NUEVA que nadie había pedido. Ahora la visita se despide de verdad. */
-
-/* Media hora. Es lo que la despedida se queda pegada a ESTE teléfono aunque recargue o vuelva
-   a escanear el QR: alcanza de sobra para levantarse de la mesa y salir del restaurante, y es
-   lo bastante corto para que el mismo aparato —el que se presta, el de la casa, el del comensal
-   que regresa en la noche— vuelva a servir para ordenar sin que nadie tenga que repararlo. */
-const DESPEDIDA_MS = 30 * 60 * 1000;
-function guardarDespedida(d){
-  try{ localStorage.setItem(LSK('mb_visita_cerrada'), JSON.stringify(d)); }catch(e){}
-}
-/* La despedida vigente de este teléfono, o null si no hay o si ya se le pasó la hora. Una
-   despedida vencida se borra aquí mismo: si no, el marcador se queda de fantasma para siempre. */
-function leerDespedida(){
-  try{
-    const d = JSON.parse(localStorage.getItem(LSK('mb_visita_cerrada')) || 'null');
-    if(!d || !d.ts) return null;
-    if(Date.now() - (+d.ts || 0) > DESPEDIDA_MS){ localStorage.removeItem(LSK('mb_visita_cerrada')); return null; }
-    return d;
-  }catch(e){ return null; }
-}
-/* El logo, con el mismo criterio que el encabezado: se enseña cuando ya está DIBUJADO. La
-   diferencia es que aquí el hueco no se deja nunca en blanco —el nombre en tipografía ocupa
-   el lugar desde el primer cuadro— así que si la imagen no llega, no hay nada que reparar. */
-function pintarMarcaDespedida(cont){
-  const nombre = RESTAURANTE.nombre || ((MARCA.prefijo ? MARCA.prefijo + ' ' : '') + MARCA.nombre);
-  cont.innerHTML = `<div class="dp-nombre">${escResena(nombre)}</div>`;
-  if(!MARCA.logo) return;
-  const img = new Image();
-  img.alt = escResena(nombre);
-  const mostrar = () => { if(img.naturalWidth){ cont.innerHTML = ''; cont.appendChild(img); } };
-  img.src = MARCA.logo;
-  if(img.complete && img.naturalWidth) mostrar();
-  else if(img.decode) img.decode().then(mostrar).catch(() => {});
-  else img.onload = mostrar;
-}
-/* Todo lo que se pinta sale del marcador, nunca de la red: esta pantalla tiene que poder
-   repintarse igual tras una recarga, con el teléfono en modo avión si hace falta. */
-function pintarDespedida(d){
-  const cuenta = [];
-  if(d.total > 0) cuenta.push(`<div class="dp-ren"><span class="caps">Total pagado</span><span class="leader"></span><b>${fmt(d.total)} ${RESTAURANTE.moneda}</b></div>`);
-  /* propina null = nunca la marcó: no se inventa un renglón. propina 0 = eligió no dejar, y eso
-     sí se dice, pero con palabras: un «$0» en la despedida se lee como un reproche. */
-  if(d.propina != null){
-    cuenta.push(d.propina > 0
-      ? `<div class="dp-ren"><span class="caps">Propina</span><span class="leader"></span><b>${fmt(d.propina)} ${RESTAURANTE.moneda}</b></div>`
-      : `<div class="dp-ren"><span class="caps">Propina</span><span class="leader"></span><span class="dp-dicho">Esta vez preferiste no dejar</span></div>`);
-  }
-  /* Ni una palabra de puntos para quien vino como invitado: ofrecerle un saldo que no tiene
-     sería enseñarle una puerta cerrada justo cuando se está despidiendo. */
-  const puntos = d.conCliente ? `
-    <div class="dp-puntos">
-      <div class="caps">★ Tu cuenta de puntos</div>
-      <div class="dp-gano"><b>+${d.puntos || 0}</b> ${(d.puntos === 1) ? 'punto por esta visita' : 'puntos por esta visita'}</div>
-      <div class="dp-saldo">Llevas ${d.saldo || 0} en total</div>
-    </div>` : '';
-  const resena = d.resena ? `
-    <div class="dp-resena">
-      <div class="dp-r-tit">¿Nos regalas una reseña?</div>
-      ${bloqueResenaHTML(d.resena)}
-    </div>` : '';
-  $('#despedida').innerHTML = `
-    <div class="dp-caja">
-      <div class="dp-marca" id="dpMarca"></div>
-      <div class="conf-sello"><div class="interior"><b>GRACIAS</b><span>por tu visita</span></div></div>
-      <h2>${d.nombre ? 'Gracias, ' + escResena(d.nombre) : 'Tu cuenta quedó pagada'}</h2>
-      <div class="dp-sub">${d.nombre ? 'Tu cuenta quedó pagada y tu mesa cerrada.' : 'Todo quedó saldado con tu mesero.'} Fue un gusto atenderte.</div>
-      ${cuenta.length ? `<div class="dp-cuenta">${cuenta.join('')}</div>` : ''}
-      ${puntos}
-      ${resena}
-      <div class="dp-cierre">Ya puedes cerrar esta ventana.</div>
-      <div class="dp-pie">Si quieres ordenar otra vez, vuelve a escanear el código QR de tu mesa: se abre una cuenta nueva. No es una falla — ésta ya quedó pagada.</div>
-      <div class="dp-orn">✳</div>
-    </div>`;
-  pintarMarcaDespedida($('#dpMarca'));
-}
-/* La puerta de un solo sentido. De aquí no hay botón, ni enlace, ni «atrás» que regrese al
-   menú: mientras el marcador esté fresco, esta pantalla es todo lo que hay. */
-function entrarDespedida(d){
-  visitaCerrada = true;
-  detenerSondeo();
-  cerrarSheets();
-  cerrarVisor();
-  const g = $('#guia');
-  if(g) g.classList.remove('visible');
-  document.body.classList.add('con-despedida');
-  pintarDespedida(d);
-  $('#despedida').classList.add('visible');
-  window.scrollTo({ top: 0 });
-  try{ history.pushState({ v: 'despedida' }, ''); }catch(e){}
-}
-/* Los puntos los abona el panel de forma asíncrona en el mismo instante en que cobra, así que
-   esta lectura puede llegar antes que el abono y traer el saldo viejo. Se hace UNA sola vez y
-   se conserva el número mayor entre lo que dice la nube y lo que ya sabíamos sumado: nunca le
-   enseñamos menos puntos de los que le tocan. Sin reintentos en bucle — es una cortesía, no
-   un dato con el que se pague nada. */
-async function refrescarSaldoDespedida(d){
-  if(!cliente || cliente.id == null) return;
-  try{
-    const cf = await api(`menusbot_clientes?id=eq.${cliente.id}&select=puntos`);
-    const leido = (cf && cf[0]) ? (+cf[0].puntos || 0) : 0;
-    d.saldo = Math.max(leido, +d.saldo || 0);
-    cliente.puntos = d.saldo;
-    try{ localStorage.setItem(LSK('mb_cliente'), JSON.stringify(cliente)); }catch(e){}
-    guardarDespedida(d);
-    pintarDespedida(d);
-  }catch(e){}
-}
 function cerrarVisita(){
-  if(visitaCerrada) return;
-  /* El total y la propina se leen ANTES de limpiar nada: dos líneas más abajo `ordenes` y
-     `totalMesaSrv` quedan vacíos y el resumen ya no tendría de dónde sacarlos. */
-  const totalPagado = totalMesaActual();
-  const propinaMarcada = propinaSugerida;
-  /* Un punto por cada $10 de lo que consumió ESTE cliente. La fórmula de verdad la ejecuta el
-     panel al cobrar (Math.floor(suma/10), en panel.html); aquí sólo se repite para poder
-     enseñársela al comensal. Están escritas en dos lados: si allá cambia, hay que cambiarla
-     aquí también o el número de la despedida no cuadrará con su saldo real. */
-  const puntosGanados = cliente ? Math.floor(ordenes.reduce((s, o) => s + (+o.total || 0), 0) / 10) : 0;
-  /* La invitación a reseñar viaja con sus enlaces DENTRO del marcador: tras una recarga ya no
-     habrá sondeo que traiga la configuración del restaurante, y la despedida tiene que verse
-     idéntica. Si ya se le ofreció durante la visita, no se le insiste. */
-  const cfgR = (config && config.resenas) || {};
-  const despedida = {
-    ts: Date.now(),
-    mesa, suc: SUC,
-    total: totalPagado,
-    propina: propinaMarcada,
-    conCliente: !!cliente,
-    nombre: cliente ? (cliente.nombre || '') : '',
-    puntos: puntosGanados,
-    saldo: cliente ? (+cliente.puntos || 0) + puntosGanados : 0,
-    /* Aquí NO se mira `resenaOfrecida` a propósito. Esa bandera existe para que la hoja
-       deslizante no le brinque encima dos veces durante la comida; la despedida es otra cosa:
-       es la última pantalla que va a ver, ya pagó, ya se va, y es el momento en que de verdad
-       puede sentarse a escribir la reseña. En el camino más común la invitación ya salió al
-       elegir la propina —y aun así tiene que volver a estar aquí, quieta y sin empujar. */
-    resena: resenasActivas()
-      ? { activo:true, google: cfgR.google, facebook: cfgR.facebook, incentivo: cfgR.incentivo }
-      : null,
-  };
   ordenes = []; misIds = []; pedido = []; cuentaPedida = false;
   /* Visita nueva, cortesía nueva: la siguiente mesa sí vuelve a ver la invitación a reseñar */
   resenaOfrecida = false;
@@ -2699,14 +2328,22 @@ function cerrarVisita(){
   mesaChequeada = false; bienvenidaPend = false; propinaSugerida = null; ordenRechazada = null;
   /* Mesa nueva: si el mesero vuelve a pedir la propina, la hoja tiene que poder abrirse otra vez */
   propinaPedidaAtendida = false; propinaPend = false; propinaPorPeticion = false;
-  /* Se cierra la sesión de MESA y nada más. `mb_cliente` se queda intacto a propósito: su cuenta
-     de puntos no tiene por qué morirse porque haya pagado la comida — es justo lo que hace que
-     la próxima vez lo reconozcamos por su nombre. */
   try{ localStorage.removeItem(LSK('mb_sesion_v1')); localStorage.removeItem(LSK('mb_mesa_intentos')); localStorage.removeItem(LSK('mb_mesa_saludo')); }catch(e){}
-  guardarDespedida(despedida);
   pintarIndicadores();
-  entrarDespedida(despedida);
-  refrescarSaldoDespedida(despedida);
+  const pideResena = resenasActivas();
+  $('#hojaConf').innerHTML = `
+    <div class="confirmacion">
+      <div class="conf-sello"><div class="interior"><b>GRACIAS</b><span>por tu visita</span></div></div>
+      <h2>Cuenta pagada</h2>
+      <div class="nota-pie" style="margin:18px 0 0;text-align:left">Tu cuenta quedó cerrada. Si ordenas de nuevo, empezará una cuenta nueva para tu mesa. ¡Hasta pronto!</div>
+      ${pideResena ? bloqueResenaHTML() : ''}
+      <div class="acciones-orden" style="padding:${pideResena ? '14px' : '22px'} 0 0">
+        <button class="${pideResena ? 'btn-fantasma' : 'btn-primario'}" onclick="cerrarSheets();mostrarVista('menu')">Volver a la carta</button>
+      </div>
+    </div>`;
+  abrirVelo();
+  $('#hojaConf').classList.add('abierta');
+  if(vistaActual === 'cuenta') pintarVistaCuenta();
 }
 
 /* ---------- Invitación a reseñar en Google / Facebook (la enciende el restaurante) ---------- */
@@ -2721,11 +2358,9 @@ function resenasActivas(){
   const r = (config && config.resenas) || {};
   return r.activo === true && !!(linkResena(r.google) || linkResena(r.facebook));
 }
-/* Misma fila de botones en la hoja y en la despedida: una sola verdad visual. Recibe los datos
-   por parámetro porque la despedida los pinta desde su marcador guardado —ahí ya no hay sondeo
-   que traiga `config`— y el resto de la carta los toma, como siempre, de la configuración viva. */
-function bloqueResenaHTML(datos){
-  const r = datos || (config && config.resenas) || {};
+/* Misma fila de botones en la hoja y en la pantalla de "Cuenta pagada": una sola verdad visual */
+function bloqueResenaHTML(){
+  const r = (config && config.resenas) || {};
   const g = linkResena(r.google), f = linkResena(r.facebook);
   const incentivo = escResena((r.incentivo || '').trim());
   const btn = (href, txt, extra) => `<a href="${escResena(href)}" target="_blank" rel="noopener" class="btn-primario" style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;box-sizing:border-box;padding:16px 10px;letter-spacing:1.6px;line-height:1.45;${extra}">${txt}</a>`;
@@ -2733,7 +2368,7 @@ function bloqueResenaHTML(datos){
       ${g ? btn(g, 'Reseñar en Google', '') : ''}
       ${f ? btn(f, 'Reseñar en Facebook', 'background:var(--oro)') : ''}
     </div>
-    ${incentivo ? `<div style="margin-top:11px;font-family:var(--grot);font-size:14px;letter-spacing:1.5px;text-transform:uppercase;color:var(--humo2);line-height:1.7;text-align:left">${incentivo}</div>` : ''}`;
+    ${incentivo ? `<div style="margin-top:11px;font-family:var(--grot);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--humo2);line-height:1.7;text-align:left">${incentivo}</div>` : ''}`;
 }
 function pintarHojaResena(){
   const r = (config && config.resenas) || {};
@@ -2863,43 +2498,10 @@ function salirCliente(){
   if(vistaActual === 'cuenta') pintarVistaCuenta();
 }
 
-/* ---------- Mudanza de dirección pública ----------
-   Las claves de este teléfono llevan el slug pegado (ver LSK), así que al mudarse hay que
-   llevárselas: si no, el comensal que está a media comida pierde su sesión, su mesa, su
-   código y sus puntos, y la mesa se le queda amarrada a una dirección que ya no existe. */
-const CLAVES_MUDANZA = ['mb_cliente','mb_sesion_v1','mb_mesa_intentos','mb_mesa_saludo','mb_guia_v1','mb_invitado','mb_puntos_visto','mb_marca','mb_visita_cerrada'];
-function mudarse(nuevo){
-  if(!/^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/.test(nuevo) || nuevo === RID) return;
-  const nk = k => nuevo === 'bellavita' ? k : k + '::' + nuevo;
-  try{
-    CLAVES_MUDANZA.forEach(k => {
-      const v = localStorage.getItem(LSK(k));
-      /* Si en la dirección nueva ya hay algo, manda lo nuevo: no se pisa una sesión viva */
-      if(v != null && localStorage.getItem(nk(k)) == null) localStorage.setItem(nk(k), v);
-    });
-  }catch(e){}
-  const p = new URLSearchParams(location.search);
-  p.set('r', nuevo);
-  location.replace(location.pathname + '?' + p.toString());
-}
-
 /* ---------- Arranque ---------- */
 $('#buscar').addEventListener('input', pintarLista);
-/* La marca que este teléfono ya conoce se pinta ANTES de hablar con la nube. Es lo que
-   evita el destello: el encabezado nace con el logo correcto en vez de con un nombre ajeno. */
-{
-  const mem = marcaRecordada();
-  if(mem && mem.nombre){ MARCA = Object.assign({}, MARCA, mem); aplicarMarca(); }
-}
-/* Antes que cualquier otra cosa: si este teléfono ya pagó y se despidió, se queda en la
-   despedida. No se abre mesa, no se restaura sesión, no se sondea la nube y ni el ?mesa=N del
-   QR se cuela — volver a entrar por el código es justamente lo que abriría la mesa nueva que
-   nadie pidió. Cuando el marcador caduca (media hora), el arranque vuelve a ser el de siempre. */
-{
-  const visitaTerminada = leerDespedida();
-  if(visitaTerminada) entrarDespedida(visitaTerminada);
-  else { sincronizar(); iniciarMesa(); }
-}
+sincronizar();
+iniciarMesa();
 pintarMarquee();
 pintarControles();
 pintarDestacados();
