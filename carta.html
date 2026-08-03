@@ -661,6 +661,10 @@ if(!RID){
 }
 /* Claves de almacenamiento separadas por restaurante (el demo conserva las suyas) */
 const LSK = k => RID === 'bellavita' ? k : k + '::' + RID;
+/* La carta de ejemplo —la que se abre desde la landing— es el único lugar donde se vale
+   simular la cocina. En un restaurante de verdad la cocina son personas, no un temporizador.
+   Se define igual que en el panel para que las dos pantallas entiendan lo mismo por «demo». */
+const MODO_DEMO = PARAMS_URL.has('demo') || RID === 'bellavita';
 
 /* ---------- Que la marca no parpadee ----------
    El HTML trae un nombre escrito porque algo tiene que haber antes de que la nube conteste.
@@ -884,6 +888,13 @@ Object.defineProperty(window, 'config', {
 let sinConexion = false;
 /* Se enciende cuando ya leímos la configuración del restaurante al menos una vez */
 let configCargada = false;
+/* CUIDADO — esto NO sirve para saber si el restaurante está atendido, y ya nadie lo usa.
+   `adminVisto` sólo lo escribe panel.html, y sólo mientras alguien tenga el panel del dueño
+   abierto en una pestaña. El servicio real se lleva desde cocina.html y mesero.html, que no
+   lo tocan nunca: un restaurante lleno, con la cocina y los meseros trabajando, deja esto en
+   falso toda la noche. Se usaba como compuerta del simulador de cocina y por eso el simulador
+   corría en producción. Si necesitas saber si hay alguien del otro lado, mídelo con algo que
+   cocina o el mesero escriban de verdad; esta señal te va a mentir. */
 const adminActivo = () => (Date.now() - (dbCache.adminVisto || 0)) < 30000;
 
 /* ---------- Temas (el restaurante los elige desde su panel) ---------- */
@@ -2633,21 +2644,75 @@ async function enviarOrden(){
   pedido = [];
   pintarIndicadores();
   mostrarConfirmacion(o);
-  programarEstados(o);
+  /* Sólo el demo se cocina solo. En producción esta orden avanza cuando cocina la avanza. */
+  if(MODO_DEMO) programarEstados(o);
   if(vistaActual === 'orden') pintarVistaOrden();
   /* La cuenta acaba de crecer: si su propina era un porcentaje, que siga siendo ese porcentaje */
   ajustarPropinaAlTotal();
 }
-/* Si el panel del restaurante no está atendido, la cocina se simula */
+/* Cocina simulada — SÓLO para la carta de ejemplo.
+   Esto existe para que el demo se mueva solo cuando no hay nadie del otro lado, y se estaba
+   colando a producción. La única compuerta era `adminActivo()`, que únicamente es cierta
+   mientras alguien tiene abierto el panel del dueño; un restaurante que trabaja con cocina y
+   mesero —que es como se trabaja— la dejaba en falso siempre. Resultado: el simulador
+   adelantaba TODA orden real, a los 9 s a preparación y a los 22 s a lista para recoger, y
+   cuando el mesero por fin la autorizaba, cocina la leía ya en estado 2 y la pintaba lista
+   sin que nadie la hubiera cocinado. Ahora la compuerta es el modo demo y nada más.
+
+   Dentro del demo se simula el servicio COMPLETO y en el orden verdadero, porque la carta de
+   ejemplo es lo que ve el restaurantero antes de decidirse y tiene que contarle el producto
+   tal como es: el mesero pasa a la mesa y confirma la orden, después la cocina la recibe, la
+   prepara, la deja lista, y al final alguien la levanta y va en camino. */
 function programarEstados(o){
-  const avanza = nivel => async () => {
-    /* Si entre tanto se cobró la mesa, este temporizador quedó colgando de una visita que ya
-       no existe: se vuelve inofensivo en vez de escribirle a una orden cerrada. */
-    if(visitaCerrada || adminActivo() || !o.dbId) return;
-    try{ await api(`menusbot_ordenes?id=eq.${o.dbId}&estado=lt.${nivel}`, { method:'PATCH', body: JSON.stringify({ estado: nivel }) }); }catch(e){}
-  };
-  setTimeout(avanza(1), 9000);
-  setTimeout(avanza(2), 22000);
+  if(!MODO_DEMO) return;   // cinturón, además del tirante que hay en quien la llama
+  const pausa = ms => new Promise(r => setTimeout(r, ms));
+  /* Se revisa antes de CADA paso, no una sola vez al principio: entre un paso y el siguiente
+     pasan segundos en los que la mesa se pudo cobrar y la visita pudo terminar. */
+  const vivo = () => !visitaCerrada && MODO_DEMO && !!o.dbId;
+  /* Los pasos van encadenados y no como temporizadores sueltos, porque el orden es el punto:
+     cada uno arranca cuando el anterior ya quedó escrito. Los tiempos están medidos contra el
+     sondeo de 4 s de esta misma pantalla — cada tramo dura al menos dos vueltas, así ningún
+     par de cambios se junta en el mismo refresco y el visitante ve los cuatro avisos por
+     separado, que es justo lo que se le quiere enseñar. En total 35 s: alcanza a contarse la
+     historia completa sin que nadie se quede mirando el teléfono a la espera. */
+  (async () => {
+    /* 1. El mesero simulado confirma la orden en la mesa. Este paso no existía y por eso el
+       demo se quedaba clavado en «por confirmar» para siempre. El filtro `verificacion=eq.pendiente`
+       va en la consulta: si algo real le pasó a la orden mientras tanto —la rechazaron, o un
+       mesero de carne y hueso se adelantó— aquí no se pisa nada. */
+    await pausa(7000);
+    if(!vivo()) return;
+    /* El nombre sale de los meseros que el propio restaurante tiene configurados (en el demo,
+       la lista semilla del panel), no de uno inventado: así el registro del panel no acaba con
+       un nombre huérfano que nadie reconoce. */
+    const equipo = ((config && config.meseros) || []).filter(Boolean);
+    const quien = equipo[0] || 'Marco';
+    try{
+      await api(`menusbot_ordenes?id=eq.${o.dbId}&verificacion=eq.pendiente`, { method:'PATCH',
+        body: JSON.stringify({ verificacion:'ok', autorizada_por: quien, autorizada_at: new Date().toISOString() }) });
+    }catch(e){ return; }
+    /* A propósito NO se toca `o.verificacion` aquí: se deja que el sondeo lo descubra solo,
+       que es lo que dispara el aviso «confirmada — ya está en la cocina». Adelantarlo en
+       memoria se comería ese paso de la historia. */
+
+    /* 2 y 3. Ahora sí, la cocina. Cada avance lleva DOS candados en la propia consulta:
+       `estado=lt.N` para no retroceder nunca, y `verificacion=eq.ok` para que sea imposible
+       —por construcción, no por suerte— adelantar una orden que nadie autorizó. */
+    for(const [nivel, espera] of [[1, 10000], [2, 10000]]){
+      await pausa(espera);
+      /* Guarda local, redundante a propósito: si el mesero de verdad la rechazó, el sondeo ya
+         lo sabe y aquí se frena sin necesidad de preguntarle nada al servidor. */
+      if(!vivo() || esPendiente(o)) return;
+      try{ await api(`menusbot_ordenes?id=eq.${o.dbId}&estado=lt.${nivel}&verificacion=eq.ok`, { method:'PATCH', body: JSON.stringify({ estado: nivel }) }); }catch(e){ return; }
+    }
+
+    /* 4. El plato sale de la cocina y ahí se queda hasta que un mesero lo levanta: sin
+       `recogida_at` el estado 2 se lee a medias y la orden se congela en «Lista en cocina»
+       sin llegar nunca a «En camino a tu mesa». Éste es el paso que cierra la historia. */
+    await pausa(8000);
+    if(!vivo() || esPendiente(o)) return;
+    try{ await api(`menusbot_ordenes?id=eq.${o.dbId}&estado=eq.2&verificacion=eq.ok&recogida_at=is.null`, { method:'PATCH', body: JSON.stringify({ recogida_at: new Date().toISOString() }) }); }catch(e){}
+  })();
 }
 function refrescarEstadoUI(){
   pintarIndicadores();

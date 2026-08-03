@@ -77,6 +77,20 @@
      enterarse desde el otro lado del pasillo, no leyendo letras chicas. */
   .vivo.caido{background:var(--al-roja);border-color:var(--al-roja);color:var(--al-txt)}
   .vivo.caido i{background:var(--al-txt);animation:none}
+  /* ---------- Quiénes están del otro lado ----------
+     Va en el encabezado y no en una ventana: en la cocina nadie tiene las manos libres para
+     cerrar avisos, y el dato hace falta todo el turno, no una vez al entrar. */
+  .presencia{display:flex;align-items:center;gap:9px;min-width:0;max-width:100%;font-size:14px;
+    letter-spacing:1.2px;font-weight:700;color:var(--humo);border:1px solid var(--linea2);
+    padding:9px 14px;border-radius:2px;line-height:1.35}
+  .presencia i{width:8px;height:8px;border-radius:50%;background:var(--humo);flex-shrink:0}
+  .presencia span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .presencia.hay{color:var(--basilico)}
+  .presencia.hay i{background:var(--basilico);animation:parp 1.6s infinite}
+  /* Cero meseros no es un detalle de pantalla: es que el plato que salga no lo va a levantar
+     nadie. Se pinta con el mismo rojo que la caída de internet, y por el mismo motivo. */
+  .presencia.nadie{background:var(--al-roja);border-color:var(--al-roja);color:var(--al-txt)}
+  .presencia.nadie i{background:var(--al-txt);animation:none}
   @keyframes parp{0%,100%{opacity:1}50%{opacity:.25}}
   .acciones-sup{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
   .btn-sec{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid var(--linea2);background:transparent;color:var(--crema);font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:10px 14px;border-radius:2px;cursor:pointer;line-height:1.4;white-space:nowrap}
@@ -199,6 +213,9 @@
   <header class="barra-sup">
     <div class="marca" id="marcaCocina">Cocina<small id="marcaSub">MenusBot</small></div>
     <div class="vivo" id="chipVivo"><i></i><span id="chipVivoTxt">EN VIVO</span></div>
+    <!-- Nace en gris: dar por hecho que no hay meseros antes de haber podido preguntar sería
+         encender la alarma por una consulta que todavía no volvía. -->
+    <div class="presencia" id="chipMeseros"><i></i><span id="chipMeserosTxt">COMPROBANDO MESEROS</span></div>
     <div class="acciones-sup">
       <button class="btn-sec" id="btnSonido">SONIDO</button>
       <button class="btn-sec" id="btnCompleta">PANTALLA COMPLETA</button>
@@ -273,7 +290,25 @@ const SUC = PARAMS.get('s') || PARAMS.get('suc') || '';
    (el celular del que instala, por ejemplo) no se pisan la sesión. */
 const LSK = k => k + '::' + RID;
 
-const SUPA_URL = 'https://xwcgqhlsubyfmpdjabjt.supabase.co';
+/* Identidad del dispositivo, copiada de carta.html. Llave GLOBAL a propósito (sin LSK): esta
+   tele es la misma tele aunque le cambien el restaurante en la URL, y si el id cambiara con
+   el slug quedaría una fila de presencia huérfana latiendo por cada cambio. */
+const DISP = (() => {
+  try{
+    let d = localStorage.getItem('mb_disp');
+    if(!d){
+      d = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+        : 'd-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+      localStorage.setItem('mb_disp', d);
+    }
+    return d;
+  }catch(e){
+    /* Navegación privada sin storage: id de una sola sesión, mejor que no tener ninguno */
+    return 'd-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+  }
+})();
+
+const SUPA_URL ='https://xwcgqhlsubyfmpdjabjt.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3Y2dxaGxzdWJ5Zm1wZGphYmp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMTc5NjYsImV4cCI6MjA5Nzg5Mzk2Nn0.DK4oPmMcNA0xLwkAkxGigiudIZUobxB_UYFurrMCc9g';
 
 /* Declaración de función a propósito (no const): las pruebas la sustituyen.
@@ -598,6 +633,7 @@ $('#btnSonido').addEventListener('click', () => {
 $('#btnSalir').addEventListener('click', () => {
   if(!armar('salir')){ toast('Toca otra vez para cerrar esta pantalla'); return; }
   try{ localStorage.removeItem(LSK('mb_cocina')); }catch(e){}
+  borrarPresencia();   /* que el mesero lo sepa desde este segundo, no en 90 */
   clearInterval(timerSondeo); timerSondeo = null;
   sesion = null; ordenes = []; vistos = null;
   location.reload();
@@ -609,12 +645,137 @@ $('#btnSalir').addEventListener('click', () => {
    plano; con eso basta. */
 function arrancarSondeo(){
   if(timerSondeo) return;
+  /* Se reinicia el contador para que el primer latido salga en la vuelta de ya, sin esperar
+     los 30 s: el mesero que abre una mesa en ese momento tiene que ver la cocina encendida. */
+  tickPres = 0;
   sondear();
   timerSondeo = setInterval(sondear, 4000);
 }
 
+/* ==================================================================
+   PRESENCIA — QUIÉN ESTÁ DEL OTRO LADO
+   ==================================================================
+   Nadie marca «ya abrí» a mano: esta pantalla está presente porque está abierta y latiendo.
+   Un botón de «estoy listo» se queda encendido toda la noche después de que apagaron la
+   tele, y entonces miente peor que no tener nada.
+
+   NADA DE ESTO PUEDE TIRAR EL SERVICIO. Cada llamada trae su propio try/catch y el error se
+   traga en silencio: la presencia es un extra, sacar la comida es el trabajo. */
+
+/* 90 segundos para tres latidos de 30. Generoso a propósito: los relojes de una tablet vieja
+   y de un teléfono no coinciden, y medio minuto de desfase no puede significar «se fueron
+   todos los meseros». Mismo criterio que latido_at en las mesas abiertas. */
+const PRES_VIVO_MS = 90000;
+const PRES_CADA_TICKS = 8;        /* 8 vueltas de 4 s ≈ 32 s entre latidos */
+
+/* Este archivo no traía contador de vueltas: el sondeo hacía lo mismo cada 4 segundos. Se
+   agrega uno sólo para la presencia, para no mandar un upsert cada cuatro segundos toda la
+   noche por un dato que cambia cada media hora. */
+let tickPres = 0;
+let meserosVivos = [];            /* nombres de los meseros despiertos en esta sucursal */
+let presLeida = false;            /* ¿alguna vez pudimos preguntar? */
+/* La sucursal con la que se escribió la fila: el borrado tiene que apuntar a la MISMA o deja
+   la fila vieja latiendo sin nadie detrás. Aquí SUC es const y no cambia, pero se guarda
+   igual para que el día que deje de serlo esto no se rompa en silencio. */
+let presSucEscrita = null;
+
+/* Sin sucursal en el enlace se ve todo el local; con sucursal se cuentan los de mi piso y
+   también los que no traen ninguna — esos nacieron de un enlace incompleto y siguen siendo
+   gente real trabajando. La columna es not null default '' en la base, pero se trata el NULL
+   igual por si alguien inserta a mano desde el editor. */
+function presDeMiPiso(f){
+  const suya = (f && f.sucursal) || '';
+  return !SUC || !suya || suya === SUC;
+}
+
+async function latirPresencia(){
+  try{
+    await api('menusbot_presencia?on_conflict=restaurante_id,sucursal,rol,dispositivo_id', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      /* visto_at va explícito: en un conflicto el default de la columna ya no se dispara, así
+         que sin esta línea la fila se quedaría con la hora del primer insert y la cocina se
+         vería apagada a los 90 segundos de haberla encendido.
+         quien va en null a propósito: la cocina es un cuarto, no una persona. */
+      body: JSON.stringify({
+        restaurante_id: RID, sucursal: SUC, rol: 'cocina',
+        quien: null, dispositivo_id: DISP,
+        visto_at: new Date().toISOString(),
+      }),
+    });
+    presSucEscrita = SUC;
+  }catch(e){}
+}
+
+async function leerPresencia(){
+  try{
+    const corte = new Date(Date.now() - PRES_VIVO_MS).toISOString();
+    const filas = await api('menusbot_presencia?restaurante_id=eq.' + encodeURIComponent(RID) +
+      '&rol=eq.mesero&visto_at=gte.' + encodeURIComponent(corte) +
+      '&select=sucursal,quien,visto_at&order=visto_at.desc&limit=80');
+    /* Se cuentan PERSONAS, no filas: el mismo mesero con el teléfono y una tablet son dos
+       filas (el índice único es por dispositivo) y decir «2 meseros · Ana» sería mentira. */
+    const vistos = [];
+    (filas || []).filter(presDeMiPiso).forEach(f => {
+      const n = String(f.quien == null ? '' : f.quien).trim() || 'Sin nombre';
+      if(vistos.indexOf(n) === -1) vistos.push(n);
+    });
+    meserosVivos = vistos;
+    presLeida = true;
+  }catch(e){
+    /* Se conserva lo último que supimos. Encender la alarma porque se cayó el internet de
+       esta tele sería mandar a alguien a buscar meseros que están en el salón. */
+  }
+  pintarPresencia();
+}
+
+/* Latido y lectura viajan juntos: escribir sin leer deja a la cocina a ciegas y leer sin
+   escribir la desaparece de la pantalla del mesero. */
+async function pulsoPresencia(){
+  try{ await latirPresencia(); await leerPresencia(); }catch(e){}
+}
+
+/* Al salir, esta pantalla se lleva SU fila. Sin esto, una tele apagada sigue contando como
+   cocina abierta hasta que caduque, y el mesero mandaría comandas a un cuarto vacío. */
+function borrarPresencia(){
+  try{
+    if(presSucEscrita === null) return;
+    /* keepalive: el borrado se dispara justo antes del location.reload() y sin él el
+       navegador cancela la petición a medio camino. */
+    api('menusbot_presencia?restaurante_id=eq.' + encodeURIComponent(RID) +
+      '&sucursal=eq.' + encodeURIComponent(presSucEscrita) +
+      '&rol=eq.cocina&dispositivo_id=eq.' + encodeURIComponent(DISP),
+      { method: 'DELETE', keepalive: true }).catch(() => {});
+    presSucEscrita = null;
+  }catch(e){}
+}
+
+function pintarPresencia(){
+  const c = $('#chipMeseros');
+  if(!c) return;
+  const n = meserosVivos.length;
+  c.classList.toggle('hay', presLeida && n > 0);
+  c.classList.toggle('nadie', presLeida && n === 0);
+  let txt;
+  if(!presLeida) txt = 'COMPROBANDO MESEROS';
+  else if(!n) txt = 'SIN MESEROS CONECTADOS';
+  else {
+    /* Tres nombres y el resto en número: el encabezado es una línea, no una lista de raya. */
+    const muestra = meserosVivos.slice(0, 3).join(', ');
+    txt = n + (n === 1 ? ' MESERO · ' : ' MESEROS · ') + muestra + (n > 3 ? ' y ' + (n - 3) + ' más' : '');
+  }
+  $('#chipMeserosTxt').textContent = txt;
+  /* La lista completa se queda a la mano de quien pase el dedo o el ratón encima. */
+  c.title = presLeida && n ? meserosVivos.join(', ') : txt;
+}
+
 async function sondear(){
   if(!RID || !$('#app').classList.contains('activa')) return;
+  /* La presencia va ANTES de pedir las comandas y con contador propio: si la consulta de
+     órdenes se cae, esta tele tiene que seguir latiendo — está encendida y el mesero necesita
+     saberlo. Sin await: un latido lento no puede atrasar el sondeo que sí importa. */
+  if(tickPres % PRES_CADA_TICKS === 0) pulsoPresencia();
+  tickPres++;
   try{
     /* Solo se piden las columnas que trae esta pantalla (estado menor a 3) y nunca la
        columna de totales: los precios no tienen por qué llegar siquiera al navegador. */
