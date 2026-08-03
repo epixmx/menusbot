@@ -184,6 +184,7 @@
   .md-tag.ida{background:var(--al-ambar);border:1px solid var(--al-ambar)}     /* ojo: mesa abandonada */
   .md-tag.dato{background:var(--al-azul);border:1px solid var(--al-azul)}      /* información neutra */
   .md-tag.ok{background:var(--al-verde);border:1px solid var(--al-verde)}      /* confirmado */
+  .md-tag.huerfana{background:var(--al-ambar);border:1px solid var(--al-ambar)} /* ojo: mesa abierta sin sucursal habiendo sucursales */
   /* De qué sucursal es la mesa: dato neutro, pero tiene que verse o la mesa parece de aquí */
   .md-suc{font-family:var(--grot);font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:6px 9px;border-radius:2px;white-space:nowrap;color:var(--al-txt);background:var(--al-azul);border:1px solid var(--al-azul);line-height:1.5}
   /* Acciones de la fila: todas juntas a la derecha, y ninguna mesa se queda sin ellas */
@@ -192,6 +193,19 @@
   .md-sel{background:var(--esp2);border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:13px;letter-spacing:.4px;padding:12px 10px;border-radius:2px;outline:none;min-height:44px;max-width:210px}
   .md-sel:focus{border-color:var(--pomodoro)}
   .md-vacio{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--humo2);line-height:1.55}
+  /* Lo que se va a perder si se cancela la mesa: va rojo y ocupa su propio renglón completo,
+     porque enumera comandas, folios y monto y no debe leerse como una etiqueta más de la fila. */
+  .md-aviso{flex-basis:100%;border:1px solid var(--al-roja);border-left:3px solid var(--al-roja);border-radius:3px;background:rgba(217,45,32,.10);padding:11px 13px;margin:4px 0 2px;font-size:13.5px;color:var(--crema);line-height:1.7}
+  .md-aviso b{color:var(--al-roja)}
+  .md-aviso .md-aviso-folios{display:block;margin-top:5px;font-family:var(--grot);font-size:12.5px;letter-spacing:1px;color:var(--humo)}
+  /* Aviso de la vista QR: los códigos ya impresos traen la sucursal cocinada en la URL */
+  .qr-aviso{border:1px solid var(--al-ambar);border-left:3px solid var(--al-ambar);border-radius:3px;background:rgba(194,65,12,.10);padding:13px 16px;margin-bottom:16px;font-size:13.5px;color:var(--crema);line-height:1.75;max-width:80ch}
+  .qr-aviso b{color:var(--al-ambar)}
+  /* Ayuda debajo de un campo de formulario. No se reusa .hint (está acotada a
+     .mesas-abiertas .hint y es una leyenda horizontal de colores) ni .nota-pie (trae margen
+     superior de 18px y filete: está pensada para cerrar una vista entera, no para colgar de un
+     input). Esta va pegada al campo, chica y apagada, sin adornos. */
+  .ayuda-campo{display:block;margin-top:6px;font-size:12.5px;color:var(--humo2);line-height:1.65;max-width:60ch}
   /* órdenes por confirmar (mesa sin abrir) */
   .por-confirmar{border:1px solid rgba(201,162,39,.6);border-left:3px solid var(--oro);border-radius:3px;background:rgba(201,162,39,.08);padding:14px 16px;margin-bottom:16px;animation:llega .3s}
   .pc-fila{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0;border-bottom:1px dotted var(--linea)}
@@ -325,7 +339,10 @@
   .nota-pie{margin-top:18px;font-size:13.5px;color:var(--humo2);line-height:1.8;border-left:2px solid var(--linea2);padding-left:12px;max-width:74ch}
 
   /* llamadas de mesa */
-  .llamada{display:flex;align-items:center;gap:14px;border:1px solid rgba(228,89,59,.55);border-left:3px solid var(--pomodoro);background:rgba(228,89,59,.08);padding:12px 16px;border-radius:3px;margin-bottom:12px;animation:llega .3s}
+  /* flex-wrap: desde que la llamada de cuenta trae dos botones —cobrar y cancelar la solicitud—
+     la fila ya no cabe en una pantalla angosta y se salía por la derecha. Que baje el botón en
+     vez de desbordar; en la computadora del dueño, que es donde vive este panel, no cambia nada. */
+  .llamada{display:flex;flex-wrap:wrap;align-items:center;gap:14px;border:1px solid rgba(228,89,59,.55);border-left:3px solid var(--pomodoro);background:rgba(228,89,59,.08);padding:12px 16px;border-radius:3px;margin-bottom:12px;animation:llega .3s}
   @keyframes llega{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
   .llamada .l-txt{font-family:var(--serif);font-size:17px}
   .llamada .l-hace{font-size:13px;letter-spacing:1.4px;color:var(--humo);text-transform:uppercase;font-weight:700}
@@ -484,6 +501,9 @@
     <div id="llamadasZona"></div>
     <div id="porConfirmarZona"></div>
     <div id="rechazadasZona"></div>
+    <!-- Bitácora de mesas canceladas por el admin. Es un registro para el dueño, NO alimenta
+         ningún KPI ni reporte: una mesa cancelada no es una venta. -->
+    <div id="canceladasRegistro"></div>
     <div id="mesasAbiertasZona"></div>
     <div id="chipMeseroZona"></div>
     <div class="tablero">
@@ -719,7 +739,7 @@
         <div><div class="caps lbl">Tipo / prefijo</div><input class="filtro" id="mPrefijo" placeholder="Trattoria, Taquería, Restaurante…"></div>
         <div><div class="caps lbl">Nombre del restaurante</div><input class="filtro" id="mNombre" placeholder="Bella Vita"></div>
         <div><div class="caps lbl">Lema / eslogan</div><input class="filtro" id="mLema" placeholder="Est. 1987"></div>
-        <div><div class="caps lbl">Sucursales (separadas por coma)</div><input class="filtro" id="mSucursales" placeholder="Centro, Zona Río, Otay — vacío si solo hay una"></div>
+        <div><div class="caps lbl">Sucursales (separadas por coma)</div><input class="filtro" id="mSucursales" placeholder="Centro, Zona Río, Otay"><span class="ayuda-campo">Tu restaurante necesita al menos una: si solo tienes un local, escribe «Principal». De aquí salen los QR, las cocinas, las mesas y los reportes de cada sucursal, así que una mesa que se abre sin sucursal queda huérfana y no cuadra con ninguna. Si repites un nombre se queda una sola vez.</span></div>
         <!-- Cuántas mesas: hasta hoy este número se sembraba al darse de alta y no había forma de
              cambiarlo desde el panel. De él salen los QR imprimibles, los chips de mesas abiertas
              y la rejilla con la que se le asignan mesas a cada mesero. -->
@@ -800,6 +820,8 @@
         <button class="btn-sec" onclick="imprimirQRs()">Imprimir hoja de QRs</button>
       </div>
     </div>
+    <!-- Aviso: cambiaste de sucursales después de imprimir y los QR llevan la vieja en la URL -->
+    <div id="qrAvisoSuc"></div>
     <div class="temas-grid" id="qrGrid" style="grid-template-columns:repeat(4,1fr)"></div>
     <div class="nota-pie">Cada QR abre la carta de TU restaurante con la mesa ya asignada (…/carta.html?mesa=N&amp;r=tu-restaurante). El comensal escanea, ordena y su comanda llega aquí con su número de mesa. La URL pública general de tu carta aparece arriba en el encabezado.</div>
 
@@ -1032,6 +1054,10 @@ async function cargar(){
      abierta por un escaneo perdido. Va aquí y no en un temporizador aparte porque lo único que
      necesita es mirar lo que este sondeo ya trajo; no se le espera, para no retrasar la pantalla. */
   barrerMesasCaducadas();
+  /* Igual que el barrido de caducadas: mira lo que este sondeo ya trajo y no se le espera.
+     Si el restaurante quedó sin ninguna sucursal, le siembra una antes de que alguien abra
+     una mesa sin local al que asignarla. */
+  sembrarSucursalSiFalta();
 }
 async function configEscribir(mut){
   mut(cfgCache);
@@ -1138,6 +1164,60 @@ function llenarFormMarca(forzar){
   if(m.logo){ prev.src = m.logo; prev.style.display = 'block'; q.style.display = 'inline-block'; }
   else{ prev.style.display = 'none'; q.style.display = 'none'; }
 }
+/* ---------- La lista de sucursales ----------
+   Todo restaurante tiene por lo menos un local. Cuando la lista se quedaba vacía, la carta del
+   comensal no tenía de dónde escoger y el sistema abría mesas con sucursal '' : en la base esa
+   mesa convive con la de la sucursal buena —el índice único es restaurante_id + sucursal + mesa—
+   y la misma mesa 3 termina partida en dos cuentas que no se ven entre sí.
+   Se compara en minúsculas y sin acentos para cazar «Centro» / «centro» / «Céntro», pero se
+   guarda el literal que escribió el dueño: así sale en sus QR, en sus cocinas y en sus reportes.
+   Mismo enfoque de normalización que limpiarSlug(), con el rango de acentos combinantes. */
+function listaSucursalesLimpia(txt){
+  const vistas = new Set();
+  const limpias = [], repetidas = [];
+  for(const parte of String(txt == null ? '' : txt).split(',')){
+    const literal = parte.trim();
+    if(!literal) continue;
+    const llave = literal.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ');
+    if(vistas.has(llave)){ repetidas.push(literal); continue; }
+    vistas.add(llave);
+    limpias.push(literal);
+  }
+  return { limpias, repetidas };
+}
+/* Los restaurantes dados de alta antes de que la sucursal fuera obligatoria nacieron con la lista
+   vacía. Ese es el hueco por el que se colaban las mesas sin sucursal, así que en cuanto el panel
+   ve una configuración sin ningún local le siembra «Principal» y lo dice.
+   Dos banderas, porque el sondeo entra cada 4 segundos: `sembrandoSucursal` evita que dos vueltas
+   se pisen y escriban dos veces, y `sucursalSembradaAvisada` evita repetirle el mismo aviso al
+   dueño cada 4 segundos para siempre. */
+let sembrandoSucursal = false;
+let sucursalSembradaAvisada = false;
+function faltanSucursales(cfg){
+  const s = (cfg || {}).sucursales;
+  if(!Array.isArray(s)) return true;
+  return !s.some(x => String(x == null ? '' : x).trim());
+}
+async function sembrarSucursalSiFalta(){
+  if(MODO_DEMO) return;                       // la carta de ejemplo no es de nadie: no se le escribe
+  if(!enLinea) return;                        // sin lectura buena, cfgCache es todavía el molde de arranque
+  if(sembrandoSucursal) return;
+  if(!cfgCache || !cfgCache.config) return;
+  if(!faltanSucursales(cfgCache.config)) return;
+  sembrandoSucursal = true;
+  try{
+    await configEscribir(d => {
+      d.config.sucursales = ['Principal'];
+      d.config.sucursales_at = Date.now();
+    });
+    if(!sucursalSembradaAvisada){
+      sucursalSembradaAvisada = true;
+      toast('Tu restaurante no tenía ninguna sucursal dada de alta, así que le pusimos «Principal». Cámbiale el nombre en Identidad si tu local se llama de otro modo. Sin sucursal, las mesas se abrían sin local asignado y no cuadraban con las de nadie.');
+    }
+  }catch(e){
+    /* Que falle la escritura no debe dejar la bandera trabada: al siguiente sondeo se reintenta. */
+  }finally{ sembrandoSucursal = false; }
+}
 function guardarMarca(){
   /* El número de mesas se valida ANTES de tocar nada: si viene mal no se guarda tampoco el resto,
      porque guardar la identidad a medias y avisar de las mesas aparte confunde más que ayuda. */
@@ -1152,6 +1232,16 @@ function guardarMarca(){
      apareciendo marcadas como «fuera de tu cuenta» en Comandas. Se avisa para que no sorprenda. */
   const antes = nMesasConfig();
   const masAlta = Math.max(0, ...meserosActivos().map(m => Math.max(0, ...m.mesas)));
+  /* La lista de sucursales se valida igual de temprano y con el mismo criterio: si queda vacía NO
+     se guarda nada. Dejar al restaurante sin ningún local es justo lo que abre mesas sin sucursal. */
+  const { limpias: sucsNuevas, repetidas } = listaSucursalesLimpia($('#mSucursales').value);
+  if(!sucsNuevas.length){
+    toast('Tu restaurante necesita al menos una sucursal: si solo tienes un local escribe «Principal». Sin ninguna, el sistema abre mesas sin local asignado y esas mesas no cuadran con las de nadie.', true);
+    $('#mSucursales').focus();
+    return;
+  }
+  const sucsAntes = sucsCfg();
+  const sucsCambiaron = JSON.stringify(sucsAntes) !== JSON.stringify(sucsNuevas);
   configEscribir(d => {
     d.config.marca = { ...marcaDe(),
       prefijo: $('#mPrefijo').value.trim(),
@@ -1159,16 +1249,25 @@ function guardarMarca(){
       lema: $('#mLema').value.trim(),
       acento: $('#mAcento').value,
       secundario: $('#mSecundario').value };
-    d.config.sucursales = $('#mSucursales').value.split(',').map(x => x.trim()).filter(Boolean);
+    d.config.sucursales = sucsNuevas;
+    /* Sello de cuándo cambió la lista. La vista QR lo compara contra la fecha de impresión para
+       avisar que las hojas ya impresas llevan cocinada una sucursal que quizá ya no existe. */
+    if(sucsCambiaron) d.config.sucursales_at = Date.now();
     d.config.mesas = nMesas;
   });
   aplicarMarcaPanel(); llenarFormMarca(true);
+  /* Un solo aviso: el toast se pisa a sí mismo, así que lo de las mesas y lo de las sucursales
+     repetidas van en la misma frase en vez de competir por los mismos 2.6 segundos. */
+  let aviso;
   if(nMesas !== antes && masAlta > nMesas)
-    toast('Guardado con ' + nMesas + ' mesas. Ojo: alguien de tu equipo tiene asignada la mesa ' + masAlta + ', que ya no entra en la cuenta — revísalo en Equipo.');
+    aviso = 'Guardado con ' + nMesas + ' mesas. Ojo: alguien de tu equipo tiene asignada la mesa ' + masAlta + ', que ya no entra en la cuenta — revísalo en Equipo.';
   else if(nMesas !== antes)
-    toast('Identidad guardada — ahora son ' + nMesas + ' mesas: vuelve a imprimir tus QR');
+    aviso = 'Identidad guardada — ahora son ' + nMesas + ' mesas: vuelve a imprimir tus QR';
   else
-    toast('Identidad guardada — la carta del comensal y el panel ya la usan');
+    aviso = 'Identidad guardada — la carta del comensal y el panel ya la usan';
+  if(repetidas.length)
+    aviso += ' Quitamos de tus sucursales ' + repetidas.join(', ') + ' porque ya estaba' + (repetidas.length === 1 ? '' : 'n') + ' en la lista: el mismo local dos veces le partiría en dos sus mesas y sus reportes.';
+  toast(aviso);
 }
 /* ---------- Reseñas (Google / Facebook) ----------
    La forma de config.resenas es un contrato con la pantalla del comensal: no cambies las llaves.
@@ -1647,7 +1746,8 @@ function render(){
         <span class="l-txt">La mesa ${String(l.mesa).padStart(2,'0')}${l.sucursal ? ' · ' + l.sucursal : ''} ${esCuenta ? `<b style="color:var(--pomodoro)">pide la cuenta</b> — <b>${fmt(pendiente)}</b> por cobrar` : esTiempo ? `<b style="color:var(--oro)">pide su siguiente tiempo</b>` : 'llama al mesero'}</span>
         <span class="l-hace">hace ${mm(Date.now() - l.ts)}</span>
         ${esCuenta
-          ? `<button class="btn-avanza" style="margin-left:auto" onclick="cobrarMesa(${l.mesa}, ${l.ts})">Cobrada — cerrar mesa</button>`
+          ? `<button class="btn-avanza" style="margin-left:auto" onclick="cobrarMesa(${l.mesa}, ${l.ts})">Cobrada — cerrar mesa</button>
+             <button class="btn-sec ${solicitudArmada === l.ts ? 'md-btn armado' : ''}" onclick="cancelarSolicitudCuenta(${l.ts})" title="El comensal pidió la cuenta y cambió de opinión: quita la solicitud, descongela su propina y la mesa sigue abierta para que pueda seguir ordenando. No cobra nada.">${solicitudArmada === l.ts ? 'Confirmar cancelar' : 'Cancelar la solicitud'}</button>`
           : `<button class="btn-sec" onclick="atenderLlamada(${l.ts})">Atendida</button>`}
       </div>`;
     }).join('');
@@ -1691,6 +1791,8 @@ function render(){
         <span>${o.autorizada_por ? 'rechazó ' + escTxt(o.autorizada_por) : 'sin registro de quién'}${o.autorizada_at ? ' · ' + hora(o.autorizada_at) : ''}</span>
       </div>`).join('')}
     </div>` : '';
+    // Bitácora de mesas canceladas por el admin: registro para el dueño, fuera de todo reporte.
+    pintarCanceladas();
     // Chips de mesas abiertas (seguridad: solo mesas abiertas ordenan directo).
     // Los números son los configurados MÁS los que estén abiertos en la base aunque se salgan
     // de la cuenta: una mesa 9 con 8 mesas configuradas no tenía chip y se quedaba sin salida.
@@ -3246,13 +3348,17 @@ function ppGrupos(){
     falta: 'Todavía no hay nadie en el equipo. Da de alta al primero con su nombre y su PIN.',
     btn: 'Ir a Equipo', ir: ['equipo', 'equipoFormZona'],
   };
-  /* Sin sucursales NO es un error: el restaurante de un solo local es el caso normal. */
+  /* Quedarse sin ninguna sucursal SÍ es un error, aunque el restaurante tenga un solo local: las
+     mesas se abren asignadas a una sucursal, y si no hay ninguna se abren sin local al que
+     pertenecer. Ese es el hueco por el que la misma mesa 3 acababa existiendo dos veces. Antes
+     este paso estaba clavado en 'ok' y nunca aparecía pendiente. */
   const pSucursales = {
     tit: 'Tus sucursales',
-    que: 'Si tienes más de un local, cada uno es una sucursal: sus mesas, sus meseros y su cocina van por separado.',
-    estado: 'ok',
-    dato: sucs.length ? (ppPlural(sucs.length, 'sucursal', 'sucursales') + ': ' + sucs.join(', ')) : 'Un solo local — así está bien, no tienes que dar de alta ninguna sucursal.',
-    ojo: '', falta: '',
+    que: 'Cada local es una sucursal: sus mesas, sus meseros y su cocina van por separado. Aunque tengas uno solo necesita nombre, porque toda mesa que se abre queda asignada a una sucursal.',
+    estado: sucs.length ? 'ok' : 'falta',
+    dato: sucs.length ? (ppPlural(sucs.length, 'sucursal', 'sucursales') + ': ' + sucs.join(', ')) : '',
+    ojo: '',
+    falta: 'Tu restaurante no tiene ninguna sucursal dada de alta. Si solo tienes un local escribe «Principal» en Identidad, en el campo «Sucursales», y guarda: sin eso las mesas se abren sin local asignado y sus cuentas no cuadran con las de nadie.',
     btn: 'Ir a Identidad', ir: ['temas', 'marcaZona'],
   };
 
@@ -3518,6 +3624,11 @@ let liberarArmada = null;
 let liberarArmadaTimer = null;
 let cierreArmado = null;
 let cierreArmadoTimer = null;
+/* Cancelar la mesa lleva su propio armado, aparte del de cerrar y del de liberar. Son tres
+   decisiones distintas —cerrar cobra, liberar suelta el teléfono, cancelar anula— y compartir
+   una sola variable haría que armar «cerrar» y volver a tocar acabara cancelando la mesa. */
+let cancelArmada = null;
+let cancelArmadaTimer = null;
 /* ¿Ya le pusimos al dueño enfrente cuánto dinero hay en juego en esa mesa? Solo entonces vale
    mandar p_confirmado: confirmar a ciegas es exactamente lo que el servidor está evitando cuando
    se niega la primera vez. Si la pantalla creía que la mesa estaba vacía y el servidor sabe que
@@ -3581,6 +3692,21 @@ function pintarAmarresMesas(){
     const k = argJS(suc);
     const mesaTxt = mesaTxtN(m.mesa);
     const sucTxt = suc ? `<span class="md-suc" title="Esta mesa es de la sucursal ${escTxt(suc)}">${escTxt(suc)}</span>` : '';
+    /* Mesa huérfana: está abierta sin ninguna sucursal aunque el restaurante sí tiene locales.
+       Así nació la mesa fantasma — un comensal entró por un enlace sin «&suc=», nunca se le pidió
+       elegir local y abrió su propia mesa 3 al lado de la mesa 3 de la sucursal buena. La marcamos
+       en ámbar y damos de una vez la manera de mandarla a donde va. */
+    const huerfana = !suc && sucsCfg().length > 0;
+    const sucsDestino = huerfana ? sucsCfg() : [];
+    const tagHuerfana = huerfana
+      ? `<span class="md-tag huerfana" title="Esta mesa se abrió sin sucursal, pero tu restaurante sí tiene locales. Mientras siga así, su cuenta va aparte de la mesa del mismo número de tus sucursales.">Sin sucursal</span>`
+      : '';
+    const selSuc = huerfana
+      ? `<select class="md-sel" id="selSuc_${i}" title="Manda esta mesa a la sucursal a la que de verdad pertenece. Se mueve la mesa y sus comandas sin cobrar; lo ya cobrado de visitas anteriores no se toca." onchange="asignarSucursalMesa(${m.mesa}, this.value)">
+          <option value="">Mandar a sucursal…</option>
+          ${sucsDestino.map(s => `<option value="${escTxt(s)}">${escTxt(s)}</option>`).join('')}
+        </select>`
+      : '';
     const etiquetas = m.autorizada ? '' : `<span class="md-tag dato" title="La abrió el comensal, no el restaurante: sus órdenes pasan por Por confirmar">La tomó el comensal</span>`;
     // Quién trae la mesa: el mesero al que se le asignó, y si alguien ya cobró ahí, quién fue
     const suyos = meserosDeMesa(m.mesa, suc);
@@ -3606,13 +3732,28 @@ function pintarAmarresMesas(){
       : `<span class="md-nota" title="Da de alta a tus meseros en la pestaña EQUIPO">agrega meseros en EQUIPO para poder asignar esta mesa</span>`;
     const armadaLib = liberarArmada === claveMesa(m.mesa, suc);
     const armadoCerrar = cierreArmado === claveMesa(m.mesa, suc);
+    const armadoCancel = cancelArmada === claveMesa(m.mesa, suc);
+    /* Cancelar la mesa es la única acción que no deja registro de venta: se usa cuando la mesa
+       nunca debió existir. Por eso el bloque rojo enumera antes lo que se va a perder —cuántas
+       comandas, con qué folios y por cuánto— y solo el segundo toque ejecuta. */
+    const sinCobrar = suyas.filter(o => !o.cerrada);
+    const avisoCancel = armadoCancel ? `<span class="md-aviso">
+      <b>Vas a cancelar la ${escTxt(mesaTxt)}${suc ? ' de ' + escTxt(suc) : ''}.</b>
+      ${sinCobrar.length
+        ? `Se anulan sus ${sinCobrar.length} comanda${sinCobrar.length === 1 ? '' : 's'} sin cobrar por <b>${fmt(porCobrar)}</b>: salen de cocina, del tablero, de los reportes y del corte, y no se levanta ningún registro de venta. Quedan anotadas abajo, no se borran.`
+        : 'No tiene comandas sin cobrar: solo deja de estar abierta y no se levanta ningún registro de venta.'}
+      ${sinCobrar.length ? `<span class="md-aviso-folios">${escTxt(sinCobrar.map(o => o.folio).filter(Boolean).join(' · ')) || 'sin folios'}</span>` : ''}
+      Toca otra vez para confirmar.
+    </span>` : '';
     // Acciones: TODA fila las lleva, con dispositivo o sin él. «Liberar» solo tiene sentido
     // cuando hay un teléfono amarrado; «Cerrar mesa» está siempre, es la salida garantizada.
     const acciones = `<span class="md-acciones">
       <button class="btn-sec md-btn" onclick="verMesaAbierta(${m.mesa},'${k}')" title="Ver las comandas de esta mesa en Registro y conciliación">Ver</button>
       ${selMesero}
+      ${selSuc}
       ${m.dispositivo_id ? `<button class="btn-sec md-btn ${armadaLib ? 'armado' : ''}" onclick="liberarMesa(${m.mesa},'${k}')" title="Suelta el teléfono que tiene la mesa sin cerrarla: el código deja de servir y el siguiente teléfono que ordene la toma">${armadaLib ? 'Confirmar liberar' : 'Liberar'}</button>` : ''}
       <button class="btn-sec md-btn ${armadoCerrar ? 'armado' : ''}" onclick="cerrarMesaAbierta(${m.mesa},'${k}')" title="${porCobrar > 0 ? `Cierra sus comandas por ${fmt(porCobrar)} y deja libre el número de mesa` : 'No tiene nada que cobrar: solo deja libre el número de mesa'}">${armadoCerrar ? 'Confirmar cerrar' : 'Cerrar mesa'}</button>
+      <button class="btn-sec md-btn ${armadoCancel ? 'armado' : ''}" onclick="cancelarMesaAdmin(${m.mesa},'${k}')" title="Cancela la mesa con tu autorización de administrador: sus comandas quedan anuladas y NO entran al corte. Para la mesa que nunca debió abrirse, no para la que ya consumió.">${armadoCancel ? 'Confirmar cancelar' : 'Cancelar mesa'}</button>
     </span>`;
     if(!m.dispositivo_id){
       // Abierta desde el panel pero nadie ha ordenado: sigue disponible para el primer teléfono
@@ -3624,8 +3765,10 @@ function pintarAmarresMesas(){
         ${quien}
         ${quienCobro}
         ${etiquetas}
+        ${tagHuerfana}
         ${porCobrar > 0 ? `<span class="md-meta" title="Comandas de esta mesa que siguen sin cobrarse">${fmt(porCobrar)} sin cobrar</span>` : ''}
         ${acciones}
+        ${avisoCancel}
       </div>`;
     }
     const dispositivos = 1 + (m.invitados ? m.invitados.length : 0);
@@ -3642,9 +3785,11 @@ function pintarAmarresMesas(){
       ${quien}
       ${quienCobro}
       ${etiquetas}
+      ${tagHuerfana}
       ${porCobrar > 0 ? `<span class="md-meta" title="Comandas de esta mesa que siguen sin cobrarse">${fmt(porCobrar)} sin cobrar</span>` : ''}
       ${abandonada ? `<span class="md-tag ida" title="Sin señal de vida en más de ${ABANDONO_MIN} minutos">Posiblemente abandonada</span>` : ''}
       ${acciones}
+      ${avisoCancel}
     </div>`;
   }).join('');
   return `<div class="mesas-detalle">
@@ -3699,6 +3844,51 @@ async function asignarMeseroMesa(mesa, meseroId, suc){
   }catch(e){ toast('Sin conexión — la mesa no cambió de mesero, inténtalo de nuevo', true); }
 }
 
+/* Adoptar una mesa huérfana: la que se abrió sin sucursal aunque el restaurante sí tiene locales.
+   Se mueve la fila del amarre y, con ella, sus comandas EN VUELO. Las cerradas se quedan donde
+   están: son el historial de visitas anteriores de ese número de mesa y moverlas cambiaría las
+   ventas ya reportadas de una sucursal a otra.
+   Este es el único camino nuevo que no pasa por menusbot_soltar_mesa, así que no tiene la puerta
+   del servidor detrás: la revisión de MODO_DEMO y la de sucursal válida se hacen aquí. */
+async function asignarSucursalMesa(mesa, destino){
+  const n = +mesa;
+  const dest = String(destino == null ? '' : destino).trim();
+  if(!dest) return; // el usuario volvió a la opción de encabezado: no es una orden de mover nada
+  if(MODO_DEMO){ toast('El menú de ejemplo no mueve mesas de sucursal — entra con la cuenta de tu restaurante', true); render(); return; }
+  const sucs = sucsCfg();
+  if(!sucs.includes(dest)){
+    toast('Esa sucursal ya no está en tu lista — vuelve a cargar la pantalla', true);
+    render();
+    return;
+  }
+  const fila = mesasAbiertasCache.find(x => x.mesa === n && !(x.sucursal || ''));
+  if(!fila){ toast(`La ${mesaTxtN(n)} ya no está abierta sin sucursal — la pantalla se puso al día`); cargar(); return; }
+  /* Choque con el índice único (restaurante_id, sucursal, mesa): si la misma mesa ya existe en la
+     sucursal destino, el PATCH se estrellaría con un 409. No mandamos una petición condenada, y
+     sobre todo NO fusionamos: juntar a ciegas dos cuentas de dos grupos distintos que por
+     casualidad se sentaron en el mismo número de mesa es peor que dejar las cosas como están. */
+  if(mesasAbiertasCache.some(x => x.mesa === n && (x.sucursal || '') === dest)){
+    toast(`En ${dest} ya hay una ${mesaTxtN(n)} abierta, y dos mesas con el mismo número no pueden convivir en la misma sucursal. Cobra o cierra una de las dos y entonces mueve la que queda — juntarlas mezclaría las cuentas de dos grupos distintos.`, true);
+    render();
+    return;
+  }
+  const enVuelo = ordenesCache.filter(o => o.mesa === n && !(o.sucursal || '') && !o.cerrada);
+  const filtro = filtroSucMesa('');
+  try{
+    await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${n}${filtro}`, { method:'PATCH', body: JSON.stringify({ sucursal: dest }) });
+    await api(`menusbot_ordenes?restaurante_id=eq.${RID}&mesa=eq.${n}${filtro}&cerrada=eq.false`, { method:'PATCH', body: JSON.stringify({ sucursal: dest }) });
+  }catch(e){
+    toast('Sin conexión — la mesa sigue sin sucursal, inténtalo de nuevo', true);
+    render();
+    return;
+  }
+  fila.sucursal = dest;
+  enVuelo.forEach(o => { o.sucursal = dest; });
+  render();
+  cargar();
+  toast(`La ${mesaTxtN(n)} ya es de ${dest}${enVuelo.length ? ` — se fueron con ella sus ${enVuelo.length} comanda${enVuelo.length === 1 ? '' : 's'} sin cobrar` : ' — no tenía comandas sin cobrar'}. Lo ya cobrado de visitas anteriores se quedó donde estaba.`);
+}
+
 /* Cerrar una mesa abierta de verdad, con dispositivo o sin él, con comandas o sin ellas.
    Cerrar las comandas y borrar la fila es trabajo del servidor; lo que queda de este lado es el
    papeleo del restaurante: el registro de venta para el corte, los puntos del cliente y las
@@ -3738,12 +3928,19 @@ async function cerrarMesaAbierta(n, suc){
   const suyos = meserosDeMesa(num, sucM);
   const meseroId = (m && m.mesero_id) || (suyos.length === 1 ? suyos[0].id : null);
   const meseroNom = meseroId ? nombreMeseroPorId(meseroId) : '';
-  // Igual que al cobrar desde el panel: nadie capturó la forma de pago ni la propina, así que
-  // NO las adivinamos. Va como 'sin anotar' para que en el corte se vea que falta el dato.
+  /* Igual que al cobrar desde el panel: nadie capturó la forma de pago, así que NO la adivinamos
+     y va como 'sin anotar' para que en el corte se vea que falta el dato.
+     La propina SÍ la sabemos: es la que el comensal eligió en su teléfono al pedir la cuenta, y
+     viene guardada en el amarre de la mesa. Antes se escribía 0 aquí, y el resultado era que la
+     propina del comensal se perdía y el reporte la daba por cero — el mesero aparecía sin propinas
+     en un turno en el que sí las hubo. Se escribe en los dos campos: en `propina_sugerida` porque
+     es lo que el comensal marcó, y en `propina` porque, cobrando desde el panel, esa cifra es la
+     única cobrada que existe. */
+  const propinaCom = Math.round(+((m && m.propina_sugerida)) || 0);
   const cobro = {
     restaurante_id: RID, sucursal: sucM, mesa: num,
     mesero: meseroNom, mesero_id: meseroId,
-    total, propina: 0, propina_sugerida: (m && m.propina_sugerida) || 0,
+    total, propina: propinaCom, propina_sugerida: propinaCom,
     metodo: 'sin anotar', folios: abiertasMesa.map(o => o.folio).filter(Boolean),
     cobrado_at: new Date().toISOString(),
   };
@@ -3789,8 +3986,10 @@ async function cerrarMesaAbierta(n, suc){
   ordenesCache.forEach(o => { if(o.mesa === num && mismaSuc(o.sucursal, sucM)) o.cerrada = true; });
   mesasAbiertasCache = mesasAbiertasCache.filter(x => !(x.mesa === num && mismaSuc(x.sucursal, sucM)));
   llamadasCache = llamadasCache.filter(l => !llamadasMesa.includes(l));
+  // Mismo par de cifras que va al servidor: la copia optimista de la pantalla no puede reportar
+  // una propina distinta de la que se acaba de guardar. (`cobro.propina_sugerida` es propinaCom.)
   if(total > 0) cobrosCache.unshift({ id: null, sucursal: sucM, mesa: num, mesero: meseroNom, mesero_id: meseroId,
-    total, propina: 0, propina_sugerida: cobro.propina_sugerida, metodo: 'sin anotar',
+    total, propina: propinaCom, propina_sugerida: propinaCom, metodo: 'sin anotar',
     folios: cobro.folios, cobrado_at: Date.parse(cobro.cobrado_at) });
   render();
   try{
@@ -3813,6 +4012,123 @@ async function cerrarMesaAbierta(n, suc){
        abierta» sería mentirle. Lo que falta es el papeleo, y eso se dice tal cual, porque es la
        venta que a fin de día no le va a cuadrar en el corte. */
   }catch(e){ toast(`${mesaTxtN(num)} se cerró, pero no se pudo guardar su registro de venta — anótalo en el corte a mano`, true); }
+}
+
+/* ---------- Cancelar una mesa, con autorización del administrador ----------
+   Cerrar una mesa la cobra; cancelarla dice que esa mesa nunca debió existir. Es la salida para
+   la mesa fantasma que abrió un comensal que entró por un enlace sin sucursal, para el escaneo
+   por equivocación y para la comanda de prueba: nada de eso es una venta y nada de eso debe
+   aparecer en el corte.
+   El permiso del que habla el dueño es la huella de su contraseña del panel: la misma credencial
+   que menusbot_soltar_mesa ya exige, así que cancelar tiene exactamente la misma puerta que
+   cerrar, y quien no entró como administrador no puede cancelar nada. */
+function quienCancelaDesdePanel(){
+  const correo = (SESION && SESION.email) || 'administrador';
+  return correo + ' · mesa cancelada desde el panel';
+}
+async function cancelarMesaAdmin(n, suc){
+  const num = +n;
+  const m = suc === undefined ? mesaAbiertaDe(num) : mesaAbiertaDe(num, suc);
+  const sucM = m ? (m.sucursal || '') : (suc || '');
+  const clave = claveMesa(num, sucM);
+  // Se anulan las comandas EN VUELO. Las ya cerradas son visitas anteriores de ese número de mesa
+  // y no tienen nada que ver con el grupo que está sentado ahora.
+  const afectadas = ordenesCache.filter(o => o.mesa === num && mismaSuc(o.sucursal, sucM) && !o.cerrada && o.verificacion !== 'rechazada');
+  const monto = afectadas.reduce((s,o) => s + (+o.total || 0), 0);
+  const folios = afectadas.map(o => o.folio).filter(Boolean);
+  if(!m && cancelArmada !== clave){
+    toast(`La ${mesaTxtN(num)} ya no está abierta — vuelve a cargar la pantalla si la sigues viendo`, true);
+    return;
+  }
+  if(cancelArmada !== clave){
+    // Primer toque: se arma y el bloque rojo de la fila enumera lo que se pierde. Se desarma solo.
+    cancelArmada = clave;
+    clearTimeout(cancelArmadaTimer);
+    cancelArmadaTimer = setTimeout(() => { cancelArmada = null; render(); }, 6000);
+    render();
+    toast(afectadas.length
+      ? `¿Cancelar la ${mesaTxtN(num)}? Se anulan sus ${afectadas.length} comanda${afectadas.length === 1 ? '' : 's'} por ${fmt(monto)} y NO se cobra nada: no entra al corte. Toca otra vez para confirmar.`
+      : `¿Cancelar la ${mesaTxtN(num)}? No tiene comandas sin cobrar; solo deja de estar abierta y no se cobra nada. Toca otra vez para confirmar.`);
+    return;
+  }
+  /* credencialPanel() ya avisa y saca la sesión cuando viene vieja: aquí solo hay que salirse
+     sin duplicarle el aviso al dueño. */
+  const credencial = credencialPanel();
+  if(!credencial) return;
+  cancelArmada = null;
+  clearTimeout(cancelArmadaTimer);
+  // Armar «cerrar» o «liberar» y terminar cancelando sería lo peor que podría pasar aquí: la mesa
+  // se va, así que los otros dos armados de esta misma mesa se desarman antes de tocar nada.
+  if(cierreArmado === clave){ cierreArmado = null; cierreAvisadoMonto = false; clearTimeout(cierreArmadoTimer); }
+  if(liberarArmada === clave){ liberarArmada = null; liberarAvisadoMonto = false; clearTimeout(liberarArmadaTimer); }
+  const llamadasMesa = llamadasCache.filter(l => l.mesa === num && mismaSuc(l.sucursal, sucM));
+  /* Se usa la misma puerta del servidor que cerrar, en modo 'cerrar', porque es la única que
+     existe y hace justo lo que hace falta: cierra las comandas de la mesa y borra su amarre.
+     Va con p_confirmado:true porque el bloque rojo ya le puso enfrente al dueño el monto exacto;
+     sin eso el servidor contestaría 'tiene_ordenes' a una decisión que ya se tomó a la vista. */
+  let res;
+  try{
+    res = await pedirSoltarMesa({ p_rest: RID, p_mesa: num, p_suc: sucM, p_modo: 'cerrar', p_pass_hash: credencial, p_confirmado: true });
+  }catch(e){ toast('Sin conexión — la mesa sigue abierta, no se canceló nada', true); render(); return; }
+  if(res && res.ok === false){
+    toast(motivoSoltarMesa(res.error), true);
+    render();
+    return;
+  }
+  const ahora = new Date().toISOString();
+  const quien = quienCancelaDesdePanel();
+  // En pantalla, de una vez
+  afectadas.forEach(o => { o.verificacion = 'rechazada'; o.estado = 3; o.cerrada = true; o.autorizada_por = quien; o.autorizada_at = Date.parse(ahora); });
+  mesasAbiertasCache = mesasAbiertasCache.filter(x => !(x.mesa === num && mismaSuc(x.sucursal, sucM)));
+  llamadasCache = llamadasCache.filter(l => !llamadasMesa.includes(l));
+  render();
+  let fallas = 0;
+  /* Una por una POR ID, no un PATCH masivo por mesa: un filtro por mesa arrastraría también las
+     comandas cerradas de visitas anteriores del mismo número y les borraría la venta.
+     Se MARCAN, nunca se borran: 'rechazada' basta para sacarlas de cocina, del tablero, de los
+     KPIs y del corte, porque dbLeer() ya filtra ese valor, y la comanda sigue existiendo. */
+  for(const o of afectadas){
+    if(!o.dbId) continue;
+    try{
+      await api(`menusbot_ordenes?id=eq.${o.dbId}`, { method:'PATCH', body: JSON.stringify({
+        verificacion:'rechazada', estado: 3, cerrada: true, autorizada_por: quien, autorizada_at: ahora }) });
+    }catch(e){ fallas++; }
+  }
+  for(const l of llamadasMesa) if(l.dbId){ try{ await api(`menusbot_llamadas?id=eq.${l.dbId}`, { method:'PATCH', body: JSON.stringify({ atendida: true }) }); }catch(e){} }
+  /* NO se crea fila en menusbot_cobros: una mesa cancelada no es una venta, y meterla al corte es
+     exactamente lo que se está evitando. Lo que sí queda es la bitácora en la configuración, que
+     es un registro para el dueño y no alimenta ningún KPI ni reporte. */
+  try{
+    await configEscribir(d => {
+      const previas = Array.isArray(d.config.cancelaciones) ? d.config.cancelaciones : [];
+      d.config.cancelaciones = [{ mesa: num, sucursal: sucM, folios, monto, comandas: afectadas.length, quien, at: Date.now() }, ...previas].slice(0, 50);
+    });
+  }catch(e){}
+  toast(fallas
+    ? `${mesaTxtN(num)} cancelada, pero ${fallas} de sus comandas no se pudieron anular — revísalas en el registro y recházalas a mano`
+    : (afectadas.length
+      ? `${mesaTxtN(num)} cancelada con tu autorización — sus ${afectadas.length} comanda${afectadas.length === 1 ? '' : 's'} por ${fmt(monto)} quedaron anuladas y NO entran al corte. Están anotadas abajo.`
+      : `${mesaTxtN(num)} cancelada con tu autorización — no tenía nada que anular y no quedó registro de venta`));
+  cargar();
+}
+
+/* La bitácora de mesas canceladas. Se pinta con la misma familia de .rechazadas porque es lo
+   mismo que cuenta: algo que existió y se anuló a propósito. Solo las ~12 más recientes: el
+   documento de configuración se lee entero cada 4 segundos y no es lugar para un historial largo. */
+function pintarCanceladas(){
+  const zona = document.getElementById('canceladasRegistro');
+  if(!zona) return;
+  const lista = ((cfgCache.config && cfgCache.config.cancelaciones) || []).slice(0, 12);
+  if(!lista.length){ zona.innerHTML = ''; return; }
+  zona.innerHTML = `<div class="rechazadas">
+    <div class="caps rz-titulo">Mesas canceladas — no cuentan en ventas ni entran al corte</div>
+    ${lista.map(c => `<div class="rz-fila">
+      <span class="rz-mesa">${escTxt(mesaTxtN(c.mesa))}${c.sucursal ? ' · ' + escTxt(c.sucursal) : ''}</span>
+      <span class="rz-items">${(c.comandas || 0)} comanda${(c.comandas || 0) === 1 ? '' : 's'} anulada${(c.comandas || 0) === 1 ? '' : 's'}${(c.folios && c.folios.length) ? ' · ' + escTxt(c.folios.join(' · ')) : ''}</span>
+      <span class="rz-folio">${fmt(+c.monto || 0)}</span>
+      <span>${escTxt(c.quien || 'sin registro de quién')}${c.at ? ' · ' + ppFecha(c.at) + ', ' + hora(c.at) : ''}</span>
+    </div>`).join('')}
+  </div>`;
 }
 
 // Suelta el amarre sin cobrar y sin cerrar la mesa: la mesa sigue abierta y queda libre para el siguiente teléfono
@@ -4008,15 +4324,18 @@ async function cobrarMesa(mesaN, ts){
   const suyos = meserosDeMesa(mesaN, sucM);
   const meseroId = (amarre && amarre.mesero_id) || (suyos.length === 1 ? suyos[0].id : null);
   const meseroNom = meseroId ? nombreMeseroPorId(meseroId) : '';
-  // Registro de venta para el corte. Cerrar desde el panel es el atajo de siempre: nadie
-  // capturó si fue efectivo o tarjeta, así que NO lo adivinamos — va como 'sin anotar' y
-  // aparece en «otra forma de pago», donde se ve que falta el dato. Igual con la propina
-  // cobrada: dejamos 0 porque nadie la confirmó, y conservamos la sugerida como referencia.
+  /* Registro de venta para el corte. Cerrar desde el panel es el atajo de siempre: nadie capturó
+     si fue efectivo o tarjeta, así que NO lo adivinamos — va como 'sin anotar' y aparece en «otra
+     forma de pago», donde se ve que falta el dato.
+     La propina es harina de otro costal: el comensal ya la eligió en su teléfono al pedir la
+     cuenta y quedó guardada en el amarre. Escribir 0 aquí era perderla — el dueño cobraba desde
+     el panel y la propina de esa mesa se reportaba como cero. Va en los dos campos. */
+  const propinaCom = Math.round(+((amarre && amarre.propina_sugerida)) || 0);
   const cobroPanel = {
     restaurante_id: RID, sucursal: sucM, mesa: mesaN,
     mesero: meseroNom, mesero_id: meseroId,
     total: abiertasMesa.reduce((s, o) => s + (+o.total || 0), 0),
-    propina: 0, propina_sugerida: (amarre && amarre.propina_sugerida) || 0,
+    propina: propinaCom, propina_sugerida: propinaCom,
     metodo: 'sin anotar', folios: abiertasMesa.map(o => o.folio).filter(Boolean),
     cobrado_at: new Date().toISOString(),
   };
@@ -4026,9 +4345,11 @@ async function cobrarMesa(mesaN, ts){
   }
   ordenesCache.forEach(o => { if(o.mesa === mesaN && (o.sucursal || '') === sucM) o.cerrada = true; });
   mesasAbiertasCache = mesasAbiertasCache.filter(x => !(x.mesa === mesaN && (x.sucursal || '') === sucM));
-  // Se refleja de una vez en los reportes; el sondeo de 4 s lo vuelve a leer del servidor
+  // Se refleja de una vez en los reportes; el sondeo de 4 s lo vuelve a leer del servidor.
+  // Mismo par de cifras que va al servidor: la copia optimista de la pantalla no puede reportar
+  // una propina distinta de la que se acaba de guardar. (`cobroPanel.propina_sugerida` es propinaCom.)
   cobrosCache.unshift({ id: null, sucursal: sucM, mesa: mesaN, mesero: meseroNom, mesero_id: meseroId,
-    total: cobroPanel.total, propina: 0, propina_sugerida: cobroPanel.propina_sugerida,
+    total: cobroPanel.total, propina: propinaCom, propina_sugerida: propinaCom,
     metodo: 'sin anotar', folios: cobroPanel.folios, cobrado_at: Date.parse(cobroPanel.cobrado_at) });
   render();
   try{
@@ -4041,8 +4362,14 @@ async function cobrarMesa(mesaN, ts){
       await api(`menusbot_clientes?id=eq.${cid}`, { method:'PATCH', body: JSON.stringify({ puntos: actuales + pts }) });
       puntosDados += pts;
     }
-    await api(`menusbot_ordenes?restaurante_id=eq.${RID}&mesa=eq.${mesaN}&sucursal=eq.${encodeURIComponent(sucM)}&cerrada=eq.false`, { method:'PATCH', body: JSON.stringify({ cerrada: true }) });
-    await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${mesaN}&sucursal=eq.${encodeURIComponent(sucM)}`, { method:'DELETE' });
+    /* filtroSucMesa() y no «&sucursal=eq.» a mano: la mesa que abrió un comensal sin elegir local
+       tiene la sucursal en NULL, y comparar NULL con la cadena vacía da falso en SQL. Escrito a
+       mano, este PATCH y este DELETE no tocaban ni una fila: la pantalla ya había quitado la mesa
+       y cuatro segundos después el sondeo la volvía a traer, con sus comandas otra vez abiertas y
+       el número de mesa apartado toda la noche. Es la misma mesa perdida que ya se cerró en los
+       otros caminos; este cobro desde el aviso de cuenta se había quedado atrás. */
+    await api(`menusbot_ordenes?restaurante_id=eq.${RID}&mesa=eq.${mesaN}${filtroSucMesa(sucM)}&cerrada=eq.false`, { method:'PATCH', body: JSON.stringify({ cerrada: true }) });
+    await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${mesaN}${filtroSucMesa(sucM)}`, { method:'DELETE' });
     if(l && l.dbId) await api(`menusbot_llamadas?id=eq.${l.dbId}`, { method:'PATCH', body: JSON.stringify({ atendida: true }) });
     // Sin este registro la mesa desaparecería del corte de caja como si nunca se hubiera vendido
     if(cobroPanel.total > 0) await api('menusbot_cobros', { method:'POST', body: JSON.stringify(cobroPanel) });
@@ -4055,6 +4382,41 @@ async function atenderLlamada(ts){
   llamadasCache = llamadasCache.filter(x => x !== l);
   render();
   try{ await api(`menusbot_llamadas?id=eq.${l.dbId}`, { method:'PATCH', body: JSON.stringify({ atendida: true }) }); }catch(e){}
+}
+
+/* Cancelar la solicitud de cuenta.
+   El comensal pidió la cuenta con su propina, y antes de que llegara el mesero decidió seguir
+   ordenando. Hasta hoy el panel solo podía cobrar esa llamada: no había manera de deshacerla, y
+   la mesa se quedaba con la propina congelada en el monto de una cuenta que ya no era la suya.
+   Esto no cobra ni cierra nada: quita la llamada, suelta la bandera de propina pedida y la mesa
+   sigue abierta exactamente como estaba. Lleva su propio doble toque, aparte del de las mesas,
+   porque una llamada no es una mesa: la llave es el ts de la llamada. */
+let solicitudArmada = null;
+let solicitudArmadaTimer = null;
+async function cancelarSolicitudCuenta(ts){
+  // Misma manera de localizar la llamada que atenderLlamada(): por su ts, que es lo que trae el botón
+  const l = llamadasCache.find(x => x.ts === ts);
+  if(!l){ toast('Esa solicitud ya no está — la pantalla se puso al día'); render(); return; }
+  if(solicitudArmada !== ts){
+    solicitudArmada = ts;
+    clearTimeout(solicitudArmadaTimer);
+    solicitudArmadaTimer = setTimeout(() => { solicitudArmada = null; render(); }, 6000);
+    render();
+    toast(`¿Cancelar la solicitud de cuenta de la ${mesaTxtN(l.mesa)}? No se cobra nada: la mesa sigue abierta, se le descongela la propina y puede seguir ordenando. Toca otra vez para confirmar.`);
+    return;
+  }
+  solicitudArmada = null;
+  clearTimeout(solicitudArmadaTimer);
+  const sucM = l.sucursal || '';
+  llamadasCache = llamadasCache.filter(x => x !== l);
+  render();
+  try{
+    if(l.dbId) await api(`menusbot_llamadas?id=eq.${l.dbId}`, { method:'PATCH', body: JSON.stringify({ atendida: true }) });
+    // Por mesa Y por sucursal: sin filtrar la sucursal se le descongelaría la propina a la mesa
+    // del mismo número del otro local, que no pidió nada.
+    await api(`menusbot_mesas_abiertas?restaurante_id=eq.${RID}&mesa=eq.${l.mesa}${filtroSucMesa(sucM)}`, { method:'PATCH', body: JSON.stringify({ propina_pedida: false }) });
+    toast(`Solicitud de cuenta de la ${mesaTxtN(l.mesa)} cancelada — la mesa sigue abierta y su propina vuelve a quedar libre para cuando pida la cuenta de verdad`);
+  }catch(e){ toast('Sin conexión — la solicitud sigue ahí, inténtalo de nuevo', true); cargar(); }
 }
 
 /* ---------- Reportes y corte ---------- */
@@ -4457,6 +4819,22 @@ function renderQRs(d){
     if(selQ.dataset.opts !== quiere){ const a = selQ.value; selQ.dataset.opts = quiere; selQ.innerHTML = quiere; selQ.value = a && [...selQ.options].some(o => o.value === a) ? a : ''; }
   }
   const suc = selQ ? selQ.value : '';
+  /* Cada QR lleva su sucursal cocinada dentro de la URL (…&suc=Centro). Si el dueño cambió sus
+     sucursales DESPUÉS de imprimir, esas hojas siguen mandando al comensal a un local que quizá
+     ya no se llama así, y esa mesa vuelve a nacer sin sucursal válida.
+     Va ANTES del return por qrListos a propósito: el aviso tiene que aparecer aunque la rejilla
+     no haya cambiado y no toque redibujarla. Solo se muestra si existen las dos fechas: un
+     restaurante que nunca ha impreso no tiene ningún QR viejo del que preocuparse. */
+  const zonaAviso = document.getElementById('qrAvisoSuc');
+  if(zonaAviso){
+    const cfgQ = d.config || {};
+    const impQ = (cfgQ.qr_impresos && typeof cfgQ.qr_impresos === 'object') ? cfgQ.qr_impresos : null;
+    const sucAt = +cfgQ.sucursales_at || 0;
+    const impAt = impQ ? (+impQ.at || 0) : 0;
+    zonaAviso.innerHTML = (sucAt && impAt && sucAt > impAt)
+      ? `<div class="qr-aviso"><b>Cambiaste tus sucursales después de imprimir.</b> Los QR que ya están pegados en las mesas llevan escrita adentro la sucursal que tenías el ${ppFecha(impAt)}, así que pueden estar mandando al comensal a un local que ya no se llama así — y una mesa que entra por un QR con sucursal equivocada acaba abriéndose sin local asignado. Elige arriba la sucursal correcta y vuelve a imprimir la hoja de esa sucursal.</div>`
+      : '';
+  }
   if(typeof QRCode === 'undefined'){ $('#qrGrid').innerHTML = '<div class="caps" style="color:var(--humo2)">CARGANDO GENERADOR DE QR…</div>'; return; }
   const clave = n + '|' + suc;
   if(qrListos === clave) return;

@@ -807,7 +807,11 @@ const filtroSuc = () => filtroSucDe(sesion.sucursal || '');
    mesa que se abrió por error no está asignada a nadie, así que con la regla vieja NINGÚN
    mesero la veía y el número quedaba apartado sin que nadie pudiera soltarlo. El mesero sin
    sucursal asignada ve todo el local, que es como trabaja el restaurante de una sola dirección. */
-const enMiSucursal = fila => !sesion.sucursal || (fila.sucursal || '') === sesion.sucursal;
+/* La fila SIN sucursal no es de nadie: nació de un enlace al que le faltaba el dato. Si se la
+   escondemos a todo mesero con sucursal asignada —que es lo que pasaba antes— esa cuenta
+   fantasma no la puede cerrar ni cobrar nadie y se queda apartando el número toda la noche.
+   Se le enseña a todos, marcada en ámbar, para que quien esté cerca la resuelva. */
+const enMiSucursal = fila => !sesion.sucursal || !(fila.sucursal || '') || (fila.sucursal || '') === sesion.sucursal;
 const mias = fila => enMiSucursal(fila) && sesion.mesas.indexOf(+fila.mesa) !== -1;
 /* Abierta en mi piso pero de nadie: la mesa huérfana que hay que poder soltar. */
 const ajena = fila => enMiSucursal(fila) && sesion.mesas.indexOf(+fila.mesa) === -1;
@@ -822,29 +826,42 @@ const ajena = fila => enMiSucursal(fila) && sesion.mesas.indexOf(+fila.mesa) ===
 /* Filtra por sucursal y no por «es mía»: como ya se está pidiendo UN número de mesa concreto,
    para las mesas del mesero da exactamente el mismo resultado que antes, y de pilón las mesas
    huérfanas también encuentran su fila viva en vez de quedarse sin nada que mostrar. */
-function filasAbiertasDe(n){
-  return (mesasAbiertas || []).filter(x => +x.mesa === +n && enMiSucursal(x));
+/* La sucursal de cualquier fila, siempre como texto: NULL y '' son lo mismo para esta app */
+const sucDe = fila => (fila && fila.sucursal) || '';
+/* Identidad REAL de una mesa en esta base: el índice único es (restaurante_id, sucursal, mesa),
+   así que «mesa 3» no identifica nada — «3#LANDMARK» sí. Agrupar por el número pelón era lo que
+   hacía que dos cuentas distintas (la de LANDMARK y la fantasma sin sucursal) aparecieran
+   JUNTAS en esta pantalla como si fueran una sola: el mesero veía un total que no era de nadie. */
+const claveMesa = (mesa, suc) => String(+mesa) + '#' + (suc || '');
+/* Filas de UNA mesa concreta de UNA sucursal concreta. Ya no puede mezclar sucursales. */
+function filasAbiertasDe(n, suc){
+  return (mesasAbiertas || []).filter(x => +x.mesa === +n && sucDe(x) === (suc || '') && enMiSucursal(x));
 }
 const cuandoFila = f => Date.parse(f.latido_at || f.abierta_at || 0) || 0;
-/* Lo que decide NO es la sucursal, es qué fila está VIVA. Primero se puso la sucursal y salió
-   mal en el restaurante de verdad: el mesero no tiene sucursal asignada, así que la fila vieja
-   sin sucursal empataba con «la suya» y le ganaba a la fila donde el comensal estaba comiendo.
-   Una mesa viva se reconoce sola: tiene un teléfono amarrado y dio señales de vida hace poco.
-   La sucursal solo desempata entre dos filas igual de vivas. */
-function mesaAbiertaDe(n){
-  const filas = filasAbiertasDe(n);
-  if(filas.length < 2) return filas[0] || null;
-  const mi = sesion.sucursal || '';
+/* Con la sucursal ya en el filtro, lo normal es que haya 0 o 1 fila y se devuelve directo.
+   El desempate se queda SÓLO para el caso degenerado de dos filas con la misma sucursal y la
+   misma mesa (que el índice único no debería permitir, pero ya se vio de todo). Se quitó el
+   término que premiaba «coincide con mi sucursal»: era justo lo que hacía que el mesero sin
+   sucursal asignada adoptara la mesa fantasma como si fuera suya. */
+function mesaAbiertaDe(n, suc){
+  const filas = filasAbiertasDe(n, suc);
+  if(filas.length === 0) return null;
+  if(filas.length === 1) return filas[0];
   const cuanto = f => {
     const lat = cuandoFila(f);
     const fresca = !!lat && (Date.now() - lat) < 3 * 3600000;
     return (f.dispositivo_id ? 16 : 0) +               /* hay un teléfono amarrado a esta fila */
       (fresca ? 8 : 0) +                               /* y dio señales de vida hace poco */
-      (((f.sucursal || '') === mi) ? 4 : 0) +          /* a igual de viva, manda mi sucursal */
       (f.codigo ? 2 : 0) +
       ((+f.propina_sugerida || 0) > 0 ? 1 : 0);
   };
   return filas.slice().sort((a,b) => cuanto(b) - cuanto(a) || cuandoFila(b) - cuandoFila(a) || (+b.id) - (+a.id))[0];
+}
+/* ¿Este restaurante trabaja con sucursales? Si no, no se le pinta ni una palabra al respecto:
+   sería ruido permanente en la pantalla de un mesero que sólo tiene un local. */
+function usaSucursales(){
+  if(sesion && sesion.sucursal) return true;
+  return (mesasAbiertas || []).some(x => sucDe(x)) || (ordenes || []).some(x => sucDe(x));
 }
 
 async function sondear(){
@@ -876,6 +893,7 @@ async function sondear(){
   barrerMesasCaducadas();   /* se cuelga del sondeo que ya corre: un reloj más sería otro que vigilar */
   if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
   refrescarPropinaDelCobro();
+  vigilarCobro();
 }
 
 async function refrescarMiFicha(){
@@ -915,29 +933,46 @@ async function cargarCobrosHoy(){
 
 /* ---------- Estado de cada mesa ---------- */
 function estadoMesas(){
+  /* Se indexa por clave compuesta mesa#sucursal, no por número de mesa. Con el índice viejo,
+     la mesa 3 de LANDMARK y la mesa 3 sin sucursal caían en el MISMO grupo: sus órdenes se
+     sumaban, sus llamadas se mezclaban y el mesero cobraba un total que no correspondía a
+     ninguna de las dos cuentas. Es exactamente el «aparecían juntas» que reportó el dueño. */
   const porMesa = {};
-  const tocar = n => (porMesa[n] = porMesa[n] || { mesa:+n, ordenes:[], abierta:null, llamadas:[], ajena:false });
-  sesion.mesas.forEach(n => tocar(n));
-  ordenes.filter(mias).forEach(o => tocar(+o.mesa).ordenes.push(o));
+  const tocar = (n, suc) => {
+    const k = claveMesa(n, suc);
+    return (porMesa[k] = porMesa[k] || { clave:k, mesa:+n, sucursal:(suc || ''), ordenes:[], abierta:null, llamadas:[], ajena:false });
+  };
+  /* Las mesas asignadas se siembran en la sucursal del mesero: es donde él está parado */
+  const miSuc = (sesion && sesion.sucursal) || '';
+  sesion.mesas.forEach(n => tocar(n, miSuc));
+  ordenes.filter(mias).forEach(o => tocar(+o.mesa, sucDe(o)).ordenes.push(o));
   /* Antes era `forEach(m => tocar(m.mesa).abierta = m)`: con dos filas para la misma mesa
      ganaba la última que llegara en la respuesta, o sea el azar. Ahora se elige a propósito. */
-  new Set(mesasAbiertas.filter(mias).map(m => +m.mesa)).forEach(n => { tocar(n).abierta = mesaAbiertaDe(n); });
-  llamadas.filter(mias).forEach(l => tocar(+l.mesa).llamadas.push(l));
+  mesasAbiertas.filter(mias).forEach(f => {
+    const g = tocar(+f.mesa, sucDe(f));
+    g.abierta = mesaAbiertaDe(+f.mesa, sucDe(f));
+  });
+  llamadas.filter(mias).forEach(l => tocar(+l.mesa, sucDe(l)).llamadas.push(l));
 
   /* Las huérfanas entran después y marcadas: son mesas abiertas de su piso que no le tocan a
      nadie, casi siempre alguien que escaneó el código de otra mesa y se fue. Sin esto el número
      se queda apartado hasta que alguien entre al panel desde la computadora, que a media hora
      pico no pasa. Van con su bandera para que ni el contador ni el tono de aviso las cuenten
      como trabajo suyo: solo tiene que poder verlas y soltarlas. */
-  new Set(mesasAbiertas.filter(ajena).map(f => +f.mesa)).forEach(n => {
-    const m = tocar(n);
+  mesasAbiertas.filter(ajena).forEach(f => {
+    const n = +f.mesa;
+    const suc = sucDe(f);
+    const m = tocar(n, suc);
     m.ajena = true;
-    m.abierta = mesaAbiertaDe(n);
+    m.abierta = mesaAbiertaDe(n, suc);
     /* Se le cuelgan también sus órdenes: si resulta que la mesa sí tiene gente comiendo, que se
-       vea de una vez y no se le ofrezca cerrarla como si estuviera vacía. */
-    ordenes.filter(o => +o.mesa === n && enMiSucursal(o)).forEach(o => m.ordenes.push(o));
+       vea de una vez y no se le ofrezca cerrarla como si estuviera vacía. Sólo las de SU misma
+       sucursal: mezclarlas era lo que inflaba el total de la mesa fantasma. */
+    ordenes.filter(o => +o.mesa === n && sucDe(o) === suc && enMiSucursal(o))
+      .forEach(o => { if(m.ordenes.indexOf(o) === -1) m.ordenes.push(o); });
   });
 
+  const conSucursales = usaSucursales();
   return Object.values(porMesa).map(m => {
     m.pendientes = m.ordenes.filter(o => o.verificacion === 'pendiente');
     m.autorizadas = m.ordenes.filter(o => o.verificacion === 'ok');
@@ -948,12 +983,29 @@ function estadoMesas(){
     m.listas = m.autorizadas.filter(o => +o.estado === 2 && !o.recogida_at);
     m.total = m.ordenes.filter(o => o.verificacion === 'ok').reduce((s,o) => s + (+o.total || 0), 0);
     m.totalConPendientes = m.ordenes.reduce((s,o) => s + (+o.total || 0), 0);
-    m.pidioCuenta = m.llamadas.some(l => l.motivo === 'cuenta') || +((m.abierta && m.abierta.propina_sugerida) || 0) > 0;
+    /* «Pidió la cuenta» y «marcó propina» eran lo mismo y no lo son. Que una mesa tenga propina
+       marcada NO significa que esté pidiendo la cuenta —el comensal puede marcarla y seguir
+       comiendo—, y con la regla vieja la mesa se quedaba en rojo «Pidió la cuenta» para siempre
+       porque la propina no se borra nunca. Ahora la petición viene SÓLO de la llamada. */
+    m.llamadaCuenta = m.llamadas.find(l => l.motivo === 'cuenta' && !l.atendida) || null;
+    m.pidioCuenta = !!m.llamadaCuenta;
+    m.propina = +((m.abierta && m.abierta.propina_sugerida) || 0);
     m.otrasLlamadas = m.llamadas.filter(l => l.motivo !== 'cuenta');
     m.ocupada = !!m.abierta || m.ordenes.length > 0;
+    /* Mesa abierta SIN sucursal en un restaurante que sí usa sucursales: es la cuenta fantasma.
+       En restaurantes de un solo local no se pinta nada — sería ruido permanente. */
+    m.sinSucursal = conSucursales && !m.sucursal && m.ocupada;
+    m.mostrarSucursal = conSucursales;
     m.urgencia = m.pendientes.length ? 0 : m.pidioCuenta ? 1 : m.listas.length ? 2 : m.otrasLlamadas.length ? 3 : 4;
     return m;
-  }).sort((a,b) => a.urgencia - b.urgencia || a.mesa - b.mesa);
+  }).sort((a,b) => a.urgencia - b.urgencia || a.mesa - b.mesa || (a.sucursal > b.sucursal ? 1 : a.sucursal < b.sucursal ? -1 : 0));
+}
+/* Rótulo de una mesa: «Mesa 03» a secas cuando hay un solo local, «Mesa 03 · LANDMARK» cuando
+   hay varios. Sin esto, dos tarjetas «Mesa 03» seguidas no se distinguen entre sí. */
+function rotuloMesa(m){
+  const n = 'Mesa ' + String(m.mesa).padStart(2, '0');
+  if(!m.mostrarSucursal) return n;
+  return n + ' · ' + (m.sucursal || 'Sin sucursal');
 }
 
 function pintarMesas(){
@@ -995,7 +1047,7 @@ function pintarMesas(){
       huerfanas.map(tarjetaMesa).join('');
   }
   cont.innerHTML = html;
-  $$('#listaMesas .tarj-mesa').forEach(b => b.addEventListener('click', () => abrirDetalle(+b.dataset.mesa)));
+  $$('#listaMesas .tarj-mesa').forEach(b => b.addEventListener('click', () => abrirDetalle(b.dataset.clave)));
 }
 
 function tarjetaMesa(m){
@@ -1005,6 +1057,10 @@ function tarjetaMesa(m){
   if(m.ajena) ets.push('<span class="et azul">No es tuya</span>');
   if(m.pendientes.length) ets.push('<span class="et roja">' + m.pendientes.length + ' por autorizar</span>');
   if(m.pidioCuenta) ets.push('<span class="et roja">Pidió la cuenta</span>');
+  /* La propina es un DATO, no una petición: verde e informativa, separada de la de arriba */
+  if(m.propina > 0) ets.push('<span class="et verde">Propina ' + fmt(m.propina) + '</span>');
+  /* La cuenta fantasma: mesa abierta sin sucursal donde sí hay sucursales */
+  if(m.sinSucursal) ets.push('<span class="et ambar">Sin sucursal</span>');
   if(m.listas.length) ets.push('<span class="et ambar">' + m.listas.length + ' lista' + (m.listas.length === 1 ? '' : 's') + ' por llevar</span>');
   /* Color por lo que significa, no por adorno: rojo = te necesitan ya, ámbar = ojo,
      azul = un dato. La misma lectura que en el panel. */
@@ -1014,8 +1070,11 @@ function tarjetaMesa(m){
     ets.push('<span class="et ' + tono + '">' + esc(txt) + '</span>');
   });
   if(!ets.length && m.ocupada) ets.push('<span class="et verde">Todo en orden</span>');
-  const meta = m.abierta ? 'Abierta ' + haceHumano(m.abierta.abierta_at) : (m.ocupada ? 'Con órdenes abiertas' : 'Libre');
-  return '<button class="tarj-mesa ' + clase + '" data-mesa="' + m.mesa + '">' +
+  const estadoMeta = m.abierta ? 'Abierta ' + haceHumano(m.abierta.abierta_at) : (m.ocupada ? 'Con órdenes abiertas' : 'Libre');
+  /* Con sucursales, la sucursal va en el meta: dos tarjetas «Mesa 03» seguidas son
+     indistinguibles sin ella, y era justo el caso de la cuenta duplicada. */
+  const meta = m.mostrarSucursal ? (m.sucursal || 'Sin sucursal') + ' · ' + estadoMeta : estadoMeta;
+  return '<button class="tarj-mesa ' + clase + '" data-clave="' + esc(m.clave) + '" data-mesa="' + m.mesa + '" data-suc="' + esc(m.sucursal) + '">' +
     '<span class="tm-top"><span class="tm-num"><small>Mesa</small>' + String(m.mesa).padStart(2,'0') + '</span>' +
     (m.ocupada ? '<span class="tm-total">' + fmt(m.totalConPendientes) + '</span>' : '') + '</span>' +
     '<span class="tm-meta">' + esc(meta) + '</span>' +
@@ -1065,7 +1124,8 @@ function detectarNovedades(){
      entrenarlo a ignorar el tono, y el tono es lo único que se oye en la cocina. */
   estadoMesas().filter(m => !m.ajena).forEach(m => {
     m.pendientes.forEach(o => ahora.add('p' + o.id));
-    if(m.pidioCuenta) ahora.add('c' + m.mesa);
+    /* Por clave y no por número: dos mesas 03 de sucursales distintas son dos avisos distintos */
+    if(m.pidioCuenta) ahora.add('c' + m.clave);
     m.listas.forEach(o => ahora.add('l' + o.id));
   });
   if(vistos === null){ vistos = ahora; return; }   /* la primera vuelta no suena */
@@ -1077,9 +1137,11 @@ function detectarNovedades(){
 /* ==================================================================
    3. DETALLE DE LA MESA — AUTORIZAR, RECHAZAR, ENTREGAR
    ================================================================== */
-function abrirDetalle(n){
-  mesaAbiertaEnDetalle = n;
-  pintarDetalle(n);
+/* Todo el detalle viaja por CLAVE (mesa#sucursal), no por número de mesa: con dos sucursales
+   el número solo no identifica una cuenta y se abría la que tocara. */
+function abrirDetalle(clave){
+  mesaAbiertaEnDetalle = clave;
+  pintarDetalle(clave);
   abrirVelo();
   $('#hojaDetalle').classList.add('abierta');
   $('#hojaDetalle').scrollTop = 0;
@@ -1102,19 +1164,19 @@ function renglones(o, conMarca){
   }).join('');
 }
 
-function pintarDetalle(n){
-  const m = estadoMesas().find(x => x.mesa === n);
+function pintarDetalle(clave){
+  const m = estadoMesas().find(x => x.clave === clave);
   if(!m){ cerrarSheets(); return; }
-  const propina = +((m.abierta && m.abierta.propina_sugerida) || 0);
-  /* La sucursal que manda es la DE LA FILA, no la del mesero: si él no tiene sucursal y se
-     manda la vacía, en la base se buscaría otra mesa 02, la de la sucursal equivocada.
-     Se saca una sola vez arriba porque también se pinta en el encabezado: un restaurante con
-     dos sucursales tiene dos «mesa 03» y desde aquí no se distinguían. */
-  const sucMesa = m.abierta ? (m.abierta.sucursal || '') : (sesion.sucursal || '');
+  const propina = m.propina;
+  /* La sucursal que manda es la DEL GRUPO, que ya viene de la fila y no del mesero: si él no
+     tiene sucursal y se manda la vacía, en la base se buscaría otra mesa 02, la de la sucursal
+     equivocada. Se saca una sola vez arriba porque también se pinta en el encabezado: un
+     restaurante con dos sucursales tiene dos «mesa 03» y desde aquí no se distinguían. */
+  const sucMesa = m.sucursal || '';
   let html = '<div class="asa"></div><div class="cuerpo">' +
     '<div class="h-top"><div><div class="caps" style="color:var(--pomodoro)">' +
       (m.abierta ? 'Abierta ' + esc(haceHumano(m.abierta.abierta_at)) : 'Sin mesa abierta') +
-      '</div><h2>Mesa ' + String(m.mesa).padStart(2,'0') + '</h2>' +
+      '</div><h2>' + esc(rotuloMesa(m)) + '</h2>' +
       /* Sin sucursal no se pinta nada: el local de una sola dirección no tiene por qué cargar
          con un «·» colgando sin texto detrás. */
       (sucMesa ? '<div class="caps" style="color:var(--humo);margin-top:7px">Sucursal ' + esc(sucMesa) + '</div>' : '') +
@@ -1124,8 +1186,21 @@ function pintarDetalle(n){
   /* Que sepa desde el primer renglón que esta mesa no es suya, antes de tocar cualquier botón. */
   if(m.ajena) html += '<div class="nota-pie" style="margin-top:12px">Nadie del equipo trae esta mesa asignada. Aparece en tu pantalla para que puedas soltarla si se abrió por error.</div>';
 
+  /* La cuenta fantasma explicada con todas sus letras: qué pasó y qué hacer. Sólo aparece en
+     restaurantes con sucursales — en los de un solo local sería ruido permanente. */
+  if(m.sinSucursal) html += '<div class="aviso-caja ambar"><b>Esta cuenta se abrió sin sucursal</b>' +
+    '<p>Alguien entró al menú con un enlace que no traía la sucursal, así que su cuenta quedó aparte de la del resto de su mesa. Puede haber OTRA mesa ' + String(m.mesa).padStart(2,'0') + ' con la sucursal correcta y la cuenta de al lado.</p>' +
+    '<p>Cóbrala como cualquier otra si el cliente ya se va, o suéltala si se abrió por error. Para que no vuelva a pasar, pídele que se una con el código de 4 dígitos de quien abrió la cuenta.</p></div>';
+
+  /* La petición de cuenta viene SÓLO de la llamada, no de la propina: el cliente puede marcar
+     propina y seguir comiendo, y con la regla vieja la mesa se quedaba en rojo para siempre. */
   if(m.pidioCuenta) html += '<div class="aviso-caja roja"><b>Pidieron la cuenta</b><p>' +
-    (propina > 0 ? 'El cliente marcó ' + fmt(propina) + ' de propina. Cóbrala con el botón de abajo.' : 'Ve a la mesa y cóbrala con el botón de abajo.') + '</p></div>';
+    (propina > 0 ? 'El cliente marcó ' + fmt(propina) + ' de propina. Cóbrala con el botón de abajo.' : 'Ve a la mesa y cóbrala con el botón de abajo.') + '</p>' +
+    '<div class="acciones"><button class="btn-fantasma" data-nocuenta="' + (m.llamadaCuenta ? m.llamadaCuenta.id : '') + '" data-nc-mesa="' + m.mesa + '" data-nc-suc="' + esc(sucMesa) + '"' +
+      ' data-armar="nocuenta' + (m.llamadaCuenta ? m.llamadaCuenta.id : '') + '" data-normal="Ya no van a pagar todavía" data-armado="Toca otra vez para retirarla">Ya no van a pagar todavía</button></div></div>';
+  /* La propina es un dato informativo y va aparte, en verde: no es una petición pendiente. */
+  else if(propina > 0) html += '<div class="aviso-caja verde"><b>Propina marcada: ' + fmt(propina) + '</b>' +
+    '<p>El cliente ya dejó anotada su propina desde su teléfono. Todavía no ha pedido la cuenta — si sigue ordenando, la cantidad se actualiza sola.</p></div>';
 
   m.otrasLlamadas.forEach(l => {
     const txt = l.motivo === 'tiempo' ? 'Quieren el siguiente tiempo' : l.motivo === 'listo' ? 'Cocina terminó un platillo' : 'Te llaman a la mesa';
@@ -1138,7 +1213,7 @@ function pintarDetalle(n){
     html += '<div class="grupo-tit"><em>' + m.pendientes.length + '</em><h2>Por autorizar</h2><i></i></div>';
     html += '<div class="nota-pie" style="margin-top:0">Lee la lista en voz alta con el comensal antes de mandarla a cocina. Cocina no la ve hasta que tú la autorizas.</div>';
     m.pendientes.forEach(o => {
-      html += '<div class="bloque pend"><div class="bl-cab"><span class="caps">Orden ' + esc(folio(o.id)) + ' &middot; Mesa ' + String(m.mesa).padStart(2,'0') + '</span>' +
+      html += '<div class="bloque pend"><div class="bl-cab"><span class="caps">Orden ' + esc(folio(o.id)) + ' &middot; ' + esc(rotuloMesa(m)) + '</span>' +
         '<span class="hh">' + esc(hora(o.creada)) + ' &middot; ' + esc(haceHumano(o.creada)) + '</span></div>' +
         renglones(o, false) +
         '<div class="tot-linea"><span class="caps">Total de esta orden</span><b>' + fmt(o.total) + '</b></div>' +
@@ -1157,7 +1232,7 @@ function pintarDetalle(n){
          conforme salen, no todos de golpe. Se ofrece cuando la comanda ya está en preparación
          o lista; además queda el atajo de cerrar la comanda completa. */
       const conPartidas = e === 1 || e === 2;
-      html += '<div class="bloque"><div class="bl-cab"><span class="caps" style="color:var(--humo)">Orden ' + esc(folio(o.id)) + ' &middot; Mesa ' + String(m.mesa).padStart(2,'0') + '</span>' +
+      html += '<div class="bloque"><div class="bl-cab"><span class="caps" style="color:var(--humo)">Orden ' + esc(folio(o.id)) + ' &middot; ' + esc(rotuloMesa(m)) + '</span>' +
         '<span class="hh">' + esc(hora(o.creada)) + '</span></div>' +
         '<div class="estado-cocina e' + e + '" style="margin-top:9px"><i></i>' + estadoTxt(o) +
           /* Quién la levantó importa cuando son dos meseros en el mismo turno: si la trae otro,
@@ -1189,7 +1264,7 @@ function pintarDetalle(n){
     if(m.autorizadas.length || m.pendientes.length){
       /* Con algo que cobrar todo sigue igual que siempre. Si hay pendientes, el botón lleva al
          mismo recordatorio de siempre: primero se autoriza o se rechaza. */
-      html += '<div class="acciones" style="margin-top:16px"><button class="btn-primario" data-cobrar="' + m.mesa + '">Cobrar y cerrar la mesa</button></div>';
+      html += '<div class="acciones" style="margin-top:16px"><button class="btn-primario" data-cobrar="' + esc(m.clave) + '">Cobrar y cerrar la mesa</button></div>';
     } else if(m.abierta){
       /* Aquí estaba el callejón sin salida que reportó el dueño: la mesa se abría por error,
          se pintaba «Cobrar y cerrar» y el botón contestaba «esta mesa no tiene nada que cobrar»
@@ -1220,8 +1295,10 @@ function pintarDetalle(n){
     entregarPartida(+id, +ix);
   }));
   h.querySelectorAll('[data-atendida]').forEach(b => b.addEventListener('click', () => atender(+b.dataset.atendida)));
-  h.querySelectorAll('[data-cobrar]').forEach(b => b.addEventListener('click', () => abrirCobro(+b.dataset.cobrar)));
+  h.querySelectorAll('[data-cobrar]').forEach(b => b.addEventListener('click', () => abrirCobro(b.dataset.cobrar)));
   h.querySelectorAll('[data-soltar]').forEach(b => b.addEventListener('click', () => soltarMesa(+b.dataset.mesa, b.dataset.suc || '', b.dataset.soltar)));
+  h.querySelectorAll('[data-nocuenta]').forEach(b => b.addEventListener('click',
+    () => cancelarCuenta(+b.dataset.nocuenta, +b.dataset.ncMesa, b.dataset.ncSuc || '')));
   repintarArmados();
 }
 
@@ -1319,6 +1396,58 @@ async function atender(id){
   pintarMesas(); if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
   try{ await api('menusbot_llamadas?id=eq.' + id, { method:'PATCH', body: JSON.stringify({ atendida:true }) }); }catch(e){}
 }
+
+/* ---------- Retirar una petición de cuenta ----------
+   El caso que reportó el dueño: la mesa pidió la cuenta, el mesero la vio en rojo, y después
+   los comensales decidieron seguir ordenando. No había forma de bajar esa bandera: la mesa se
+   quedaba en rojo, encabezando la lista, y la propina congelada en la cifra de ese momento.
+   Aquí se retira la petición y se le devuelve al comensal el control de su propina.
+   Dos escrituras separadas a propósito: la llamada se marca atendida (no se borra ninguna fila
+   de la base) y la mesa deja de tener la propina pedida para que su teléfono la recalcule. */
+const nocuentaEnVuelo = {};
+async function cancelarCuenta(id, mesa, suc){
+  if(!sesion) return;
+  const clave = 'nocuenta' + (id || '');
+  if(nocuentaEnVuelo[clave]) return;
+  if(!armar(clave)){ toast('Toca otra vez para retirar la petición de cuenta de la mesa ' + mesa); return; }
+  nocuentaEnVuelo[clave] = true;
+
+  /* Pintado optimista con copia de seguridad: el mesero está parado frente a la mesa y el rojo
+     tiene que apagarse ya. Si el servidor dice que no, se vuelve a poner exactamente como estaba. */
+  const respaldoLlamadas = llamadas.slice();
+  const filas = (mesasAbiertas || []).filter(f => +f.mesa === +mesa && (f.sucursal || '') === (suc || ''));
+  const respaldoPedida = filas.map(f => f.propina_pedida);
+  if(id) llamadas = llamadas.filter(l => +l.id !== +id);
+  filas.forEach(f => { f.propina_pedida = false; });
+  pintarMesas(); if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
+
+  let okLlamada = true, okMesa = true;
+  if(id){
+    try{ await api('menusbot_llamadas?id=eq.' + id, { method:'PATCH', body: JSON.stringify({ atendida:true }) }); }
+    catch(e){ okLlamada = false; }
+  }
+  try{
+    await api('menusbot_mesas_abiertas?restaurante_id=eq.' + encodeURIComponent(RID) + '&mesa=eq.' + (+mesa) + filtroSucDe(suc),
+      { method:'PATCH', body: JSON.stringify({ propina_pedida:false }) });
+  }catch(e){ okMesa = false; }
+
+  delete nocuentaEnVuelo[clave];
+
+  if(!okLlamada){
+    /* La bandera roja la manda la llamada: si esa no se guardó, mentir sería peor que fallar. */
+    llamadas = respaldoLlamadas;
+    filas.forEach((f, i) => { f.propina_pedida = respaldoPedida[i]; });
+    pintarMesas(); if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
+    toast('No se pudo retirar la petición de la mesa ' + mesa + '. Revisa el internet y vuelve a intentar.');
+    return;
+  }
+  if(!okMesa){
+    toast('Retirada la petición de la mesa ' + mesa + ', pero al teléfono del cliente le puede seguir apareciendo el aviso de propina.');
+  } else {
+    toast('Listo: la mesa ' + mesa + ' vuelve a estar ordenando. Su propina se actualiza sola con lo que agreguen.');
+  }
+  sondear();
+}
 /* ==================================================================
    3b. SOLTAR UNA MESA QUE SE ABRIÓ POR ERROR
    Pasa todos los días: alguien escanea el código de la mesa de junto mientras espera, o abre
@@ -1395,7 +1524,9 @@ async function soltarMesa(mesa, suc, modo){
      queda mirando la pantalla hasta el siguiente sondeo. */
   if(modo === 'cerrar'){
     mesasAbiertas = mesasAbiertas.filter(f => !(+f.mesa === +mesa && (f.sucursal || '') === (suc || '')));
-    ordenes = ordenes.filter(o => !(+o.mesa === +mesa && enMiSucursal(o)));
+    /* Con sucursal: sin ella, cerrar la mesa 03 de un local le borraba de la pantalla las
+       órdenes vivas de la mesa 03 del otro. */
+    ordenes = ordenes.filter(o => !(+o.mesa === +mesa && sucDe(o) === (suc || '')));
   } else {
     mesasAbiertas.filter(f => +f.mesa === +mesa && (f.sucursal || '') === (suc || ''))
       .forEach(f => { f.dispositivo_id = null; f.codigo = null; });
@@ -1446,24 +1577,28 @@ function barrerMesasCaducadas(){
 /* ==================================================================
    4. COBRAR Y CERRAR LA MESA
    ================================================================== */
-function abrirCobro(n){
-  const m = estadoMesas().find(x => x.mesa === n);
+function abrirCobro(clave){
+  const m = estadoMesas().find(x => x.clave === clave);
   if(!m) return;
   if(m.pendientes.length){ toast('Primero autoriza o rechaza lo que está pendiente de esta mesa.'); return; }
   if(!m.autorizadas.length){ toast('Esta mesa no tiene nada que cobrar.'); return; }
+  const n = m.mesa;
   const sug = Math.round(+((m.abierta && m.abierta.propina_sugerida) || 0));
   /* El cobro se congela al abrirse: el mesero está parado en la mesa y los números no deben
      cambiarle debajo de la mano a media cuenta.
      La propina NO vive en este estado como algo editable: es siempre `sugerida`, la que el
      comensal marcó en su teléfono. Así el corte cuadra por construcción. */
   cobro = {
+    clave: m.clave,
     mesa: n, total: Math.round(m.total), sugerida: sug,
     metodo: 'efectivo', recibido: 0,
     folios: m.autorizadas.map(o => +o.id),
     hayMesaAbierta: !!m.abierta, pedidaHasta: 0, sugNueva: null,
-    /* Se guarda la sucursal DE LA FILA que se está cobrando, no la del mesero: si él no tiene
+    /* Explicación viva de por qué los números se movieron; sobrevive a las resincronizaciones */
+    avisoFijo: '', sigAviso: '',
+    /* Se guarda la sucursal DEL GRUPO que se está cobrando, no la del mesero: si él no tiene
        sucursal asignada, un DELETE sin este dato borraría la mesa 02 de TODAS las sucursales. */
-    suc: (m.abierta ? (m.abierta.sucursal || '') : (sesion.sucursal || '')),
+    suc: m.sucursal || '',
   };
   pintarCobro();
   abrirVelo();
@@ -1506,6 +1641,9 @@ function pintarCobro(){
       '<p>La propina la elige el cliente en su teléfono, y esta mesa ya no tiene la carta abierta, así que se cobra sin propina. Si te dieron algo en la mano, eso no pasa por el sistema.</p></div>';
   }
   html += '<div id="avisoPropinaNueva">' + avisoPropinaNuevaHtml(c) + '</div>';
+  /* La explicación de por qué se movieron los números vive en su propio hueco para poder
+     cambiarla sin repintar la hoja mientras el mesero cuenta el efectivo. */
+  html += '<div id="avisoCobroVivo">' + (c.avisoFijo || '') + '</div>';
 
   html += '<div class="campo"><span class="caps">¿Cómo va a pagar?</span><div class="duo">' +
     '<button class="met-btn ' + (c.metodo === 'efectivo' ? 'sel' : '') + '" data-met="efectivo">Efectivo</button>' +
@@ -1572,6 +1710,109 @@ async function pedirPropina(btn){
   }, 20000);
 }
 
+/* ---------- Que lo que se cobra sea lo que hay ----------
+   Entre que se abre esta hoja y el mesero termina de contar el efectivo pasan minutos, y en esos
+   minutos la mesa puede haber pedido postres, otro mesero puede haber autorizado una comanda, o
+   alguien puede haber cobrado ya. El cobro se congela al abrirse a propósito (los números no
+   deben bailar mientras se cuenta dinero), pero cobrar con cifras viejas es justo lo que reportó
+   el dueño: el total de su teléfono no cuadraba con la suma de sus platillos.
+   revisarCobro NO escribe nada: solo compara lo congelado contra el estado vivo y dice qué pasó. */
+const capturandoEfectivo = () => {
+  const c = cobro;
+  if(!c || c.metodo !== 'efectivo') return false;
+  const ir = $('#inpRecibido');
+  return !!(+c.recibido || 0) || !!(ir && String(ir.value).trim());
+};
+
+function revisarCobro(c){
+  const m = c ? estadoMesas().find(x => x.clave === c.clave) : null;
+  if(!m) return { falla:'sin_mesa', m:null, folios:[], total:0, sugerida:0 };
+  const folios = m.autorizadas.map(o => +o.id).sort((a,b) => a - b);
+  const antes = (c.folios || []).map(x => +x).sort((a,b) => a - b);
+  const total = Math.round(+m.total || 0);
+  const sugerida = Math.round(+((m.abierta && m.abierta.propina_sugerida) || 0));
+  const chk = { m, folios, total, sugerida, falla:'' };
+  /* El orden importa: se reporta la causa que el mesero tiene que resolver primero. */
+  if(m.pendientes.length) chk.falla = 'pendientes';
+  else if(!folios.length) chk.falla = 'sin_ordenes';
+  else if(folios.length !== antes.length || folios.some((x,i) => x !== antes[i])) chk.falla = 'cambio';
+  else if(total !== Math.round(+c.total || 0)) chk.falla = 'monto';
+  else if(sugerida !== Math.round(+c.sugerida || 0)) chk.falla = 'propina';
+  return chk;
+}
+
+/* Huella de lo revisado: sirve para no repetirle el mismo aviso cada 4 segundos. */
+const firmaCobro = chk => chk.falla + '|' + chk.total + '|' + chk.sugerida + '|' + chk.folios.join(',');
+
+function explicarFallaCobro(chk){
+  if(!chk || !chk.falla) return '';
+  if(chk.falla === 'sin_mesa') return '<div class="aviso-caja roja"><b>Esta mesa ya no está</b>' +
+    '<p>Se cobró o se cerró desde otro teléfono mientras tenías esta hoja abierta. No registres nada aquí: cierra y revisa la lista.</p></div>';
+  if(chk.falla === 'pendientes') return '<div class="aviso-caja ambar"><b>Llegó algo nuevo sin autorizar</b>' +
+    '<p>La mesa mandó ' + chk.m.pendientes.length + ' orden' + (chk.m.pendientes.length === 1 ? '' : 'es') + ' más por ' + fmt(chk.m.totalConPendientes - chk.m.total) +
+    '. Cierra esta hoja, autorízalas o recházalas, y vuelve a cobrar con el total completo.</p></div>';
+  if(chk.falla === 'sin_ordenes') return '<div class="aviso-caja roja"><b>Ya no hay nada que cobrar</b>' +
+    '<p>Las órdenes de esta mesa se cerraron desde otro lado. Cierra esta hoja y revisa la lista antes de recibir dinero.</p></div>';
+  if(chk.falla === 'cambio') return '<div class="aviso-caja ambar"><b>La cuenta de esta mesa cambió</b>' +
+    '<p>Ahora son ' + chk.folios.length + (chk.folios.length === 1 ? ' orden' : ' órdenes') + ' por ' + fmt(chk.total) +
+    '. Ya corregí los números de esta hoja: revísalos con el cliente y vuelve a tocar para cobrar.</p></div>';
+  if(chk.falla === 'monto') return '<div class="aviso-caja ambar"><b>El total de la mesa cambió</b>' +
+    '<p>Ahora son ' + fmt(chk.total) + '. Ya corregí los números de esta hoja: revísalos con el cliente y vuelve a tocar para cobrar.</p></div>';
+  if(chk.falla === 'propina') return '<div class="aviso-caja azul"><b>La mesa movió su propina</b>' +
+    '<p>Ahora marca ' + fmt(chk.sugerida) + '. Esto no detiene el cobro: se registra la cifra que ves arriba.</p></div>';
+  return '';
+}
+
+/* Reescribe el cobro congelado con lo que hay de verdad. `dejarPropina` se usa cuando el mesero
+   está capturando efectivo: ahí la propina no se le mueve debajo de la mano, solo se le avisa. */
+function resincronizarCobro(c, m, dejarPropina){
+  if(!c || !m) return false;
+  const folios = m.autorizadas.map(o => +o.id).sort((a,b) => a - b);
+  const antes = (c.folios || []).map(x => +x).sort((a,b) => a - b);
+  const total = Math.round(+m.total || 0);
+  const sugerida = Math.round(+((m.abierta && m.abierta.propina_sugerida) || 0));
+  const movio = total !== Math.round(+c.total || 0)
+    || folios.length !== antes.length || folios.some((x,i) => x !== antes[i]);
+  c.total = total;
+  c.folios = folios;
+  c.hayMesaAbierta = !!m.abierta;
+  if(dejarPropina){
+    c.sugNueva = (sugerida !== Math.round(+c.sugerida || 0)) ? sugerida : null;
+  } else {
+    c.sugerida = sugerida;
+    c.sugNueva = null;
+  }
+  return movio;
+}
+
+/* Sólo el hueco del aviso, sin tocar el resto de la hoja: repintar mataría el foco del campo
+   de efectivo justo cuando el mesero está tecleando. */
+function pintarAvisoCobroVivo(){
+  const caja = $('#avisoCobroVivo');
+  if(caja) caja.innerHTML = (cobro && cobro.avisoFijo) || '';
+}
+
+/* Vigilancia en vivo: se cuelga del sondeo que ya corre. */
+function vigilarCobro(){
+  const c = cobro;
+  if(!c) return;
+  const h = $('#hojaCobro');
+  if(!h || !h.classList.contains('abierta')) return;
+  const chk = revisarCobro(c);
+  /* La propina la lleva refrescarPropinaDelCobro, que ya sabe distinguir si está capturando. */
+  if(!chk.falla || chk.falla === 'propina') return;
+  const firma = firmaCobro(chk);
+  if(c.sigAviso === firma) return;      /* el mismo aviso no se repite cada 4 segundos */
+  c.sigAviso = firma;
+  c.avisoFijo = explicarFallaCobro(chk);
+  if(chk.falla === 'sin_mesa'){ pintarAvisoCobroVivo(); toast('Alguien más cerró la mesa ' + c.mesa + '. No cobres desde esta hoja.'); return; }
+  const capturando = capturandoEfectivo();
+  const movio = resincronizarCobro(c, chk.m, capturando);
+  if(capturando) pintarAvisoCobroVivo();
+  else pintarCobro();
+  if(movio) toast('Los números de la mesa ' + c.mesa + ' cambiaron. Revísalos antes de cobrar.');
+}
+
 /* Con el cobro abierto, la propina que marque la mesa entra sin sacudirle la pantalla
    al mesero: si todavía no empezó a contar el efectivo se repinta con la cifra buena;
    si ya está capturando, solo se le deja el aviso. */
@@ -1580,13 +1821,13 @@ function refrescarPropinaDelCobro(){
   if(!c) return;
   const h = $('#hojaCobro');
   if(!h || !h.classList.contains('abierta')) return;
-  /* La MISMA fila que eligió abrirCobro, no cualquiera con ese número de mesa. */
-  const m = mesaAbiertaDe(c.mesa);
+  /* La MISMA fila que eligió abrirCobro: mismo número Y misma sucursal. Sin el segundo dato,
+     un restaurante con dos «mesa 03» podía leerle la propina de la sucursal de enfrente. */
+  const m = mesaAbiertaDe(c.mesa, c.suc);
   if(c.hayMesaAbierta && !m) return;   /* si se cayó la fila, no se le borra la propina de enfrente */
   const sug = Math.round(+((m && m.propina_sugerida) || 0));
   if(sug === Math.round(+c.sugerida || 0)) return;
-  const ir = $('#inpRecibido');
-  const capturando = !!(+c.recibido || 0) || !!(ir && String(ir.value).trim());
+  const capturando = capturandoEfectivo();
   if(!capturando){
     c.sugerida = sug;
     c.sugNueva = null;
@@ -1619,6 +1860,33 @@ async function confirmarCobro(){
   const c = cobro;
   if(!c) return;
   if(!armar('cobro')){ toast('Toca otra vez para registrar el cobro y cerrar la mesa'); return; }
+
+  /* Última mirada al estado vivo ANTES de escribir una sola línea. Si la mesa se movió entre que
+     se abrió esta hoja y este toque, no se registra un cobro con cifras viejas: se corrigen los
+     números delante del mesero, se le explica qué pasó y se sale sin escribir nada. El botón
+     queda desarmado, así que el segundo toque ya es sobre las cifras buenas.
+     La propina es la única causa que NO detiene el cobro: es un dato del cliente, se avisa y se
+     registra la cifra que el mesero tiene enfrente, que es la que cobró. */
+  const chk = revisarCobro(c);
+  if(chk.falla && chk.falla !== 'propina'){
+    c.avisoFijo = explicarFallaCobro(chk);
+    c.sigAviso = firmaCobro(chk);
+    if(chk.falla === 'sin_mesa'){
+      pintarAvisoCobroVivo();
+      toast('Esta mesa ya se cobró o se cerró desde otro teléfono. No se registró nada.');
+      return;
+    }
+    resincronizarCobro(c, chk.m, capturandoEfectivo());
+    pintarCobro();
+    toast(chk.falla === 'pendientes'
+      ? 'La mesa mandó algo nuevo sin autorizar. No se cobró nada: autorízalo o recházalo primero.'
+      : 'La cuenta cambió: ahora son ' + fmt(c.total) + '. No se cobró nada, revisa y vuelve a tocar.');
+    return;
+  }
+  /* Con el visto bueno, se vuelve a alinear el cobro con la mesa (dejando la propina como está)
+     y HASTA ENTONCES se arma lo que va a la base: nunca desde el estado congelado de hace rato. */
+  if(chk.m) resincronizarCobro(c, chk.m, true);
+
   const btn = $('#btnCobrar');
   if(btn) btn.disabled = true;
 
@@ -1648,7 +1916,9 @@ async function confirmarCobro(){
     await api('menusbot_mesas_abiertas?restaurante_id=eq.' + encodeURIComponent(RID) + '&mesa=eq.' + c.mesa + filtroSucDe(c.suc), { method:'DELETE' });
   }catch(e){ okMesa = false; }
 
-  llamadas.filter(l => +l.mesa === c.mesa).forEach(l => {
+  /* Con sucursal, si no: en un restaurante de dos locales se estaban dando por atendidas las
+     llamadas de la otra mesa 03, que seguía esperando a su mesero. */
+  llamadas.filter(l => +l.mesa === c.mesa && sucDe(l) === (c.suc || '')).forEach(l => {
     api('menusbot_llamadas?id=eq.' + l.id, { method:'PATCH', body: JSON.stringify({ atendida:true }) }).catch(() => {});
   });
 
@@ -1834,8 +2104,16 @@ if('serviceWorker' in navigator){
   navigator.serviceWorker.addEventListener('message', e => {
     if(e.data && e.data.mbAviso){
       if(sesion) sondear();
+      /* El aviso trae un número de mesa, no una clave: con dos sucursales ese número ya no
+         identifica a nadie. Se busca el grupo vivo con ese número —prefiriendo el de la
+         sucursal del mesero— y solo se abre si hay uno solo o si la sucursal desempata. */
       const mesa = e.data.mbAviso.mesa;
-      if(mesa && sesion && sesion.mesas.indexOf(+mesa) !== -1) abrirDetalle(+mesa);
+      if(mesa && sesion && sesion.mesas.indexOf(+mesa) !== -1){
+        const sucAviso = e.data.mbAviso.sucursal || sesion.sucursal || '';
+        const cand = estadoMesas().filter(x => x.mesa === +mesa);
+        const g = cand.find(x => (x.sucursal || '') === sucAviso) || (cand.length === 1 ? cand[0] : null);
+        if(g) abrirDetalle(g.clave);
+      }
     }
   });
 }

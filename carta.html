@@ -226,6 +226,9 @@
   .btn-primario{width:100%;min-height:44px;padding:16px;border:none;border-radius:2px;background:var(--pomodoro);color:var(--papel);font-size:14px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;font-family:var(--grot);transition:.15s}
   .btn-primario:active{transform:scale(.98);background:#C94A2F}
   .btn-fantasma{width:100%;min-height:44px;padding:14px 13px;border:1px solid var(--linea2);border-radius:2px;background:transparent;color:var(--humo);font-size:13px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;font-family:var(--grot)}
+  /* Doble toque: el botón queda «armado» 4.5 s y lo dice con todas sus letras. Sustituye a los
+     diálogos nativos del navegador, que aquí están prohibidos. */
+  .btn-fantasma.armado,.btn-primario.armado{background:var(--al-ambar);border-color:var(--al-ambar);color:var(--al-txt)}
   .nota-pie{margin:10px 20px 0;font-size:13px;color:var(--humo2);line-height:1.8;border-left:2px solid var(--linea2);padding-left:12px}
 
   /* progreso en cuenta */
@@ -244,6 +247,11 @@
   .velo.abierto{opacity:1;pointer-events:auto}
   .hoja{position:fixed;left:50%;transform:translate(-50%,105%);bottom:0;width:100%;max-width:480px;max-height:93vh;background:var(--esp);border-top:1px solid var(--linea2);z-index:90;transition:transform .38s cubic-bezier(.22,.9,.24,1);overflow-y:auto;overscroll-behavior:contain}
   .hoja.abierta{transform:translate(-50%,0)}
+  /* Carril propio para las dos hojas que NO pueden quedar tapadas: el splash y la guía viven
+     en z-index 300, y la hoja de sucursal se pintaba debajo de ellos. Sin sucursal no hay
+     mesa válida, así que estas dos ganan a todo lo demás. */
+  #hojaSucursal,#hojaUnirse{z-index:320}
+  .velo.alto{z-index:310}
   .hero-plato{position:relative;height:320px;overflow:hidden;background:var(--esp2)}
   .hero-plato img{width:100%;height:100%;object-fit:cover;filter:saturate(.94) contrast(1.04)}
   .hero-plato .svg-fb svg{width:100%;height:110%}
@@ -491,6 +499,9 @@
       <div class="orn"><i></i>✳<i></i></div>
       <div class="pregunta">¿EN QUÉ MESA TE ENCUENTRAS?</div>
       <div class="mesas" id="gridMesas"></div>
+      <!-- Segundo teléfono de la mesa: si ya le pasaron el código, no tiene por qué adivinar
+           mesa ni sucursal — el código sabe las dos cosas. -->
+      <button class="btn-fantasma" id="btnUnirseSplash" onclick="abrirHojaUnirse()">Alguien de mi mesa ya abrió la cuenta — tengo el código</button>
       <div class="nota">En el producto real, cada mesa tiene su código QR<br>y este paso es automático. — Prototipo MenusBot</div>
     </div>
   </div>
@@ -589,6 +600,7 @@
       <div class="g-paso"><b>3</b><div><h4>Manda tu orden cuando quieras</h4><p>Tu mesero pasa a la mesa a confirmarla contigo y de ahí se va a la cocina. Sigue su avance en «Cuenta».</p></div></div>
       <div class="g-nota">Nadie te apura: ve la carta con calma y ordena las veces que quieras — todo se va sumando y se paga junto al final.</div>
       <button class="btn-primario" onclick="cerrarGuia()">Empezar a ordenar</button>
+      <button class="btn-fantasma" style="margin-top:10px" onclick="abrirHojaUnirse()">Alguien de mi mesa ya abrió la cuenta — tengo el código</button>
     </div>
   </div>
 
@@ -608,6 +620,7 @@
 <div class="hoja" id="hojaBienvenida"></div>
 <div class="hoja" id="hojaPropina"></div>
 <div class="hoja" id="hojaSucursal"></div>
+<div class="hoja" id="hojaUnirse"></div>
 <div class="hoja" id="hojaAyuda">
   <div class="confirmacion" style="text-align:left">
     <div class="vista-head" style="padding:0 0 6px"><div class="caps" style="color:var(--humo)">¿Necesitas algo?</div><h2 style="font-family:var(--serif);font-style:italic;font-weight:500;font-size:30px">Estamos para servirte</h2></div>
@@ -615,6 +628,7 @@
       <button class="btn-primario" onclick="cerrarSheets();llamarMesero()">Llamar al mesero a mi mesa</button>
       <button class="btn-fantasma" onclick="cerrarSheets();pedirCuenta()">Pedir la cuenta para pagar</button>
       <button class="btn-fantasma" onclick="abrirHojaBienvenida()">Ver el código de mi mesa</button>
+      <button class="btn-fantasma" onclick="abrirHojaUnirse()">Alguien de mi mesa ya abrió la cuenta — tengo el código</button>
       <button class="btn-fantasma" onclick="abrirHojaCliente()">Mi cuenta de puntos</button>
       <button class="btn-fantasma" onclick="cerrarSheets();mostrarGuia(true)">¿Cómo funciona esta carta?</button>
       <button class="btn-fantasma" onclick="cerrarSheets();cambiarMesa()">Cambiar de mesa</button>
@@ -639,7 +653,8 @@ const RESTAURANTE = { nombre:'Trattoria Bella Vita', moneda:'MXN' };
 const IMG_BASE = 'https://xwcgqhlsubyfmpdjabjt.supabase.co/storage/v1/object/public/menusbot-demo/';
 const IMG = id => IMG_BASE + id + '.jpg';
 /* Multi-restaurante: el QR SIEMPRE trae &r=slug. Sin restaurante en la URL → landing general. */
-const RID = (new URLSearchParams(location.search).get('r') || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+const PARAMS_URL = new URLSearchParams(location.search);
+const RID = (PARAMS_URL.get('r') || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
 if(!RID){
   location.replace('index.html');
   throw new Error('Sin restaurante en la URL — redirigiendo a la landing');
@@ -960,6 +975,7 @@ let hashCarta = '';
 let hashMesa = '';
 let mesaOtras = [];        // órdenes de esta mesa enviadas desde otros teléfonos/sesiones
 let totalMesaSrv = null;   // total real de la mesa según el servidor (= "por cobrar" del panel)
+let totalMesaCobrado = 0;  // parte de ese total que el mesero ya cobró y cerró
 let misIds = [];
 /* Se levanta cuando la visita terminó (pagada y cerrada) y ya no se baja en esta carga de la
    página. Es el freno de mano: mientras esté arriba, este teléfono no le pregunta nada a la
@@ -993,6 +1009,7 @@ async function sincronizar(){
     aplicarMarca();
     /* Ya que se sabe la marca de verdad, se guarda para que la próxima visita no espere */
     recordarMarca(MARCA);
+    validarSucursal();
     ofrecerSucursal();
     /* Apartar la mesa en cuanto sabemos en qué sucursal está. Los guardas de dentro hacen
        que esto corra una sola vez; si la bienvenida no pudo salir (guía abierta, otra hoja
@@ -1087,10 +1104,25 @@ async function sincronizar(){
     }
     // Cuenta de la MESA: todas las órdenes no cobradas de esta mesa (de cualquier teléfono),
     // para que el total del comensal sea el mismo que el "por cobrar" del panel.
-    if(mesa != null){
-      const om = await api(`menusbot_ordenes?restaurante_id=eq.${RID}&mesa=eq.${mesa}&sucursal=eq.${encodeURIComponent(SUC)}&cerrada=eq.false&verificacion=neq.rechazada&select=id,total,estado,recogida_at,creada&order=creada.asc`);
+    if(mesa != null && !faltaElegirSucursal()){
+      /* El filtro era sólo `cerrada=eq.false` y por eso el total que veía el comensal salía
+         MUCHO más bajo que la suma de sus platillos: en cuanto el mesero cobraba una parte,
+         esas órdenes —las suyas, las que sigue viendo pintadas en su ticket— dejaban de contar.
+         Quitar el filtro tampoco sirve: arrastraría las visitas anteriores de la misma mesa
+         (el mesero cobra, borra la fila de mesas_abiertas y marca cerrada=true; la mesa 5 puede
+         rotar tres veces en una tarde, y `abierta_at` lo escribe el reloj del teléfono, así que
+         no es de fiar). La condición correcta es «lo que sigue abierto, MÁS lo mío»: así el
+         conjunto que se cuenta es por construcción idéntico al que se pinta. */
+      const misParaFiltro = (misIds || []).filter(x => +x > 0);
+      const filtroCuenta = misParaFiltro.length
+        ? `&or=(cerrada.eq.false,id.in.(${misParaFiltro.join(',')}))`
+        : '&cerrada=eq.false';
+      const om = await api(`menusbot_ordenes?restaurante_id=eq.${RID}&mesa=eq.${mesa}&sucursal=eq.${encodeURIComponent(SUC)}${filtroCuenta}&verificacion=neq.rechazada&select=id,total,estado,recogida_at,creada,cerrada&order=creada.asc`);
       const otras = (om || []).filter(x => !misIds.includes(x.id));
       const totalSrv = (om || []).reduce((s, x) => s + (+x.total || 0), 0);
+      /* Cuánto de ese total ya lo cobró el mesero: se le dice con todas sus letras en la
+         vista de cuenta en vez de dejarlo adivinando por qué la cifra no cuadra. */
+      totalMesaCobrado = (om || []).reduce((s, x) => s + (x.cerrada ? (+x.total || 0) : 0), 0);
       /* La recogida entra en la huella: es un cambio visible (de «lista» a «en camino») que
          no mueve el estado, y sin ella la lista de la mesa se quedaría pintada como estaba. */
       const hM = JSON.stringify([otras.map(x => [x.id, x.estado, x.recogida_at || null]), totalSrv]);
@@ -1099,12 +1131,14 @@ async function sincronizar(){
         mesaOtras = otras;
         totalMesaSrv = (om || []).length ? totalSrv : null;
         if(vistaActual === 'cuenta') pintarVistaCuenta();
+        /* El total de la mesa se movió: si la propina era un porcentaje, se recalcula sola */
+        ajustarPropinaAlTotal();
       }
       /* El mesero, antes de cobrar, puede pedirle a la mesa que marque su propina: eso llega
          como propina_pedida:true en la fila de esta mesa. Se atiende una sola vez por petición. */
-      if(mesaEsMia){
+      if(mesaEsMia && rutaMiMesa()){
         try{
-          const fm = await api(rutaMesa() + '&select=propina_pedida,propina_sugerida');
+          const fm = await api(rutaMiMesa() + '&select=propina_pedida,propina_sugerida');
           const f = (fm && fm[0]) || null;
           if(f){
             if(mesaFila){ mesaFila.propina_pedida = f.propina_pedida; }
@@ -1142,13 +1176,36 @@ let sondeo = setInterval(sincronizar, 4000);
 function detenerSondeo(){ if(sondeo != null){ clearInterval(sondeo); sondeo = null; } }
 
 /* ---------- Sesión persistente (sobrevive back/recarga del navegador) ---------- */
-let SUC = new URLSearchParams(location.search).get('suc') || '';
+/* La sucursal puede llegar como ?s= (lo que emite el QR de cocina) o como ?suc= (lo que emite
+   el generador del panel). Se aceptan las dos: un QR viejo no puede abrir una mesa fantasma. */
+let SUC = PARAMS_URL.get('s') || PARAMS_URL.get('suc') || '';
+/* Comparación tolerante a acentos y mayúsculas, pero SIEMPRE se guarda el literal exacto que
+   está en config.sucursales: la base indexa por texto y «Centro» ≠ «centro» para el índice. */
+const normSuc = v => (v == null ? '' : String(v)).normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+const sucursalesConfig = () => ((dbCache.config && dbCache.config.sucursales) || []).filter(Boolean).map(String);
+function sucursalOficial(v){
+  const n = normSuc(v);
+  if(!n) return '';
+  return sucursalesConfig().find(x => normSuc(x) === n) || '';
+}
+/* Se corre en cuanto la nube contesta: valida lo que venía en la URL o en la sesión y, si el
+   restaurante tiene una sola sucursal, la pone solita — no tiene caso preguntar por una opción. */
+function validarSucursal(){
+  const sucs = sucursalesConfig();
+  if(!sucs.length){ SUC = ''; return; }
+  if(sucs.length === 1){
+    if(SUC !== sucs[0]){ SUC = sucs[0]; marcaAplicada = ''; aplicarMarca(); guardarSesion(); }
+    return;
+  }
+  const oficial = sucursalOficial(SUC);
+  if(oficial !== SUC){ SUC = oficial; guardarSesion(); }
+}
 function guardarSesion(){
   try{
     if(!pedido.length && !ordenes.length && !cuentaPedida){ localStorage.removeItem(LSK('mb_sesion_v1')); return; }
     /* mesaFila viaja en la sesión para que una recarga no le esconda su código al dueño de
        la mesa; el permiso real se vuelve a verificar contra la nube en cada envío. */
-    localStorage.setItem(LSK('mb_sesion_v1'), JSON.stringify({ mesa, suc: SUC, pedido, ordenes, misIds, cuentaPedida, resenaOfrecida, mesaFila, propinaSugerida, ts: Date.now() }));
+    localStorage.setItem(LSK('mb_sesion_v1'), JSON.stringify({ mesa, suc: SUC, pedido, ordenes, misIds, cuentaPedida, resenaOfrecida, mesaFila, propinaSugerida, propinaPct, llamadaCuentaId, ts: Date.now() }));
   }catch(e){}
 }
 function restaurarSesion(mesaURL){
@@ -1162,6 +1219,10 @@ function restaurarSesion(mesaURL){
     cuentaPedida = !!g.cuentaPedida;
     resenaOfrecida = !!g.resenaOfrecida;
     propinaSugerida = (g.propinaSugerida == null) ? null : +g.propinaSugerida;
+    /* `== null` a propósito: las sesiones guardadas antes de este cambio no traen estos dos
+       campos y deben quedar en null, no en 0 ni en NaN. */
+    propinaPct = (g.propinaPct == null) ? null : +g.propinaPct;
+    llamadaCuentaId = (g.llamadaCuentaId == null) ? null : +g.llamadaCuentaId;
     mesaFila = g.mesaFila || null;
     mesaEsMia = !!(mesaFila && (mesaFila.dispositivo_id === DISP
       || (Array.isArray(mesaFila.invitados) && mesaFila.invitados.includes(DISP))));
@@ -1244,9 +1305,20 @@ function guardarIntentosMesa(){
 }
 
 const MESA_SEL = 'select=id,dispositivo_id,codigo,invitados,autorizada,abierta_at,latido_at,propina_pedida,propina_sugerida';
-/* El índice único es (restaurante_id, sucursal, mesa): los tres filtros identifican UNA fila */
-const rutaMesa = () => `menusbot_mesas_abiertas?restaurante_id=eq.${encodeURIComponent(RID)}`
-  + `&sucursal=eq.${encodeURIComponent(SUC)}&mesa=eq.${mesa ?? 0}`;
+/* El índice único es (restaurante_id, sucursal, mesa): los tres filtros identifican UNA fila.
+   Si todavía no sabemos la sucursal devuelve null a propósito: con `sucursal=eq.` vacío la
+   consulta apunta a una mesa fantasma —fue exactamente lo que abrió la cuenta duplicada—. */
+const rutaMesa = () => faltaElegirSucursal() ? null
+  : `menusbot_mesas_abiertas?restaurante_id=eq.${encodeURIComponent(RID)}`
+    + `&sucursal=eq.${encodeURIComponent(SUC)}&mesa=eq.${mesa ?? 0}`;
+/* La fila que YA tenemos en la mano se apunta por id, que es el único identificador que no
+   depende del índice (restaurante_id, sucursal, mesa). Caso real: el restaurante da de alta su
+   primera sucursal con la mesa ya abierta; la fila vieja se quedó con la sucursal vacía y
+   rutaMesa() —que ya apunta a la sucursal nueva— dejaría de encontrarla, así que la propina y
+   el «ya no quiero la cuenta» se escribirían en el aire sin que nadie se enterara.
+   No abre mesas: si no hay fila propia cae en rutaMesa() y la guarda de sucursal sigue viva. */
+const rutaMiMesa = () => (mesaFila && mesaFila.id)
+  ? `menusbot_mesas_abiertas?id=eq.${mesaFila.id}` : rutaMesa();
 const codigoMesa = () => String(Math.floor(1000 + Math.random() * 9000)); // 4 dígitos, nunca 0xxx
 /* PostgREST devuelve 409 cuando el índice único rechaza el POST: otro dispositivo tomó la
    mesa en el mismo instante. No es un error de red, es una carrera que hay que reevaluar. */
@@ -1296,6 +1368,11 @@ async function pedirCaducarMesa(f){
    { ok:false, motivo:'sinred' } si no se pudo verificar. En la duda NUNCA devuelve ok. */
 async function asegurarMesa(){
   if(mesa == null) return { ok:false, motivo:'bloqueada' };
+  /* Aquí está la guarda dura, en el único lugar por donde pasan TODOS los caminos que escriben
+     en menusbot_mesas_abiertas. Sin sucursal no se escribe nada: el índice único es
+     (restaurante_id, sucursal, mesa), así que una fila con sucursal vacía convive con la de
+     verdad y el restaurante termina con dos cuentas para una sola mesa. */
+  if(faltaElegirSucursal()) return { ok:false, motivo:'faltasucursal' };
   const ahora = () => new Date().toISOString();
   /* Varias pasadas porque una carrera perdida (409 o PATCH de 0 filas) se resuelve
      releyendo la fila y reevaluando; el tope evita quedarnos girando aquí. */
@@ -1482,26 +1559,43 @@ function ofrecerBienvenida(){
   abrirHojaBienvenida();
 }
 /* Mensaje ya redactado: quien lo recibe solo tiene que abrir el enlace y teclear el código */
+/* Enlace explícito a MI mesa. location.href no sirve: el segundo teléfono llegaba con la URL
+   pelona del restaurante, sin sucursal, y terminaba abriendo una fila fantasma. Aquí van los
+   cuatro datos que hacen falta —restaurante, sucursal, mesa y código— para que el que reciba
+   el mensaje entre exactamente a la misma cuenta sin tener que elegir nada. */
+function enlaceDeMiMesa(cod){
+  const u = new URL(location.href);
+  u.search = '';
+  u.hash = '';
+  const p = new URLSearchParams();
+  p.set('r', RID);
+  if(SUC) p.set('suc', SUC);
+  if(mesa != null) p.set('mesa', String(mesa));
+  if(cod) p.set('cod', String(cod));
+  u.search = p.toString();
+  return u.toString();
+}
 async function compartirCodigoMesa(){
   const cod = codigoVisible();
   if(!cod) return;
   const n = mesa != null ? String(mesa).padStart(2, '0') : '—';
-  const url = location.href;
-  const texto = `Estamos en la mesa ${n} de ${RESTAURANTE.nombre}. Abre la carta en tu teléfono y escribe el código ${cod} para unirte a nuestra cuenta y ordenar: ${url}`;
+  const url = enlaceDeMiMesa(cod);
+  const texto = `Estamos en la mesa ${n} de ${RESTAURANTE.nombre}. Abre la carta en tu teléfono y escribe el código ${cod} para unirte a nuestra cuenta y ordenar.`;
   if(navigator.share){
-    /* Cancelar el compartir del sistema no es un error: si lo cierra, no hacemos nada más */
-    try{ await navigator.share({ title: RESTAURANTE.nombre, text: texto }); }catch(e){}
+    /* El enlace va en `url`, no dentro del texto: WhatsApp y iOS lo tratan como enlace real
+       y no lo parten a la mitad cuando el mensaje es largo. */
+    try{ await navigator.share({ title: RESTAURANTE.nombre, text: texto, url }); }catch(e){}
     return;
   }
   try{
-    await navigator.clipboard.writeText(texto);
+    await navigator.clipboard.writeText(texto + ' ' + url);
     toast('Mensaje copiado — pégalo en tu WhatsApp');
     return;
   }catch(e){}
   /* Sin portapapeles moderno (o sin permiso): el truco viejo del campo oculto */
   try{
     const t = document.createElement('textarea');
-    t.value = texto;
+    t.value = texto + ' ' + url;
     t.setAttribute('readonly', '');
     t.style.cssText = 'position:fixed;top:-1000px;opacity:0';
     document.body.appendChild(t);
@@ -1517,6 +1611,9 @@ async function compartirCodigoMesa(){
    su código desde el primer segundo y puede pasárselo a los suyos mientras leen la carta. */
 let mesaChequeada = false;
 let abriendoMesa = false;
+/* En alto mientras se está uniendo con código: ese camino trae su propia mesa y su propia
+   sucursal, y abrirMesaAlLlegar() no debe adelantarse a apartar otra por debajo. */
+let uniendoseMesa = false;
 /* Reintento silencioso de una mesa que quedó apartada sin uso. Tope de intentos a propósito:
    pasada media hora esperando, si sigue trabada es que no está vacía y la salida ya no es
    esperar, es el mesero. */
@@ -1536,16 +1633,19 @@ function reintentarMesaLuego(){
     if(!mesaEsMia && mesaFila && mesaSilenciosa(mesaFila)) reintentarMesaLuego();
   }, 60000);
 }
-const faltaElegirSucursal = () => !SUC
-  && ((dbCache.config && dbCache.config.sucursales) || []).filter(Boolean).length > 0;
+/* Verdadera mientras NO se pueda escribir en la mesa con seguridad. Incluye a propósito el
+   arranque —el primer segundo, antes de que la nube conteste— porque hasta entonces no sabemos
+   si el restaurante tiene sucursales, y en esa ventana se estaban emitiendo consultas con
+   `sucursal=eq.` vacío que es justo la fila fantasma que causó las cuentas separadas. */
+const faltaElegirSucursal = () => !configCargada
+  || (!SUC && sucursalesConfig().length > 0);
 async function abrirMesaAlLlegar(){
   if(mesa == null || mesaChequeada || abriendoMesa) return;
-  /* Hasta no leer la configuración del restaurante no sabemos si tiene sucursales, y apartar
-     la mesa con la sucursal equivocada sería peor que esperar dos segundos. */
-  if(!configCargada) return;
-  /* Sin sucursal elegida la mesa 5 de la sucursal Centro y la de Roma son la misma fila:
-     mejor esperar a que conteste en qué sucursal está. */
-  if(faltaElegirSucursal()) return;
+  /* Mientras se está uniendo con código, la mesa (y la sucursal) las manda el código: que este
+     camino no se adelante a apartar la mesa equivocada por debajo. */
+  if(uniendoseMesa || $('#hojaUnirse').classList.contains('abierta')) return;
+  /* La guarda de sucursal ya no vive aquí sino dentro de asegurarMesa(), que devuelve
+     'faltasucursal' sin escribir nada. Así ningún camino puede saltársela. */
   abriendoMesa = true;
   let r;
   try{ r = await asegurarMesa(); }
@@ -1555,6 +1655,10 @@ async function abrirMesaAlLlegar(){
     mesaChequeada = true;
     ofrecerBienvenida();
     refrescarCodigoVisible();
+  } else if(r.motivo === 'faltasucursal'){
+    /* A propósito NO se marca mesaChequeada: el sondeo de 4 s vuelve a pasar por aquí y en
+       cuanto elija sucursal la mesa se aparta sola, sin que tenga que recargar. */
+    pedirSucursalAhora();
   } else if(r.motivo === 'bloqueada'){
     mesaChequeada = true;
     /* La hoja se abre sola una sola vez: en los reintentos de abajo el comensal ya sabe qué
@@ -1637,6 +1741,9 @@ async function unirmeAMesa(){
   const inp = $('#mesaCodigo');
   const cod = ((inp && inp.value) || '').replace(/\D/g, '');
   if(cod.length !== 4){ errorMesa('Faltan dígitos: el código de la mesa son 4 números.'); return; }
+  /* Sin sucursal esta hoja no puede saber de qué mesa habla. La búsqueda por código en todo
+     el restaurante sí puede, y además adopta la sucursal correcta: se manda por ahí. */
+  if(!rutaMesa()){ cerrarSheets(); abrirHojaUnirse(cod); return; }
   let f;
   try{
     /* Fila fresca antes de escribir: los invitados los agrega cualquier teléfono de la
@@ -1679,6 +1786,132 @@ function seguirTrasUnirse(){
   if(pedido.length){ enviarOrden(); return; }
   marcarSaludoDado();
   abrirHojaBienvenida();
+}
+
+/* ================================================================
+   UNIRSE CON EL CÓDIGO — DESDE CUALQUIER PARTE
+   Aquí se arregla el caso que reportó el restaurante. El segundo teléfono llegaba sin
+   sucursal, no se le preguntaba, y abría una fila aparte: dos cuentas para una mesa.
+   Decisión de diseño: el código es la fuente de la verdad, no la sucursal que el recién
+   llegado nunca eligió. Se busca en TODO el restaurante y se ADOPTA la sucursal de la mesa
+   encontrada. Quien tiene el código está sentado en esa mesa, punto.
+   ================================================================ */
+/* Busca el código de 4 dígitos entre todas las mesas abiertas del restaurante, sin filtrar
+   por sucursal. Devuelve el arreglo de filas que coinciden (normalmente una). */
+async function buscarMesaPorCodigo(cod){
+  const filas = await api(`menusbot_mesas_abiertas?restaurante_id=eq.${encodeURIComponent(RID)}`
+    + `&codigo=eq.${encodeURIComponent(cod)}&select=id,mesa,sucursal,dispositivo_id,codigo,invitados,autorizada,abierta_at,latido_at,propina_pedida,propina_sugerida`);
+  return (filas || []).slice();
+}
+/* Entra a una fila concreta: adopta su sucursal y su mesa, se anota como invitado y sigue. */
+async function entrarAMesa(f){
+  uniendoseMesa = true;
+  try{
+    const sucFila = f.sucursal || '';
+    if(sucFila !== SUC){
+      SUC = sucFila;
+      marcaAplicada = '';
+      aplicarMarca();
+      /* La sucursal ya no hace falta preguntarla: llegó con el código */
+      sucursalOfrecida = true;
+    }
+    const invitados = Array.isArray(f.invitados) ? f.invitados.slice() : [];
+    if(!invitados.includes(DISP)) invitados.push(DISP);
+    let fila = f;
+    if(f.dispositivo_id !== DISP){
+      const r = await api(`menusbot_mesas_abiertas?id=eq.${f.id}`, {
+        method:'PATCH', headers:{ 'Prefer':'return=representation' },
+        body: JSON.stringify({ invitados }),
+      });
+      fila = (r && r[0]) || Object.assign({}, f, { invitados });
+    }
+    /* asignarMesa() reinicia mesaChequeada y llama a abrirMesaAlLlegar(); con uniendoseMesa
+       en alto ese camino se abstiene y no intenta apartar nada por debajo. */
+    if(mesa !== +f.mesa) asignarMesa(+f.mesa, true);
+    else $('#splash').classList.add('oculto');
+    mesaFila = fila;
+    mesaEsMia = true;
+    mesaChequeada = true;
+    guardarSesion();
+    return true;
+  }finally{ uniendoseMesa = false; }
+}
+/* Hoja propia, independiente de la de bloqueo de mesa: esta se puede abrir aunque todavía no
+   haya mesa ni sucursal, que es justo el estado del segundo teléfono al llegar. */
+function abrirHojaUnirse(codPrellenado){
+  $('#hojaUnirse').innerHTML = `
+    <div class="confirmacion" style="text-align:left">
+      <div class="caps" style="color:var(--pomodoro)">UNIRME A LA CUENTA DE MI MESA</div>
+      <h2 style="text-align:left;margin-top:8px;font-family:var(--serif);font-style:italic;font-weight:500;font-size:28px">Escribe el código de 4 dígitos</h2>
+      <div class="nota-pie" style="margin:10px 0 4px">Lo tiene en pantalla quien abrió la cuenta. Con ese código entras a la misma cuenta y a la misma sucursal — no tienes que elegir nada más.</div>
+      <input class="notas-inp" id="unirseCodigo" inputmode="numeric" maxlength="4" placeholder="0000" value="${(codPrellenado || '').replace(/\D/g, '').slice(0,4)}" style="text-align:center;letter-spacing:8px;font-size:26px;margin-top:12px">
+      <div class="nota-pie" id="unirseAviso" style="margin:8px 0 0"></div>
+      <div id="unirseOpciones"></div>
+      <div class="acciones-orden" style="padding:16px 0 0">
+        <button class="btn-primario" onclick="unirmeConCodigo()">Unirme a esta cuenta</button>
+        <button class="btn-fantasma" onclick="cerrarSheets()">Ahora no</button>
+      </div>
+    </div>`;
+  cerrarSheets();
+  abrirVelo();
+  $('#velo').classList.add('alto');
+  $('#hojaUnirse').classList.add('abierta');
+  const inp = $('#unirseCodigo');
+  if(inp && !inp.value) setTimeout(() => { try{ inp.focus(); }catch(e){} }, 380);
+}
+function avisoUnirse(txt, falla){
+  const a = $('#unirseAviso');
+  if(!a) return;
+  a.textContent = txt || '';
+  a.style.color = falla ? 'var(--al-ambar)' : 'var(--humo)';
+}
+/* El mismo código de 4 dígitos puede repetirse en dos mesas distintas (son aleatorios y hay
+   nada más 9000). En vez de adivinar, se le pregunta a quien sí sabe dónde está sentado. */
+function pintarDesempateMesas(filas){
+  const c = $('#unirseOpciones');
+  if(!c) return;
+  c.innerHTML = `
+    <div class="nota-pie" style="margin:12px 0 6px">Ese código aparece en más de una mesa. ¿En cuál estás?</div>
+    <div class="acciones-orden" style="padding:0">
+      ${filas.map((f, i) => `<button class="btn-fantasma" onclick="unirseAOpcion(${i})">Mesa ${String(f.mesa).padStart(2,'0')}${f.sucursal ? ' · ' + f.sucursal : ''}</button>`).join('')}
+    </div>`;
+}
+let opcionesUnirse = [];
+function unirseAOpcion(i){
+  const f = opcionesUnirse[i];
+  if(!f) return;
+  unirsePorCodigo(f);
+}
+/* Cierra el trámite con una fila ya elegida */
+async function unirsePorCodigo(f){
+  avisoUnirse('Entrando a tu mesa…');
+  try{
+    await entrarAMesa(f);
+  }catch(e){ avisoUnirse('No pudimos confirmar tu mesa — revisa tu internet y vuelve a intentar.', true); return; }
+  cerrarSheets();
+  toast(`Listo — estás en la mesa ${String(f.mesa).padStart(2,'0')}${f.sucursal ? ' · ' + f.sucursal : ''}`);
+  seguirTrasUnirse();
+}
+async function unirmeConCodigo(){
+  const inp = $('#unirseCodigo');
+  const cod = ((inp && inp.value) || '').replace(/\D/g, '');
+  if(cod.length !== 4){ avisoUnirse('Faltan dígitos: el código de la mesa son 4 números.', true); return; }
+  avisoUnirse('Buscando tu mesa…');
+  let filas;
+  try{ filas = await buscarMesaPorCodigo(cod); }
+  catch(e){ avisoUnirse('No pudimos buscar tu mesa — revisa tu internet y vuelve a intentar.', true); return; }
+  if(!filas.length){
+    avisoUnirse('Ese código no corresponde a ninguna mesa abierta. Vuelve a pedírselo a quien lo tiene en pantalla.', true);
+    if(inp){ inp.value = ''; try{ inp.focus(); }catch(e){} }
+    return;
+  }
+  if(filas.length > 1){
+    opcionesUnirse = filas;
+    avisoUnirse('');
+    pintarDesempateMesas(filas);
+    return;
+  }
+  unirsePorCodigo(filas[0]);
 }
 
 /* Historial: el botón back navega entre vistas / cierra fichas en vez de salir */
@@ -1750,13 +1983,27 @@ const ESTADOS_COLOR = ['var(--al-azul)','var(--al-azul)','var(--al-azul)','var(-
 const COLOR_PENDIENTE = 'var(--al-ambar)';
 /* Una orden nace 'pendiente' y ahí se queda hasta que el mesero la confirma en la mesa */
 const esPendiente = o => (o.verificacion || 'pendiente') === 'pendiente';
-/* Total de la mesa: el del servidor manda (es el mismo «por cobrar» que ve el restaurante);
-   si todavía no lo tenemos, se suma lo que sabemos desde este teléfono. */
-const totalMesaActual = () => totalMesaSrv != null
-  ? totalMesaSrv
-  : ordenes.reduce((s, o) => s + o.total, 0) + mesaOtras.reduce((s, x) => s + (+x.total || 0), 0);
+/* Total de la mesa. Ahora se deriva de lo que el comensal TIENE PINTADO —sus tickets más las
+   órdenes de los otros teléfonos de su mesa—, que es la única cifra que él puede verificar
+   sumando con el dedo. El total del servidor queda de respaldo para el primer segundo, antes
+   de que lleguen los tickets: si el número no cuadra con la suma, el comensal desconfía de la
+   cuenta entera, y con razón. */
+const totalTicketsMesa = () => ordenes.reduce((s, o) => s + (+o.total || 0), 0)
+  + mesaOtras.reduce((s, x) => s + (+x.total || 0), 0);
+const totalMesaActual = () => (ordenes.length || mesaOtras.length)
+  ? totalTicketsMesa()
+  : (totalMesaSrv != null ? totalMesaSrv : 0);
 /* Propina que el comensal sugirió al pedir la cuenta (null = todavía no ha elegido) */
 let propinaSugerida = null;
+/* Porcentaje con el que se calculó la propina. null = monto libre que él escribió: ese NUNCA
+   se recalcula solo — es una cantidad que decidió a mano y moverla sería faltarle al respeto. */
+let propinaPct = null;
+/* Id de la llamada de «pedir la cuenta», para poder cancelarla si decide seguir ordenando */
+let llamadaCuentaId = null;
+/* El mesero ya cobró y borró la fila: dejar de intentar actualizar la propina */
+let propinaCongelada = false;
+/* Para no repetir el aviso de que la propina se recalculó sola */
+let propinaAvisada = false;
 function pintarIndicadores(){
   guardarSesion();
   const n = pedido.reduce((s,i) => s + i.qty, 0);
@@ -2046,16 +2293,25 @@ function cerrarSheets(){
   $('#hojaAyuda').classList.remove('abierta');
   $('#hojaCliente').classList.remove('abierta');
   $('#hojaSucursal').classList.remove('abierta');
+  $('#hojaUnirse').classList.remove('abierta');
+  $('#velo').classList.remove('alto');
 }
 
-/* ---------- Selector de sucursal (cuando el QR no la trae) ---------- */
+/* ---------- Selector de sucursal (cuando el QR no la trae) ----------
+   Antes esta función marcaba la bandera ANTES de pintar y salía temprano si había cualquier
+   otra hoja abierta: si el splash estaba encima, la hoja se pintaba debajo, nadie la veía y
+   como la bandera ya estaba puesta jamás se volvía a ofrecer. Ese es el origen exacto de la
+   «sesión fantasma sin sucursal». Ahora se pinta primero, se sube el velo a su carril propio
+   y la bandera se pone hasta el final, cuando la hoja está de verdad al frente. */
 let sucursalOfrecida = false;
-function ofrecerSucursal(){
-  if(SUC || sucursalOfrecida) return;
-  const sucs = ((dbCache.config && dbCache.config.sucursales) || []).filter(Boolean);
-  if(!sucs.length) return;
-  if(document.querySelector('.hoja.abierta') || $('#guia').classList.contains('visible')) return; // espera su turno
-  sucursalOfrecida = true;
+/* Se levanta cuando el comensal intentó mandar su orden y le faltaba la sucursal: en cuanto la
+   elija, la orden sale sola. Que no tenga que volver a buscar el botón. */
+let ordenEsperandoSucursal = false;
+function ofrecerSucursal(forzar){
+  if(SUC) return;
+  if(sucursalOfrecida && !forzar) return;
+  const sucs = sucursalesConfig();
+  if(sucs.length < 2) return;   // con una sola la pone validarSucursal(): no hay nada que preguntar
   $('#hojaSucursal').innerHTML = `
     <div class="confirmacion" style="text-align:left">
       <div class="caps" style="color:var(--pomodoro)">¿EN QUÉ SUCURSAL ESTÁS?</div>
@@ -2064,17 +2320,33 @@ function ofrecerSucursal(){
         ${sucs.map(x => `<button class="btn-primario" onclick="elegirSucursal('${x.replace(/'/g, "\\'")}')">${x}</button>`).join('')}
       </div>
     </div>`;
+  cerrarSheets();
   abrirVelo();
+  $('#velo').classList.add('alto');
   $('#hojaSucursal').classList.add('abierta');
+  sucursalOfrecida = true;
+}
+/* Punto de entrada para cuando algo se topó con la falta de sucursal (apertura de mesa, envío
+   de orden). Fuerza el reintento aunque ya se hubiera ofrecido antes y quedado tapada. */
+function pedirSucursalAhora(){
+  if(!configCargada || SUC) return;
+  if(sucursalesConfig().length < 2) return;
+  if($('#hojaSucursal').classList.contains('abierta')) return;
+  ofrecerSucursal(true);
 }
 function elegirSucursal(x){
-  SUC = x;
+  /* Se guarda el literal exacto de la configuración: la base indexa por texto */
+  SUC = sucursalOficial(x) || x;
   marcaAplicada = '';
   aplicarMarca();
   guardarSesion();
   cerrarSheets();
-  toast('Sucursal ' + x + ' — benvenuto');
+  toast('Sucursal ' + SUC + ' — benvenuto');
   abrirMesaAlLlegar(); // ya sabemos dónde está: ahora sí se puede apartar su mesa
+  if(ordenEsperandoSucursal && pedido.length){
+    ordenEsperandoSucursal = false;
+    setTimeout(() => enviarOrden(), 60);
+  }
 }
 function abrirAyuda(){
   cerrarSheets();
@@ -2091,6 +2363,16 @@ function agregarAlPedido(id, qty, notas){
   else pedido.push({id, qty, notas: notas||''});
   pintarIndicadores();
   if(vistaActual === 'orden') pintarVistaOrden();
+  avisarQueSigueOrdenando();
+}
+/* Está agregando platillos con la cuenta ya pedida. NO se cancela la petición en silencio —el
+   mesero podría ir en camino con la terminal—: se le explica en qué situación está y se le
+   deja a la mano el botón para retirarla si eso es lo que quiere. */
+let avisoSigueOrdenandoDado = false;
+function avisarQueSigueOrdenando(){
+  if(!cuentaPedida || avisoSigueOrdenandoDado) return;
+  avisoSigueOrdenandoDado = true;
+  toast('Ojo: ya pediste la cuenta y tu mesero viene en camino. Si quieres seguir ordenando, retira la petición en «Cuenta»');
 }
 function agregarRapido(id){
   const d = PLATILLOS.find(x => x.id === id);
@@ -2203,6 +2485,11 @@ function pintarVistaCuenta(){
       /* Mientras el mesero no cobre, la propina se puede cambiar: que se vea, y con dedo de adulto */
       html += `<div style="margin:0 20px 14px"><button class="btn-fantasma" style="width:100%" onclick="abrirHojaPropina()">${propinaSugerida > 0 ? 'Cambiar la propina' : 'Marcar una propina'}</button></div>`;
     }
+    /* Cambiar de opinión no es un error. Sin esto, pedir la cuenta era una puerta de un solo
+       sentido: el mesero no podía cancelar la petición y se quedaba pendiente para siempre. */
+    html += `<div style="margin:0 20px 14px"><button class="btn-fantasma" style="width:100%"
+      data-armar="nocuenta" data-normal="Ya no, quiero seguir ordenando" data-armado="Toca otra vez para retirar la petición"
+      onclick="cancelarCuentaPedida()">Ya no, quiero seguir ordenando</button></div>`;
     /* Mientras espera al mesero: si cerró la invitación sin querer, aquí la vuelve a encontrar */
     if(resenasActivas()) html += `<div style="margin:-4px 20px 12px;font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--oro);cursor:pointer" onclick="abrirHojaResena()">Dejar una reseña</div>`;
   } else if(porConfirmar.length){
@@ -2248,6 +2535,18 @@ function pintarVistaCuenta(){
       <div class="nota-pie" style="margin-top:8px">Pedidas desde otro teléfono en tu misma mesa — también entran en el total.</div>
     </div>`;
   }
+  /* Dos avisos que antes faltaban y dejaban al comensal creyendo que la cuenta estaba mal.
+     Ámbar: parte de la mesa ya se pagó, por eso el total no es la suma de todo lo que ve. */
+  if(totalMesaCobrado > 0){
+    html += `<div class="al-bloque ambar" style="margin:0 20px 12px"><div class="caps" style="margin-bottom:6px;opacity:.85">PARTE DE TU MESA YA SE PAGÓ</div>
+      <div>Tu mesero ya cobró <b>${fmt(totalMesaCobrado)} ${RESTAURANTE.moneda}</b> de esta mesa. Esas órdenes siguen aquí abajo para que puedas revisarlas, pero ya no se vuelven a cobrar: <b>lo que falta por pagar es ${fmt(Math.max(0, totalMesa - totalMesaCobrado))} ${RESTAURANTE.moneda}</b>.</div></div>`;
+  }
+  /* Azul: el total del servidor y la suma de los tickets no coinciden. Puede ser un cobro que
+     acaba de entrar o una orden que todavía no baja. Se dice, no se esconde. */
+  if(totalMesaSrv != null && Math.abs(totalMesaSrv - totalTicketsMesa()) >= 1 && (ordenes.length || mesaOtras.length)){
+    html += `<div class="al-bloque azul" style="margin:0 20px 12px"><div class="caps" style="margin-bottom:6px;opacity:.85">ESTAMOS ACTUALIZANDO TU CUENTA</div>
+      <div>El total que tenemos registrado (<b>${fmt(totalMesaSrv)}</b>) no coincide todavía con la suma de las órdenes que ves aquí (<b>${fmt(totalTicketsMesa())}</b>). Suele acomodarse solo en unos segundos. Si al llegar el mesero sigue sin cuadrar, muéstrale esta pantalla — la cifra buena es la suma de tus órdenes.</div></div>`;
+  }
   html += `<div class="ticket"><div class="t-int">
       <div class="t-tot" style="padding-top:0"><span class="caps">Total de la mesa</span><span class="leader"></span><b>${fmt(totalMesa)} ${RESTAURANTE.moneda}</b></div>
       <div class="t-bar"></div>
@@ -2262,6 +2561,7 @@ function pintarVistaCuenta(){
     </div>
     <div class="nota-pie">El avance de tus órdenes se actualiza solo, sin que tengas que recargar nada. Tómate tu tiempo — nadie te va a apurar.</div>`;
   v.innerHTML = html;
+  repintarArmados();   // el botón de doble toque se vuelve a pintar en su estado real
 }
 let sinBebidasOk = false;
 function mostrarSugerenciaBebidas(){
@@ -2296,6 +2596,13 @@ async function enviarOrden(){
   const permiso = await asegurarMesa();
   if(!permiso.ok){
     if(permiso.motivo === 'bloqueada'){ abrirHojaMesa(); }
+    else if(permiso.motivo === 'faltasucursal'){
+      /* Su orden NO se pierde: se queda armada tal cual y se manda sola en cuanto elija.
+         Preguntar aquí es mucho mejor que mandarla a la sucursal equivocada. */
+      toast('Antes de mandar tu orden, dinos en qué sucursal estás');
+      ordenEsperandoSucursal = true;
+      pedirSucursalAhora();
+    }
     else { avisarMesaNoConfirmada(); }
     return;
   }
@@ -2328,6 +2635,8 @@ async function enviarOrden(){
   mostrarConfirmacion(o);
   programarEstados(o);
   if(vistaActual === 'orden') pintarVistaOrden();
+  /* La cuenta acaba de crecer: si su propina era un porcentaje, que siga siendo ese porcentaje */
+  ajustarPropinaAlTotal();
 }
 /* Si el panel del restaurante no está atendido, la cocina se simula */
 function programarEstados(o){
@@ -2444,10 +2753,10 @@ function pintarHojaPropina(otra){
       </div>`
       : `
       <div class="prop-ops">
-        ${yaEligio ? `<button class="prop-btn" onclick="elegirPropina(${propinaSugerida})"><span class="pb-pct">Dejarla como la marqué</span><span class="pb-mto">${propinaSugerida > 0 ? fmt(propinaSugerida) : 'Sin propina'}</span></button>` : ''}
-        ${PROP_PCTS.map(p => `<button class="prop-btn" onclick="elegirPropina(${montoPropina(p)})"><span class="pb-pct">${p}% de propina</span><span class="pb-mto">${fmt(montoPropina(p))}</span></button>`).join('')}
+        ${yaEligio ? `<button class="prop-btn" onclick="elegirPropina(${propinaSugerida}, ${propinaPct == null ? 'null' : propinaPct})"><span class="pb-pct">Dejarla como la marqué</span><span class="pb-mto">${propinaSugerida > 0 ? fmt(propinaSugerida) : 'Sin propina'}</span></button>` : ''}
+        ${PROP_PCTS.map(p => `<button class="prop-btn" onclick="elegirPropina(${montoPropina(p)}, ${p})"><span class="pb-pct">${p}% de propina</span><span class="pb-mto">${fmt(montoPropina(p))}</span></button>`).join('')}
         <button class="prop-btn" onclick="pintarHojaPropina(true)"><span class="pb-pct">Otra cantidad</span><span class="pb-mto">Tú decides</span></button>
-        <button class="prop-btn neutro" onclick="elegirPropina(0)"><span class="pb-pct">Prefiero no dejar propina</span><span class="pb-mto">Sin propina</span></button>
+        <button class="prop-btn neutro" onclick="elegirPropina(0, null)"><span class="pb-pct">Prefiero no dejar propina</span><span class="pb-mto">Sin propina</span></button>
       </div>
       <div class="nota-pie" style="margin:16px 0 0;border-left-color:var(--linea2)">Cualquiera de las opciones está bien y nadie se va a enterar de cuál elegiste más que tu mesero. Elige con confianza.</div>`}
     </div>`;
@@ -2463,17 +2772,23 @@ function elegirPropinaOtra(){
   const inp = $('#propOtra');
   const n = Math.round(+((inp && inp.value) || '').replace(/[^\d]/g, ''));
   if(!(n >= 0) || !isFinite(n)){ toast('Escribe la cantidad en números, por ejemplo 150', true); return; }
-  elegirPropina(n);
+  /* pct null: es una cantidad que escribió a mano y NUNCA se recalcula sola */
+  elegirPropina(n, null);
 }
 /* Lo que elige aquí es lo que se registra: se guarda en propina_sugerida (la columna que leen
-   el mesero y el panel) y se apaga propina_pedida para que la misma petición no reabra la hoja. */
-function elegirPropina(monto){
+   el mesero y el panel) y se apaga propina_pedida para que la misma petición no reabra la hoja.
+   `pct` es el porcentaje con el que se calculó (null = cantidad libre). Se recuerda para poder
+   recalcular la propina si después ordena más: en la prueba del restaurante la propina se quedó
+   congelada en el total viejo y el mesero cobró un 15% que ya no era 15% de nada. */
+function elegirPropina(monto, pct){
   propinaSugerida = Math.max(0, Math.round(+monto || 0));
+  propinaPct = (pct == null) ? null : +pct;
+  propinaCongelada = false;
   guardarSesion();
   const porPeticion = propinaPorPeticion;
   propinaPorPeticion = false;
-  if(mesa != null){
-    api(rutaMesa(), { method:'PATCH', body: JSON.stringify({ propina_sugerida: propinaSugerida, propina_pedida: false }) }).catch(() => {});
+  if(mesa != null && rutaMiMesa()){
+    api(rutaMiMesa(), { method:'PATCH', body: JSON.stringify({ propina_sugerida: propinaSugerida, propina_pedida: false }) }).catch(() => {});
   }
   cerrarSheets();
   /* Si el mesero ya venía en camino (él la pidió, o la cuenta ya estaba pedida) no hay que
@@ -2488,6 +2803,40 @@ function elegirPropina(monto){
   }
   confirmarPedirCuenta();
 }
+/* ---------- La propina sigue al total ----------
+   Caso real del restaurante: el comensal pidió la cuenta, marcó 15%, y luego decidió ordenar
+   algo más. La propina se quedó congelada en el 15% del total viejo y nadie la volvió a tocar.
+   Si la marcó como PORCENTAJE, el porcentaje es lo que decidió — no la cifra. Si escribió una
+   cantidad libre, esa cifra es lo que decidió y aquí no se toca jamás. */
+let ultimoTotalPropina = null;
+async function ajustarPropinaAlTotal(){
+  if(propinaCongelada) return;
+  if(propinaSugerida == null || propinaPct == null) return;   // sin propina o cantidad libre
+  if(mesa == null || !rutaMesa() || !mesaFila || !mesaFila.id) return;
+  const total = totalMesaActual();
+  if(!(total > 0)) return;
+  const nueva = Math.round(total * propinaPct / 100);
+  if(nueva === propinaSugerida){ ultimoTotalPropina = total; return; }
+  let filas;
+  try{
+    filas = await api(`menusbot_mesas_abiertas?id=eq.${mesaFila.id}`, {
+      method:'PATCH', headers:{ 'Prefer':'return=representation' },
+      body: JSON.stringify({ propina_sugerida: nueva }),
+    });
+  }catch(e){ return; }   // sin red: se reintenta en el siguiente sondeo
+  /* Respuesta vacía = el mesero ya cobró y borró la fila. La propina que él vio es la que va;
+     no tiene caso seguir intentando ni asustar al comensal con un número que ya no aplica. */
+  if(!filas || !filas.length){ propinaCongelada = true; return; }
+  const antes = propinaSugerida;
+  propinaSugerida = nueva;
+  ultimoTotalPropina = total;
+  guardarSesion();
+  if(vistaActual === 'cuenta') pintarVistaCuenta();
+  if(!propinaAvisada){
+    propinaAvisada = true;
+    toast(`Tu propina se ajustó de ${fmt(antes)} a ${fmt(nueva)} — sigue siendo el ${propinaPct}% de tu cuenta`);
+  }
+}
 function pedirCuenta(){
   if(cuentaPedida){ toast('Ya pedimos tu cuenta — el mesero viene a cobrar a tu mesa'); return; }
   if(Date.now() - ultimaLlamada < 30000){ toast('Ya avisamos — tu mesero está en camino'); return; }
@@ -2498,9 +2847,13 @@ function confirmarPedirCuenta(){
   if(Date.now() - ultimaLlamada < 30000 && cuentaPedida){ return; }
   ultimaLlamada = Date.now();
   avisarMesero('cuenta');
-  api('menusbot_llamadas', { method:'POST', body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, motivo:'cuenta', sucursal: SUC }) })
-    .then(() => {
+  /* Se pide la fila de vuelta para quedarnos con el id de la llamada: sin él no había manera
+     de cancelar la petición si el comensal decide seguir ordenando, y en la prueba del
+     restaurante se quedó pendiente para siempre y el mesero no pudo quitarla. */
+  api('menusbot_llamadas', { method:'POST', headers:{ 'Prefer':'return=representation' }, body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, motivo:'cuenta', sucursal: SUC }) })
+    .then(r => {
       cuentaPedida = true;
+      llamadaCuentaId = (r && r[0] && r[0].id != null) ? +r[0].id : null;
       latirMesa(); // sigue habiendo gente en la mesa: la mantenemos viva hasta que se cierre
       guardarSesion();
       if(vistaActual === 'cuenta') pintarVistaCuenta();
@@ -2510,6 +2863,46 @@ function confirmarPedirCuenta(){
       setTimeout(mostrarHojaResena, 1200);
     })
     .catch(() => toast('Sin conexión — inténtalo de nuevo', true));
+}
+
+/* ---------- «Ya no, quiero seguir ordenando» ----------
+   Cambiar de opinión no es un error. Se retira la petición de cuenta de la app del mesero
+   (la llamada se marca atendida y se apaga propina_pedida) y la mesa vuelve a la normalidad.
+   Doble toque en vez de un diálogo nativo: un toque suelto no puede deshacer la cuenta. */
+const armados = {};
+function armar(clave){
+  if(armados[clave]){ clearTimeout(armados[clave]); delete armados[clave]; repintarArmados(); return true; }
+  armados[clave] = setTimeout(() => { delete armados[clave]; repintarArmados(); }, 4500);
+  repintarArmados();
+  return false;
+}
+function repintarArmados(){
+  document.querySelectorAll('[data-armar]').forEach(b => {
+    const c = b.dataset.armar;
+    const on = !!armados[c];
+    b.textContent = on ? b.dataset.armado : b.dataset.normal;
+    b.classList.toggle('armado', on);
+  });
+}
+async function cancelarCuentaPedida(){
+  if(!cuentaPedida) return;
+  if(!armar('nocuenta')) return;   // primer toque: arma; segundo toque: ejecuta
+  const idLlamada = llamadaCuentaId;
+  cuentaPedida = false;
+  llamadaCuentaId = null;
+  avisoSigueOrdenandoDado = false;
+  guardarSesion();
+  if(vistaActual === 'cuenta') pintarVistaCuenta();
+  pintarIndicadores();
+  toast('Listo — retiramos la petición. Sigue ordenando con calma');
+  /* La fila de la mesa deja de pedir propina; su propina marcada se queda tal cual */
+  if(mesa != null && rutaMiMesa()){
+    api(rutaMiMesa(), { method:'PATCH', body: JSON.stringify({ propina_pedida: false }) }).catch(() => {});
+  }
+  /* La llamada se marca atendida: así desaparece de la app del mesero sin borrar nada */
+  if(idLlamada != null){
+    api(`menusbot_llamadas?id=eq.${idLlamada}`, { method:'PATCH', body: JSON.stringify({ atendida: true }) }).catch(() => {});
+  }
 }
 
 /* ---------- El mesero no pudo pasar la orden ---------- */
@@ -2692,7 +3085,10 @@ function cerrarVisita(){
   ordenes = []; misIds = []; pedido = []; cuentaPedida = false;
   /* Visita nueva, cortesía nueva: la siguiente mesa sí vuelve a ver la invitación a reseñar */
   resenaOfrecida = false;
-  mesaOtras = []; totalMesaSrv = null; hashMesa = '';
+  mesaOtras = []; totalMesaSrv = null; hashMesa = ''; totalMesaCobrado = 0;
+  /* Visita nueva: la propina se marca desde cero y se puede volver a ajustar */
+  propinaPct = null; llamadaCuentaId = null; propinaCongelada = false;
+  propinaAvisada = false; avisoSigueOrdenandoDado = false;
   /* Visita nueva: esta pantalla ya no es dueña de nada y los intentos de código se reinician */
   mesaFila = null; mesaEsMia = false; mesaIntentos = 0;
   /* Mesa nueva, código nuevo y bienvenida nueva: la siguiente visita vuelve a ver su código */
@@ -2898,7 +3294,15 @@ $('#buscar').addEventListener('input', pintarLista);
 {
   const visitaTerminada = leerDespedida();
   if(visitaTerminada) entrarDespedida(visitaTerminada);
-  else { sincronizar(); iniciarMesa(); }
+  else {
+    sincronizar();
+    iniciarMesa();
+    /* Llegó por el enlace que le compartieron desde la mesa: se le adelanta la hoja de unirse
+       con el código ya escrito. Un toque y está dentro de la MISMA cuenta — sin elegir mesa,
+       sin elegir sucursal y, sobre todo, sin abrir una fila nueva. */
+    const codURL = (PARAMS_URL.get('cod') || '').replace(/\D/g, '').slice(0, 4);
+    if(codURL.length === 4 && !mesaEsMia) setTimeout(() => abrirHojaUnirse(codURL), 200);
+  }
 }
 pintarMarquee();
 pintarControles();
