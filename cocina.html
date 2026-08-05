@@ -45,7 +45,7 @@
   .pantalla{display:none;height:100%}
   .pantalla.activa{display:block}
   #app.activa{display:flex;flex-direction:column}
-  #entrada.activa,#sinRid.activa{display:flex;align-items:center;justify-content:center;overflow-y:auto}
+  #entrada.activa,#sinRid.activa,#sucursal.activa,#conflicto.activa{display:flex;align-items:center;justify-content:center;overflow-y:auto}
 
   /* ---------- Sin restaurante / entrada ---------- */
   .caja-centro{width:100%;max-width:520px;padding:34px 26px;text-align:center}
@@ -66,6 +66,39 @@
   .tecla:active{background:var(--pomodoro);color:var(--papel)}
   .tecla.aux{font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:1.2px;color:var(--humo);text-transform:uppercase}
   .tecla:disabled{opacity:.32;cursor:default}
+
+  /* ---------- Elegir sucursal / choque de sucursales ----------
+     Estas dos pantallas cargan más texto que la del PIN —hay que explicar, no nada más pedir
+     cuatro dígitos—, así que la caja se ensancha: con 520 px el párrafo del choque salía en
+     ocho renglones flacos y nadie lee eso a media hora pico. */
+  .caja-centro.ancha{max-width:640px}
+  .lista-suc{display:flex;flex-direction:column;gap:10px;margin-top:24px}
+  /* 82 px de alto: se aprieta con el dorso del dedo y sin puntería, igual que el teclado del
+     PIN. El nombre del local va en la serif del proyecto porque es un nombre propio, no un
+     rótulo de botón. */
+  .btn-suc{display:flex;align-items:center;justify-content:center;width:100%;min-height:82px;
+    border:1px solid var(--linea2);background:var(--esp2);color:var(--crema);
+    font-family:var(--serif);font-style:italic;font-weight:500;font-size:30px;letter-spacing:-.5px;
+    padding:14px 18px;border-radius:3px;cursor:pointer;line-height:1.2;transition:.12s}
+  .btn-suc:hover{border-color:var(--pomodoro);color:var(--pomodoro)}
+  .btn-suc:active{transform:scale(.995)}
+  /* El primario del choque: rojo lleno y ancho completo. Lo seguro tiene que ser lo más fácil
+     de apretar; lo irreversible se queda en el botón secundario y con doble toque. */
+  .btn-grande{display:flex;align-items:center;justify-content:center;width:100%;min-height:60px;
+    border:none;background:var(--pomodoro);color:#FFFFFF;font-family:var(--grot);font-size:16px;
+    font-weight:700;letter-spacing:1.6px;text-transform:uppercase;padding:14px;border-radius:2px;
+    cursor:pointer;line-height:1.4}
+  .btn-grande:active{transform:scale(.99)}
+  .acciones-conf{display:flex;flex-direction:column;gap:10px;margin-top:26px}
+  .acciones-conf .btn-sec{width:100%}
+  /* La letra chica que explica el porqué. Va separada por una línea para que se lea como nota
+     al pie y no como una tercera instrucción más que hay que obedecer. */
+  .nota-pie{margin-top:26px;padding-top:18px;border-top:1px solid var(--linea);
+    font-size:14px;color:var(--humo2);line-height:1.75;text-align:left}
+  .caja-centro p.nota-pie{margin-top:26px}
+  /* El nombre de la sucursal dentro del párrafo: si no resalta, el aviso se lee como un muro
+     de texto y justo el dato que importa —cuál contra cuál— se pierde. */
+  .suc-dice{font-weight:700;color:var(--crema);letter-spacing:.6px}
 
   /* ---------- Encabezado ---------- */
   .barra-sup{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--linea);flex-shrink:0}
@@ -140,6 +173,10 @@
      comanda sigue esperando: el verde se reserva para lo que ya se movió. */
   .p-ok.pase{display:inline-block;margin-left:0}
   .p-ok.pase.espera{background:var(--al-azul)}
+  /* Ámbar, no verde: la comanda sin sucursal no está bien, está avisando. Es el mismo ámbar
+     del aviso de PIN sin configurar, y significa lo mismo: esto funciona, pero alguien tiene
+     que ir a arreglarlo. */
+  .p-ok.huerfana{display:inline-block;margin-left:0;background:var(--al-ambar)}
   .c-pie{margin-top:12px;padding-top:12px;border-top:1px dotted rgba(36,31,24,.25)}
   /* Botón de avanzar: ocupa todo el ancho de la tarjeta. Se aprieta con el dorso del dedo,
      con las manos ocupadas y sin mirar. */
@@ -208,6 +245,42 @@
   </div>
 </section>
 
+<!-- ============ ¿De qué sucursal es esta pantalla? ============
+     Va ANTES del PIN a propósito: el PIN que se valida es el de la sucursal elegida, así que
+     primero hay que saber cuál es. Solo aparece cuando el restaurante tiene varias y el
+     enlace no dice cuál. -->
+<section class="pantalla" id="sucursal">
+  <div class="caja-centro ancha">
+    <div class="sobre">MenusBot · Cocina</div>
+    <h1>¿De qué <em>sucursal</em><br>es esta pantalla?</h1>
+    <div class="orn"><i></i>&#10022;<i></i></div>
+    <p id="sucSub"></p>
+    <div class="lista-suc" id="listaSuc"></div>
+    <p class="nota-pie">Una pantalla de cocina atiende una sola sucursal. Queda amarrada a la que elijas hasta que alguien le dé Salir y vuelva a entrar con el PIN de otra. Si esta tableta es la del pase de dos locales, mejor abre una pantalla por local.</p>
+    <div style="margin-top:18px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button class="btn-sec" id="btnTemaSuc">TEMA OSCURO</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Dos sucursales en la misma pantalla ============ -->
+<section class="pantalla" id="conflicto">
+  <div class="caja-centro ancha">
+    <div class="sobre">MenusBot · Cocina</div>
+    <h1>Esta pantalla ya está<br>en <em>otra sucursal</em></h1>
+    <div class="orn"><i></i>&#10022;<i></i></div>
+    <p id="confTxt"></p>
+    <div class="acciones-conf">
+      <button class="btn-grande" id="btnSeguir">SEGUIR AQUÍ</button>
+      <button class="btn-sec" id="btnTomar">TOMAR LA OTRA DE TODOS MODOS</button>
+    </div>
+    <p class="nota-pie" id="confNota">Este aviso puede salir sin que nadie haya hecho nada raro: una pantalla que se apagó de golpe — se fue la luz, se cerró la pestaña, se durmió la tableta — sigue figurando abierta hasta 90 segundos. Si sabes que del otro lado ya no hay nadie trabajando, toma esta sucursal y sigue.</p>
+    <div style="margin-top:18px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button class="btn-sec" id="btnTemaConf">TEMA OSCURO</button>
+    </div>
+  </div>
+</section>
+
 <!-- ============ La pantalla de trabajo ============ -->
 <section class="pantalla" id="app">
   <header class="barra-sup">
@@ -269,7 +342,7 @@ function escTxt(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').repl
 function pintarBtnTema(){
   const claro = document.documentElement.classList.contains('claro');
   const txt = claro ? 'TEMA OSCURO' : 'TEMA CLARO';
-  ['#btnTema','#btnTemaEntrada'].forEach(s => { const b = $(s); if(b) b.textContent = txt; });
+  ['#btnTema','#btnTemaEntrada','#btnTemaSuc','#btnTemaConf'].forEach(s => { const b = $(s); if(b) b.textContent = txt; });
   const meta = document.querySelector('meta[name="theme-color"]');
   if(meta) meta.setAttribute('content', claro ? '#F6F1E7' : '#151210');
 }
@@ -285,7 +358,16 @@ const PARAMS = new URLSearchParams(location.search);
 const RID = (PARAMS.get('r') || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
 /* La carta usa ?suc= y los enlaces del equipo ?s=. Se aceptan las dos para que nadie
    se pelee con la URL a media hora pico. */
-const SUC = PARAMS.get('s') || PARAMS.get('suc') || '';
+/* Lo que venía escrito en el enlace, tal cual, y que ya no se toca más. Se guarda aparte
+   porque hace falta saber si el enlace traía una sucursal EQUIVOCADA (renombrada, dada de
+   baja, mal tecleada) o si no traía ninguna: son dos avisos distintos y fingir que un enlace
+   roto venía vacío deja al dueño buscando un problema que no va a encontrar. */
+const SUC_ENLACE = PARAMS.get('s') || PARAMS.get('suc') || '';
+/* Ya no es const: cuando el restaurante tiene varias sucursales y el enlace no dice cuál, la
+   pantalla la elige a mano y SUC cambia UNA vez, siempre antes del primer sondeo y antes de
+   resolver el PIN. Todo lo que lee SUC (el filtro de comandas, la presencia, el encabezado)
+   corre después de esa decisión. */
+let SUC = SUC_ENLACE;
 /* Espacio de nombres por restaurante: dos restaurantes abiertos en el mismo navegador
    (el celular del que instala, por ejemplo) no se pisan la sesión. */
 const LSK = k => k + '::' + RID;
@@ -350,8 +432,9 @@ function toast(txt, falla){
 
 /* ---------- Doble toque para lo irreversible ----------
    Mismo patrón del resto del proyecto: el primer toque arma el botón 4.5 s, el segundo
-   ejecuta. Aquí solo lo usa SALIR; avanzar una comanda es el trabajo de todos los días y
-   pedirle dos toques a cada plato sería estorbar. */
+   ejecuta. Aquí lo usan SALIR y el «tomar esta sucursal de todos modos» —los dos dejan a
+   alguien sin pantalla y no hay cómo deshacerlos—; avanzar una comanda es el trabajo de todos
+   los días y pedirle dos toques a cada plato sería estorbar. */
 const armados = {};
 function armar(clave){
   if(armados[clave]){ clearTimeout(armados[clave]); delete armados[clave]; repintarArmados(); return true; }
@@ -364,6 +447,18 @@ function repintarArmados(){
   const on = !!armados.salir;
   b.textContent = on ? '¿SEGURO?' : 'SALIR';
   b.classList.toggle('armado', on);
+
+  const t = $('#btnTomar');
+  /* El segundo toque tiene que decir QUÉ va a pasar, no «¿seguro?»: quien lo aprieta está
+     dejando sin pantalla a la otra cocina y merece leerlo antes, no después. Los nombres los
+     deja puestos pintarConflicto(). */
+  if(t && t.dataset.nueva){
+    const on = !!armados.tomar;
+    t.textContent = on
+      ? 'TOCA OTRA VEZ PARA DEJAR ' + t.dataset.vieja.toUpperCase() + ' Y ABRIR ' + t.dataset.nueva.toUpperCase()
+      : 'TOMAR ' + t.dataset.nueva.toUpperCase() + ' DE TODOS MODOS';
+    t.classList.toggle('armado', on);
+  }
 }
 
 /* ---------- Sonido: un tono corto hecho al momento, sin archivos ----------
@@ -540,10 +635,52 @@ function revisarPin(){
    valer se quedarían fuera de su propia cocina hasta que alguien les migre el blob. Primero
    manda la sucursal del enlace; si esa sucursal no tiene lo suyo, cae al de siempre. */
 function cocinaDeSucursal(){
-  return (cfg.cocinas && SUC && cfg.cocinas[SUC]) || null;
+  /* La llave se busca floja: el dueño teclea «Landmark» en el panel y el enlace impreso dice
+     «LANDMARK». Con cfg.cocinas[SUC] a secas, esa diferencia de mayúsculas hacía caer el PIN
+     al de la raíz y la sucursal se abría con la llave equivocada sin que nadie lo notara. */
+  if(cfg.cocinas && SUC){
+    const k = Object.keys(cfg.cocinas).find(x => mismaSuc(x, SUC));
+    if(k) return cfg.cocinas[k];
+  }
+  return null;
 }
 function hayCocinasPorSucursal(){
   return !!(cfg.cocinas && Object.keys(cfg.cocinas).length);
+}
+
+/* La lista de sucursales vive en cfg.config.sucursales (la escribe el panel desde el campo
+   «Sucursales separadas por coma»), NO junto a cfg.cocinas: los PINes de cocina están en la
+   raíz del documento porque esta pantalla lee el blob de una sola vez, pero la lista de
+   locales es configuración del restaurante y siempre estuvo adentro de .config. */
+function sucursalesCfg(){
+  return (((cfg.config && cfg.config.sucursales) || [])).filter(Boolean).map(String);
+}
+/* «LANDMARK», «landmark» y « LANDMARK » son el mismo local. El dueño escribe el nombre a mano
+   en el panel y el enlace lo trae escrito a mano en un QR: pedir que coincidan letra por letra
+   es pedir que nadie se equivoque nunca. Se comparan flojo, pero SUC siempre se queda con el
+   literal configurado, que es el que traen escrito las órdenes. */
+function mismaSuc(a, b){
+  return String(a == null ? '' : a).trim().toLowerCase() === String(b == null ? '' : b).trim().toLowerCase();
+}
+/* Devuelve el literal configurado que corresponde a lo que traía el enlace, o '' si no calza
+   con ninguno. Ese '' es lo que distingue «el enlace no dijo nada» de «el enlace dijo algo que
+   ya no existe». */
+function calzarSuc(quiere, sucs){
+  const s = (sucs || sucursalesCfg()).find(x => mismaSuc(x, quiere));
+  return s || '';
+}
+
+function guardarSesion(){
+  try{ localStorage.setItem(LSK('mb_cocina'), JSON.stringify(sesion)); }catch(e){}
+}
+
+/* El PIN depende de la sucursal, y la sucursal puede decidirse después de leer la config
+   (cuando la elige quien está frente a la pantalla). Por eso se resuelve aparte y se vuelve
+   a llamar cada vez que SUC cambia. */
+function resolverPin(){
+  const ent = cocinaDeSucursal();
+  PIN_COCINA = String((ent && ent.pin != null ? ent.pin : cfg.cocina_pin) ?? '').trim();
+  sinPin = !/^\d{4}$/.test(PIN_COCINA);
 }
 
 async function cargarConfig(){
@@ -552,9 +689,7 @@ async function cargarConfig(){
     cfg = (cfgs && cfgs[0] && cfgs[0].data) || {};
     cfgOk = true;
   }catch(e){ cfgOk = false; }
-  const ent = cocinaDeSucursal();
-  PIN_COCINA = String((ent && ent.pin != null ? ent.pin : cfg.cocina_pin) ?? '').trim();
-  sinPin = !/^\d{4}$/.test(PIN_COCINA);
+  resolverPin();
 }
 
 function nombreDelLugar(){
@@ -578,14 +713,149 @@ async function arrancar(){
     return;
   }
   $('#btnReintentar').style.display = 'none';
+  await decidirSucursal();
+}
 
+/* ---------- UNA PANTALLA, UNA SUCURSAL ----------
+   El orden no es negociable: primero se sabe QUÉ sucursal es esta pantalla, luego si esa
+   sucursal choca con la que ya estaba abierta, y hasta el final el PIN — porque el PIN que se
+   valida es el de la sucursal elegida. */
+async function decidirSucursal(){
+  const sucs = sucursalesCfg();
+  /* Un solo local configurado: no se pregunta —la respuesta solo puede ser una— y además se
+     FUERZA SUC a ese literal, aunque el enlace traiga otra cosa. Ese «aunque» es el QR viejo:
+     se renombró la sucursal en el panel y el código impreso sigue diciendo el nombre anterior.
+     Sin esto, SUC se quedaba con el nombre muerto y el tablero salía casi vacío sin explicar
+     nada. Con cero sucursales configuradas no se toca SUC: no hay contra qué calzarlo y
+     inventarle un valor sería peor que dejarlo como venía. */
+  if(sucs.length < 2){
+    if(sucs.length === 1 && !mismaSuc(SUC, sucs[0])){ SUC = sucs[0]; resolverPin(); }
+    await revisarConflictos();
+    return;
+  }
+
+  const calza = calzarSuc(SUC_ENLACE, sucs);
+  /* El enlace manda si dice la verdad: los QR y los accesos directos ya impresos tienen que
+     seguir entrando derecho, sin una pregunta nueva cada mañana. */
+  if(calza){ SUC = calza; resolverPin(); await revisarConflictos(); return; }
+
+  pedirSucursal(sucs);
+}
+
+function pedirSucursal(sucs){
+  pantalla('sucursal');
+  const n = sucs.length;
+  $('#sucSub').innerHTML = SUC_ENLACE
+    /* El enlace traía una sucursal que ya no está en la lista. Decirlo con todas sus letras es
+       lo único que le permite al dueño encontrar el QR viejo y reimprimirlo. */
+    ? 'El enlace con el que abriste dice <span class="suc-dice">' + escTxt(SUC_ENLACE) + '</span>, y esa sucursal ya no está en la lista de ' + escTxt(nombreDelLugar()) + '. Puede que la hayan renombrado o dado de baja. Elige la de este cuarto y avísale al dueño para que rehaga ese enlace.'
+    : 'El enlace con el que abriste no dice a qué sucursal pertenece esta pantalla, y ' + escTxt(nombreDelLugar()) + ' tiene ' + n + '. Elige la de este cuarto.';
+  $('#listaSuc').innerHTML = sucs.map((s, i) =>
+    '<button class="btn-suc" data-i="' + i + '">' + escTxt(s) + '</button>').join('');
+  $$('#listaSuc .btn-suc').forEach(b => b.addEventListener('click', () => {
+    arrancarAudio();
+    elegirSucursal(sucs[+b.dataset.i]);
+  }));
+}
+
+async function elegirSucursal(s){
+  SUC = s;
+  resolverPin();
+  pantalla('entrada');
+  $('#entradaSub').textContent = 'Un momento…';
+  await revisarConflictos();
+}
+
+/* Detector LOCAL: esta misma pantalla ya entró con el PIN de otra sucursal. Atrapa el caso de
+   la tableta que abre el enlace de CENTRO después de haber entrado a LANDMARK — la llave de
+   localStorage lleva el restaurante, no la sucursal, y sin esto pasaba derecho.
+   Solo hay conflicto cuando las DOS sucursales tienen nombre: una sesión sin sucursal es una
+   sesión vieja del piloto (o de cuando el restaurante no tenía locales) y adoptar la de ahora
+   es más honesto que plantarle un aviso a alguien que no cambió nada. */
+function conflictoLocal(){
+  const vieja = (sesion && sesion.sucursal) || '';
+  return (vieja && SUC && !mismaSuc(vieja, SUC)) ? vieja : '';
+}
+
+/* Detector REMOTO: otra pestaña de ESTA misma pantalla está latiendo con otra sucursal. Las
+   dos comparten el mismo localStorage y se pisan la sesión, así que el detector local no las
+   ve nunca; la tabla de presencia sí, porque cada sucursal deja su propia fila (el índice
+   único es restaurante + sucursal + rol + dispositivo).
+   Si la consulta falla NO se bloquea nada: quedarse fuera de la cocina por un parpadeo de
+   internet es peor que ver dos sucursales revueltas un rato. */
+async function conflictoRemoto(){
+  if(!SUC) return '';
+  try{
+    const corte = new Date(Date.now() - PRES_VIVO_MS).toISOString();
+    const filas = await api('menusbot_presencia?restaurante_id=eq.' + encodeURIComponent(RID) +
+      '&rol=eq.cocina&dispositivo_id=eq.' + encodeURIComponent(DISP) +
+      '&visto_at=gte.' + encodeURIComponent(corte) + '&select=sucursal,visto_at&order=visto_at.desc&limit=10');
+    const otra = (filas || []).find(f => (f.sucursal || '') && !mismaSuc(f.sucursal, SUC));
+    return otra ? String(otra.sucursal) : '';
+  }catch(e){ return ''; }
+}
+
+async function revisarConflictos(){
+  const vieja = conflictoLocal() || await conflictoRemoto();
+  if(vieja){ pintarConflicto(vieja, SUC); return; }
+  seguirAEntrada();
+}
+
+function pintarConflicto(vieja, nueva){
+  pantalla('conflicto');
+  $('#confTxt').innerHTML = 'Esta pantalla ya está abierta como <span class="suc-dice">' + escTxt(vieja) +
+    '</span> y estás intentando abrirla como <span class="suc-dice">' + escTxt(nueva) +
+    '</span>. Una pantalla de cocina sólo puede atender una sucursal a la vez: revueltas, las comandas de los dos locales caen en el mismo tablero y alguien acaba cocinando lo que no le tocaba.';
+  $('#btnSeguir').textContent = 'SEGUIR EN ' + vieja.toUpperCase();
+  /* En los data- van los nombres tal como están configurados, no en mayúsculas: de aquí sale
+     el DELETE de la fila de presencia, y esa fila se guardó con el literal, no con el rótulo. */
+  $('#btnSeguir').dataset.vieja = vieja;
+  const t = $('#btnTomar');
+  t.dataset.vieja = vieja;
+  t.dataset.nueva = nueva;
+  if(armados.tomar) clearTimeout(armados.tomar);
+  delete armados.tomar;
+  repintarArmados();
+}
+
+$('#btnSeguir').addEventListener('click', async () => {
+  arrancarAudio();
+  /* Se queda donde estaba: no se borra nada ni se vuelve a pedir el PIN, porque esta pantalla
+     ya había entrado a esa sucursal. */
+  SUC = $('#btnSeguir').dataset.vieja || SUC;
+  resolverPin();
+  delete armados.tomar;
+  seguirAEntrada();
+});
+
+$('#btnTomar').addEventListener('click', () => {
+  arrancarAudio();
+  if(!armar('tomar')){ toast('Toca otra vez para confirmar'); return; }
+  const t = $('#btnTomar');
+  /* Primero se apaga la sucursal vieja y luego se abre la nueva, en ese orden: al revés
+     quedarían las dos vivas un instante y el mesero vería dos cocinas encendidas.
+     Se borra la que DETECTÓ el choque (data-vieja), no la que diga la sesión guardada. En el
+     choque local son la misma; en el choque remoto NO: ahí la sesión del localStorage ya la
+     pisó otra pestaña y puede decir justo la sucursal nueva, con lo que se borraría la fila
+     que acabamos de tomar y la vieja se quedaría latiendo sola hasta caducar. */
+  const vieja = t.dataset.vieja || (sesion && sesion.sucursal) || '';
+  borrarPresenciaDe(vieja);
+  try{ localStorage.removeItem(LSK('mb_cocina')); }catch(e){}
+  sesion = null;
+  toast('Listo — esta pantalla queda en ' + SUC);
+  seguirAEntrada();
+});
+
+/* La entrada de siempre, ya con la sucursal decidida. */
+function seguirAEntrada(){
+  pantalla('entrada');
   /* Sin PIN configurado se entra derecho, y el pie lo dice todo el tiempo: si no, el dueño
      no podría ni probar la pantalla antes de ponerle llave. */
   if(sinPin || sesion){ entrarApp(); return; }
 
   $('#teclado').style.display = 'grid';
   $('#pinPuntos').style.display = 'flex';
-  $('#entradaSub').textContent = 'Teclea el PIN de cocina de ' + nombreDelLugar() + '.';
+  $('#entradaSub').textContent = 'Teclea el PIN de cocina de ' + nombreDelLugar() + (SUC ? ' · ' + SUC : '') + '.';
   pinBuf = ''; pintarPin();
   vigilarBloqueo();
 }
@@ -602,6 +872,12 @@ const destellando = new Map();      // id -> timeout que apaga el destello
 
 function entrarApp(){
   pantalla('app');
+  /* Aquí se amarra la pantalla a su sucursal, y es el único lugar donde pasa. Cubre tres
+     caminos que acaban igual: el PIN recién tecleado, la sesión vieja del piloto que venía sin
+     sucursal (migración suave: adopta la de ahora) y el restaurante sin PIN configurado, que
+     nunca guardaba sesión y por eso no tenía con qué detectar el choque local. */
+  sesion = { ts: (sesion && sesion.ts) || Date.now(), sucursal: SUC };
+  guardarSesion();
   const ent = cocinaDeSucursal();
   const nom = (ent && ent.nombre) || cfg.cocina_nombre || 'Cocina';
   $('#marcaCocina').innerHTML = escTxt(nom) + '<small>' + escTxt(nombreDelLugar() + (SUC ? ' · ' + SUC : '')) + '</small>';
@@ -621,6 +897,8 @@ function entrarApp(){
 
 $('#btnTema').addEventListener('click', alternarTema);
 $('#btnTemaEntrada').addEventListener('click', alternarTema);
+$('#btnTemaSuc').addEventListener('click', alternarTema);
+$('#btnTemaConf').addEventListener('click', alternarTema);
 $('#btnReintentar').addEventListener('click', () => { arrancar(); });
 $('#btnCompleta').addEventListener('click', () => { pantallaCompleta(); pantallaViva(); });
 $('#btnSonido').addEventListener('click', () => {
@@ -675,8 +953,10 @@ let tickPres = 0;
 let meserosVivos = [];            /* nombres de los meseros despiertos en esta sucursal */
 let presLeida = false;            /* ¿alguna vez pudimos preguntar? */
 /* La sucursal con la que se escribió la fila: el borrado tiene que apuntar a la MISMA o deja
-   la fila vieja latiendo sin nadie detrás. Aquí SUC es const y no cambia, pero se guarda
-   igual para que el día que deje de serlo esto no se rompa en silencio. */
+   la fila vieja latiendo sin nadie detrás. SUC ya quedó fijo antes del primer latido —se
+   decide en decidirSucursal(), que corre completo antes de arrancarSondeo()—, pero se guarda
+   igual: el día que alguien mueva ese orden, el borrado tiene que seguir apuntando a la fila
+   que de verdad se escribió y no a la que SUC diga en ese momento. */
 let presSucEscrita = null;
 
 /* Sin sucursal en el enlace se ve todo el local; con sucursal se cuentan los de mi piso y
@@ -685,7 +965,10 @@ let presSucEscrita = null;
    igual por si alguien inserta a mano desde el editor. */
 function presDeMiPiso(f){
   const suya = (f && f.sucursal) || '';
-  return !SUC || !suya || suya === SUC;
+  /* Floja como en todo el resto: el mesero escribe su fila con la sucursal que traía SU enlace,
+     que puede venir con otras mayúsculas o con un espacio de más. Con === estricto, «Landmark»
+     y «LANDMARK» eran dos pisos distintos y el mesero desaparecía del chip de la cocina. */
+  return !SUC || !suya || mismaSuc(suya, SUC);
 }
 
 async function latirPresencia(){
@@ -738,15 +1021,23 @@ async function pulsoPresencia(){
 /* Al salir, esta pantalla se lleva SU fila. Sin esto, una tele apagada sigue contando como
    cocina abierta hasta que caduque, y el mesero mandaría comandas a un cuarto vacío. */
 function borrarPresencia(){
+  if(presSucEscrita === null) return;
+  borrarPresenciaDe(presSucEscrita);
+  presSucEscrita = null;
+}
+
+/* Borrar la fila de UNA sucursal concreta. Va aparte porque el «tomar esta sucursal de todos
+   modos» tiene que apagar una fila que esta pestaña NUNCA escribió —la dejó la otra pestaña,
+   o la sesión anterior de esta misma pantalla— y ahí presSucEscrita no sirve de nada. */
+function borrarPresenciaDe(suc){
   try{
-    if(presSucEscrita === null) return;
+    if(suc == null) return;
     /* keepalive: el borrado se dispara justo antes del location.reload() y sin él el
        navegador cancela la petición a medio camino. */
     api('menusbot_presencia?restaurante_id=eq.' + encodeURIComponent(RID) +
-      '&sucursal=eq.' + encodeURIComponent(presSucEscrita) +
+      '&sucursal=eq.' + encodeURIComponent(suc) +
       '&rol=eq.cocina&dispositivo_id=eq.' + encodeURIComponent(DISP),
       { method: 'DELETE', keepalive: true }).catch(() => {});
-    presSucEscrita = null;
   }catch(e){}
 }
 
@@ -804,10 +1095,22 @@ async function sondear(){
 
 /* Lo que la cocina tiene derecho a ver: autorizado por el mesero, sin cerrar y de su
    sucursal. Una comanda que el mesero todavía no confirma no se empieza a cocinar. */
+/* órdenes que traen la columna sucursal vacía —la cuenta fantasma que el mesero ya conoce: la
+   mesa que se abrió desde un QR con la sucursal mal escrita o desde antes de que el
+   restaurante tuviera locales—. En cuanto esta pantalla queda amarrada a una sucursal, un
+   filtro estricto las volvería INVISIBLES para todas las cocinas a la vez, y eso es un
+   comensal esperando una comida que nadie está haciendo y de la que nadie se va a enterar.
+   Por eso la huérfana se ve en TODAS las pantallas de sucursal, con su etiqueta ámbar puesta.
+   Sí, alguien puede cocinarla dos veces; cocinarla dos veces se arregla en la barra en dos
+   minutos y no cocinarla nunca no se arregla. Mismo criterio y mismo rótulo que el «Sin
+   sucursal» del mesero, que ya trata este caso así. */
+function esHuerfana(o){
+  return !!SUC && !(o.sucursal || '');
+}
 function visibles(){
   return ordenes.filter(o =>
     o.verificacion === 'ok' && !o.cerrada && o.estado < 3 &&
-    (!SUC || (o.sucursal || '') === SUC));
+    (!SUC || esHuerfana(o) || mismaSuc(o.sucursal, SUC)));
 }
 
 function detectarNuevas(){
@@ -891,6 +1194,7 @@ function tarjeta(o){
       '<span class="reloj' + claseReloj(min, o.estado) + '">' + min + ' min</span>' +
     '</div>' +
     '<div class="c-folio">' + escTxt(o.folio) + (o.sucursal ? ' · ' + escTxt(o.sucursal) : '') + '</div>' +
+    (esHuerfana(o) ? '<div class="c-folio"><span class="p-ok huerfana">Sin sucursal — también la ve la otra cocina</span></div>' : '') +
     pase +
     '<div class="c-items">' + items + '</div>' +
     pie + '</div>';
