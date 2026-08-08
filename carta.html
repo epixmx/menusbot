@@ -231,6 +231,45 @@
   .btn-fantasma.armado,.btn-primario.armado{background:var(--al-ambar);border-color:var(--al-ambar);color:var(--al-txt)}
   .nota-pie{margin:10px 20px 0;font-size:13px;color:var(--humo2);line-height:1.8;border-left:2px solid var(--linea2);padding-left:12px}
 
+  /* ---------- «¿Cómo funciona?»: la explicación larga, guardada ----------
+     Cada pantalla deja UNA frase a la vista y lo demás se esconde aquí. Se usa <details> nativo
+     porque estas pantallas se pintan con innerHTML: un desplegable de JS habría que reconectarlo
+     en cada repintado y tarde o temprano se queda mudo. El navegador lo abre solo, sin handlers.
+     Todos los colores salen de variables del tema para que Editoriale, Notte, Giorno y Mare
+     se vean igual de bien sin tocar nada. */
+  .masinfo{margin:10px 20px 0}
+  .masinfo>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;min-height:44px;padding:12px 0;
+    font-family:var(--grot);font-size:13px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;line-height:1.5;color:var(--humo2)}
+  .masinfo>summary::-webkit-details-marker{display:none}
+  /* Sin el signo el rótulo parece texto muerto: es lo único que avisa que hay algo debajo. */
+  .masinfo>summary::after{content:'+';font-size:16px;font-weight:700;line-height:1}
+  .masinfo[open]>summary::after{content:'−'}
+  /* Mismo tratamiento que .nota-pie, y un margen arriba para que al abrirse el texto
+     no aparezca pegado al rótulo y el salto se sienta suave. */
+  .masinfo .mi-cuerpo{margin-top:8px;font-size:13px;color:var(--humo2);line-height:1.8;border-left:2px solid var(--linea2);padding-left:12px}
+  .masinfo .mi-cuerpo p+p{margin-top:12px}
+  .masinfo .mi-cuerpo b{color:var(--crema)}
+
+  /* Variante gruesa: las órdenes que pidió otro teléfono de la misma mesa se perdían entre los
+     tickets propios. Aquí llevan marco y acento de oro —el oro es el color de «de la casa», el
+     pomodoro está reservado para lo que se toca— para que se lean de lejos como algo aparte. */
+  .masinfo.grueso{margin:6px 20px 14px;border:1px solid var(--linea2);border-left:3px solid var(--oro);border-radius:2px;background:var(--esp2)}
+  .masinfo.grueso>summary{min-height:56px;padding:16px 14px;gap:6px;font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:.2px;color:var(--oro)}
+  /* El conteo empuja y el monto nunca se parte: si el renglón no cabe, se parte la etiqueta,
+     no la cifra —que es lo que el comensal vino a leer de un vistazo. */
+  .masinfo.grueso>summary .mi-tit{flex:1}
+  .masinfo.grueso>summary .mi-tot{white-space:nowrap}
+  .masinfo.grueso>summary::after{font-size:20px;color:var(--oro);margin-left:2px}
+  .masinfo.grueso .mi-cuerpo{margin-top:0;border-left:none;padding:0 14px 15px}
+  /* El chip de estado baja a su propio renglón: los estados largos («en servicio en tu mesa»)
+     no caben junto al número y al monto, y partidos en dos no se leen. */
+  .masinfo.grueso .mi-fila{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:12px 0;
+    border-top:1px solid var(--linea);font-family:var(--grot);font-size:14px;letter-spacing:.5px;color:var(--crema)}
+  .masinfo.grueso .mi-fila .mi-num{white-space:nowrap}
+  .masinfo.grueso .mi-fila .mi-monto{font-weight:700;font-size:14.5px;white-space:nowrap;flex-shrink:0;color:var(--crema)}
+  .masinfo.grueso .mi-fila .mi-chip{flex-basis:100%}
+  .masinfo.grueso .mi-fila .chip-estado{font-size:11.5px;letter-spacing:.9px;padding:5px 9px}
+
   /* progreso en cuenta */
   .prog{margin-top:16px}
   .prog .p-linea-cont{display:flex;align-items:center}
@@ -446,6 +485,7 @@
     #vistaOrden .vista-head,#vistaCuenta .vista-head,
     #vistaOrden .acciones-orden,#vistaCuenta .acciones-orden,
     #vistaOrden .nota-pie,#vistaCuenta .nota-pie,
+    #vistaOrden .masinfo,#vistaCuenta .masinfo,
     #vistaOrden .bloque,#vistaCuenta .banner-estado{max-width:600px;margin-left:auto;margin-right:auto}
   }
   @media(min-width:1100px){
@@ -1530,17 +1570,23 @@ function pintarHojaBienvenida(){
     <div class="confirmacion" style="text-align:left">
       <div class="caps al-etiq verde">MESA ${n} · LISTA</div>
       <h2 style="text-align:left;margin-top:8px">${soyDuenio ? 'Esta mesa ya es tuya' : 'Ya estás en la mesa ' + n}</h2>
-      <div class="nota-pie" style="margin:10px 0 0">La mesa ${n} quedó apartada en ${soyDuenio ? 'este teléfono' : 'tu teléfono'}. Nadie de otra mesa puede ordenar a tu nombre, y todo lo que pidan aquí se junta en <b style="color:var(--crema)">una sola cuenta</b> que se paga al final.</div>
+      <div class="nota-pie" style="margin:10px 0 0">La mesa ${n} quedó apartada en ${soyDuenio ? 'este teléfono' : 'tu teléfono'} y todo lo que pidan aquí se junta en <b style="color:var(--crema)">una sola cuenta</b> que se paga al final.</div>
       ${cod ? `<div class="cod-caja">
         <div class="cod-rot">CÓDIGO DE TU MESA</div>
         <div class="cod-num">${cod}</div>
         <div class="cod-pie">Dilo en voz alta o compártelo</div>
       </div>
-      <div class="nota-pie" style="margin:12px 0 0">¿Vienen acompañados y cada quien quiere ver la carta en su propio teléfono? Que escaneen <b style="color:var(--crema)">el mismo código QR de esta mesa</b> y escriban estos cuatro números. Con eso entran a la misma cuenta.</div>
       <div class="acciones-orden" style="padding:16px 0 0">
         <button class="btn-fantasma" onclick="compartirCodigoMesa()">Compartir el código con mi mesa</button>
       </div>` : ''}
-      <div class="nota-pie" style="margin:${cod ? '4px' : '12px'} 0 0;border-left-color:var(--basilico)">Y lo más importante: <b style="color:var(--crema)">nadie te va a apurar</b>. Ve la carta con toda la calma, platica, y manda tu orden cuando ustedes quieran. Puedes ordenar las veces que se te antoje durante la comida.</div>
+      <details class="masinfo" style="margin:${cod ? '6px' : '12px'} 0 0">
+        <summary>¿Cómo funciona?</summary>
+        <div class="mi-cuerpo">
+          <p>Nadie de otra mesa puede ordenar a tu nombre.</p>
+          ${cod ? `<p>¿Vienen acompañados y cada quien quiere ver la carta en su propio teléfono? Que escaneen <b>el mismo código QR de esta mesa</b> y escriban estos cuatro números. Con eso entran a la misma cuenta.</p>` : ''}
+          <p>Y lo más importante: <b>nadie te va a apurar</b>. Ve la carta con toda la calma, platica, y manda tu orden cuando ustedes quieran. Puedes ordenar las veces que se te antoje durante la comida.</p>
+        </div>
+      </details>
       <div class="acciones-orden" style="padding:18px 0 0">
         <button class="btn-primario" onclick="cerrarBienvenida()">Ver la carta con calma</button>
       </div>
@@ -1700,10 +1746,10 @@ function pintarHojaMesa(){
     <div class="confirmacion" style="text-align:left">
       <div class="caps al-etiq azul">MESA ${n}</div>
       <h2 style="text-align:left;margin-top:8px">Alguien de tu mesa ya abrió la cuenta</h2>
-      <div class="nota-pie" style="margin:10px 0 0">Otro teléfono escaneó el QR de la mesa ${n} antes que tú y la cuenta quedó abierta ahí. Todo bien: así evitamos que la misma orden salga dos veces a la cocina.</div>
+      <div class="nota-pie" style="margin:10px 0 0">Otro teléfono escaneó el QR de la mesa ${n} antes que tú y la cuenta quedó abierta ahí.</div>
       ${agotado
         ? `<div class="al-bloque ambar" style="margin:12px 0 0">Ya probamos varios códigos y ninguno coincidió. Lo más fácil ahora es que te ayude un mesero: toca el botón y en un momento está en tu mesa.</div>`
-        : `<div class="nota-pie" style="margin:12px 0 0">Para ordenar desde tu propio teléfono necesitas el <b style="color:var(--crema)">código de 4 dígitos de la mesa</b>. Pídeselo a quien escaneó primero — lo tiene en su pantalla, igual que todos los que ya se unieron.</div>
+        : `<div class="nota-pie" style="margin:12px 0 0">Para ordenar desde tu propio teléfono necesitas el <b style="color:var(--crema)">código de 4 dígitos de la mesa</b> — pídeselo a quien escaneó primero.</div>
       <input class="notas-inp" id="mesaCodigo" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4 dígitos" style="margin-top:14px;text-align:center;letter-spacing:8px;font-size:22px;font-weight:700;padding:16px 15px">
       <div class="al-bloque roja" id="mesaError" style="margin:10px 0 0;display:none"></div>`}
       <div class="acciones-orden" style="padding:18px 0 0">
@@ -1712,7 +1758,14 @@ function pintarHojaMesa(){
         <button class="btn-fantasma" onclick="cerrarSheets();cambiarMesa()">No es mi mesa · escanear otro QR</button>
       </div>
       ${quizaVacia ? `<div class="nota-pie" style="margin:12px 0 0">Parece que en esta mesa nadie ha ordenado nada. Si es así, se libera sola en unos minutos y podrás tomarla sin código: deja abierta la carta y vuelve a intentar.</div>` : ''}
-      <div class="nota-pie" style="margin:14px 0 0;border-left-color:var(--linea2)">Mientras tanto puedes ver la carta con calma: cierra esta ventana tocando fuera y sigue explorando. Solo necesitas el código a la hora de mandar tu orden.</div>
+      <details class="masinfo" style="margin:12px 0 0">
+        <summary>¿Cómo funciona?</summary>
+        <div class="mi-cuerpo">
+          <p>Todo bien: así evitamos que la misma orden salga dos veces a la cocina.</p>
+          <p>Quien escaneó primero lo tiene en su pantalla, igual que todos los que ya se unieron.</p>
+          <p>Mientras tanto puedes ver la carta con calma: cierra esta ventana tocando fuera y sigue explorando. Solo necesitas el código a la hora de mandar tu orden.</p>
+        </div>
+      </details>
     </div>`;
 }
 function abrirHojaMesa(){
@@ -2444,7 +2497,7 @@ function pintarVistaOrden(){
     <button class="btn-primario" onclick="enviarOrden()">Enviar mi orden — Mesa ${String(mesa).padStart(2,'0')}</button>
     <button class="btn-fantasma" onclick="mostrarVista('menu')">Seguir explorando la carta</button>
   </div>
-  <div class="nota-pie">Cuando la mandes, tu mesero viene a la mesa a confirmarla contigo antes de que entre a la cocina. Puedes revisarla con calma hasta entonces.</div>`;
+  <div class="nota-pie">Cuando la mandes, tu mesero viene a la mesa a confirmarla contigo antes de que entre a la cocina; hasta entonces puedes revisarla con calma.</div>`;
   v.innerHTML = html;
   v.querySelectorAll('.sug-cards').forEach(arrastrable);
 }
@@ -2482,7 +2535,14 @@ function pintarVistaCuenta(){
   const v = $('#vistaCuenta');
   let html = `<div class="vista-head"><div class="caps">Mesa ${mesa ? String(mesa).padStart(2,'0') : '—'}${SUC ? ' · ' + SUC : ''} · seguimiento en vivo</div><h2>Tu cuenta</h2>
     ${cliente ? `<div style="margin-top:10px;font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--oro);cursor:pointer" onclick="abrirHojaCliente()">★ ${cliente.nombre || cliente.telefono} · ${cliente.puntos || 0} puntos</div>` : ''}
-    <div class="nota-pie" style="margin-top:10px">Aquí vive la cuenta de tu mesa: cada orden que envíes se suma y su estado se actualiza solo. <b style="color:var(--crema)">Todo se paga junto al final.</b></div></div>`;
+    <div class="nota-pie" style="margin-top:10px">Aquí vive la cuenta de tu mesa y <b style="color:var(--crema)">todo se paga junto al final</b>.</div>
+    <details class="masinfo" style="margin:2px 0 0">
+      <summary>¿Cómo funciona?</summary>
+      <div class="mi-cuerpo">
+        <p>Cada orden que envíes se suma sola y su estado se actualiza solo, sin que tengas que recargar nada.</p>
+        <p>Tómate tu tiempo — nadie te va a apurar.</p>
+      </div>
+    </details></div>`;
   html += lineaCodigoMesa();
   const activas = ordenes.filter(o => o.estado < 3);
   const porConfirmar = ordenes.filter(esPendiente);
@@ -2536,15 +2596,22 @@ function pintarVistaCuenta(){
       ${progresoHTML(o)}
     </div></div>`;
   }
+  /* Un solo renglón gordo en vez de una lista suelta: el comensal solo necesita saber CUÁNTO
+     le suman a su cuenta las órdenes de los demás; el desglose lo abre si le interesa. */
   if(mesaOtras.length){
-    html += `<div class="bloque" style="padding:0 18px;margin:6px 0 14px"><div class="b-cab"><span class="caps">Otras órdenes de tu mesa</span><i></i></div>
-      ${mesaOtras.map(x => `<div class="t-item" style="padding:8px 0">
-        <span class="t-nom" style="font-family:var(--grot);font-size:14px;letter-spacing:.5px">Nº ${iniciales(MARCA.nombre)}-${1000 + x.id}</span>
-        <span class="chip-estado" style="--ce:${ESTADOS_COLOR[x.estado] || ESTADOS_COLOR[0]};margin-left:10px"><i></i>${txtEstado(x)}</span>
-        <span class="leader"></span><span class="t-precio" style="font-family:var(--grot)">${fmt(+x.total || 0)}</span>
-      </div>`).join('')}
-      <div class="nota-pie" style="margin-top:8px">Pedidas desde otro teléfono en tu misma mesa — también entran en el total.</div>
-    </div>`;
+    const nOtras = mesaOtras.length;
+    const totalOtras = mesaOtras.reduce((s, x) => s + (+x.total || 0), 0);
+    html += `<details class="masinfo grueso">
+      <summary><span class="mi-tit">+${nOtras} ${nOtras === 1 ? 'orden' : 'órdenes'} de tu mesa</span><span>·</span><span class="mi-tot">${fmt(totalOtras)} ${RESTAURANTE.moneda}</span></summary>
+      <div class="mi-cuerpo">
+        ${mesaOtras.map(x => `<div class="mi-fila">
+          <span class="mi-num">Nº ${iniciales(MARCA.nombre)}-${1000 + x.id}</span>
+          <span class="leader"></span><span class="mi-monto">${fmt(+x.total || 0)}</span>
+          <span class="mi-chip"><span class="chip-estado" style="--ce:${ESTADOS_COLOR[x.estado] || ESTADOS_COLOR[0]}"><i></i>${txtEstado(x)}</span></span>
+        </div>`).join('')}
+        <p style="margin-top:12px">Pedidas desde otro teléfono en tu misma mesa — también entran en el total.</p>
+      </div>
+    </details>`;
   }
   /* Dos avisos que antes faltaban y dejaban al comensal creyendo que la cuenta estaba mal.
      Ámbar: parte de la mesa ya se pagó, por eso el total no es la suma de todo lo que ve. */
@@ -2569,8 +2636,7 @@ function pintarVistaCuenta(){
       <button class="btn-fantasma" onclick="mostrarVista('menu')" style="border-color:var(--pomodoro);color:var(--pomodoro)">Ordenar algo más</button>
       <button class="btn-primario" onclick="pedirCuenta()">Pedir la cuenta para pagar</button>
       <button class="btn-fantasma" onclick="llamarMesero()">Llamar al mesero a mi mesa</button>
-    </div>
-    <div class="nota-pie">El avance de tus órdenes se actualiza solo, sin que tengas que recargar nada. Tómate tu tiempo — nadie te va a apurar.</div>`;
+    </div>`;
   v.innerHTML = html;
   repintarArmados();   // el botón de doble toque se vuelve a pintar en su estado real
 }
@@ -2730,9 +2796,19 @@ function mostrarConfirmacion(o){
       <div class="conf-sello"><div class="interior">${pend ? '<b>ANOTADA</b><span>tu orden</span>' : '<b>RECIBIDO</b><span>en cocina</span>'}</div></div>
       <h2>${pend ? 'Ya quedó anotada' : '¡Orden enviada!'}</h2>
       <div class="folio">Nº <b>${o.num}</b> · Mesa ${String(o.mesa).padStart(2,'0')}${SUC ? ' · ' + SUC : ''} · ${fmt(o.total)} ${RESTAURANTE.moneda}</div>
-      ${pend ? `<div class="nota-pie" style="margin:18px 0 0;text-align:left;border-left-color:var(--oro)">Tu orden ya se anotó y <b style="color:var(--crema)">tu mesero viene a la mesa a confirmarla contigo</b>. La repasan juntos en voz alta —los términos, lo que va sin algo, lo que quieren primero— y en ese momento pasa a la cocina.</div>
-      <div class="nota-pie" style="margin:12px 0 0;text-align:left">Es parte del servicio: preferimos que alguien te vea a la cara antes de encender la estufa. <b style="color:var(--crema)">No tienes que hacer nada más</b> — quédate cómodo, ya va para allá.</div>` : ''}
-      <div class="nota-pie" style="margin:${pend ? '12px' : '22px'} 0 0;text-align:left">Puedes seguirla en la pestaña <b style="color:var(--crema)">Cuenta</b> paso por paso: por confirmar, en cocina, preparando, lista en cocina y en camino a tu mesa.<br><br>¿Se te antoja algo más después? Ordena las veces que quieras, sin prisa: todo se va sumando y <b style="color:var(--crema)">se paga junto al final</b>.</div>
+      ${pend
+        ? `<div class="nota-pie" style="margin:18px 0 0;text-align:left;border-left-color:var(--oro)">Tu orden ya se anotó y <b style="color:var(--crema)">tu mesero viene a la mesa a confirmarla contigo</b>.</div>`
+        : `<div class="nota-pie" style="margin:22px 0 0;text-align:left">Tu orden ya entró a la cocina y puedes seguirla en la pestaña <b style="color:var(--crema)">Cuenta</b>.</div>`}
+      <details class="masinfo" style="margin:6px 0 0;text-align:left">
+        <summary>¿Cómo funciona?</summary>
+        <div class="mi-cuerpo">
+          ${pend ? `<p>La repasan juntos en voz alta —los términos, lo que va sin algo, lo que quieren primero— y en ese momento pasa a la cocina.</p>
+          <p>Es parte del servicio: preferimos que alguien te vea a la cara antes de encender la estufa. <b>No tienes que hacer nada más</b> — quédate cómodo, ya va para allá.</p>
+          <p>Puedes seguirla en la pestaña <b>Cuenta</b> paso por paso: por confirmar, en cocina, preparando, lista en cocina y en camino a tu mesa.</p>`
+          : `<p>La sigues paso por paso: por confirmar, en cocina, preparando, lista en cocina y en camino a tu mesa.</p>`}
+          <p>¿Se te antoja algo más después? Ordena las veces que quieras, sin prisa: todo se va sumando y <b>se paga junto al final</b>.</p>
+        </div>
+      </details>
       <div class="acciones-orden" style="padding:22px 0 0">
         <button class="btn-primario" onclick="cerrarSheets();mostrarVista('cuenta')">Ver el estado de mi orden</button>
         <button class="btn-fantasma" onclick="cerrarSheets();mostrarVista('menu')">Seguir viendo la carta</button>
@@ -2808,7 +2884,14 @@ function pintarHojaPropina(otra){
         <div class="t-tot" style="padding-top:0"><span class="caps">Total de tu mesa</span><span class="leader"></span><b>${fmt(total)} ${RESTAURANTE.moneda}</b></div>
         ${yaEligio ? `<div class="t-tot" style="padding-top:10px"><span class="caps">Propina que marcaste</span><span class="leader"></span><b>${propinaSugerida > 0 ? fmt(propinaSugerida) + ' ' + RESTAURANTE.moneda : 'Sin propina'}</b></div>` : ''}
       </div></div>
-      <div class="nota-pie" style="margin:14px 0 0">La propina la decides tú y no se paga aquí: <b style="color:var(--crema)">se la entregas a tu mesero</b> cuando llegue a cobrar, en efectivo o con tarjeta. La cantidad que marques es la que <b style="color:var(--crema)">queda registrada en tu cuenta</b>, y puedes cambiarla mientras no te haya cobrado.</div>
+      <div class="nota-pie" style="margin:14px 0 0">La propina la decides tú y no se paga aquí: <b style="color:var(--crema)">se la entregas a tu mesero</b> cuando llegue a cobrar, en efectivo o con tarjeta.</div>
+      <details class="masinfo" style="margin:4px 0 0">
+        <summary>¿Cómo funciona?</summary>
+        <div class="mi-cuerpo">
+          <p>La cantidad que marques es la que <b>queda registrada en tu cuenta</b>, y puedes cambiarla mientras no te haya cobrado.</p>
+          ${otra ? '' : `<p>Cualquiera de las opciones está bien y nadie se va a enterar de cuál elegiste más que tu mesero. Elige con confianza.</p>`}
+        </div>
+      </details>
       ${otra ? `
       <div class="nota-pie" style="margin:14px 0 0">Escribe la cantidad que quieras dejar, en pesos.</div>
       <input class="notas-inp" id="propOtra" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Cantidad en pesos" style="margin-top:12px;text-align:center;letter-spacing:2px;font-size:21px;font-weight:700;padding:16px 15px">
@@ -2822,8 +2905,7 @@ function pintarHojaPropina(otra){
         ${PROP_PCTS.map(p => `<button class="prop-btn" onclick="elegirPropina(${montoPropina(p)}, ${p})"><span class="pb-pct">${p}% de propina</span><span class="pb-mto">${fmt(montoPropina(p))}</span></button>`).join('')}
         <button class="prop-btn" onclick="pintarHojaPropina(true)"><span class="pb-pct">Otra cantidad</span><span class="pb-mto">Tú decides</span></button>
         <button class="prop-btn neutro" onclick="elegirPropina(0, null)"><span class="pb-pct">Prefiero no dejar propina</span><span class="pb-mto">Sin propina</span></button>
-      </div>
-      <div class="nota-pie" style="margin:16px 0 0;border-left-color:var(--linea2)">Cualquiera de las opciones está bien y nadie se va a enterar de cuál elegiste más que tu mesero. Elige con confianza.</div>`}
+      </div>`}
     </div>`;
 }
 function abrirHojaPropina(){
@@ -2979,8 +3061,14 @@ function mostrarOrdenRechazada(o){
     <div class="confirmacion" style="text-align:left">
       <div class="caps al-etiq ambar">ORDEN Nº ${o.num} · NO PASÓ</div>
       <h2 style="text-align:left;margin-top:8px">Esta orden no pudo pasar</h2>
-      <div class="nota-pie" style="margin:10px 0 0">Tu mesero la revisó y no la mandó a la cocina. Suele ser porque algo se acabó o porque hubo un cambio de última hora en la mesa. <b style="color:var(--crema)">No entró a la cocina y no se te cobra nada.</b></div>
-      <div class="nota-pie" style="margin:12px 0 0;border-left-color:var(--oro)">Lo más rápido: pregúntale a tu mesero qué pasó — él ya sabe. Y si quieres, vuelves a armar tu orden aquí mismo con toda calma.</div>
+      <div class="nota-pie" style="margin:10px 0 0">Tu mesero la revisó y no la mandó a la cocina, así que <b style="color:var(--crema)">no se te cobra nada</b>.</div>
+      <details class="masinfo" style="margin:4px 0 0">
+        <summary>¿Cómo funciona?</summary>
+        <div class="mi-cuerpo">
+          <p>Suele ser porque algo se acabó o porque hubo un cambio de última hora en la mesa.</p>
+          <p>Lo más rápido: pregúntale a tu mesero qué pasó — él ya sabe. Y si quieres, vuelves a armar tu orden aquí mismo con toda calma.</p>
+        </div>
+      </details>
       <div class="acciones-orden" style="padding:18px 0 0">
         ${reponible ? `<button class="btn-primario" onclick="reponerOrdenRechazada()">Volver a ordenar lo mismo</button>` : ''}
         <button class="btn-fantasma" onclick="cerrarSheets();llamarMesero('mesa')">Llamar al mesero a mi mesa</button>
