@@ -925,6 +925,24 @@ const MODO_DEMO = PARAMS.has('demo') || PARAMS.get('r') === 'bellavita';
    nueva tiene que ganarle a todo lo demás: quien llega por ese enlace no puede entrar de otra
    forma, y una sesión vieja guardada en este navegador no le sirve de nada. */
 const TOKEN_REC = PARAMS.get('recuperar');
+/* Supabase manda su enlace de recuperación con los datos en el fragmento de la URL
+   (#access_token=...&type=recovery), no en la búsqueda. El fragmento nunca viaja al servidor,
+   que es justo lo que se quiere de un token que abre una cuenta. */
+const HASH_REC = (() => {
+  try{
+    const h = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+    if(h.get('type') !== 'recovery' || !h.get('access_token')) return null;
+    return { token: h.get('access_token'), refresco: h.get('refresh_token') || '' };
+  }catch(e){ return null; }
+})();
+/* El correo del dueño viene dentro del token. Se lee solo para enseñárselo y que confirme que
+   el enlace le llegó a la cuenta correcta; no se le cree nada más que eso. */
+function correoDelToken(t){
+  try{
+    const p = JSON.parse(atob(String(t).split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return p.email || '';
+  }catch(e){ return ''; }
+}
 let SESION = null;
 try{ SESION = JSON.parse(localStorage.getItem('mb_panel_sesion') || 'null'); }catch(e){}
 /* ---------- La sesión de verdad: Supabase Auth ----------
@@ -1406,12 +1424,12 @@ function revisarSlugEscrito(){
     try{
       /* Ocupado cuenta también las direcciones que alguna vez fueron de alguien: sus QR viejos
          siguen apuntando ahí, así que esas direcciones no se reciclan nunca. */
-      const [rest, cfg] = await Promise.all([
-        api(`menusbot_restaurantes?slug=eq.${encodeURIComponent(limpio)}&select=slug`),
-        api(`menusbot_config?id=eq.${encodeURIComponent(limpio)}&select=id`),
-      ]);
+      /* Se pregunta al servidor en vez de leer las tablas: contesta sí o no sin dejar ver una
+         sola fila de otro restaurante. Antes esto obligaba a que la tabla de restaurantes fuera
+         legible por cualquiera — que es exactamente el agujero que se está tapando. */
+      const libre = await api('rpc/menusbot_slug_libre', { method:'POST', body: JSON.stringify({ p_slug: limpio }) });
       if(limpiarSlug(document.getElementById('slugNuevo').value) !== limpio) return; // ya siguió escribiendo
-      if((rest && rest.length) || (cfg && cfg.length)) avisoSlug('Ocupada — prueba con otra', 'var(--al-roja)');
+      if(libre === false) avisoSlug('Ocupada — prueba con otra', 'var(--al-roja)');
       else avisoSlug('Libre — puedes tomarla', 'var(--al-verde)');
     }catch(e){ avisoSlug('No se pudo revisar; revisa tu conexión', 'var(--al-ambar)'); }
   }, 450);
@@ -5093,22 +5111,11 @@ async function entrarPanel(){
       abrirPanel();
       return;
     }
-    /* Camino viejo, para quien todavía no migra. Este es el que obliga a que el pass_hash
-       siga siendo legible con la llave pública, así que se va en cuanto todos tengan usuario. */
-    const filas = await api(`menusbot_restaurantes?email=eq.${encodeURIComponent(email)}&select=slug,nombre,email,pass_hash,activo`);
-    const r = filas && filas[0];
-    const hash = await sha256(email + ':' + pass);
-    if(!r || r.pass_hash !== hash){ err.textContent = 'CORREO O CONTRASEÑA INCORRECTOS'; err.style.visibility = 'visible'; return; }
-    if(r.activo === false){ err.textContent = 'CUENTA DESACTIVADA'; err.style.visibility = 'visible'; return; }
-    /* El hash se queda guardado con la sesión (h) para que el panel pueda identificarse ante el
-       servidor cada vez que suelta una mesa, sin volver a pedirle la contraseña al dueño en cada
-       toque. No es un secreto nuevo que se filtre: ese mismo pass_hash se lee hoy de
-       menusbot_restaurantes con la llave pública, y es justo lo que permite que la regla de quién
-       puede cerrar una mesa viva en la base de datos y no en la buena voluntad de este botón. */
-    SESION = { slug: r.slug, nombre: r.nombre, email: r.email, h: hash };
-    try{ localStorage.setItem('mb_panel_sesion', JSON.stringify(SESION)); }catch(e){}
-    RID = r.slug;
-    abrirPanel();
+    /* Ya no hay camino viejo. Comparar una huella contra una tabla que cualquiera podía leer
+       nunca fue un candado: el secreto que autorizaba estaba publicado. Ahora la única puerta
+       es Supabase Auth, y por eso la tabla de restaurantes ya puede cerrarse al público. */
+    err.textContent = 'CORREO O CONTRASEÑA INCORRECTOS';
+    err.style.visibility = 'visible';
   }catch(e){ err.textContent = 'SIN CONEXIÓN — INTENTA DE NUEVO'; err.style.visibility = 'visible'; }
 }
 function salirPanel(){
@@ -5157,12 +5164,16 @@ async function pedirEnlaceRecuperacion(){
   btn.disabled = true;
   avisoOlvide('Enviando…', 'var(--humo2)');
   try{
-    const r = await fetch(SUPA_URL + '/functions/v1/mb-recuperar', {
+    /* El correo lo manda Supabase Auth, no una función nuestra: es el mismo sistema que guarda
+       la contraseña, así que el enlace que llega sirve de verdad para cambiarla. La respuesta es
+       la misma tenga cuenta ese correo o no — Auth tampoco lo dice, por la misma razón que
+       explica el comentario de arriba. */
+    const r = await fetch(SUPA_URL + '/auth/v1/recover', {
       method: 'POST',
-      headers: { 'Content-Type':'application/json', apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY },
-      body: JSON.stringify({ email }),
+      headers: { 'Content-Type':'application/json', apikey: SUPA_KEY },
+      body: JSON.stringify({ email, gotrue_meta_security: {} }),
     });
-    const d = await r.json().catch(()=>null);
+    const d = r.ok ? { ok: true, enviado: true } : await r.json().catch(()=>null);
     if(d && d.ok && d.enviado){
       avisoOlvide(MSG_REC_NEUTRO, 'var(--humo)');
     }else if(d && d.error === 'sin_correo'){
@@ -5195,7 +5206,8 @@ function salirDeRecuperacion(){
      panel vuelve a decidir qué toca: candado para quien no tiene sesión, panel para quien sí. */
   const u = new URL(location.href);
   u.searchParams.delete('recuperar');
-  location.replace(u.pathname + u.search + u.hash);
+  // También el fragmento: ahí es donde viaja el token de Supabase y no tiene por qué quedarse
+  location.replace(u.pathname + u.search);
 }
 async function validarEnlaceRecuperacion(){
   const MAL = 'Este enlace no sirve. Puede que se haya copiado mal o que ya se haya pedido uno más nuevo.';
@@ -5233,6 +5245,52 @@ async function guardarPassRecuperada(){
   if(p1 !== p2){ avisoRec('Las dos contraseñas no son iguales. Revísalas.', 'var(--pomodoro)'); $('#recPass2').focus(); return; }
   btn.disabled = true;
   avisoRec('Guardando…', 'var(--humo2)');
+  /* Camino nuevo: el enlace de Supabase trae un token que solo sirve para esto. Se cambia la
+     contraseña con él y de paso queda la sesión abierta, así que el dueño entra sin teclear
+     nada más. La contraseña sí viaja aquí —no una huella— porque quien la guarda es Auth y la
+     protege con bcrypt del otro lado; el hash casero de antes ni siquiera era un candado. */
+  if(HASH_REC){
+    try{
+      const r = await fetch(SUPA_URL + '/auth/v1/user', {
+        method: 'PUT',
+        headers: { 'Content-Type':'application/json', apikey: SUPA_KEY, Authorization: 'Bearer ' + HASH_REC.token },
+        body: JSON.stringify({ password: p1 }),
+      });
+      if(!r.ok){
+        const e = await r.json().catch(()=>null);
+        const msg = JSON.stringify(e || {});
+        if(/expired|invalid/i.test(msg)){
+          fallaRecuperacion('Este enlace ya venció o se usó. Pide uno nuevo desde la pantalla de entrar.');
+          return;
+        }
+        avisoRec('No se pudo guardar la contraseña. Intenta de nuevo en un momento.', 'var(--pomodoro)');
+        btn.disabled = false;
+        return;
+      }
+      AUTH = { token: HASH_REC.token, refresco: HASH_REC.refresco,
+               vence: Date.now() + (3600 * 1000), email: correoDelToken(HASH_REC.token) };
+      guardarAuth();
+      const mios = await api('menusbot_duenios?select=restaurante_id&limit=1');
+      const slug = mios && mios[0] && mios[0].restaurante_id;
+      if(!slug){
+        fallaRecuperacion('Tu contraseña quedó cambiada, pero esta cuenta no tiene un restaurante asignado. Avísale al administrador de MenusBot.');
+        return;
+      }
+      const rs = await api(`menusbot_restaurantes?slug=eq.${encodeURIComponent(slug)}&select=slug,nombre,email`);
+      const rr = rs && rs[0];
+      SESION = { slug, nombre: (rr && rr.nombre) || slug, email: (rr && rr.email) || AUTH.email, auth: true };
+      try{ localStorage.setItem('mb_panel_sesion', JSON.stringify(SESION)); }catch(e){}
+      RID = slug;
+      history.replaceState(null, '', location.pathname);
+      $('#recuperar').style.display = 'none';
+      abrirPanel();
+      return;
+    }catch(e){
+      avisoRec('Sin conexión — intenta de nuevo en un momento.', 'var(--pomodoro)');
+      btn.disabled = false;
+      return;
+    }
+  }
   try{
     /* La contraseña que acaba de escribir el dueño no sale de su navegador: lo que viaja es su
        huella SHA-256 mezclada con el correo de la cuenta, igual que al entrar. Ni el servidor ni
@@ -5302,7 +5360,16 @@ if(!(SESION && SESION.email && SESION.slug)){
   $('#passTitulo').style.display = 'none';
   $('#passZona').style.display = 'none';
 }
-if(TOKEN_REC){
+if(HASH_REC){
+  /* Enlace de Supabase Auth. No hay nada que validar contra nuestra base: el token ya viene
+     firmado por el servidor y el propio cambio de contraseña lo rechaza si venció. */
+  $('#recuperar').style.display = 'flex';
+  $('#recNombre').textContent = 'tu panel';
+  $('#recCorreo').textContent = correoDelToken(HASH_REC.token);
+  $('#recEspera').style.display = 'none';
+  $('#recForm').style.display = 'flex';
+  $('#recPass1').focus();
+}else if(TOKEN_REC){
   /* Quien llega con un token viene a recuperar su acceso y nada más: ni el candado ni una sesión
      guardada de antes le sirven, así que esta pantalla se pone delante de todo lo demás. */
   $('#recuperar').style.display = 'flex';

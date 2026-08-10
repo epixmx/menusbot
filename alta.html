@@ -91,7 +91,7 @@
            restaurante_id + sucursal + mesa) y parten la misma mesa en dos cuentas distintas. -->
       <div class="campo"><label class="caps" for="rSucursal">Sucursal o local principal</label><input id="rSucursal" value="Principal" maxlength="30" placeholder="Principal"><span class="ayuda">Si solo tienes un local déjalo en «Principal». Si más adelante abres otro, lo agregas desde tu panel y cada uno lleva sus mesas, su cocina y sus reportes por separado.</span></div>
       <div class="campo"><label class="caps" for="rEmail">Correo electrónico</label><input id="rEmail" type="email" autocomplete="username" placeholder="tucorreo@restaurante.com"></div>
-      <div class="campo"><label class="caps" for="rPass">Contraseña</label><input id="rPass" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres"></div>
+      <div class="campo"><label class="caps" for="rPass">Contraseña</label><input id="rPass" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres"></div>
       <button class="btn" id="btnAlta" onclick="crearCuenta()">Crear mi cuenta gratis</button>
       <div class="error" id="altaError"></div>
       <div class="nota">Al crearla entras directo a tu panel. ¿Ya tienes cuenta? <a href="panel.html">Inicia sesión aquí</a>.</div>
@@ -256,37 +256,51 @@ async function crearCuenta(){
   const falla = m => { err.textContent = m; err.style.display = 'block'; btn.disabled = false; btn.textContent = 'CREAR MI CUENTA GRATIS'; };
   if(nombre.length < 2) return falla('Escribe el nombre de tu restaurante');
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return falla('Escribe un correo válido');
-  if(pass.length < 6) return falla('La contraseña necesita al menos 6 caracteres');
+  if(pass.length < 8) return falla('La contraseña necesita al menos 8 caracteres');
   btn.disabled = true; btn.textContent = 'CREANDO TU PANEL…';
   try{
-    // correo único
-    const ya = await api(`menusbot_restaurantes?email=eq.${encodeURIComponent(email)}&select=id`);
-    if(ya && ya.length) return falla('Ese correo ya tiene una cuenta — inicia sesión');
-    // slug único
-    let slug = slugify(nombre);
-    const usados = await api(`menusbot_restaurantes?slug=like.${encodeURIComponent(slug)}*&select=slug`);
-    const setU = new Set((usados || []).map(x => x.slug));
-    if(setU.has(slug)){
-      let n = 2;
-      while(setU.has(slug + '-' + n)) n++;
-      slug = slug + '-' + n;
+    /* El alta ya no se arma desde el navegador. Antes esta pantalla escribía directo en la
+       tabla de restaurantes con la llave pública —incluida la huella de la contraseña— y por
+       eso esa tabla tenía que ser escribible por cualquiera. Ahora manda los datos y el
+       servidor hace todo: crea el usuario de verdad, siembra la carta, registra el restaurante
+       y lo liga con su dueño. Si algo truena a media faena, allá se deshace lo hecho; aquí ya
+       no puede quedar una cuenta a medias. */
+    const r = await fetch(SUPA_URL + '/functions/v1/mb-alta', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY },
+      body: JSON.stringify({ nombre, cocina, email, pass, config: configSemilla(nombre, cocina, sucursal) }),
+    });
+    const d = await r.json().catch(() => null);
+    if(!d || !d.ok){
+      const motivo = d && d.error;
+      if(motivo === 'correo_usado')     return falla('Ese correo ya tiene una cuenta — inicia sesión');
+      if(motivo === 'contrasena_corta') return falla('La contraseña necesita al menos 8 caracteres');
+      if(motivo === 'correo')           return falla('Escribe un correo válido');
+      if(motivo === 'nombre')           return falla('Escribe el nombre de tu restaurante');
+      return falla('No se pudo crear tu cuenta — intenta de nuevo en un momento');
     }
-    const hash = await sha256(email + ':' + pass);
-    // primero el menú/configuración (si esto falla, no queda cuenta a medias)
-    await api('menusbot_config', { method:'POST', body: JSON.stringify({ id: slug, data: configSemilla(nombre, cocina, sucursal) }) });
+    /* Se entra de una vez con la cuenta recién hecha, para que nadie tenga que teclear su
+       contraseña dos veces seguidas. Si el token no llega, tampoco es grave: la cuenta ya
+       existe y el panel le va a pedir que entre. */
     try{
-      await api('menusbot_restaurantes', { method:'POST', body: JSON.stringify({ slug, nombre, email, pass_hash: hash, cocina, plan:'demo' }) });
-    }catch(e2){
-      await api(`menusbot_config?id=eq.${encodeURIComponent(slug)}`, { method:'DELETE' }).catch(() => {});
-      throw e2;
-    }
-    /* La huella de la contraseña va en la sesión desde el primer minuto: es la credencial con la
-       que el panel se identifica ante menusbot_soltar_mesa. Sin ella, un restaurante recién dado
-       de alta no podía soltar, cerrar ni cancelar mesas — el panel lo mandaba a entrar de nuevo. */
-    try{ localStorage.setItem('mb_panel_sesion', JSON.stringify({ slug, nombre, email, h: hash })); }catch(e){}
+      const t = await fetch(SUPA_URL + '/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', apikey: SUPA_KEY },
+        body: JSON.stringify({ email, password: pass }),
+      });
+      const ses = await t.json().catch(() => null);
+      if(ses && ses.access_token){
+        localStorage.setItem('mb_panel_auth', JSON.stringify({
+          token: ses.access_token, refresco: ses.refresh_token,
+          vence: Date.now() + ((ses.expires_in || 3600) * 1000), email,
+        }));
+        localStorage.setItem('mb_panel_sesion', JSON.stringify({
+          slug: d.slug, nombre: d.nombre || nombre, email, auth: true,
+        }));
+      }
+    }catch(e){}
     location.href = 'panel.html';
   }catch(e){
-    if(/duplicate|23505/.test(String(e))) return falla('Ese correo o nombre ya está registrado — inicia sesión');
     falla('Sin conexión — intenta de nuevo en un momento');
   }
 }
