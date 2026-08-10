@@ -927,17 +927,76 @@ const MODO_DEMO = PARAMS.has('demo') || PARAMS.get('r') === 'bellavita';
 const TOKEN_REC = PARAMS.get('recuperar');
 let SESION = null;
 try{ SESION = JSON.parse(localStorage.getItem('mb_panel_sesion') || 'null'); }catch(e){}
+/* ---------- La sesión de verdad: Supabase Auth ----------
+   Hasta hoy «entrar al panel» era comparar un hash contra una tabla que cualquiera puede leer
+   con la llave pública: el secreto que autorizaba estaba publicado. Esto es lo otro — un
+   usuario real y un token firmado por el servidor, con caducidad. Convive con la entrada vieja
+   a propósito, porque todavía hay dueños sin migrar y tumbarles el panel no es una opción. */
+let AUTH = null;
+try{ AUTH = JSON.parse(localStorage.getItem('mb_panel_auth') || 'null'); }catch(e){}
+function guardarAuth(){
+  try{
+    if(AUTH) localStorage.setItem('mb_panel_auth', JSON.stringify(AUTH));
+    else localStorage.removeItem('mb_panel_auth');
+  }catch(e){}
+}
+async function authPeticion(ruta, cuerpo){
+  const r = await fetch(SUPA_URL + '/auth/v1/' + ruta, {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', apikey: SUPA_KEY },
+    body: JSON.stringify(cuerpo),
+  });
+  const d = await r.json().catch(() => null);
+  return { ok: r.ok, status: r.status, d };
+}
+async function authEntrar(email, pass){
+  const { ok, d } = await authPeticion('token?grant_type=password', { email, password: pass });
+  if(!ok || !d || !d.access_token) return null;
+  AUTH = { token: d.access_token, refresco: d.refresh_token, vence: Date.now() + ((d.expires_in || 3600) * 1000), email };
+  guardarAuth();
+  return AUTH;
+}
+/* El token dura una hora y el panel de un restaurante se queda abierto todo el turno. Sin
+   esto, a la hora exacta el dueño empezaría a ver «sin conexión» sin haber tocado nada. */
+async function authRefrescar(){
+  if(!AUTH || !AUTH.refresco) return false;
+  const { ok, d } = await authPeticion('token?grant_type=refresh_token', { refresh_token: AUTH.refresco });
+  if(!ok || !d || !d.access_token){ AUTH = null; guardarAuth(); return false; }
+  AUTH = { ...AUTH, token: d.access_token, refresco: d.refresh_token || AUTH.refresco,
+           vence: Date.now() + ((d.expires_in || 3600) * 1000) };
+  guardarAuth();
+  return true;
+}
+function authSalir(){
+  /* Se le avisa al servidor para que el refresco deje de servir, pero no se espera respuesta:
+     si el aviso no llega, el token local ya se borró y por aquí nadie vuelve a entrar. */
+  if(AUTH){
+    try{
+      fetch(SUPA_URL + '/auth/v1/logout', { method:'POST',
+        headers:{ apikey: SUPA_KEY, Authorization: 'Bearer ' + AUTH.token } }).catch(()=>{});
+    }catch(e){}
+  }
+  AUTH = null;
+  guardarAuth();
+}
+/* Con sesión se habla con el token del dueño; sin ella, con la llave anónima de siempre. */
+function llaveActual(){ return (AUTH && AUTH.token) || SUPA_KEY; }
 let RID = MODO_DEMO ? 'bellavita' : ((SESION && SESION.slug) || null);
 let accesoOk = false;
 async function sha256(t){
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
   return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
 }
-async function api(ruta, opc = {}){
+async function api(ruta, opc = {}, reintento = false){
+  /* Con sesión de Auth va el token del dueño en vez de la llave anónima: así la base sabe
+     quién está preguntando y las reglas por restaurante pueden apoyarse en eso. */
   const r = await fetch(SUPA_URL + '/rest/v1/' + ruta, {
     ...opc,
-    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', ...(opc.headers || {}) },
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + llaveActual(), 'Content-Type': 'application/json', ...(opc.headers || {}) },
   });
+  /* Token vencido: se renueva UNA vez y se repite la petición. Una sola, para no quedar
+     dando vueltas si el refresco también murió. */
+  if(r.status === 401 && AUTH && !reintento && await authRefrescar()) return api(ruta, opc, true);
   if(!r.ok){
     // El status viaja en el error para poder distinguir un nombre repetido (409) de una caída de red
     const e = new Error(await r.text());
@@ -3657,6 +3716,11 @@ async function pedirSoltarMesa(cuerpo){
    «sin permiso» una y otra vez: en vez de dejar al dueño picando un botón muerto sin entender por
    qué, se le pide entrar de nuevo una sola vez y listo. */
 function credencialPanel(){
+  /* Con sesión de Supabase Auth ya no hace falta ninguna huella: la identidad del dueño viaja
+     firmada en el token y el servidor la revisa ANTES que el hash. Se manda esta palabra en su
+     lugar para no cambiar la forma de las llamadas; no coincide con ninguna huella real, así
+     que si algún día se llamara sin sesión válida el servidor negaría igual. */
+  if(SESION && SESION.auth) return 'auth';
   if(SESION && SESION.h) return SESION.h;
   if(SESION){
     toast('Vuelve a entrar al panel para poder soltar mesas — tu sesión es de una versión anterior', true);
@@ -5001,6 +5065,36 @@ async function entrarPanel(){
   err.style.visibility = 'hidden';
   if(!email || !pass){ err.textContent = 'ESCRIBE TU CORREO Y CONTRASEÑA'; err.style.visibility = 'visible'; return; }
   try{
+    /* Primero el camino nuevo. Si este correo ya tiene usuario de verdad, se entra con token
+       y ni siquiera se toca la tabla de contraseñas. */
+    if(await authEntrar(email, pass)){
+      const mios = await api('menusbot_duenios?select=restaurante_id&limit=1');
+      const slug = mios && mios[0] && mios[0].restaurante_id;
+      if(!slug){
+        authSalir();
+        err.textContent = 'ESA CUENTA NO TIENE RESTAURANTE ASIGNADO';
+        err.style.visibility = 'visible';
+        return;
+      }
+      const rs = await api(`menusbot_restaurantes?slug=eq.${encodeURIComponent(slug)}&select=slug,nombre,email,activo`);
+      const rr = rs && rs[0];
+      if(rr && rr.activo === false){
+        authSalir();
+        err.textContent = 'CUENTA DESACTIVADA';
+        err.style.visibility = 'visible';
+        return;
+      }
+      /* Aquí ya no se guarda ningún hash. La identidad viaja firmada en el token y las
+         funciones del servidor ya saben leerla, que era el último motivo para tener el
+         hash a la mano en el navegador. */
+      SESION = { slug, nombre: (rr && rr.nombre) || slug, email, auth: true };
+      try{ localStorage.setItem('mb_panel_sesion', JSON.stringify(SESION)); }catch(e){}
+      RID = slug;
+      abrirPanel();
+      return;
+    }
+    /* Camino viejo, para quien todavía no migra. Este es el que obliga a que el pass_hash
+       siga siendo legible con la llave pública, así que se va en cuanto todos tengan usuario. */
     const filas = await api(`menusbot_restaurantes?email=eq.${encodeURIComponent(email)}&select=slug,nombre,email,pass_hash,activo`);
     const r = filas && filas[0];
     const hash = await sha256(email + ':' + pass);
@@ -5018,6 +5112,7 @@ async function entrarPanel(){
   }catch(e){ err.textContent = 'SIN CONEXIÓN — INTENTA DE NUEVO'; err.style.visibility = 'visible'; }
 }
 function salirPanel(){
+  authSalir();
   try{ localStorage.removeItem('mb_panel_sesion'); }catch(e){}
   location.href = 'panel.html';
 }
