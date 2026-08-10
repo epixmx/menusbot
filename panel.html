@@ -759,6 +759,46 @@
         <button class="btn-mini" onclick="coloresDelTema()">Usar colores del tema</button>
       </div>
     </div>
+    <!-- CÓMO SE ORDENA: con mesero de toda la vida, o sin mesero — el comensal ordena y paga solo -->
+    <div class="vista-titulo" style="margin-top:36px" id="servTitulo"><h1 style="font-size:24px">Cómo se ordena y cómo se cobra</h1><span class="caps">Con mesero en la mesa, o sin mesero: el comensal ordena y paga desde su teléfono</span></div>
+    <div class="marca-zona" id="servZona">
+      <div class="marca-form">
+        <div><div class="caps lbl">Modo del restaurante</div>
+          <select class="filtro" id="sModo" onchange="pintarServicioVivo()">
+            <option value="mesero">Con mesero — el comensal ordena y el mesero confirma en la mesa</option>
+            <option value="kiosco">Sin mesero — el comensal ordena, paga, y la orden entra derecho a la cocina</option>
+          </select>
+        </div>
+      </div>
+      <div id="servKiosco" style="display:none">
+        <div class="caps lbl" style="margin-top:22px;margin-bottom:8px">Qué puede pedir</div>
+        <label class="switch-lbl"><input type="checkbox" id="sAqui" onchange="pintarServicioVivo()"><span class="switch"><i></i></span><span class="caps" style="color:var(--humo);letter-spacing:1.6px">Comer aquí — ordena en la tablet o desde su mesa</span></label>
+        <label class="switch-lbl"><input type="checkbox" id="sRecoger" onchange="pintarServicioVivo()"><span class="switch"><i></i></span><span class="caps" style="color:var(--humo);letter-spacing:1.6px">Pasar a recoger — ordena antes y llega por él</span></label>
+        <label class="switch-lbl"><input type="checkbox" id="sDomicilio" onchange="pintarServicioVivo()"><span class="switch"><i></i></span><span class="caps" style="color:var(--humo);letter-spacing:1.6px">Llevar a domicilio — ustedes lo entregan</span></label>
+
+        <div id="servEnvio" style="display:none">
+          <div class="marca-form" style="margin-top:18px">
+            <div><div class="caps lbl">Costo de envío</div><input class="filtro" type="number" id="sEnvio" min="0" max="9999" step="1" inputmode="numeric" placeholder="0"></div>
+            <div><div class="caps lbl">Pedido mínimo para envío</div><input class="filtro" type="number" id="sMinimo" min="0" max="99999" step="1" inputmode="numeric" placeholder="0"></div>
+          </div>
+        </div>
+
+        <div class="caps lbl" style="margin-top:24px;margin-bottom:8px">Cómo puede pagar</div>
+        <label class="switch-lbl"><input type="checkbox" id="sPagoCaja"><span class="switch"><i></i></span><span class="caps" style="color:var(--humo);letter-spacing:1.6px">En caja o al recibirlo — efectivo o terminal, sin pasar por línea</span></label>
+        <label class="switch-lbl"><input type="checkbox" id="sPagoMP" onchange="pintarServicioVivo()"><span class="switch"><i></i></span><span class="caps" style="color:var(--humo);letter-spacing:1.6px">Tarjeta con Mercado Pago — se cobra al ordenar</span></label>
+        <div id="servMP" style="display:none;margin-top:12px">
+          <div id="sMpEstado" style="font-size:13.5px;color:var(--humo2);line-height:1.8"></div>
+          <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+            <button class="btn-sec" id="btnMpConectar" onclick="conectarMercadoPago()">Conectar mi Mercado Pago</button>
+          </div>
+        </div>
+      </div>
+      <div id="servAviso" class="caps" style="margin-top:14px;min-height:18px;letter-spacing:1.4px;font-size:12px;color:var(--humo2)"></div>
+      <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn-sec" onclick="guardarServicio()">Guardar</button>
+      </div>
+      <div class="nota-pie">Con mesero todo sigue igual que hoy. Sin mesero, quien va a <strong>comer ahí</strong> ordena sin crear cuenta —solo da su teléfono si quiere sus puntos— y quien pide <strong>para recoger o a domicilio</strong> sí necesita cuenta, porque hay que saber a quién se le entrega y a dónde. La cocina no ve un pedido en línea hasta que está pagado o hasta que quedó apartado para pagarse en caja.</div>
+    </div>
     <!-- DIRECCIÓN PÚBLICA: el slug con el que se dio de alta el restaurante vive en todas sus URLs -->
     <div class="vista-titulo" style="margin-top:36px" id="slugTitulo"><h1 style="font-size:24px">Dirección pública</h1><span class="caps">El nombre corto que aparece en la URL de tu carta y en todos tus QR</span></div>
     <div class="marca-zona" id="slugZona">
@@ -1225,7 +1265,104 @@ function aplicarMarcaPanel(){
   }
   llenarFormMarca(false);
   llenarFormResenas(false); /* mismo arranque que la identidad: el formulario de reseñas también vive en esta vista */
+  llenarFormServicio(false);
 }
+/* ---------- Cómo se ordena y cómo se cobra ----------
+   Este bloque es el interruptor de todo el modo sin mesero: de aquí sale lo que la carta del
+   comensal decide mostrar. Vive en cfg.config.servicio y no en la raíz porque es configuración
+   del restaurante, igual que la lista de sucursales. */
+const SERVICIO_DEF = {
+  modo: 'mesero',
+  canales: { aqui: true, recoger: false, domicilio: false },
+  pagos: { caja: true, mp: false },
+  envio: 0,
+  minimo: 0,
+};
+function servicioDe(){
+  const s = (cfgCache.config && cfgCache.config.servicio) || {};
+  return {
+    modo: s.modo === 'kiosco' ? 'kiosco' : 'mesero',
+    canales: Object.assign({}, SERVICIO_DEF.canales, s.canales || {}),
+    pagos: Object.assign({}, SERVICIO_DEF.pagos, s.pagos || {}),
+    envio: Math.max(0, +s.envio || 0),
+    minimo: Math.max(0, +s.minimo || 0),
+  };
+}
+let servicioFormHash = null;
+function llenarFormServicio(forzar){
+  const zona = document.getElementById('servZona');
+  if(!zona || !document.getElementById('sModo')) return;
+  const s = servicioDe();
+  const hash = JSON.stringify(s);
+  if(!forzar && (hash === servicioFormHash || zona.contains(document.activeElement))) return;
+  servicioFormHash = hash;
+  $('#sModo').value = s.modo;
+  $('#sAqui').checked = !!s.canales.aqui;
+  $('#sRecoger').checked = !!s.canales.recoger;
+  $('#sDomicilio').checked = !!s.canales.domicilio;
+  $('#sPagoCaja').checked = !!s.pagos.caja;
+  $('#sPagoMP').checked = !!s.pagos.mp;
+  $('#sEnvio').value = s.envio || '';
+  $('#sMinimo').value = s.minimo || '';
+  pintarServicioVivo();
+}
+/* Enseña y esconde según lo que se va marcando, sin guardar nada todavía: el dueño tiene que
+   poder ver a qué se compromete antes de apretar Guardar. */
+function pintarServicioVivo(){
+  const kiosco = $('#sModo') && $('#sModo').value === 'kiosco';
+  const zk = $('#servKiosco'); if(zk) zk.style.display = kiosco ? '' : 'none';
+  const ze = $('#servEnvio'); if(ze) ze.style.display = (kiosco && $('#sDomicilio').checked) ? '' : 'none';
+  const zm = $('#servMP'); if(zm) zm.style.display = (kiosco && $('#sPagoMP').checked) ? '' : 'none';
+  const est = $('#sMpEstado');
+  if(est){
+    /* Mientras no exista la aplicación de Mercado Pago no hay a dónde mandar al dueño. Se dice
+       tal cual en vez de dejar un botón que truene: un botón muerto se siente como una falla. */
+    est.textContent = MP_LISTO
+      ? 'Todavía no has conectado tu cuenta. Al conectarla, el dinero de cada pedido cae directo en tu Mercado Pago — MenusBot no lo toca en ningún momento.'
+      : 'La conexión con Mercado Pago todavía se está configurando del lado de MenusBot. Mientras tanto puedes recibir pedidos cobrando en caja o al entregar.';
+    const b = $('#btnMpConectar');
+    if(b) b.style.display = MP_LISTO ? '' : 'none';
+  }
+}
+/* Se prende cuando la aplicación de Mercado Pago exista y la función del servidor esté puesta.
+   Hasta entonces la pantalla lo dice con todas sus letras en vez de fingir que funciona. */
+const MP_LISTO = false;
+function conectarMercadoPago(){
+  toast('La conexión con Mercado Pago todavía no está lista', true);
+}
+function guardarServicio(){
+  const modo = $('#sModo').value === 'kiosco' ? 'kiosco' : 'mesero';
+  const canales = { aqui: $('#sAqui').checked, recoger: $('#sRecoger').checked, domicilio: $('#sDomicilio').checked };
+  const pagos = { caja: $('#sPagoCaja').checked, mp: $('#sPagoMP').checked };
+  const aviso = (t, c) => { const el = $('#servAviso'); if(el){ el.textContent = t || ''; el.style.color = c || 'var(--humo2)'; } };
+  aviso('');
+  if(modo === 'kiosco'){
+    /* Un restaurante sin mesero y sin ninguna forma de pedir es una carta que no deja ordenar.
+       Vale más negarse aquí que dejar al comensal frente a una pantalla sin botones. */
+    if(!canales.aqui && !canales.recoger && !canales.domicilio){
+      aviso('Elige al menos una forma de pedir: aquí, para recoger o a domicilio', 'var(--al-roja)');
+      return;
+    }
+    if(!pagos.caja && !pagos.mp){
+      aviso('Elige al menos una forma de pagar', 'var(--al-roja)');
+      return;
+    }
+    /* Un pedido a domicilio que solo se puede pagar al recibirlo es una apuesta: el repartidor
+       sale sin saber si le van a abrir. Se permite, pero se dice. */
+    if(canales.domicilio && !pagos.mp){
+      aviso('Ojo: a domicilio sin pago en línea, el repartidor sale sin cobrar por adelantado', 'var(--al-ambar)');
+    }
+  }
+  const envio = Math.max(0, Math.round(Number($('#sEnvio').value) || 0));
+  const minimo = Math.max(0, Math.round(Number($('#sMinimo').value) || 0));
+  configEscribir(d => {
+    d.config = d.config || {};
+    d.config.servicio = { modo, canales, pagos, envio, minimo };
+  });
+  servicioFormHash = null;
+  toast(modo === 'kiosco' ? 'Guardado — tu carta ya deja ordenar sin mesero' : 'Guardado — tu carta trabaja con mesero');
+}
+
 function llenarFormMarca(forzar){
   const zona = document.getElementById('marcaZona');
   if(!zona || !document.getElementById('mNombre')) return;
