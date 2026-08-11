@@ -840,12 +840,12 @@ let VIDEOS = {}; // fotos propias subidas por el restaurante (dataURL)
 /* Autoplay silencioso y en bucle: en un menú el video no es contenido que se "reproduce", es
    la foto viva del platillo. Va sin controles y con playsinline para que iOS no lo saque a
    pantalla completa. El poster es la foto de siempre, así el hueco nunca queda negro mientras
-   carga. preload=metadata para no tragarse los datos del comensal antes de que abra la ficha. */
+   carga. preload=auto y no metadata: estos archivos traen su indice al FINAL, asi que el navegador no puede pintar el primer cuadro hasta tenerlo entero. Pidiendolo completo arranca de una vez; cuando el video venga con el indice al principio (faststart) esto puede volver a metadata. */
 function medio(id){
   const v = VIDEOS[id];
   if(!v) return foto(id);
   const cartel = FOTOS[id] || IMG(id);
-  return `<video src="${v}" poster="${cartel}" autoplay muted loop playsinline preload="metadata"
+  return `<video src="${v}" poster="${cartel}" autoplay muted loop playsinline preload="auto"
     style="width:100%;height:100%;object-fit:cover;display:block"
     onerror="this.outerHTML = '<img src=\\'${cartel}\\' alt=\\'\\' style=\\'width:100%;height:100%;object-fit:cover\\'>'"></video>`;
 }
