@@ -87,23 +87,27 @@
   .splash .nota{margin-top:22px;font-size:13px;color:var(--humo2);line-height:1.8;letter-spacing:.3px}
 
   /* ---------- Cabecera ---------- */
-  .cab{padding:18px 20px 0}
+  .cab{padding:26px 20px 0}
   .cab .fila-top{display:flex;justify-content:space-between;align-items:center}
   .marca-mini{font-family:var(--grot);font-size:12.5px;letter-spacing:1.4px;font-weight:700;color:var(--humo)}
   .mesa-pill{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:13px;font-weight:600;letter-spacing:1.4px;padding:11px 14px;border-radius:2px;cursor:pointer;min-height:44px}
   .mesa-pill b{color:var(--pomodoro);font-size:14.5px}
-  .titulo-zona{position:relative;margin-top:4px}
-  .titulo-zona h1{font-family:var(--serif);font-weight:500;font-size:44px;line-height:.95;letter-spacing:-1.2px}
+  .titulo-zona{position:relative;margin-top:16px}
+  /* El padding derecho es el ancho del sello más su margen: sin él, un nombre largo
+     —«Flautas El Crunch»— se le mete encima y las dos cosas se vuelven ilegibles. Y el
+     tamaño se acomoda al ancho disponible en vez de ser fijo, para que un nombre de tres
+     palabras no obligue a leer letras encimadas. */
+  .titulo-zona h1{font-family:var(--serif);font-weight:500;font-size:clamp(32px,10.5vw,44px);line-height:1.02;letter-spacing:-1.2px;padding-right:94px}
   .titulo-zona h1 em{font-style:italic;color:var(--pomodoro)}
   .titulo-zona .sello{position:absolute;right:-4px;top:4px;width:84px;height:84px;animation:gira 28s linear infinite;opacity:.9}
   .titulo-zona .sello-logo{display:none !important}
   #logoPrincipal{width:68%;max-width:230px;height:78px;object-fit:contain;object-position:left center;display:block;margin:0}
-  .lema-cab{margin-top:2px;font-family:var(--serif);font-style:italic;font-weight:500;font-size:17px;letter-spacing:.3px;color:var(--crema)}
-  @media (min-width:700px){ #logoPrincipal{width:85%;max-width:310px;height:104px} .lema-cab{font-size:18px;margin-top:4px} .titulo-zona .sello{top:14px} .titulo-zona{margin-top:2px} }
+  .lema-cab{margin-top:9px;font-family:var(--serif);font-style:italic;font-weight:500;font-size:17px;letter-spacing:.3px;color:var(--crema)}
+  @media (min-width:700px){ #logoPrincipal{width:85%;max-width:310px;height:104px} .lema-cab{font-size:18px;margin-top:10px} .titulo-zona .sello{top:14px} .titulo-zona{margin-top:10px} .titulo-zona h1{padding-right:110px} }
   @keyframes gira{to{transform:rotate(360deg)}}
   .sello text{font-family:var(--grot);font-size:11px;letter-spacing:.6px;fill:var(--humo);font-weight:600}
   .sello .centro{font-family:var(--serif);font-style:italic;font-size:21px;fill:var(--pomodoro)}
-  .marquee{margin-top:8px;border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);overflow:hidden;padding:9px 0}
+  .marquee{margin-top:22px;border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);overflow:hidden;padding:11px 0}
   .marquee .tira{display:flex;gap:34px;white-space:nowrap;animation:desliza 26s linear infinite;width:max-content}
   @keyframes desliza{to{transform:translateX(-50%)}}
   .marquee span{font-family:var(--grot);font-size:12.5px;letter-spacing:1.4px;font-weight:600;color:var(--humo);display:flex;align-items:center;gap:34px}
@@ -120,7 +124,7 @@
   @keyframes parp{0%,100%{opacity:1}50%{opacity:.25}}
 
   /* ---------- Controles ---------- */
-  .controles{padding:18px 20px 0;position:sticky;top:0;background:var(--esp);box-shadow:0 14px 14px -14px rgba(0,0,0,.5);z-index:30}
+  .controles{padding:20px 20px 0;position:sticky;top:0;background:var(--esp);box-shadow:0 14px 14px -14px rgba(0,0,0,.5);z-index:30}
   .buscador{display:flex;align-items:center;gap:10px;border:1px solid var(--linea2);padding:12px 14px;background:var(--esp)}
   .buscador input{border:none;outline:none;flex:1;font-size:15px;background:transparent;color:var(--crema);font-family:var(--grot);letter-spacing:.4px}
   .buscador input::placeholder{color:var(--humo2);letter-spacing:1px}
