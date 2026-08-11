@@ -624,7 +624,7 @@
       <button class="nav-item" id="navCuenta" onclick="mostrarVista('cuenta')">
         <span class="dot-estado" id="navDot"></span>
         <svg class="ico" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>
-        Cuenta
+        <span id="navCuentaTxt">Cuenta</span>
       </button>
       <button class="nav-item" id="navMesa" onclick="abrirAyuda()">
         <svg class="ico" viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9z"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
@@ -1427,14 +1427,23 @@ function notaPieKiosco(){
    Con mesero sigue siendo la mesa y no se toca ni un pixel. Sin mesero dice el tipo de pedido,
    que es lo unico que ahi cambia el resto de la pantalla; y si el negocio solo tiene un canal
    no se puede tocar, porque abrir una hoja para elegir entre una sola opcion es tomarle el pelo. */
+/* La pestaña se llama como lo que enseña: con mesero es la cuenta de la mesa; sin mesero es
+   el estado del pedido que ya salió. */
+function pintarNavCuenta(){
+  const t = document.getElementById('navCuentaTxt');
+  if(t) t.textContent = esKiosco() ? 'Estado' : 'Cuenta';
+}
 function pintarPillPedido(){
   const p = document.querySelector('.mesa-pill');
   if(!p || !esKiosco()) return;
   const canales = canalesCarta();
   /* Mientras no haya elegido NO se pinta el primer canal: leer «COMER AQUÍ» debajo de una hoja
      que justo le esta preguntando como lo quiere se lee como si ya hubiera decidido por el. */
-  p.innerHTML = '<b id="mesaNum">' + (PEDIDO_CAPS[PEDIDO] || 'TU PEDIDO') + '</b>';
-  p.style.pointerEvents = canales.length <= 1 ? 'none' : '';
+  /* Un solo canal: no hay nada que elegir ni nada que explicar aquí arriba. Fuera. */
+  if(canales.length <= 1){ p.style.display = 'none'; return; }
+  p.style.display = '';
+  p.innerHTML = '<b id="mesaNum">' + (PEDIDO_CAPS[PEDIDO] || 'ELIGE') + '</b><span aria-hidden="true" style="color:var(--humo);font-size:11px">▾</span>';
+  p.style.pointerEvents = '';
   p.setAttribute('aria-label', PEDIDO ? 'Tipo de pedido: ' + PEDIDO_NOMBRE[PEDIDO] : 'Elegir tipo de pedido');
 }
 function tocarPill(){
@@ -1645,6 +1654,7 @@ function aplicarModoKiosco(){
     const nm = $('#navMesa');
     if(nm) nm.style.display = k ? 'none' : '';
     pintarPillPedido();
+    pintarNavCuenta();
     pintarMarquee();
     pintarAyuda();
     pintarGuiaSegunServicio();
@@ -2663,10 +2673,10 @@ function abrirPlatillo(id){
   cantModal = 1;
   const cat = CATEGORIAS.find(c => c.id === d.cat);
   $('#hoja').innerHTML = `
-    <div class="hero-plato" onclick="abrirVisor('${d.id}')" style="cursor:zoom-in">${foto(d.id)}
-      <button class="btn-full" onclick="event.stopPropagation();abrirVisor('${d.id}')"><svg class="ico" style="width:13px;height:13px" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg> Ver foto en grande</button>
+    <div class="hero-plato"${FOTOS[d.id] ? ` onclick="abrirVisor('${d.id}')" style="cursor:zoom-in"` : ''}>${foto(d.id)}
+      ${FOTOS[d.id] ? `<button class="btn-full" onclick="event.stopPropagation();abrirVisor('${d.id}')"><svg class="ico" style="width:13px;height:13px" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg> Ver foto en grande</button>` : ''}
       <button class="cerrar" onclick="event.stopPropagation();cerrarSheets()"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-      <span class="chip-lupa"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5M11 8v6M8 11h6"/></svg></span>
+      ${FOTOS[d.id] ? '<span class="chip-lupa"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5M11 8v6M8 11h6"/></svg></span>' : ''}
     </div>
     <div class="contenido">
       <div class="f-cat">${cat.num} — ${cat.nombre}</div>
@@ -2857,7 +2867,7 @@ function cambiarQtyItem(idx, dif){
 }
 function pintarVistaOrden(){
   const v = $('#vistaOrden');
-  let html = `<div class="vista-head"><div class="caps">${rotuloPedido()}${SUC ? ' · ' + SUC : ''} · por enviar</div><h2>Tu orden</h2></div>`;
+  let html = `<div class="vista-head">${esKiosco() ? '' : `<div class="caps">${rotuloPedido()}${SUC ? ' · ' + SUC : ''} · por enviar</div>`}<h2>Tu orden</h2></div>`;
   html += lineaCodigoMesa();
   if(!pedido.length){
     if(ordenes.length){
@@ -2956,7 +2966,9 @@ function progresoHTML(o){
 }
 function pintarVistaCuenta(){
   const v = $('#vistaCuenta');
-  let html = `<div class="vista-head"><div class="caps">${rotuloPedido()}${SUC ? ' · ' + SUC : ''} · seguimiento en vivo</div><h2>Tu cuenta</h2>
+  /* «Cuenta» es palabra de mesa: la cuenta se pide y se paga al final de una comida. Quien
+     ordenó para que se lo lleven no tiene una cuenta abierta, tiene un pedido en camino. */
+  let html = `<div class="vista-head">${esKiosco() ? '' : `<div class="caps">${rotuloPedido()}${SUC ? ' · ' + SUC : ''} · seguimiento en vivo</div>`}<h2>${esKiosco() ? 'Cómo va tu pedido' : 'Tu cuenta'}</h2>
     ${cliente ? `<div style="margin-top:10px;font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--oro);cursor:pointer" onclick="abrirHojaCliente()">★ ${cliente.nombre || cliente.telefono} · ${cliente.puntos || 0} puntos</div>` : ''}
     <div class="nota-pie" style="margin-top:10px">${esKiosco()
       ? `Aquí sigues en vivo lo que ya mandaste a la cocina. Se paga <b style="color:var(--crema)">${PEDIDO === 'domicilio' ? 'al recibirlo' : 'en caja'}</b>.`
