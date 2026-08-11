@@ -763,13 +763,21 @@
     <div class="vista-titulo" style="margin-top:36px" id="servTitulo"><h1 style="font-size:24px">Cómo se ordena y cómo se cobra</h1><span class="caps">Con mesero en la mesa, o sin mesero: el comensal ordena y paga desde su teléfono</span></div>
     <div class="marca-zona" id="servZona">
       <div class="marca-form">
-        <div><div class="caps lbl">Modo del restaurante</div>
+        <div><div class="caps lbl">Cómo trabaja tu negocio</div>
+          <select class="filtro" id="sNegocio" onchange="pintarServicioVivo()">
+            <option value="mesas">Restaurante con servicio en mesa</option>
+            <option value="mostrador">Mostrador o autoservicio</option>
+            <option value="cocina">Cocina sin local — dark kitchen</option>
+          </select>
+        </div>
+        <div id="celdaModo"><div class="caps lbl">Modo del restaurante</div>
           <select class="filtro" id="sModo" onchange="pintarServicioVivo()">
             <option value="mesero">Con mesero — el comensal ordena y el mesero confirma en la mesa</option>
             <option value="kiosco">Sin mesero — el comensal ordena, paga, y la orden entra derecho a la cocina</option>
           </select>
         </div>
       </div>
+      <div id="negocioAyuda" style="font-size:13.5px;color:var(--humo2);line-height:1.8;margin-top:12px"></div>
       <div id="servKiosco" style="display:none">
         <div class="caps lbl" style="margin-top:22px;margin-bottom:8px">Qué puede pedir</div>
         <label class="switch-lbl"><input type="checkbox" id="sAqui" onchange="pintarServicioVivo()"><span class="switch"><i></i></span><span class="caps" style="color:var(--humo);letter-spacing:1.6px">Comer aquí — ordena en la tablet o desde su mesa</span></label>
@@ -1266,6 +1274,7 @@ function aplicarMarcaPanel(){
   llenarFormMarca(false);
   llenarFormResenas(false); /* mismo arranque que la identidad: el formulario de reseñas también vive en esta vista */
   llenarFormServicio(false);
+  aplicarNegocioAlPanel();
 }
 /* ---------- Cómo se ordena y cómo se cobra ----------
    Este bloque es el interruptor de todo el modo sin mesero: de aquí sale lo que la carta del
@@ -1278,6 +1287,27 @@ const SERVICIO_DEF = {
   envio: 0,
   minimo: 0,
 };
+/* Lo que cada tipo de negocio tiene y lo que no. De aquí sale qué se esconde en el panel:
+   no es cosmético, es la diferencia entre un dueño que entiende su pantalla y uno que se pierde
+   entre opciones que nunca va a usar. */
+const NEGOCIOS = {
+  mesas: {
+    ayuda: 'Tus comensales se sientan, cada mesa tiene su QR y un mesero toma y confirma la orden. Puedes además recibir pedidos para recoger o a domicilio si activas el modo sin mesero.',
+    mesas: true, meseros: true, modoLibre: true,
+  },
+  mostrador: {
+    ayuda: 'El cliente ordena solo y pasa por su comida cuando le llaman. Puede haber mesas para sentarse, pero nadie las atiende ni se lleva una cuenta por mesa — por eso esta pantalla no te pide número de mesas ni equipo de meseros.',
+    mesas: false, meseros: false, modoLibre: false,
+  },
+  cocina: {
+    ayuda: 'No entra nadie a comer: todo sale para recoger en la puerta o a domicilio. Sin mesas, sin meseros y sin salón, así que el panel te esconde todo eso.',
+    mesas: false, meseros: false, modoLibre: false,
+  },
+};
+function negocioDe(){
+  const t = (cfgCache.config && cfgCache.config.negocio) || 'mesas';
+  return NEGOCIOS[t] ? t : 'mesas';
+}
 function servicioDe(){
   const s = (cfgCache.config && cfgCache.config.servicio) || {};
   return {
@@ -1296,6 +1326,7 @@ function llenarFormServicio(forzar){
   const hash = JSON.stringify(s);
   if(!forzar && (hash === servicioFormHash || zona.contains(document.activeElement))) return;
   servicioFormHash = hash;
+  $('#sNegocio').value = negocioDe();
   $('#sModo').value = s.modo;
   $('#sAqui').checked = !!s.canales.aqui;
   $('#sRecoger').checked = !!s.canales.recoger;
@@ -1309,6 +1340,17 @@ function llenarFormServicio(forzar){
 /* Enseña y esconde según lo que se va marcando, sin guardar nada todavía: el dueño tiene que
    poder ver a qué se compromete antes de apretar Guardar. */
 function pintarServicioVivo(){
+  /* El tipo de negocio manda sobre el modo: un mostrador o una dark kitchen no tienen meseros,
+     así que ni siquiera se les enseña la pregunta — se les fija en «sin mesero» y punto. */
+  const tipo = ($('#sNegocio') && $('#sNegocio').value) || 'mesas';
+  const neg = NEGOCIOS[tipo] || NEGOCIOS.mesas;
+  const ayuda = $('#negocioAyuda'); if(ayuda) ayuda.textContent = neg.ayuda;
+  const celda = $('#celdaModo'); if(celda) celda.style.display = neg.modoLibre ? '' : 'none';
+  if(!neg.modoLibre && $('#sModo')) $('#sModo').value = 'kiosco';
+  /* Una cocina sin local no recibe a nadie: «comer aquí» no es una opción que pueda existir. */
+  const filaAqui = $('#sAqui') && $('#sAqui').closest('.switch-lbl');
+  if(filaAqui) filaAqui.style.display = (tipo === 'cocina') ? 'none' : '';
+  if(tipo === 'cocina' && $('#sAqui')) $('#sAqui').checked = false;
   const kiosco = $('#sModo') && $('#sModo').value === 'kiosco';
   const zk = $('#servKiosco'); if(zk) zk.style.display = kiosco ? '' : 'none';
   const ze = $('#servEnvio'); if(ze) ze.style.display = (kiosco && $('#sDomicilio').checked) ? '' : 'none';
@@ -1331,7 +1373,9 @@ function conectarMercadoPago(){
   toast('La conexión con Mercado Pago todavía no está lista', true);
 }
 function guardarServicio(){
-  const modo = $('#sModo').value === 'kiosco' ? 'kiosco' : 'mesero';
+  const tipoSel = ($('#sNegocio') && $('#sNegocio').value) || 'mesas';
+  const libreModo = (NEGOCIOS[tipoSel] || NEGOCIOS.mesas).modoLibre;
+  const modo = (!libreModo || $('#sModo').value === 'kiosco') ? 'kiosco' : 'mesero';
   const canales = { aqui: $('#sAqui').checked, recoger: $('#sRecoger').checked, domicilio: $('#sDomicilio').checked };
   const pagos = { caja: $('#sPagoCaja').checked, mp: $('#sPagoMP').checked };
   const aviso = (t, c) => { const el = $('#servAviso'); if(el){ el.textContent = t || ''; el.style.color = c || 'var(--humo2)'; } };
@@ -1355,14 +1399,30 @@ function guardarServicio(){
   }
   const envio = Math.max(0, Math.round(Number($('#sEnvio').value) || 0));
   const minimo = Math.max(0, Math.round(Number($('#sMinimo').value) || 0));
+  const tipo = ($('#sNegocio') && $('#sNegocio').value) || 'mesas';
   configEscribir(d => {
     d.config = d.config || {};
+    d.config.negocio = NEGOCIOS[tipo] ? tipo : 'mesas';
     d.config.servicio = { modo, canales, pagos, envio, minimo };
   });
+  aplicarNegocioAlPanel();
   servicioFormHash = null;
   toast(modo === 'kiosco' ? 'Guardado — tu carta ya deja ordenar sin mesero' : 'Guardado — tu carta trabaja con mesero');
 }
 
+/* Esconde del panel entero lo que este negocio no tiene. Se llama en cada vuelta de render
+   porque la configuración puede llegar tarde o cambiar desde otra pestaña. */
+function aplicarNegocioAlPanel(){
+  const neg = NEGOCIOS[negocioDe()] || NEGOCIOS.mesas;
+  const campoMesas = document.getElementById('mMesas');
+  if(campoMesas && campoMesas.parentElement) campoMesas.parentElement.style.display = neg.mesas ? '' : 'none';
+  const tabEquipo = document.querySelector('.tab[data-v="equipo"]');
+  if(tabEquipo) tabEquipo.style.display = neg.meseros ? '' : 'none';
+  /* Si el dueño estaba parado en Equipo y acaba de cambiarse a mostrador, la pestaña se
+     esconde debajo de sus pies: se le regresa a Comandas en vez de dejarlo en una vista
+     que ya no existe en su menú. */
+  if(!neg.meseros && vista === 'equipo'){ const t = document.querySelector('.tab[data-v="comandas"]'); if(t) t.click(); }
+}
 function llenarFormMarca(forzar){
   const zona = document.getElementById('marcaZona');
   if(!zona || !document.getElementById('mNombre')) return;

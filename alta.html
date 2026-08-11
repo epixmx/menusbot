@@ -86,6 +86,16 @@
           <option value="general">Otra — menú general</option>
         </select>
       </div>
+      <!-- El tipo de negocio decide qué le vamos a enseñar al dueño de aquí en adelante. Una dark
+           kitchen no tiene mesas ni meseros, y enseñarle esa configuración solo la estorba. -->
+      <div class="campo"><label class="caps" for="rTipo">¿Cómo trabaja tu negocio?</label>
+        <select id="rTipo" onchange="pintarAyudaTipo()">
+          <option value="mesas">Restaurante con servicio en mesa</option>
+          <option value="mostrador">Mostrador o autoservicio</option>
+          <option value="cocina">Cocina sin local — dark kitchen</option>
+        </select>
+        <span class="ayuda" id="ayudaTipo"></span>
+      </div>
       <!-- Toda cuenta nace con al menos una sucursal. Sin ella se abrían mesas «sin sucursal»,
            que en la base conviven con las de la sucursal buena (el índice único es
            restaurante_id + sucursal + mesa) y parten la misma mesa en dos cuentas distintas. -->
@@ -222,15 +232,61 @@ const SEMILLAS = {
    sucursal es lo que permitía abrir mesas fantasma sin local asignado. `sucursales_at` sella
    cuándo cambió la lista; el panel lo compara contra la fecha de impresión de los QR para avisar
    que los códigos ya impresos apuntan a una sucursal que quizá ya no existe. */
+/* ---------- Cómo trabaja el negocio ----------
+   No es un dato de catálogo: es lo que decide qué pantallas ve el dueño el resto de su vida.
+   Un restaurante con mesas necesita meseros, propinas y una cuenta por mesa; un mostrador no
+   tiene nada de eso aunque tenga sillas; una dark kitchen ni siquiera recibe gente. Preguntarlo
+   una vez aquí evita enseñarle a cada quien la configuración de los otros dos. */
+const NEGOCIOS = {
+  mesas: {
+    ayuda: 'Tus comensales se sientan, cada mesa tiene su código QR y un mesero toma y confirma la orden. Es el flujo completo: mesas, equipo, propinas y cuenta por mesa.',
+    mesas: 8,
+    modo: 'mesero',
+    canales: { aqui: true, recoger: false, domicilio: false },
+  },
+  mostrador: {
+    ayuda: 'El cliente ordena solo —desde su teléfono o desde una tablet— y pasa por su comida cuando le llaman. Puede haber mesas para sentarse, pero nadie las atiende ni lleva una cuenta por mesa. Taquerías, cafeterías, food trucks, barras.',
+    mesas: 0,
+    modo: 'kiosco',
+    canales: { aqui: true, recoger: true, domicilio: false },
+  },
+  cocina: {
+    ayuda: 'No entra nadie a comer: todo lo que sale es para recoger en la puerta o para llevar a domicilio. Sin mesas, sin meseros y sin salón.',
+    mesas: 0,
+    modo: 'kiosco',
+    canales: { aqui: false, recoger: true, domicilio: true },
+  },
+};
+function tipoElegido(){
+  const el = document.getElementById('rTipo');
+  const t = el ? el.value : 'mesas';
+  return NEGOCIOS[t] ? t : 'mesas';
+}
+function pintarAyudaTipo(){
+  const el = document.getElementById('ayudaTipo');
+  if(el) el.textContent = NEGOCIOS[tipoElegido()].ayuda;
+}
+
 function configSemilla(nombre, cocina, sucursal){
   const s = SEMILLAS[cocina] || SEMILLAS.general;
   const suc = String(sucursal || '').trim().slice(0,30) || 'Principal';
+  const tipo = tipoElegido();
+  const neg = NEGOCIOS[tipo];
   return {
     config: {
       tema: 'editoriale',
       meseros: [],
       pin: '1987',
-      mesas: 8,
+      /* El tipo se guarda como dato, no como consecuencia: de él salen las pantallas que el
+         panel enseña y esconde, y el dueño lo puede cambiar después si su negocio cambia. */
+      negocio: tipo,
+      servicio: {
+        modo: neg.modo,
+        canales: { ...neg.canales },
+        pagos: { caja: true, mp: false },
+        envio: 0, minimo: 0,
+      },
+      mesas: neg.mesas,
       menuPropio: true,
       categorias: s.categorias,
       marca: { prefijo:'', nombre: nombre, lema:'', logo:'', acento:'', secundario:'' },
@@ -305,6 +361,7 @@ async function crearCuenta(){
   }
 }
 document.getElementById('rPass').addEventListener('keydown', e => { if(e.key === 'Enter') crearCuenta(); });
+pintarAyudaTipo();
 </script>
 </body>
 </html>
