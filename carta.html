@@ -66,7 +66,11 @@
 
   /* ---------- Splash ---------- */
   .splash{position:fixed;inset:0;z-index:300;background:var(--esp);display:flex;align-items:center;justify-content:center;padding:26px;transition:opacity .6s,visibility .6s}
-  .splash::before{content:'';position:absolute;inset:0;background:url('https://xwcgqhlsubyfmpdjabjt.supabase.co/storage/v1/object/public/menusbot-demo/margherita.jpg') center/cover;opacity:.16;filter:saturate(.7) contrast(1.05)}
+  /* El fondo lo pone cada restaurante, NO el archivo. Aquí venía clavada la foto de la pizza
+     del piloto, así que una taquería recién dada de alta abría su carta con la margarita de
+     otro. El valor por omisión es un lavado del color de acento del propio restaurante: no
+     dice nada de nadie más y funciona igual de bien en los cuatro temas. */
+  .splash::before{content:'';position:absolute;inset:0;background:var(--portada, radial-gradient(130% 105% at 50% 0%, var(--pomodoro) 0%, transparent 64%));opacity:.16;filter:saturate(.7) contrast(1.05)}
   .splash.oculto{opacity:0;visibility:hidden}
   .splash-caja{position:relative;max-width:390px;width:100%;text-align:center}
   .splash .sobre{font-family:var(--grot);font-size:13px;letter-spacing:1.4px;color:var(--humo);font-weight:600}
@@ -1014,6 +1018,15 @@ function aplicarMarca(){
     } else enTexto();
     if(lemaEl) lemaEl.textContent = SUC ? 'Sucursal ' + SUC : (m.lema || '');
   }
+  /* La portada del splash: la del restaurante si la subió, la de la pizza SOLO en el menú de
+     ejemplo —que para eso es el ejemplo— y para todos los demás, nada: el lavado de su propio
+     color que define el CSS. Que un negocio nuevo abra con la foto de otro es de las cosas que
+     más rápido rompen la confianza en un producto. */
+  const portada = m.portada
+    ? `url('${String(m.portada).replace(/["'\\)]/g, '')}') center/cover`
+    : (MODO_DEMO ? "url('https://xwcgqhlsubyfmpdjabjt.supabase.co/storage/v1/object/public/menusbot-demo/margherita.jpg') center/cover" : '');
+  if(portada) document.documentElement.style.setProperty('--portada', portada);
+  else document.documentElement.style.removeProperty('--portada');
   const base = TEMAS[temaActual] || TEMAS.editoriale;
   document.documentElement.style.setProperty('--pomodoro', m.acento || base.pomodoro);
   document.documentElement.style.setProperty('--oro', m.secundario || base.oro);
@@ -1058,6 +1071,11 @@ async function sincronizar(){
     configCargada = true;
     aplicarTema((dbCache.config && dbCache.config.tema) || 'editoriale');
     aplicarMarca();
+    /* La rejilla se pinta hasta aquí porque hasta aquí se sabe cuántas mesas hay de verdad. */
+    pintarGridMesas();
+    /* Un negocio sin mesas no puede preguntar «¿en qué mesa estás?». Se le quita el splash de
+       encima y ve su carta directo; lo de ordenar sin mesa es el paso que sigue. */
+    if(sinMesasCarta() && mesa == null) $('#splash').classList.add('oculto');
     /* Ya que se sabe la marca de verdad, se guarda para que la próxima visita no espere */
     recordarMarca(MARCA);
     validarSucursal();
@@ -1293,12 +1311,34 @@ function iniciarMesa(){
   if(restaurarSesion(null)){ pintarIndicadores(); if(mesa != null) return; }
   pintarGridMesas();
 }
+/* ---------- Qué clase de negocio es y cuántas mesas tiene ----------
+   Se lee de la configuración, no del archivo. Un mostrador o una cocina sin local no tienen
+   mesas que ofrecer, y un restaurante con seis no tiene por qué enseñar doce. */
+function negocioCarta(){
+  const t = (dbCache.config && dbCache.config.negocio) || 'mesas';
+  return (t === 'mostrador' || t === 'cocina') ? t : 'mesas';
+}
+function nMesasCarta(){
+  const n = Math.round(Number(dbCache.config && dbCache.config.mesas));
+  return (isFinite(n) && n > 0) ? Math.min(200, n) : 0;
+}
+/* Sin mesas no hay nada que preguntar: ni el negocio las tiene, ni el dueño configuró ninguna. */
+function sinMesasCarta(){ return negocioCarta() !== 'mesas' || nMesasCarta() === 0; }
+
 /* Rejilla de mesas del splash. Se pinta también al pedir «cambiar de mesa»: quien entró por
-   el QR nunca la había pintado y se quedaba mirando un splash sin botones. */
+   el QR nunca la había pintado y se quedaba mirando un splash sin botones.
+   Antes la lista era literal —del 1 al 12, para todos— así que un restaurante de seis mesas
+   ofrecía seis que no existen y uno de veinte escondía ocho. Ahora sale de su configuración,
+   y se vuelve a pintar cuando esa configuración llega o cambia. */
+let gridMesasHash = null;
 function pintarGridMesas(){
   const g = $('#gridMesas');
-  if(!g || g.children.length) return;
-  g.innerHTML = [1,2,3,4,5,6,7,8,9,10,11,12].map(n =>
+  if(!g) return;
+  const total = nMesasCarta();
+  const hash = String(total);
+  if(hash === gridMesasHash) return;
+  gridMesasHash = hash;
+  g.innerHTML = Array.from({ length: total }, (_, i) => i + 1).map(n =>
     `<button class="mesa-btn" onclick="asignarMesa(${n})">${n}<small>MESA</small></button>`).join('');
 }
 function asignarMesa(n, silencioso){
