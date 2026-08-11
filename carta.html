@@ -307,6 +307,8 @@
   .btn-full{position:absolute;top:16px;left:16px;display:flex;align-items:center;gap:9px;border:1px solid rgba(245,237,222,.35);background:rgba(21,18,16,.78);backdrop-filter:blur(6px);color:#F5EDDE;font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;padding:14px 16px;border-radius:2px;cursor:pointer;z-index:5;min-height:44px}
   .chip-lupa{position:absolute;right:14px;bottom:14px;width:42px;height:42px;border-radius:50%;background:rgba(18,15,12,.72);backdrop-filter:blur(5px);border:1px solid var(--linea2);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:4}
   .chip-lupa .ico{width:17px;height:17px;color:#F5EDDE;stroke-width:2}
+  .chip-video{position:absolute;left:14px;bottom:14px;display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:2px;background:rgba(18,15,12,.72);backdrop-filter:blur(5px);border:1px solid var(--linea2);pointer-events:none;z-index:4}
+  .chip-video .ico{width:12px;height:12px;color:#F5EDDE}
   .hoja .contenido{padding:0 24px 36px;margin-top:-44px;position:relative;z-index:2}
   .hoja .f-cat{font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--pomodoro)}
   .hoja h2{font-family:var(--serif);font-style:italic;font-weight:500;font-size:31px;line-height:1.05;margin-top:8px;letter-spacing:-.5px}
@@ -831,7 +833,22 @@ const ARTE = {
  vino: plato('<path d="M78 30 h44 q2 26 -16 32 l0 26 h-12 l0 -26 q-18 -6 -16 -32 Z" fill="#E8E2D6" stroke="#B8AE9E" stroke-width="2"/><path d="M81 40 h38 q-1 16 -13 20 l-12 0 q-12 -4 -13 -20 Z" fill="#7B1E2B"/>'),
 };
 ARTE.generico = plato('<circle cx="100" cy="70" r="22" fill="#C9A227" opacity=".8"/><path d="M64 92 q16 8 36 8 q20 0 36 -8" stroke="#8FAE8B" stroke-width="5" fill="none" stroke-linecap="round"/>');
-let FOTOS = {}; // fotos propias subidas por el restaurante (dataURL)
+let FOTOS = {};
+/* Videos por platillo, con la misma forma que FOTOS: { idPlatillo: url }. El restaurante los
+   sube desde su panel; si un platillo no tiene, la ficha enseña su foto y ya. */
+let VIDEOS = {}; // fotos propias subidas por el restaurante (dataURL)
+/* Autoplay silencioso y en bucle: en un menú el video no es contenido que se "reproduce", es
+   la foto viva del platillo. Va sin controles y con playsinline para que iOS no lo saque a
+   pantalla completa. El poster es la foto de siempre, así el hueco nunca queda negro mientras
+   carga. preload=metadata para no tragarse los datos del comensal antes de que abra la ficha. */
+function medio(id){
+  const v = VIDEOS[id];
+  if(!v) return foto(id);
+  const cartel = FOTOS[id] || IMG(id);
+  return `<video src="${v}" poster="${cartel}" autoplay muted loop playsinline preload="metadata"
+    style="width:100%;height:100%;object-fit:cover;display:block"
+    onerror="this.outerHTML = '<img src=\\'${cartel}\\' alt=\\'\\' style=\\'width:100%;height:100%;object-fit:cover\\'>'"></video>`;
+}
 function foto(id){
   const src = FOTOS[id] || IMG(id);
   return `<img src="${src}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="svg-fb" style="display:none">${ARTE[id] || ARTE.generico}</div>`;
@@ -1089,6 +1106,7 @@ async function sincronizar(){
     if(h !== hashCarta){
       hashCarta = h;
       FOTOS = dbCache.fotos || {};
+      VIDEOS = dbCache.videos || {};
       /* Categorías propias del restaurante (los nuevos las definen al darse de alta) */
       if(dbCache.config && Array.isArray(dbCache.config.categorias) && dbCache.config.categorias.length){
         CATEGORIAS = dbCache.config.categorias.map((c, i) => ({ id: c.id, nombre: c.nombre, num: c.num || String(i+1).padStart(2,'0') }));
@@ -2673,10 +2691,10 @@ function abrirPlatillo(id){
   cantModal = 1;
   const cat = CATEGORIAS.find(c => c.id === d.cat);
   $('#hoja').innerHTML = `
-    <div class="hero-plato"${FOTOS[d.id] ? ` onclick="abrirVisor('${d.id}')" style="cursor:zoom-in"` : ''}>${foto(d.id)}
-      ${FOTOS[d.id] ? `<button class="btn-full" onclick="event.stopPropagation();abrirVisor('${d.id}')"><svg class="ico" style="width:13px;height:13px" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg> Ver foto en grande</button>` : ''}
+    <div class="hero-plato"${FOTOS[d.id] && !VIDEOS[d.id] ? ` onclick="abrirVisor('${d.id}')" style="cursor:zoom-in"` : ''}>${medio(d.id)}
+      ${FOTOS[d.id] && !VIDEOS[d.id] ? `<button class="btn-full" onclick="event.stopPropagation();abrirVisor('${d.id}')"><svg class="ico" style="width:13px;height:13px" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg> Ver foto en grande</button>` : ''}
       <button class="cerrar" onclick="event.stopPropagation();cerrarSheets()"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-      ${FOTOS[d.id] ? '<span class="chip-lupa"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5M11 8v6M8 11h6"/></svg></span>' : ''}
+      ${FOTOS[d.id] && !VIDEOS[d.id] ? '<span class="chip-lupa"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5M11 8v6M8 11h6"/></svg></span>' : ''}${VIDEOS[d.id] ? '<span class="chip-video"><svg class="ico" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg></span>' : ''}
     </div>
     <div class="contenido">
       <div class="f-cat">${cat.num} — ${cat.nombre}</div>
@@ -2702,10 +2720,6 @@ function abrirPlatillo(id){
       </div>
       <div class="bloque"><div class="b-cab"><span class="caps">Alérgenos</span><i></i></div>
         ${d.alergenos.length ? `<div class="alerg">${d.alergenos.map(a => `<span>${a}</span>`).join('')}</div>` : '<div style="font-size:14px;color:var(--humo2);letter-spacing:1px">SIN ALÉRGENOS COMUNES</div>'}
-      </div>
-      <div class="bloque"><div class="b-cab"><span class="caps">Sugerencia de la casa</span><i></i></div>
-        <div class="nota-vino" style="margin-bottom:12px">${d.maridaje}</div>
-        ${sugCardsHTML(sugerenciasDe(d, 3, pedido.map(i => i.id)))}
       </div>
       <div class="bloque"><div class="b-cab"><span class="caps">Nota para cocina</span><i></i></div>
         <input class="notas-inp" id="notasPlatillo" placeholder="Ej. sin cebolla, término medio, para compartir…">
