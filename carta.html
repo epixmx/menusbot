@@ -555,7 +555,7 @@
     <div class="cab">
       <div class="fila-top">
         <span class="marca-mini" id="marcaMini">MENÚ INTERACTIVO</span>
-        <button class="mesa-pill" onclick="cambiarMesa()">MESA <b id="mesaNum">–</b></button>
+        <button class="mesa-pill" onclick="tocarPill()">MESA <b id="mesaNum">–</b></button>
       </div>
       <div class="titulo-zona">
         <div id="cabPrincipal">
@@ -641,10 +641,10 @@
       <div class="caps" style="color:var(--pomodoro);letter-spacing:1.4px;font-family:var(--grot);font-weight:700;font-size:13px">CÓMO ORDENAR DESDE TU CELULAR</div>
       <div class="g-paso"><b>1</b><div><h4>Toca cualquier platillo</h4><p>Verás su foto en grande, ingredientes, calorías y alérgenos.</p></div></div>
       <div class="g-paso"><b>2</b><div><h4>Agrégalo con el botón +</h4><p>Suma todo lo que se te antoje; puedes ajustar cantidades después.</p></div></div>
-      <div class="g-paso"><b>3</b><div><h4>Manda tu orden cuando quieras</h4><p>Tu mesero pasa a la mesa a confirmarla contigo y de ahí se va a la cocina. Sigue su avance en «Cuenta».</p></div></div>
-      <div class="g-nota">Nadie te apura: ve la carta con calma y ordena las veces que quieras — todo se va sumando y se paga junto al final.</div>
+      <div class="g-paso"><b>3</b><div><h4>Manda tu orden cuando quieras</h4><p id="guiaPaso3">Tu mesero pasa a la mesa a confirmarla contigo y de ahí se va a la cocina. Sigue su avance en «Cuenta».</p></div></div>
+      <div class="g-nota" id="guiaNota">Nadie te apura: ve la carta con calma y ordena las veces que quieras — todo se va sumando y se paga junto al final.</div>
       <button class="btn-primario" onclick="cerrarGuia()">Empezar a ordenar</button>
-      <button class="btn-fantasma" style="margin-top:10px" onclick="abrirHojaUnirse()">Alguien de mi mesa ya abrió la cuenta — tengo el código</button>
+      <button class="btn-fantasma" id="guiaUnirse" style="margin-top:10px" onclick="abrirHojaUnirse()">Alguien de mi mesa ya abrió la cuenta — tengo el código</button>
     </div>
   </div>
 
@@ -665,21 +665,13 @@
 <div class="hoja" id="hojaPropina"></div>
 <div class="hoja" id="hojaSucursal"></div>
 <div class="hoja" id="hojaUnirse"></div>
-<div class="hoja" id="hojaAyuda">
-  <div class="confirmacion" style="text-align:left">
-    <div class="vista-head" style="padding:0 0 6px"><div class="caps" style="color:var(--humo)">¿Necesitas algo?</div><h2 style="font-family:var(--serif);font-style:italic;font-weight:500;font-size:30px">Estamos para servirte</h2></div>
-    <div class="acciones-orden" style="padding:16px 0 0">
-      <button class="btn-primario" onclick="cerrarSheets();llamarMesero()">Llamar al mesero a mi mesa</button>
-      <button class="btn-fantasma" onclick="cerrarSheets();pedirCuenta()">Pedir la cuenta para pagar</button>
-      <button class="btn-fantasma" onclick="abrirHojaBienvenida()">Ver el código de mi mesa</button>
-      <button class="btn-fantasma" onclick="abrirHojaUnirse()">Alguien de mi mesa ya abrió la cuenta — tengo el código</button>
-      <button class="btn-fantasma" onclick="abrirHojaCliente()">Mi cuenta de puntos</button>
-      <button class="btn-fantasma" onclick="cerrarSheets();mostrarGuia(true)">¿Cómo funciona esta carta?</button>
-      <button class="btn-fantasma" onclick="cerrarSheets();cambiarMesa()">Cambiar de mesa</button>
-    </div>
-  </div>
-</div>
+<!-- La ayuda ya no es fija: con mesero ofrece al mesero, y en un negocio sin mesero ofrecer
+     «llamar al mesero a mi mesa» seria mentirle al comensal. La pinta pintarAyuda(). -->
+<div class="hoja" id="hojaAyuda"></div>
 <div class="hoja" id="hojaCliente"></div>
+<!-- Sin mesero: como quiere su pedido, y a quien se le entrega -->
+<div class="hoja" id="hojaPedido"></div>
+<div class="hoja" id="hojaDatos"></div>
 
 <!-- Visor -->
 <div class="visor" id="visor" onclick="cerrarVisor()">
@@ -1076,6 +1068,9 @@ async function sincronizar(){
     /* Un negocio sin mesas no puede preguntar «¿en qué mesa estás?». Se le quita el splash de
        encima y ve su carta directo; lo de ordenar sin mesa es el paso que sigue. */
     if(sinMesasCarta() && mesa == null) $('#splash').classList.add('oculto');
+    /* Aqui y no antes: hasta este punto no se sabe si hay mesero, y la primera pintada de la
+       pagina ocurre a ciegas. Es idempotente, asi que correrla en cada sondeo no cuesta. */
+    aplicarModoKiosco();
     /* Ya que se sabe la marca de verdad, se guarda para que la próxima visita no espere */
     recordarMarca(MARCA);
     validarSucursal();
@@ -1324,6 +1319,345 @@ function nMesasCarta(){
 }
 /* Sin mesas no hay nada que preguntar: ni el negocio las tiene, ni el dueño configuró ninguna. */
 function sinMesasCarta(){ return negocioCarta() !== 'mesas' || nMesasCarta() === 0; }
+
+/* ================================================================
+   SERVICIO SIN MESERO (KIOSCO)
+   Un mostrador o una cocina sin local no tienen a quien mandar a la mesa a confirmar la orden,
+   y media carta le habla al comensal de una mesa que no existe: «MESA –», «ORDENA DESDE TU
+   MESA», la pestaña «Mesero», «ENVIAR MI ORDEN — MESA NULL». Todo lo que sigue esta para que
+   ese negocio vea SU flujo, y para que el restaurante con mesero —que esta en produccion
+   atendiendo gente— no note absolutamente nada: cada rama nueva cuelga de esKiosco().
+   ================================================================ */
+function servicioCarta(){
+  const s = dbCache.config && dbCache.config.servicio;
+  return (s && typeof s === 'object') ? s : {};
+}
+/* LA REGLA MAESTRA. El dueno puede pedir kiosco a mano (servicio.modo), pero un negocio que no
+   es de mesas lo es por definicion: no hay mesero que confirme aunque nadie lo configure. */
+function esKiosco(){
+  return servicioCarta().modo === 'kiosco' || negocioCarta() !== 'mesas';
+}
+/* Los mismos tres nombres en los tres registros que usa el archivo: titulo, versalitas y pie.
+   Estan juntos para que nadie invente un cuarto nombre para lo mismo en otra pantalla. */
+const PEDIDO_NOMBRE = { aqui:'Comer aquí', recoger:'Paso a recoger', domicilio:'A domicilio' };
+const PEDIDO_CAPS   = { aqui:'COMER AQUÍ', recoger:'RECOGER', domicilio:'DOMICILIO' };
+const PEDIDO_PIE    = { aqui:'Comer aquí', recoger:'Para recoger', domicilio:'A domicilio' };
+/* Canales prendidos, siempre en el mismo orden para que la hoja no baile entre visitas.
+   Si el dueno no configuro ninguno NO se inventa uno que su negocio no da: se cae a lo unico
+   que ese tipo de negocio siempre puede cumplir —el mostrador sirve en su local, la cocina sin
+   local entrega fuera—, porque una opcion que nadie va a cumplir es peor que no ofrecerla. */
+function canalesCarta(){
+  const c = servicioCarta().canales || {};
+  const lista = ['aqui','recoger','domicilio'].filter(k => c[k] === true);
+  if(lista.length) return lista;
+  return negocioCarta() === 'cocina' ? ['recoger','domicilio'] : ['aqui'];
+}
+/* Tipo de pedido de esta visita. Se recuerda por restaurante (LSK) porque quien pidio a
+   domicilio hoy casi siempre vuelve a pedir a domicilio: volver a preguntarselo es friccion. */
+let PEDIDO = null;
+try{ PEDIDO = localStorage.getItem(LSK('mb_pedido_tipo')) || null; }catch(e){}
+function fijarPedido(t, silencioso){
+  if(!PEDIDO_NOMBRE[t]) return;
+  PEDIDO = t;
+  try{ localStorage.setItem(LSK('mb_pedido_tipo'), t); }catch(e){}
+  pintarPillPedido();
+  pintarAyuda();
+  if(vistaActual === 'orden') pintarVistaOrden();
+  else if(vistaActual === 'cuenta') pintarVistaCuenta();
+  pintarIndicadores();
+  if(!silencioso) toast(PEDIDO_NOMBRE[t] + ' — así lo preparamos');
+}
+/* Envio y minimo SOLO existen a domicilio: en el mostrador y para recoger no hay reparto que
+   cobrar ni minimo que exigir. Con mesero devuelven 0 siempre, y por eso se pueden sumar sin
+   condicion en los totales sin cambiarle un peso al restaurante que ya esta trabajando. */
+function envioCarta(){
+  if(!esKiosco() || PEDIDO !== 'domicilio') return 0;
+  const n = Number(servicioCarta().envio);
+  return (isFinite(n) && n > 0) ? n : 0;
+}
+function minimoCarta(){
+  if(!esKiosco() || PEDIDO !== 'domicilio') return 0;
+  const n = Number(servicioCarta().minimo);
+  return (isFinite(n) && n > 0) ? n : 0;
+}
+/* Datos de quien recoge o recibe. Se guardan CAMPO POR CAMPO y no como una linea de texto
+   porque asi entran a la base y el repartidor los lee separados. La direccion esta desarmada a
+   proposito: mas adelante la va a llenar Google con su autocompletado de direcciones, que
+   devuelve calle, colonia y codigo postal cada uno por su lado, y cada campo tiene que poder
+   recibir su pedazo de esa respuesta sin volver a partir una cadena a mano. */
+let datosKiosco = { nombre:'', telefono:'', calle:'', colonia:'', cp:'', referencias:'' };
+try{
+  const g = JSON.parse(localStorage.getItem(LSK('mb_datos_entrega')) || 'null');
+  if(g && typeof g === 'object') datosKiosco = Object.assign(datosKiosco, g);
+}catch(e){}
+function guardarDatosKiosco(){
+  try{ localStorage.setItem(LSK('mb_datos_entrega'), JSON.stringify(datosKiosco)); }catch(e){}
+}
+/* Un pedido que se entrega necesita a quien; uno que se come aqui, no. */
+const pedidoNecesitaDatos = () => esKiosco() && (PEDIDO === 'recoger' || PEDIDO === 'domicilio');
+const datosCompletos = () => {
+  const d = datosKiosco;
+  if(!String(d.nombre || '').trim()) return false;
+  if(String(d.telefono || '').replace(/\D/g, '').length !== 10) return false;
+  if(PEDIDO === 'domicilio' && (!String(d.calle || '').trim() || !String(d.colonia || '').trim())) return false;
+  return true;
+};
+/* Lo que escribe el comensal vuelve a la pantalla dentro de un value=""; sin escapar, unas
+   comillas en su nombre romperian el formulario entero y se quedaria sin poder ordenar. */
+const escAtr = t => String(t == null ? '' : t)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+/* Encabezado de las vistas: con mesero manda la mesa; sin mesero, el tipo de pedido. */
+const rotuloPedido = () => esKiosco()
+  ? (PEDIDO_CAPS[PEDIDO] || 'TU PEDIDO')
+  : 'Mesa ' + (mesa ? String(mesa).padStart(2,'0') : '—');
+/* La verdad de este flujo, dicha sin adornos: nadie va a pasar a confirmar nada, la orden
+   entra derecho a la cocina, y el dinero se paga donde le toca a cada canal. */
+function notaPieKiosco(){
+  const entra = 'Cuando la mandes entra derecho a la cocina — aquí no hay quien pase a confirmarla. ';
+  if(PEDIDO === 'domicilio') return entra + 'Se paga al recibirla.';
+  if(PEDIDO === 'recoger') return entra + 'Se paga en caja al recogerla.';
+  return entra + 'Se paga en caja.';
+}
+
+/* ---------- La pildora de arriba a la derecha ----------
+   Con mesero sigue siendo la mesa y no se toca ni un pixel. Sin mesero dice el tipo de pedido,
+   que es lo unico que ahi cambia el resto de la pantalla; y si el negocio solo tiene un canal
+   no se puede tocar, porque abrir una hoja para elegir entre una sola opcion es tomarle el pelo. */
+function pintarPillPedido(){
+  const p = document.querySelector('.mesa-pill');
+  if(!p || !esKiosco()) return;
+  const canales = canalesCarta();
+  /* Mientras no haya elegido NO se pinta el primer canal: leer «COMER AQUÍ» debajo de una hoja
+     que justo le esta preguntando como lo quiere se lee como si ya hubiera decidido por el. */
+  p.innerHTML = '<b id="mesaNum">' + (PEDIDO_CAPS[PEDIDO] || 'TU PEDIDO') + '</b>';
+  p.style.pointerEvents = canales.length <= 1 ? 'none' : '';
+  p.setAttribute('aria-label', PEDIDO ? 'Tipo de pedido: ' + PEDIDO_NOMBRE[PEDIDO] : 'Elegir tipo de pedido');
+}
+function tocarPill(){
+  if(esKiosco()){ if(canalesCarta().length > 1) abrirHojaPedido(); return; }
+  cambiarMesa();
+}
+
+/* ---------- Hoja: como quiere su pedido ----------
+   Solo se pregunta cuando de verdad hay que elegir. Con un canal unico se fija solo y el
+   comensal no da ni un toque de mas — una cocina que unicamente reparte no tiene nada que
+   preguntarle a nadie. */
+let pedidoOfrecido = false;
+function ofrecerHojaPedido(){
+  if(pedidoOfrecido) return;
+  /* Si hay otra hoja encima o el splash sigue arriba, esta se pintaria debajo y nadie la
+     veria; el sondeo de 4 s vuelve a pasar por aqui y entonces si. */
+  if(document.querySelector('.hoja.abierta')) return;
+  const sp = $('#splash');
+  if(sp && !sp.classList.contains('oculto')) return;
+  pedidoOfrecido = true;
+  abrirHojaPedido(true);
+}
+function abrirHojaPedido(primera){
+  const canales = canalesCarta();
+  const h = $('#hojaPedido');
+  h.innerHTML = `
+    <div class="confirmacion" style="text-align:left">
+      <div class="caps" style="color:var(--pomodoro)">${primera ? 'ANTES DE EMPEZAR' : 'TU PEDIDO'}</div>
+      <h2 style="text-align:left;margin-top:8px">¿Cómo lo quieres?</h2>
+      <div class="nota-pie" style="margin:10px 0 16px">Lo puedes cambiar cuando quieras desde el botón de arriba a la derecha.</div>
+      <div class="acciones-orden" style="padding:0">
+        ${canales.map(c => `<button class="${c === PEDIDO ? 'btn-primario' : 'btn-fantasma'}" onclick="elegirPedido('${c}')">${PEDIDO_NOMBRE[c]}${detalleCanal(c)}</button>`).join('')}
+      </div>
+    </div>`;
+  cerrarSheets();
+  abrirVelo();
+  h.classList.add('abierta');
+  history.pushState({ v: vistaActual, capa: 'pedido' }, '');
+}
+/* El envio y el minimo se dicen ANTES de elegir, no despues de llenar el carrito: enterarse
+   del minimo con la orden armada es la peor forma de enterarse. */
+function detalleCanal(c){
+  if(c !== 'domicilio') return '';
+  const e = Number(servicioCarta().envio) || 0;
+  const m = Number(servicioCarta().minimo) || 0;
+  const partes = [];
+  if(e > 0) partes.push('envío ' + fmt(e));
+  if(m > 0) partes.push('mínimo ' + fmt(m));
+  return partes.length ? ' — ' + partes.join(' · ') : '';
+}
+function elegirPedido(t){
+  cerrarSheets();
+  fijarPedido(t);
+}
+
+/* ---------- Hoja: a quien se le entrega ----------
+   Se pide ANTES DE MANDAR LA ORDEN y no antes de ver la carta: nadie quiere llenar un
+   formulario para asomarse al menu. Todavia no existen las cuentas de comensal; cuando
+   existan, estos datos saldran de ahi y esta hoja se volvera un repaso. */
+function abrirHojaDatos(){
+  const dom = PEDIDO === 'domicilio';
+  const h = $('#hojaDatos');
+  h.innerHTML = `
+    <div class="confirmacion" style="text-align:left">
+      <div class="caps" style="color:var(--pomodoro)">ANTES DE ENVIAR</div>
+      <h2 style="text-align:left;margin-top:8px">${dom ? '¿A dónde te la llevamos?' : '¿A nombre de quién?'}</h2>
+      <div class="nota-pie" style="margin:10px 0 16px">${dom
+        ? 'Sin dirección el repartidor no sabe a dónde ir, y sin teléfono no te puede avisar que ya llegó.'
+        : 'Con tu nombre te llamamos cuando esté lista; el teléfono es por si algo le falta a tu orden.'}</div>
+      <input class="notas-inp" id="kNombre" autocomplete="name" maxlength="60" placeholder="Tu nombre" value="${escAtr(datosKiosco.nombre)}">
+      <input class="notas-inp" id="kTel" type="tel" inputmode="tel" maxlength="10" autocomplete="tel" placeholder="Teléfono a 10 dígitos" value="${escAtr(datosKiosco.telefono)}" style="margin-top:10px">
+      ${dom ? `
+      <!-- Los campos de la direccion van SEPARADOS a proposito, no en una sola linea de texto:
+           asi se guardan en la base tal cual y —mas adelante— los va a llenar Google con su
+           autocompletado de direcciones, que devuelve calle, colonia y codigo postal cada uno
+           por su lado. Por eso estan desarmados desde ahora. -->
+      <input class="notas-inp" id="kCalle" maxlength="120" placeholder="Calle y número" value="${escAtr(datosKiosco.calle)}" style="margin-top:10px">
+      <input class="notas-inp" id="kColonia" maxlength="80" placeholder="Colonia" value="${escAtr(datosKiosco.colonia)}" style="margin-top:10px">
+      <input class="notas-inp" id="kCP" inputmode="numeric" maxlength="5" placeholder="Código postal" value="${escAtr(datosKiosco.cp)}" style="margin-top:10px">
+      <input class="notas-inp" id="kRef" maxlength="120" placeholder="Referencias (opcional)" value="${escAtr(datosKiosco.referencias)}" style="margin-top:10px">` : ''}
+      <div class="al-bloque roja" id="kError" style="margin:12px 0 0;display:none"></div>
+      <div class="acciones-orden" style="padding:18px 0 0">
+        <button class="btn-primario" onclick="confirmarDatosKiosco()">Guardar y enviar mi orden</button>
+        <button class="btn-fantasma" onclick="cerrarSheets()">Todavía no</button>
+      </div>
+    </div>`;
+  cerrarSheets();
+  abrirVelo();
+  h.classList.add('abierta');
+  history.pushState({ v: vistaActual, capa: 'datos' }, '');
+}
+/* El aviso va DENTRO de la hoja, junto al campo que falta, y ademas en el toast. Los dialogos
+   nativos del navegador estan prohibidos en este archivo —congelan la extension de Chrome con
+   la que se despliega—, y un toast solo se pierde si el comensal parpadea. */
+function avisoDatos(txt){
+  const e = $('#kError');
+  if(e){ e.textContent = txt; e.style.display = 'block'; }
+  toast(txt, true);
+}
+function confirmarDatosKiosco(){
+  const v = id => { const el = $('#' + id); return el ? String(el.value || '').trim() : ''; };
+  const d = {
+    nombre: v('kNombre'),
+    telefono: v('kTel').replace(/\D/g, '').slice(0, 10),
+    calle: v('kCalle'), colonia: v('kColonia'),
+    cp: v('kCP').replace(/\D/g, '').slice(0, 5),
+    referencias: v('kRef'),
+  };
+  /* Validacion de verdad, no de adorno: sin nombre o sin diez digitos la orden no sale. */
+  if(!d.nombre){ avisoDatos('Escribe tu nombre — es con lo que te llamamos al entregarte tu orden.'); return; }
+  if(d.telefono.length !== 10){ avisoDatos('El teléfono va a 10 dígitos: es por donde te buscamos si algo le falta a tu orden.'); return; }
+  if(PEDIDO === 'domicilio'){
+    if(!d.calle){ avisoDatos('Falta la calle y el número — sin eso el repartidor no sabe a dónde ir.'); return; }
+    if(!d.colonia){ avisoDatos('Falta la colonia.'); return; }
+  }
+  datosKiosco = Object.assign(datosKiosco, d);
+  guardarDatosKiosco();
+  cerrarSheets();
+  enviarOrden();
+}
+
+/* ---------- Compuerta del envio sin mesero ----------
+   Sustituye ENTERA a la de la mesa: aqui no hay mesa que apartar ni dueno que verificar, lo
+   que hay que asegurar es de que sucursal sale, que alcance el minimo y a quien se le entrega. */
+function validarPedidoKiosco(){
+  if(!PEDIDO){ abrirHojaPedido(); toast('Primero dinos cómo quieres tu pedido'); return false; }
+  if(faltaElegirSucursal()){
+    /* Su orden NO se pierde: se queda armada y sale sola en cuanto elija — igual que con mesero */
+    toast('Antes de mandar tu orden, dinos de qué sucursal la quieres');
+    ordenEsperandoSucursal = true;
+    pedirSucursalAhora();
+    return false;
+  }
+  const min = minimoCarta();
+  if(min > 0 && totalPedido() < min){
+    toast('El pedido mínimo a domicilio es ' + fmt(min) + ' — te faltan ' + fmt(min - totalPedido()), true);
+    return false;
+  }
+  if(pedidoNecesitaDatos() && !datosCompletos()){ abrirHojaDatos(); return false; }
+  return true;
+}
+/* El cuerpo del POST sin mesero. La mesa va NULL de verdad (la columna lo acepta) en vez de
+   ese 0 que en el panel se lee como «mesa cero»; y la verificacion nace en 'ok' porque no hay
+   nadie que pueda confirmarla: sin mesero la orden entra derecho a cocina o no entra.
+   El pago queda anotado como pendiente en caja — Mercado Pago todavia no esta conectado y
+   aqui no se inventa ninguna integracion. */
+function cuerpoOrdenKiosco(items, total, verificacion){
+  const dom = PEDIDO === 'domicilio';
+  return {
+    restaurante_id: RID, mesa: null, items, total, sucursal: SUC, verificacion,
+    cliente_id: (cliente && cliente.id != null) ? cliente.id : null,
+    canal: PEDIDO === 'aqui' ? 'kiosco' : PEDIDO,
+    contacto: { nombre: datosKiosco.nombre || '', telefono: datosKiosco.telefono || '' },
+    direccion: dom ? {
+      calle: datosKiosco.calle || '', colonia: datosKiosco.colonia || '',
+      cp: datosKiosco.cp || '', referencias: datosKiosco.referencias || '',
+    } : {},
+    envio: envioCarta(),
+    pago_estado: 'na', pago_metodo: 'caja',
+  };
+}
+
+/* ---------- La hoja de ayuda, segun quien atienda ----------
+   Con mesero es la de siempre, boton por boton. Sin mesero se caen las cinco cosas que no
+   existen (llamar al mesero, pedir la cuenta, el codigo de la mesa, unirse a la mesa, cambiar
+   de mesa) y entra «Cambiar tipo de pedido» cuando de verdad hay entre que elegir. Nunca queda
+   vacia: los puntos y el «como funciona» quedan siempre, y el titulo cambia con ella para no
+   prometer un servicio en mesa que no hay. */
+function pintarAyuda(){
+  const h = $('#hojaAyuda');
+  if(!h) return;
+  const k = esKiosco();
+  const b = [];
+  if(!k){
+    b.push('<button class="btn-primario" onclick="cerrarSheets();llamarMesero()">Llamar al mesero a mi mesa</button>');
+    b.push('<button class="btn-fantasma" onclick="cerrarSheets();pedirCuenta()">Pedir la cuenta para pagar</button>');
+    b.push('<button class="btn-fantasma" onclick="abrirHojaBienvenida()">Ver el código de mi mesa</button>');
+    b.push('<button class="btn-fantasma" onclick="abrirHojaUnirse()">Alguien de mi mesa ya abrió la cuenta — tengo el código</button>');
+  } else if(canalesCarta().length > 1){
+    b.push('<button class="btn-primario" onclick="abrirHojaPedido()">Cambiar tipo de pedido</button>');
+  }
+  b.push('<button class="btn-fantasma" onclick="abrirHojaCliente()">Mi cuenta de puntos</button>');
+  b.push('<button class="btn-fantasma" onclick="cerrarSheets();mostrarGuia(true)">¿Cómo funciona esta carta?</button>');
+  if(!k) b.push('<button class="btn-fantasma" onclick="cerrarSheets();cambiarMesa()">Cambiar de mesa</button>');
+  h.innerHTML = `
+  <div class="confirmacion" style="text-align:left">
+    <div class="vista-head" style="padding:0 0 6px"><div class="caps" style="color:var(--humo)">¿Necesitas algo?</div><h2 style="font-family:var(--serif);font-style:italic;font-weight:500;font-size:30px">${k ? 'Aquí te echamos la mano' : 'Estamos para servirte'}</h2></div>
+    <div class="acciones-orden" style="padding:16px 0 0">${b.join('')}</div>
+  </div>`;
+}
+
+/* ---------- Todo el modo kiosco aplicado a la pantalla ----------
+   Se corre en CADA sincronizacion porque la configuracion llega tarde (la primera pintada
+   ocurre antes de que la nube conteste) y puede cambiar en caliente desde el panel. Es
+   idempotente y barata: solo repinta cuando la huella cambia. */
+let kioscoAplicado = null;
+function aplicarModoKiosco(){
+  const k = esKiosco();
+  const canales = k ? canalesCarta() : [];
+  /* Un tipo de pedido que el negocio ya no ofrece no se puede quedar pegado del localStorage */
+  if(k && PEDIDO && canales.indexOf(PEDIDO) < 0) PEDIDO = null;
+  if(k && !PEDIDO && canales.length === 1) fijarPedido(canales[0], true);
+  const huella = JSON.stringify([k, canales, PEDIDO]);
+  if(huella !== kioscoAplicado){
+    kioscoAplicado = huella;
+    /* La pestana «Mesero» no tiene a quien llamar: fuera. Los otros tres son flex:1 y se
+       reparten el ancho solos en cuanto este deja de ocupar lugar. */
+    const nm = $('#navMesa');
+    if(nm) nm.style.display = k ? 'none' : '';
+    pintarPillPedido();
+    pintarMarquee();
+    pintarAyuda();
+    pintarGuiaSegunServicio();
+    if(vistaActual === 'orden') pintarVistaOrden();
+    else if(vistaActual === 'cuenta') pintarVistaCuenta();
+    pintarIndicadores();
+  }
+  if(k && !PEDIDO && canales.length > 1) ofrecerHojaPedido();
+}
+/* La guia se escribio para el servicio en mesa. Sin mesero, el paso 3 miente. */
+function pintarGuiaSegunServicio(){
+  if(!esKiosco()) return;
+  const p = $('#guiaPaso3'), n = $('#guiaNota'), u = $('#guiaUnirse');
+  if(p) p.textContent = 'Tu orden entra derecho a la cocina en cuanto la mandes. Sigue su avance en «Cuenta».';
+  if(n) n.textContent = 'Nadie te apura: ve la carta con calma y arma tu orden a gusto — antes de mandarla la revisas completa.';
+  if(u) u.style.display = 'none';
+}
 
 /* Rejilla de mesas del splash. Se pinta también al pedir «cambiar de mesa»: quien entró por
    el QR nunca la había pintado y se quedaba mirando un splash sin botones.
@@ -1575,7 +1909,9 @@ function latirMesa(){
 /* Código de la mesa tal como se puede pintar: solo dígitos, y solo si este teléfono
    pertenece de verdad a la mesa (dueño o invitado que ya entró con el código). */
 function codigoVisible(){
-  if(!mesaEsMia || !mesaFila) return '';
+  /* Sin mesero no hay mesa ni codigo: si una sesion vieja dejo una fila guardada, que no se
+     asome una tira que habla de compartir «tu mesa» en un negocio que no tiene ninguna. */
+  if(esKiosco() || !mesaEsMia || !mesaFila) return '';
   const cod = String(mesaFila.codigo || '').replace(/\D/g, '').slice(0, 4); // solo dígitos al DOM
   return cod.length === 4 ? cod : '';
 }
@@ -2070,6 +2406,13 @@ const ESTADOS_TXT = ['Recibida en cocina','En preparación','En camino a tu mesa
    Y ojo, aquí se le habla al comensal: es «a TU mesa», no «a la mesa» como en el personal. */
 function txtEstado(o){
   if(!o) return '';
+  /* Sin mesa nada va «a tu mesa»: lo que se recoge queda listo en el mostrador y lo que se
+     reparte va en camino a secas. El estado 3 es «entregada» y ya, sin lugar. */
+  if(esKiosco()){
+    if(o.estado === 2) return o.recogida_at ? (PEDIDO === 'domicilio' ? 'En camino' : 'Lista para recoger') : 'Lista en cocina';
+    if(o.estado === 3) return 'Entregada';
+    return ESTADOS_TXT[o.estado] || '';
+  }
   if(o.estado === 2) return o.recogida_at ? 'En camino a tu mesa' : 'Lista en cocina';
   return ESTADOS_TXT[o.estado] || '';
 }
@@ -2077,6 +2420,11 @@ function txtEstado(o){
 function avisoEstado(o){
   const avisos = ['recibida en cocina','en preparación','va en camino a tu mesa','entregada — ¡provecho!'];
   if(!o) return '';
+  if(esKiosco()){
+    if(o.estado === 2) return o.recogida_at ? (PEDIDO === 'domicilio' ? 'va en camino' : 'lista para recoger') : 'lista en cocina';
+    if(o.estado === 3) return 'entregada — ¡provecho!';
+    return avisos[o.estado] || '';
+  }
   if(o.estado === 2) return o.recogida_at ? 'va en camino a tu mesa' : 'lista en cocina';
   return avisos[o.estado] || '';
 }
@@ -2121,7 +2469,7 @@ function pintarIndicadores(){
       barra.classList.remove('modo-estado');
       $('#boNum').textContent = n;
       $('#boTxt').innerHTML = '<b>Enviar mi orden</b>';
-      $('#boTotal').textContent = fmt(totalPedido());
+      $('#boTotal').textContent = fmt(totalPedido() + envioCarta());
       barra.classList.toggle('visible', vistaActual !== 'orden');
     } else if(ordenes.length && vistaActual === 'menu'){
       // Modo estatus: órdenes en curso y carrito vacío
@@ -2174,7 +2522,7 @@ function pintarMarquee(){
   const propio = dbCache.config && dbCache.config.menuPropio;
   const lema = (MARCA.lema || (propio ? 'HECHO AL MOMENTO' : 'EST. 1987')).toUpperCase();
   const items = propio
-    ? ['INGREDIENTES FRESCOS', lema, 'ORDENA DESDE TU MESA', 'RECETAS DE LA CASA']
+    ? ['INGREDIENTES FRESCOS', lema, esKiosco() ? 'ORDENA DESDE TU CELULAR' : 'ORDENA DESDE TU MESA', 'RECETAS DE LA CASA']
     : ['HORNO DE LEÑA','PASTA FRESCA DEL DÍA', lema, 'RECETAS DE LA CASA','COCINA ITALIANA'];
   const mitad = items.map(t => `<span>${t}</span>`).join('');
   $('#tiraMarquee').innerHTML = mitad + mitad;
@@ -2398,6 +2746,8 @@ function cerrarSheets(){
   $('#hojaCliente').classList.remove('abierta');
   $('#hojaSucursal').classList.remove('abierta');
   $('#hojaUnirse').classList.remove('abierta');
+  $('#hojaPedido').classList.remove('abierta');
+  $('#hojaDatos').classList.remove('abierta');
   $('#velo').classList.remove('alto');
 }
 
@@ -2453,6 +2803,9 @@ function elegirSucursal(x){
   }
 }
 function abrirAyuda(){
+  /* Se pinta SIEMPRE al abrir: la configuracion puede llegar despues del primer toque y una
+     hoja vacia parece la app rota. */
+  pintarAyuda();
   cerrarSheets();
   abrirVelo();
   $('#hojaAyuda').classList.add('abierta');
@@ -2500,7 +2853,7 @@ function cambiarQtyItem(idx, dif){
 }
 function pintarVistaOrden(){
   const v = $('#vistaOrden');
-  let html = `<div class="vista-head"><div class="caps">Mesa ${mesa ? String(mesa).padStart(2,'0') : '—'}${SUC ? ' · ' + SUC : ''} · por enviar</div><h2>Tu orden</h2></div>`;
+  let html = `<div class="vista-head"><div class="caps">${rotuloPedido()}${SUC ? ' · ' + SUC : ''} · por enviar</div><h2>Tu orden</h2></div>`;
   html += lineaCodigoMesa();
   if(!pedido.length){
     if(ordenes.length){
@@ -2516,7 +2869,7 @@ function pintarVistaOrden(){
     v.innerHTML = html; return;
   }
   html += `<div class="ticket"><div class="t-int">
-    <div class="t-cab"><div class="t-marca">${MARCA.nombre}</div><div class="caps">Orden · Mesa ${String(mesa).padStart(2,'0')}${SUC ? ' · ' + SUC : ''}</div></div>`;
+    <div class="t-cab"><div class="t-marca">${MARCA.nombre}</div><div class="caps">Orden · ${rotuloPedido()}${SUC ? ' · ' + SUC : ''}</div></div>`;
   html += pedido.map((i,idx) => {
     const d = PLATILLOS.find(x => x.id === i.id);
     return `<div class="t-item">
@@ -2527,17 +2880,32 @@ function pintarVistaOrden(){
       <span class="t-stepper"><button onclick="cambiarQtyItem(${idx},-1)">−</button><span>${i.qty}</span><button onclick="cambiarQtyItem(${idx},1)">+</button></span>
     </div>`;
   }).join('');
-  html += `<div class="t-tot"><span class="caps">Total</span><span class="leader"></span><b>${fmt(totalPedido())} ${RESTAURANTE.moneda}</b></div>
+  /* El envio se cobra aparte y se VE aparte: metido dentro del total, el comensal cuenta con
+     el dedo, no le cuadra y desconfia de la cuenta entera. Con mesero envioCarta() es 0 y este
+     renglon no existe, asi que el ticket de siempre queda intacto. */
+  const envio = envioCarta();
+  if(envio > 0){
+    html += `<div class="t-item"><span class="t-qty"></span><span class="t-nom">Envío</span><span class="leader"></span><span class="t-precio">${fmt(envio)}</span></div>`;
+  }
+  html += `<div class="t-tot"><span class="caps">Total</span><span class="leader"></span><b>${fmt(totalPedido() + envio)} ${RESTAURANTE.moneda}</b></div>
     <div class="t-bar"></div>
-    <div class="t-folio">MESA ${String(mesa).padStart(2,'0')} · ${cuentaPedido()} ART · 15–25 MIN</div>
+    <div class="t-folio">${esKiosco() ? (PEDIDO_CAPS[PEDIDO] || 'PEDIDO') : 'MESA ' + String(mesa).padStart(2,'0')} · ${cuentaPedido()} ART · 15–25 MIN</div>
   </div></div>`;
   const sugs = sugerenciasComanda(3);
   if(sugs.length) html += `<div class="bloque" style="margin-top:20px;padding:0 18px"><div class="b-cab"><span class="caps">La casa sugiere</span><i></i></div>${sugCardsHTML(sugs)}</div>`;
+  /* Enterarse del minimo hasta que el boton no responde es la peor forma de enterarse: se dice
+     aqui, con la cifra exacta que falta, y encima del boton. */
+  const min = minimoCarta();
+  const falta = min > 0 ? Math.max(0, min - totalPedido()) : 0;
+  if(falta > 0){
+    html += `<div class="al-bloque ambar" style="margin:16px 20px 0"><div class="caps" style="margin-bottom:6px;opacity:.85">TE FALTA UN POCO</div>
+      <div>El pedido mínimo a domicilio es <b>${fmt(min)}</b>. Agrega <b>${fmt(falta)}</b> más y te lo llevamos.</div></div>`;
+  }
   html += `<div class="acciones-orden">
-    <button class="btn-primario" onclick="enviarOrden()">Enviar mi orden — Mesa ${String(mesa).padStart(2,'0')}</button>
+    <button class="btn-primario" onclick="enviarOrden()">${esKiosco() ? 'Enviar mi orden' : `Enviar mi orden — Mesa ${String(mesa).padStart(2,'0')}`}</button>
     <button class="btn-fantasma" onclick="mostrarVista('menu')">Seguir explorando la carta</button>
   </div>
-  <div class="nota-pie">Cuando la mandes, tu mesero viene a la mesa a confirmarla contigo antes de que entre a la cocina; hasta entonces puedes revisarla con calma.</div>`;
+  <div class="nota-pie">${esKiosco() ? notaPieKiosco() : 'Cuando la mandes, tu mesero viene a la mesa a confirmarla contigo antes de que entre a la cocina; hasta entonces puedes revisarla con calma.'}</div>`;
   v.innerHTML = html;
   v.querySelectorAll('.sug-cards').forEach(arrastrable);
 }
@@ -2554,28 +2922,41 @@ const PROG_PASOS = ['Por confirmar','En cocina','Preparando','En camino','Entreg
    servicio va bien, dura segundos. Además `recogida_at` es NULL en toda orden anterior a
    hoy: con seis puntos esas órdenes se verían saltándose un paso que sí ocurrió; con cinco
    y el nombre variable no se nota nada raro. */
-const nombrePaso = (o, i) => i === 3 ? (o.recogida_at ? 'En camino' : 'Lista en cocina') : PROG_PASOS[i];
+/* Sin mesero la orden nace confirmada, asi que el primer hito real es la cocina y el paso
+   «Por confirmar» sobra: dejarlo pintado como ya cumplido le contaria al comensal un tramite
+   que nunca ocurrio. Con mesero la lista sigue siendo la de siempre, entera. */
+const pasosOrden = () => esKiosco() ? PROG_PASOS.slice(1) : PROG_PASOS;
+const nombrePaso = (o, i) => {
+  const n = pasosOrden()[i];
+  if(n !== 'En camino') return n;
+  if(!o.recogida_at) return 'Lista en cocina';
+  return (esKiosco() && PEDIDO !== 'domicilio') ? 'Lista para recoger' : 'En camino';
+};
 function pasoOrden(o){
+  if(esKiosco()) return (o.estado || 0);
   return (o.verificacion || 'pendiente') === 'pendiente' ? 0 : (o.estado || 0) + 1;
 }
 function progresoHTML(o){
   const p = pasoOrden(o);
-  const ultimo = PROG_PASOS.length - 1;
+  const L = pasosOrden();
+  const ultimo = L.length - 1;
   const dot = i => p > i ? 'hecho' : p === i ? (i === ultimo ? 'hecho' : 'activo') : '';
   const seg = i => p >= i ? 'hecha' : '';
   let linea = `<span class="p-dot ${dot(0)}"></span>`;
   for(let i = 1; i <= ultimo; i++) linea += `<span class="p-seg ${seg(i)}"></span><span class="p-dot ${dot(i)}"></span>`;
   return `<div class="prog">
     <div class="p-linea-cont">${linea}</div>
-    <div class="p-etiq cinco">Paso ${Math.min(p, ultimo) + 1} de ${PROG_PASOS.length}<span class="p-cual ${p < ultimo ? 'on' : ''}">${nombrePaso(o, Math.min(p, ultimo))}</span></div></div>
-    ${p === 0 ? `<div style="margin-top:10px;font-family:var(--grot);font-size:12.5px;letter-spacing:1.4px;text-transform:uppercase;color:#8A7D69;line-height:1.7">Tu mesero viene a confirmarla contigo · en cuanto lo haga, entra a la cocina</div>` : ''}
+    <div class="p-etiq cinco">Paso ${Math.min(p, ultimo) + 1} de ${L.length}<span class="p-cual ${p < ultimo ? 'on' : ''}">${nombrePaso(o, Math.min(p, ultimo))}</span></div></div>
+    ${!esKiosco() && p === 0 ? `<div style="margin-top:10px;font-family:var(--grot);font-size:12.5px;letter-spacing:1.4px;text-transform:uppercase;color:#8A7D69;line-height:1.7">Tu mesero viene a confirmarla contigo · en cuanto lo haga, entra a la cocina</div>` : ''}
     ${o.estado===3 && o.entregada_por ? `<div style="margin-top:10px;font-family:var(--grot);font-size:12.5px;letter-spacing:1.6px;text-transform:uppercase;color:#8A7D69">Confirmada por ${o.entregada_por} · ${o.entregada_at ? new Date(o.entregada_at).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : ''}</div>` : ''}`;
 }
 function pintarVistaCuenta(){
   const v = $('#vistaCuenta');
-  let html = `<div class="vista-head"><div class="caps">Mesa ${mesa ? String(mesa).padStart(2,'0') : '—'}${SUC ? ' · ' + SUC : ''} · seguimiento en vivo</div><h2>Tu cuenta</h2>
+  let html = `<div class="vista-head"><div class="caps">${rotuloPedido()}${SUC ? ' · ' + SUC : ''} · seguimiento en vivo</div><h2>Tu cuenta</h2>
     ${cliente ? `<div style="margin-top:10px;font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--oro);cursor:pointer" onclick="abrirHojaCliente()">★ ${cliente.nombre || cliente.telefono} · ${cliente.puntos || 0} puntos</div>` : ''}
-    <div class="nota-pie" style="margin-top:10px">Aquí vive la cuenta de tu mesa y <b style="color:var(--crema)">todo se paga junto al final</b>.</div>
+    <div class="nota-pie" style="margin-top:10px">${esKiosco()
+      ? `Aquí sigues en vivo lo que ya mandaste a la cocina. Se paga <b style="color:var(--crema)">${PEDIDO === 'domicilio' ? 'al recibirlo' : 'en caja'}</b>.`
+      : 'Aquí vive la cuenta de tu mesa y <b style="color:var(--crema)">todo se paga junto al final</b>.'}</div>
     <details class="masinfo" style="margin:2px 0 0">
       <summary>¿Cómo funciona?</summary>
       <div class="mi-cuerpo">
@@ -2638,7 +3019,9 @@ function pintarVistaCuenta(){
   }
   /* Un solo renglón gordo en vez de una lista suelta: el comensal solo necesita saber CUÁNTO
      le suman a su cuenta las órdenes de los demás; el desglose lo abre si le interesa. */
-  if(mesaOtras.length){
+  /* Sin mesa no existe «lo que pidieron los demas de tu mesa»: el sondeo ni siquiera lo
+     consulta, pero la guarda va explicita para que nadie la reviva por accidente. */
+  if(mesaOtras.length && !esKiosco()){
     const nOtras = mesaOtras.length;
     const totalOtras = mesaOtras.reduce((s, x) => s + (+x.total || 0), 0);
     html += `<details class="masinfo grueso">
@@ -2655,7 +3038,7 @@ function pintarVistaCuenta(){
   }
   /* Dos avisos que antes faltaban y dejaban al comensal creyendo que la cuenta estaba mal.
      Ámbar: parte de la mesa ya se pagó, por eso el total no es la suma de todo lo que ve. */
-  if(totalMesaCobrado > 0){
+  if(totalMesaCobrado > 0 && !esKiosco()){
     html += `<div class="al-bloque ambar" style="margin:0 20px 12px"><div class="caps" style="margin-bottom:6px;opacity:.85">PARTE DE TU MESA YA SE PAGÓ</div>
       <div>Tu mesero ya cobró <b>${fmt(totalMesaCobrado)} ${RESTAURANTE.moneda}</b> de esta mesa. Esas órdenes siguen aquí abajo para que puedas revisarlas, pero ya no se vuelven a cobrar: <b>lo que falta por pagar es ${fmt(Math.max(0, totalMesa - totalMesaCobrado))} ${RESTAURANTE.moneda}</b>.</div></div>`;
   }
@@ -2666,16 +3049,21 @@ function pintarVistaCuenta(){
       <div>El total que tenemos registrado (<b>${fmt(totalMesaSrv)}</b>) no coincide todavía con la suma de las órdenes que ves aquí (<b>${fmt(totalTicketsMesa())}</b>). Suele acomodarse solo en unos segundos. Si al llegar el mesero sigue sin cuadrar, muéstrale esta pantalla — la cifra buena es la suma de tus órdenes.</div></div>`;
   }
   html += `<div class="ticket"><div class="t-int">
-      <div class="t-tot" style="padding-top:0"><span class="caps">Total de la mesa</span><span class="leader"></span><b>${fmt(totalMesa)} ${RESTAURANTE.moneda}</b></div>
+      <div class="t-tot" style="padding-top:0"><span class="caps">${esKiosco() ? 'Total de tus pedidos' : 'Total de la mesa'}</span><span class="leader"></span><b>${fmt(totalMesa)} ${RESTAURANTE.moneda}</b></div>
       <div class="t-bar"></div>
-      <div class="t-folio">${ordenes.length + mesaOtras.length} ORDEN(ES) · MESA ${String(mesa).padStart(2,'0')}</div>
+      <div class="t-folio">${ordenes.length + mesaOtras.length} ORDEN(ES) · ${esKiosco() ? (PEDIDO_CAPS[PEDIDO] || 'PEDIDO') : 'MESA ' + String(mesa).padStart(2,'0')}</div>
     </div></div>
     <div class="acciones-orden">
       ${ordenes.some(o => o.estado < 3 && (o.items || []).some(i => i.entregado) && (o.items || []).some(i => !i.entregado))
         ? `<button class="btn-primario" style="background:var(--oro)" onclick="pedirSiguienteTiempo()">Traer mi siguiente tiempo</button>` : ''}
       <button class="btn-fantasma" onclick="mostrarVista('menu')" style="border-color:var(--pomodoro);color:var(--pomodoro)">Ordenar algo más</button>
-      <button class="btn-primario" onclick="pedirCuenta()">Pedir la cuenta para pagar</button>
-      <button class="btn-fantasma" onclick="llamarMesero()">Llamar al mesero a mi mesa</button>
+      ${esKiosco()
+        /* La pestana «Mesero» se fue del nav, asi que la hoja de ayuda —que sigue teniendo los
+           puntos, el «como funciona» y el cambio de tipo de pedido— necesitaba una puerta:
+           esta es. Sin ella el comensal se quedaba sin ninguna. */
+        ? `<button class="btn-fantasma" onclick="abrirAyuda()">¿Necesitas algo?</button>`
+        : `<button class="btn-primario" onclick="pedirCuenta()">Pedir la cuenta para pagar</button>
+      <button class="btn-fantasma" onclick="llamarMesero()">Llamar al mesero a mi mesa</button>`}
     </div>`;
   v.innerHTML = html;
   repintarArmados();   // el botón de doble toque se vuelve a pintar en su estado real
@@ -2704,12 +3092,22 @@ async function enviarOrden(){
   const hayBebida = pedido.some(i => { const p = PLATILLOS.find(x => x.id === i.id); return p && p.cat === 'bebidas'; });
   if(!hayBebida && !sinBebidasOk){ mostrarSugerenciaBebidas(); return; }
   const items = pedido.map(i => { const p = PLATILLOS.find(x => x.id === i.id); return { id:i.id, qty:i.qty, notas:i.notas, nombre:p.nombre, precio:p.precio }; });
-  const total = totalPedido();
+  /* El envio forma parte de lo que el comensal paga, asi que va dentro del total; ademas viaja
+     desglosado en su propio campo para que el panel pueda separarlo. Con mesero vale 0. */
+  const total = totalPedido() + envioCarta();
   /* Seguridad: la mesa pertenece a UN dispositivo. Si no es suyo, no manda comanda; y si la
      mesa no se puede verificar, tampoco. Antes esta comprobación fallaba ABIERTA (el catch
      dejaba pasar la orden "para no bloquear el demo local") y ese era el hueco: con la red
      caída, o con otro teléfono ya ordenando en la misma mesa, cocina recibía órdenes que
      nadie podía respaldar. */
+  /* Dos caminos, y el de siempre queda intacto. Sin mesero no hay mesa que apartar ni quien
+     confirme de viva voz: si nadie puede autorizar la orden, dejarla 'pendiente' seria dejarla
+     colgada para siempre, asi que nace 'ok' y entra derecho a cocina. */
+  let verificacion = 'pendiente';
+  if(esKiosco()){
+    if(!validarPedidoKiosco()) return;   // el mismo avisa que falta y abre lo que haga falta
+    verificacion = 'ok';
+  } else {
   const permiso = await asegurarMesa();
   if(!permiso.ok){
     if(permiso.motivo === 'bloqueada'){ abrirHojaMesa(); }
@@ -2726,12 +3124,15 @@ async function enviarOrden(){
   /* TODA orden nueva nace 'pendiente', sin excepción: el mesero va a la mesa, la confirma de
      viva voz con el comensal y él la autoriza. Cocina no la ve hasta entonces. Ya no se decide
      aquí en el teléfono si la mesa estaba autorizada — esa decisión es del mesero. */
-  const verificacion = 'pendiente';
+  verificacion = 'pendiente';
+  }
   let fila;
   try{
     const filas = await api('menusbot_ordenes', {
       method:'POST', headers:{ 'Prefer':'return=representation' },
-      body: JSON.stringify({ restaurante_id: RID, mesa: mesa ?? 0, items, total, sucursal: SUC, verificacion, cliente_id: (cliente && cliente.id != null) ? cliente.id : null }),
+      body: JSON.stringify(esKiosco()
+        ? cuerpoOrdenKiosco(items, total, verificacion)
+        : { restaurante_id: RID, mesa: mesa ?? 0, items, total, sucursal: SUC, verificacion, cliente_id: (cliente && cliente.id != null) ? cliente.id : null }),
     });
     fila = filas[0];
   }catch(e){
@@ -2741,8 +3142,10 @@ async function enviarOrden(){
   /* La bandera de bebidas se consume solo cuando la orden salió de verdad: si el envío se
      frenó por la mesa, al reintentar no lo volvemos a interrogar sobre lo mismo. */
   sinBebidasOk = false;
-  latirMesa(); // la mesa sigue viva: que nadie la tome por abandono
-  avisarMesero('orden'); // le suena al mesero de esta mesa: tiene una orden por confirmar
+  latirMesa(); // la mesa sigue viva: que nadie la tome por abandono (sin mesa no hace nada)
+  /* Sin mesero no hay a quien avisarle que pase a confirmar: ese timbre sonaria en un teléfono
+     que nadie trae, y la orden ya va camino a la cocina por su cuenta. */
+  if(!esKiosco()) avisarMesero('orden'); // le suena al mesero de esta mesa: tiene una orden por confirmar
   const folioN = iniciales(MARCA.nombre) + '-' + (1000 + fila.id);
   const o = { num: folioN, folio: folioN, dbId: fila.id, items: pedido.slice(), total, estado: 0, mesa: mesa ?? '–', verificacion };
   misIds.push(fila.id);
@@ -2835,7 +3238,7 @@ function mostrarConfirmacion(o){
     <div class="confirmacion">
       <div class="conf-sello"><div class="interior">${pend ? '<b>ANOTADA</b><span>tu orden</span>' : '<b>RECIBIDO</b><span>en cocina</span>'}</div></div>
       <h2>${pend ? 'Ya quedó anotada' : '¡Orden enviada!'}</h2>
-      <div class="folio">Nº <b>${o.num}</b> · Mesa ${String(o.mesa).padStart(2,'0')}${SUC ? ' · ' + SUC : ''} · ${fmt(o.total)} ${RESTAURANTE.moneda}</div>
+      <div class="folio">Nº <b>${o.num}</b> · ${esKiosco() ? (PEDIDO_PIE[PEDIDO] || 'Pedido') : 'Mesa ' + String(o.mesa).padStart(2,'0')}${SUC ? ' · ' + SUC : ''} · ${fmt(o.total)} ${RESTAURANTE.moneda}</div>
       ${pend
         ? `<div class="nota-pie" style="margin:18px 0 0;text-align:left;border-left-color:var(--oro)">Tu orden ya se anotó y <b style="color:var(--crema)">tu mesero viene a la mesa a confirmarla contigo</b>.</div>`
         : `<div class="nota-pie" style="margin:22px 0 0;text-align:left">Tu orden ya entró a la cocina y puedes seguirla en la pestaña <b style="color:var(--crema)">Cuenta</b>.</div>`}
@@ -2845,8 +3248,12 @@ function mostrarConfirmacion(o){
           ${pend ? `<p>La repasan juntos en voz alta —los términos, lo que va sin algo, lo que quieren primero— y en ese momento pasa a la cocina.</p>
           <p>Es parte del servicio: preferimos que alguien te vea a la cara antes de encender la estufa. <b>No tienes que hacer nada más</b> — quédate cómodo, ya va para allá.</p>
           <p>Puedes seguirla en la pestaña <b>Cuenta</b> paso por paso: por confirmar, en cocina, preparando, lista en cocina y en camino a tu mesa.</p>`
-          : `<p>La sigues paso por paso: por confirmar, en cocina, preparando, lista en cocina y en camino a tu mesa.</p>`}
-          <p>¿Se te antoja algo más después? Ordena las veces que quieras, sin prisa: todo se va sumando y <b>se paga junto al final</b>.</p>
+          : `<p>${esKiosco()
+            ? 'La sigues paso por paso: en cocina, preparando, lista y entregada.'
+            : 'La sigues paso por paso: por confirmar, en cocina, preparando, lista en cocina y en camino a tu mesa.'}</p>`}
+          <p>${esKiosco()
+            ? `¿Se te antoja algo más? Manda otra orden cuando quieras — cada una se paga <b>${PEDIDO === 'domicilio' ? 'al recibirla' : 'en caja'}</b>.`
+            : '¿Se te antoja algo más después? Ordena las veces que quieras, sin prisa: todo se va sumando y <b>se paga junto al final</b>.'}</p>
         </div>
       </details>
       <div class="acciones-orden" style="padding:22px 0 0">
@@ -3497,6 +3904,7 @@ $('#buscar').addEventListener('input', pintarLista);
     if(codURL.length === 4 && !mesaEsMia) setTimeout(() => abrirHojaUnirse(codURL), 200);
   }
 }
+pintarAyuda();
 pintarMarquee();
 pintarControles();
 pintarDestacados();
