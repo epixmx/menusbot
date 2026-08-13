@@ -2617,13 +2617,29 @@ function pintarDestacados(){
      hace el trabajo. Si no hay ni una ni otra —restaurante recien dado de alta, sin fotos
      todavia— no se enciende nada y el encabezado se ve como siempre. */
   const cab = document.querySelector('.cab');
-  const suPortada = (MARCA && MARCA.portada) || FOTOS[(pops[0] || {}).id] || '';
-  if(cab && suPortada){
-    cab.style.setProperty('--portada-cab', "url('" + String(suPortada).replace(/["'\\)]/g, '') + "') center/cover");
-    cab.classList.add('con-portada');
-  } else if(cab){
+  /* Tres fuentes, en orden: la portada que subio el restaurante, la foto de su primer
+     favorito, o el arte que ya trae el platillo. La ultima importa mas de lo que parece:
+     un restaurante que todavia no sube fotos igual abre con una imagen y no con un titulo
+     solo. */
+  const suPortada = (MARCA && MARCA.portada)
+    || (pops[0] ? (FOTOS[pops[0].id] || IMG(pops[0].id)) : '') || '';
+  /* Se precarga antes de encenderla. El encabezado con portada trae su propio velo oscuro,
+     asi que si la imagen no existe quedaria un bloque negro tapando el nombre de un
+     restaurante de tema claro: peor que no haber puesto nada. Solo se enciende cuando la
+     foto ya cargo de verdad. */
+  if(cab && suPortada && cab.dataset.portada !== suPortada){
+    cab.dataset.portada = suPortada;
+    const pre = new Image();
+    pre.onload = () => {
+      cab.style.setProperty('--portada-cab', "url('" + String(suPortada).replace(/["'\\)]/g, '') + "') center/cover");
+      cab.classList.add('con-portada');
+    };
+    pre.onerror = () => { cab.classList.remove('con-portada'); delete cab.dataset.portada; };
+    pre.src = suPortada;
+  } else if(cab && !suPortada){
     cab.classList.remove('con-portada');
     cab.style.removeProperty('--portada-cab');
+    delete cab.dataset.portada;
   }
   $('#destScroll').innerHTML = pops.map(d => `
     <div class="dest-card" onclick="abrirPlatillo('${d.id}')">
