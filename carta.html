@@ -185,8 +185,7 @@
   .tarjeta-plato .tp-nombre{display:flex;align-items:baseline;gap:12px;margin-top:13px}
   .tarjeta-plato h3{font-family:var(--serif);font-weight:500;font-size:20px;line-height:1.25;flex:1;min-width:0}
   .tarjeta-plato .tp-precio{font-family:var(--grot);font-weight:700;font-size:17px;color:var(--pomodoro);letter-spacing:.5px;white-space:nowrap}
-  .tarjeta-plato p{font-size:14px;color:var(--humo);margin-top:5px;line-height:1.6;letter-spacing:.2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .tarjeta-plato .tp-meta{display:flex;gap:12px;margin-top:9px;flex-wrap:wrap}
+  .tarjeta-plato .tp-meta{display:flex;gap:12px;margin-top:11px;flex-wrap:wrap}
   /* Rejilla: dos por renglon. El 4:3 aqui si cabe y es el formato en que nacen las fotos,
      asi que la imagen entra completa sin recorte lateral. */
   .rejilla-platos{display:grid;grid-template-columns:1fr 1fr;gap:22px 12px;margin:12px 0 6px}
@@ -194,8 +193,7 @@
   .celda-plato .foto-p{aspect-ratio:4/3}
   .celda-plato h3{font-family:var(--serif);font-weight:500;font-size:16px;line-height:1.25;margin-top:10px}
   .celda-plato .tp-precio{font-family:var(--grot);font-weight:700;font-size:15px;color:var(--pomodoro);letter-spacing:.5px;display:block;margin-top:4px}
-  .celda-plato p{font-size:12.5px;color:var(--humo);margin-top:5px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .celda-plato .tp-meta{display:flex;gap:9px;margin-top:7px;flex-wrap:wrap}
+  .celda-plato .tp-meta{display:flex;gap:9px;margin-top:9px;flex-wrap:wrap}
   .celda-plato .mini-tag{font-size:10.5px;letter-spacing:1px}
   .mini-tag{font-family:var(--grot);font-size:12px;font-weight:700;letter-spacing:1.2px;line-height:1.5;text-transform:uppercase}
   .mini-tag.veg{color:var(--basilico)}
@@ -2662,7 +2660,6 @@ function tarjetaPlato(d){
   return `<div class="tarjeta-plato" onclick="abrirPlatillo('${d.id}')">
     ${fotoConMas(d)}
     <div class="tp-nombre"><h3>${d.nombre}</h3><span class="tp-precio">${fmt(d.precio)}</span></div>
-    <p>${d.desc}</p>
     <div class="tp-meta">${etiquetasPlato(d)}</div>
   </div>`;
 }
@@ -2670,7 +2667,6 @@ function celdaPlato(d){
   return `<div class="celda-plato" onclick="abrirPlatillo('${d.id}')">
     ${fotoConMas(d)}
     <h3>${d.nombre}</h3><span class="tp-precio">${fmt(d.precio)}</span>
-    <p>${d.desc}</p>
     <div class="tp-meta">${etiquetasPlato(d)}</div>
   </div>`;
 }
