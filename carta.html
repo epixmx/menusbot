@@ -247,7 +247,7 @@
   .acciones-orden{padding:8px 20px 12px;display:flex;flex-direction:column;gap:10px}
   .btn-primario{width:100%;min-height:44px;padding:16px;border:none;border-radius:2px;background:var(--pomodoro);color:var(--papel);font-size:14px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;font-family:var(--grot);transition:.15s}
   .btn-primario:active{transform:scale(.98);background:#C94A2F}
-  .btn-fantasma{width:100%;min-height:44px;padding:14px 13px;border:1px solid var(--linea2);border-radius:2px;background:transparent;color:var(--humo);font-size:13px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;font-family:var(--grot)}
+  .btn-fantasma{width:100%;min-height:46px;padding:14px 13px;border:1px solid var(--linea2);border-radius:2px;background:transparent;color:var(--crema);font-size:13px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;font-family:var(--grot)}
   /* Doble toque: el botón queda «armado» 4.5 s y lo dice con todas sus letras. Sustituye a los
      diálogos nativos del navegador, que aquí están prohibidos. */
   .btn-fantasma.armado,.btn-primario.armado{background:var(--al-ambar);border-color:var(--al-ambar);color:var(--al-txt)}
@@ -501,6 +501,7 @@
     /* Lista de platillos en 2 columnas; encabezados de sección a todo lo ancho */
     #lista{display:grid;grid-template-columns:1fr 1fr;column-gap:40px;align-items:stretch}
     #lista .seccion-cab,#lista .vacio{grid-column:1/-1}
+    #lista .rejilla-platos{grid-column:1/-1;grid-template-columns:repeat(3,1fr);gap:26px 24px}
     /* Ficha de platillo: panel lateral derecho en lugar de hoja inferior */
     #hoja{left:auto;right:0;top:0;bottom:auto;height:100vh;max-height:100vh;width:480px;max-width:480px;transform:translateX(105%);border-top:none;border-left:1px solid var(--linea2);box-shadow:-24px 0 60px rgba(0,0,0,.55)}
     #hoja.abierta{transform:translateX(0)}
@@ -518,13 +519,14 @@
     .barra-orden{max-width:1012px}
     /* 3 columnas en escritorio */
     #lista{grid-template-columns:repeat(3,1fr)}
+    #lista .rejilla-platos{grid-template-columns:repeat(4,1fr)}
   }
 
   /* ---------- Código de la mesa: grande, legible de un vistazo y fácil de dictar ---------- */
-  .cod-caja{margin-top:18px;border:1px solid var(--al-azul);border-radius:2px;padding:20px 16px 18px;text-align:center;background:var(--al-azul);color:var(--al-txt)}
-  .cod-caja .cod-rot{font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1.4px;line-height:1.5;text-transform:uppercase;color:var(--al-txt)}
-  .cod-caja .cod-num{font-family:var(--grot);font-weight:700;font-size:52px;line-height:1;letter-spacing:12px;color:var(--al-txt);margin:12px 0 4px;padding-left:12px}
-  .cod-caja .cod-pie{font-family:var(--grot);font-size:13px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;color:var(--al-txt);opacity:.92;line-height:1.7}
+  .cod-caja{margin-top:18px;border:1px solid var(--linea2);border-radius:3px;padding:18px 16px 16px;text-align:center;background:transparent}
+  .cod-caja .cod-rot{font-family:var(--grot);font-size:11.5px;font-weight:700;letter-spacing:1.6px;line-height:1.5;text-transform:uppercase;color:var(--humo)}
+  .cod-caja .cod-num{font-family:var(--grot);font-weight:700;font-size:52px;line-height:1;letter-spacing:12px;color:var(--pomodoro);margin:10px 0 6px;padding-left:12px}
+  .cod-caja .cod-pie{font-family:var(--grot);font-size:12.5px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--humo);line-height:1.7}
   /* Tira discreta: conserva el código a la vista sin estorbar, para quien llega tarde */
   .cod-tira{display:flex;align-items:center;gap:13px;margin:0 20px 14px;min-height:44px;border:1px solid var(--al-azul);border-radius:2px;padding:11px 13px;background:var(--al-azul);width:calc(100% - 40px);text-align:left;cursor:pointer;font-family:var(--grot);color:var(--al-txt);font-weight:700}
   .cod-tira b{font-family:var(--grot);font-weight:700;font-size:22px;letter-spacing:4px;flex-shrink:0}
@@ -2926,7 +2928,6 @@ function pintarVistaOrden(){
   html += pedido.map((i,idx) => {
     const d = PLATILLOS.find(x => x.id === i.id);
     return `<div class="t-item">
-      <span class="t-qty">${i.qty}×</span>
       <span class="t-nom">${d.nombre}${i.notas?`<small>— ${i.notas}</small>`:''}</span>
       <span class="leader"></span>
       <span class="t-precio">${fmt(d.precio * i.qty)}</span>
@@ -2938,7 +2939,7 @@ function pintarVistaOrden(){
      renglon no existe, asi que el ticket de siempre queda intacto. */
   const envio = envioCarta();
   if(envio > 0){
-    html += `<div class="t-item"><span class="t-qty"></span><span class="t-nom">Envío</span><span class="leader"></span><span class="t-precio">${fmt(envio)}</span></div>`;
+    html += `<div class="t-item"><span class="t-nom">Envío</span><span class="leader"></span><span class="t-precio">${fmt(envio)}</span></div>`;
   }
   html += `<div class="t-tot"><span class="caps">Total</span><span class="leader"></span><b>${fmt(totalPedido() + envio)} ${RESTAURANTE.moneda}</b></div>
     <div class="t-bar"></div>
