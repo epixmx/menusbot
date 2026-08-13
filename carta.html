@@ -90,6 +90,15 @@
   .cab{padding:26px 20px 0}
   .cab .fila-top{display:flex;justify-content:space-between;align-items:center}
   .marca-mini{font-family:var(--grot);font-size:12.5px;letter-spacing:1.4px;font-weight:700;color:var(--humo)}
+  .cab.con-portada{position:relative;background:#0E0C0A;padding-bottom:22px}
+  .cab.con-portada::before{content:'';position:absolute;inset:0;background:var(--portada-cab);opacity:.5;filter:saturate(.92) contrast(1.04)}
+  .cab.con-portada::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,10,8,.42) 0%,rgba(12,10,8,.66) 52%,rgba(12,10,8,.9) 100%)}
+  .cab.con-portada > *{position:relative;z-index:2}
+  .cab.con-portada .marca-mini{color:rgba(247,241,231,.72)}
+  .cab.con-portada h1{color:#F7F1E7}
+  .cab.con-portada .lema-cab{color:rgba(247,241,231,.9)}
+  .cab.con-portada .sello text{fill:rgba(247,241,231,.68)}
+  .cab.con-portada .mesa-pill{color:#F7F1E7;border-color:rgba(247,241,231,.42);background:rgba(12,10,8,.4)}
   .mesa-pill{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:13px;font-weight:600;letter-spacing:1.4px;padding:11px 14px;border-radius:2px;cursor:pointer;min-height:44px}
   .mesa-pill b{color:var(--pomodoro);font-size:14.5px}
   .titulo-zona{position:relative;margin-top:16px}
@@ -107,7 +116,7 @@
   @keyframes gira{to{transform:rotate(360deg)}}
   .sello text{font-family:var(--grot);font-size:11px;letter-spacing:.6px;fill:var(--humo);font-weight:600}
   .sello .centro{font-family:var(--serif);font-style:italic;font-size:21px;fill:var(--pomodoro)}
-  .marquee{margin-top:22px;border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);overflow:hidden;padding:11px 0}
+  .marquee{margin-top:0;border-bottom:1px solid var(--linea);overflow:hidden;padding:12px 0}
   .marquee .tira{display:flex;gap:34px;white-space:nowrap;animation:desliza 26s linear infinite;width:max-content}
   @keyframes desliza{to{transform:translateX(-50%)}}
   .marquee span{font-family:var(--grot);font-size:12.5px;letter-spacing:1.4px;font-weight:600;color:var(--humo);display:flex;align-items:center;gap:34px}
@@ -124,37 +133,37 @@
   @keyframes parp{0%,100%{opacity:1}50%{opacity:.25}}
 
   /* ---------- Controles ---------- */
-  .controles{padding:20px 20px 0;position:sticky;top:0;background:var(--esp);box-shadow:0 14px 14px -14px rgba(0,0,0,.5);z-index:30}
+  .controles{padding:14px 20px 0;position:sticky;top:0;background:var(--esp);box-shadow:0 14px 14px -14px rgba(0,0,0,.5);z-index:30}
   .buscador{display:flex;align-items:center;gap:10px;border:1px solid var(--linea2);padding:12px 14px;background:var(--esp)}
   .buscador input{border:none;outline:none;flex:1;font-size:15px;background:transparent;color:var(--crema);font-family:var(--grot);letter-spacing:.4px}
   .buscador input::placeholder{color:var(--humo2);letter-spacing:1px}
-  .chips{display:flex;gap:8px;overflow-x:auto;padding:12px 0 2px;scrollbar-width:none}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:10px 0 0;scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
   .chip{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;min-height:44px;font-family:var(--grot);font-size:13px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;padding:10px 15px;border:1px solid var(--linea);background:transparent;color:var(--humo);cursor:pointer;transition:.15s;border-radius:2px}
   .chip.activo{border-color:var(--pomodoro);color:var(--pomodoro)}
-  .tabs{display:flex;gap:2px;overflow-x:auto;padding:10px 0 12px;scrollbar-width:none}
+  .tabs{display:flex;gap:2px;overflow-x:auto;padding:8px 0 10px;scrollbar-width:none}
   .tabs::-webkit-scrollbar{display:none}
   .tab{flex-shrink:0;display:flex;align-items:baseline;gap:7px;min-height:44px;font-family:var(--grot);font-size:14px;font-weight:600;letter-spacing:1px;padding:13px 13px;background:transparent;border:none;color:var(--humo2);cursor:pointer;text-transform:uppercase}
   .tab sup{font-size:12px;color:var(--pomodoro);font-weight:700}
   .tab.activo{color:var(--crema);border-bottom:2px solid var(--pomodoro)}
 
   /* ---------- Destacados ---------- */
-  .destacados{padding:10px 0 0}
+  .destacados{padding:6px 0 0}
   .dest-titulo{display:flex;align-items:center;gap:14px;padding:0 20px}
   .dest-titulo .num{font-family:var(--serif);font-style:italic;font-size:17px;color:var(--pomodoro)}
   .dest-titulo h2{font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--crema)}
   .dest-titulo i{flex:1;border-top:1px solid var(--linea)}
-  .dest-scroll{display:flex;gap:18px;overflow-x:auto;padding:18px 20px 8px;scroll-snap-type:x mandatory;scrollbar-width:none}
+  .dest-scroll{display:flex;gap:14px;overflow-x:auto;padding:14px 20px 4px;scroll-snap-type:x mandatory;scrollbar-width:none}
   .dest-scroll::-webkit-scrollbar{display:none}
-  .dest-card{flex-shrink:0;width:212px;scroll-snap-align:start;cursor:pointer}
-  .dest-card .arco{position:relative;height:250px;border-radius:120px 120px 4px 4px;overflow:hidden;background:var(--esp2)}
+  .dest-card{flex-shrink:0;width:230px;scroll-snap-align:start;cursor:pointer}
+  .dest-card .arco{position:relative;aspect-ratio:4/3;border-radius:4px;overflow:hidden;background:var(--esp2)}
   .dest-card .arco img{width:100%;height:100%;object-fit:cover;filter:saturate(.92) contrast(1.03);transition:transform .5s}
   .dest-card:active .arco img{transform:scale(1.05)}
   .dest-card .arco .svg-fb svg{width:100%;height:100%}
-  .dest-card .arco .tag-fav{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:var(--esp);border:1px solid var(--linea2);color:var(--oro);font-family:var(--grot);font-size:12px;font-weight:700;letter-spacing:1.4px;padding:6px 12px;border-radius:2px}
-  .dest-card .dc-info{padding:13px 4px 0;text-align:center}
+  .dest-card .arco .tag-fav{position:absolute;top:10px;left:10px;background:var(--esp);border:1px solid var(--linea2);color:var(--oro);font-family:var(--grot);font-size:12px;font-weight:700;letter-spacing:1.4px;padding:6px 12px;border-radius:2px}
+  .dest-card .dc-info{padding:11px 2px 0;text-align:left}
   .dest-card h3{font-family:var(--serif);font-style:italic;font-weight:500;font-size:19px;line-height:1.25}
-  .dest-card .dc-linea{display:flex;align-items:baseline;gap:8px;margin-top:8px;padding:0 8px}
+  .dest-card .dc-linea{display:flex;align-items:baseline;gap:8px;margin-top:7px;padding:0}
   .dest-card .dc-precio{font-family:var(--grot);font-weight:700;font-size:15px;color:var(--pomodoro);letter-spacing:.5px;white-space:nowrap}
   .dest-card .dc-kcal{font-family:var(--grot);font-size:12.5px;letter-spacing:1px;color:var(--humo2);font-weight:600;white-space:nowrap;line-height:1.5}
 
@@ -2604,6 +2613,18 @@ function pasaFiltro(d){
 }
 function pintarDestacados(){
   const pops = PLATILLOS.filter(d => d.tags.includes('popular') && !d.oculto);
+  /* La portada del restaurante manda; si no subio ninguna, la foto de su primer favorito
+     hace el trabajo. Si no hay ni una ni otra —restaurante recien dado de alta, sin fotos
+     todavia— no se enciende nada y el encabezado se ve como siempre. */
+  const cab = document.querySelector('.cab');
+  const suPortada = (MARCA && MARCA.portada) || FOTOS[(pops[0] || {}).id] || '';
+  if(cab && suPortada){
+    cab.style.setProperty('--portada-cab', "url('" + String(suPortada).replace(/["'\\)]/g, '') + "') center/cover");
+    cab.classList.add('con-portada');
+  } else if(cab){
+    cab.classList.remove('con-portada');
+    cab.style.removeProperty('--portada-cab');
+  }
   $('#destScroll').innerHTML = pops.map(d => `
     <div class="dest-card" onclick="abrirPlatillo('${d.id}')">
       <div class="arco">${foto(d.id)}<span class="tag-fav">FAVORITO</span><span class="tag-ver">TOCA PARA VER</span></div>
