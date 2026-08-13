@@ -165,23 +165,37 @@
   .seccion-cab .snum{font-family:var(--serif);font-style:italic;font-size:16px;color:var(--pomodoro)}
   .seccion-cab h2{font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase}
   .seccion-cab small{font-size:12.5px;letter-spacing:1px;line-height:1.5;color:var(--humo2);font-weight:600;text-transform:uppercase}
-  .fila-platillo{display:flex;gap:14px;padding:18px 0;border-bottom:1px solid var(--linea);cursor:pointer;align-items:flex-start}
-  .fila-platillo .thumb{position:relative;width:34vw;min-width:112px;max-width:164px;aspect-ratio:4/3;border-radius:3px;overflow:hidden;flex-shrink:0;background:var(--esp2)}
-  .fila-platillo .thumb img{width:100%;height:100%;object-fit:cover;filter:saturate(.92) contrast(1.03)}
-  .fila-platillo .thumb .svg-fb svg{width:100%;height:100%}
-  .fila-platillo .fp-info{flex:1;min-width:0;padding-top:4px}
-  .fila-platillo .fp-nombre{display:flex;align-items:baseline;gap:10px}
-  .fila-platillo h3{font-family:var(--serif);font-weight:500;font-size:18.5px;line-height:1.25}
-  .fila-platillo .fp-precio{font-family:var(--grot);font-weight:700;font-size:15.5px;color:var(--pomodoro);letter-spacing:.5px;white-space:nowrap}
-  .fila-platillo p{font-size:14px;color:var(--humo);margin-top:6px;line-height:1.6;letter-spacing:.2px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-  .fila-platillo .fp-meta{display:flex;align-items:center;gap:12px;margin-top:9px;flex-wrap:wrap}
+  /* La caja de la foto es la misma en los dos formatos; solo cambia su proporcion. */
+  .foto-p{position:relative;width:100%;overflow:hidden;border-radius:4px;background:var(--esp2)}
+  .foto-p img{width:100%;height:100%;object-fit:cover;filter:saturate(.92) contrast(1.03)}
+  .foto-p .svg-fb svg{width:100%;height:100%}
+  /* Tarjeta ancha: el platillo se lleva los 350 px de la columna. 3:2 y no 4:3 porque a
+     ancho completo el 4:3 empuja el nombre fuera de la primera pantalla. */
+  .tarjeta-plato{cursor:pointer;padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--linea)}
+  .tarjeta-plato .foto-p{aspect-ratio:3/2}
+  .tarjeta-plato .tp-nombre{display:flex;align-items:baseline;gap:12px;margin-top:13px}
+  .tarjeta-plato h3{font-family:var(--serif);font-weight:500;font-size:20px;line-height:1.25;flex:1;min-width:0}
+  .tarjeta-plato .tp-precio{font-family:var(--grot);font-weight:700;font-size:17px;color:var(--pomodoro);letter-spacing:.5px;white-space:nowrap}
+  .tarjeta-plato p{font-size:14px;color:var(--humo);margin-top:5px;line-height:1.6;letter-spacing:.2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .tarjeta-plato .tp-meta{display:flex;gap:12px;margin-top:9px;flex-wrap:wrap}
+  /* Rejilla: dos por renglon. El 4:3 aqui si cabe y es el formato en que nacen las fotos,
+     asi que la imagen entra completa sin recorte lateral. */
+  .rejilla-platos{display:grid;grid-template-columns:1fr 1fr;gap:22px 12px;margin:12px 0 6px}
+  .celda-plato{cursor:pointer;min-width:0}
+  .celda-plato .foto-p{aspect-ratio:4/3}
+  .celda-plato h3{font-family:var(--serif);font-weight:500;font-size:16px;line-height:1.25;margin-top:10px}
+  .celda-plato .tp-precio{font-family:var(--grot);font-weight:700;font-size:15px;color:var(--pomodoro);letter-spacing:.5px;display:block;margin-top:4px}
+  .celda-plato p{font-size:12.5px;color:var(--humo);margin-top:5px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .celda-plato .tp-meta{display:flex;gap:9px;margin-top:7px;flex-wrap:wrap}
+  .celda-plato .mini-tag{font-size:10.5px;letter-spacing:1px}
   .mini-tag{font-family:var(--grot);font-size:12px;font-weight:700;letter-spacing:1.2px;line-height:1.5;text-transform:uppercase}
   .mini-tag.veg{color:var(--basilico)}
   .mini-tag.sg{color:#9DB6CE}
   .mini-tag.pop{color:var(--oro)}
   .mini-tag.kcal{color:var(--humo2);display:flex;align-items:center;gap:4px}
-  .btn-mas-fila{position:absolute;right:6px;bottom:6px;z-index:3;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:1px solid var(--linea2);background:rgba(18,15,12,.72);backdrop-filter:blur(6px);color:var(--crema);font-size:19px;font-weight:400;cursor:pointer;border-radius:2px;transition:.15s;font-family:var(--grot)}
-  .btn-mas-fila:active{background:var(--pomodoro);border-color:var(--pomodoro);color:var(--papel)}
+  .btn-mas-foto{position:absolute;right:9px;bottom:9px;z-index:3;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;border-radius:50%;background:var(--crema);color:var(--esp);font-size:21px;font-weight:500;line-height:1;cursor:pointer;transition:.15s;font-family:var(--grot);box-shadow:0 2px 9px rgba(0,0,0,.45)}
+  .btn-mas-foto:active{background:var(--pomodoro);color:var(--papel)}
+  .celda-plato .btn-mas-foto{width:31px;height:31px;font-size:19px;right:7px;bottom:7px}
   .vacio{text-align:center;color:var(--humo);padding:60px 20px;font-size:15px;line-height:1.8}
   footer{text-align:center;font-size:12.5px;color:var(--humo2);padding:26px 0 10px;letter-spacing:1px;line-height:1.6;text-transform:uppercase}
 
@@ -2597,20 +2611,28 @@ function pintarDestacados(){
       </div>
     </div>`).join('');
 }
-function filaPlatillo(d){
-  return `<div class="fila-platillo" onclick="abrirPlatillo('${d.id}')">
-    <div class="thumb">${foto(d.id)}<button class="btn-mas-fila" onclick="event.stopPropagation();agregarRapido('${d.id}')" title="Agregar">+</button></div>
-    <div class="fp-info">
-      <div class="fp-nombre"><h3>${d.nombre}</h3><span class="leader"></span><span class="fp-precio">${fmt(d.precio)}</span></div>
-      <p>${d.desc}</p>
-      <div class="fp-meta">
-        <span class="mini-tag detalle">Ver detalle</span>
-        <span class="mini-tag kcal">${ICO.flama} ${d.kcal} kcal</span>
-        ${d.tags.includes('popular') ? '<span class="mini-tag pop">Favorito</span>' : ''}
-        ${d.tags.includes('vegetariano') ? '<span class="mini-tag veg">Vegetariano</span>' : ''}
-        ${d.tags.includes('sin gluten') ? '<span class="mini-tag sg">Sin gluten</span>' : ''}
-      </div>
-    </div>
+function etiquetasPlato(d){
+  return (d.tags.includes('popular')     ? '<span class="mini-tag pop">Favorito</span>'    : '')
+       + (d.tags.includes('vegetariano') ? '<span class="mini-tag veg">Vegetariano</span>' : '')
+       + (d.tags.includes('sin gluten')  ? '<span class="mini-tag sg">Sin gluten</span>'   : '');
+}
+function fotoConMas(d){
+  return `<div class="foto-p">${foto(d.id)}<button class="btn-mas-foto" onclick="event.stopPropagation();agregarRapido('${d.id}')" title="Agregar ${escAtr(d.nombre)}" aria-label="Agregar ${escAtr(d.nombre)}">+</button></div>`;
+}
+function tarjetaPlato(d){
+  return `<div class="tarjeta-plato" onclick="abrirPlatillo('${d.id}')">
+    ${fotoConMas(d)}
+    <div class="tp-nombre"><h3>${d.nombre}</h3><span class="tp-precio">${fmt(d.precio)}</span></div>
+    <p>${d.desc}</p>
+    <div class="tp-meta">${etiquetasPlato(d)}</div>
+  </div>`;
+}
+function celdaPlato(d){
+  return `<div class="celda-plato" onclick="abrirPlatillo('${d.id}')">
+    ${fotoConMas(d)}
+    <h3>${d.nombre}</h3><span class="tp-precio">${fmt(d.precio)}</span>
+    <p>${d.desc}</p>
+    <div class="tp-meta">${etiquetasPlato(d)}</div>
   </div>`;
 }
 function pintarLista(){
@@ -2620,11 +2642,15 @@ function pintarLista(){
   const visibles = PLATILLOS.filter(pasaFiltro);
   if(!visibles.length){ $('#lista').innerHTML = '<div class="vacio">No encontramos platillos con esos criterios.<br>Prueba con otro filtro o busca por nombre.</div>'; return; }
   let html = '';
+  let primera = true;
   for(const c of CATEGORIAS){
     const del = visibles.filter(d => d.cat === c.id);
     if(!del.length) continue;
     html += `<div class="seccion-cab"><span class="gnum">${c.num}</span><span class="snum">${c.num}</span><h2>${c.nombre}</h2><small>${del.length} ${del.length===1?'platillo':'platillos'}</small></div>`;
-    html += del.map(filaPlatillo).join('');
+    html += primera
+      ? del.map(tarjetaPlato).join('')
+      : '<div class="rejilla-platos">' + del.map(celdaPlato).join('') + '</div>';
+    primera = false;
   }
   $('#lista').innerHTML = html;
 }
