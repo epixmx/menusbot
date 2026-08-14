@@ -23,6 +23,27 @@
     --ink:#241F18; --nav-bg:rgba(19,16,13,.96);
     --serif:'Fraunces',Georgia,serif;
     --grot:'Space Grotesk','Inter',system-ui,sans-serif;
+    /* Tokens de tipografía y forma. Los valores de aquí son los de Editoriale;
+       cada tema puede pisarlos. Un tema que sólo cambia color no cambia nada:
+       la personalidad de una carta está en la letra y en las esquinas. */
+    --serif-i:italic;      /* Fraunces se usa en cursiva; una grotesca display, no */
+    --serif-w:500;         /* peso de los títulos */
+    --h1-ls:-1.2px;        /* tracking del título grande */
+    --nom-tt:none;         /* caja de los nombres de platillo */
+    --nom-ls:0;            /* tracking de los nombres de platillo */
+    --r-chico:2px;         /* chips, botones, campos, tarjetas de aviso */
+    --r-foto:4px;          /* fotos de platillo */
+    --r-mas:50%;           /* botón + sobre la foto */
+    --r-tarjeta:0;         /* tarjeta de platillo */
+    --fondo-app:var(--esp);
+    --tarjeta-bg:transparent;
+    --tarjeta-borde:none;
+    --tarjeta-pad:0 0 20px;
+    --celda-pad:0;
+    --tarjeta-sombra:none;
+    --vidrio:none;
+    --divisor:1px solid var(--linea);
+    --barra-bg:var(--esp);
     /* Alertas sólidas: NO cambian con el tema. Un aviso se ve igual siempre,
        eso es parte de que se entienda. aplicarTema() nunca las sobreescribe. */
     --al-roja:#D92D20;
@@ -44,7 +65,7 @@
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html{scroll-behavior:smooth}
   body{font-family:var(--grot);background:#0B0908;color:var(--crema)}
-  .telefono{max-width:480px;margin:0 auto;min-height:100vh;background:var(--esp);position:relative;box-shadow:0 0 90px rgba(0,0,0,.9)}
+  .telefono{max-width:480px;margin:0 auto;min-height:100vh;background:var(--fondo-app);position:relative;box-shadow:0 0 90px rgba(0,0,0,.9)}
   @media(min-width:900px){
     body{background:#0B0908;padding:34px 0}
     .telefono{border-radius:8px;overflow:hidden;min-height:calc(100vh - 68px);outline:1px solid var(--linea)}
@@ -74,13 +95,13 @@
   .splash.oculto{opacity:0;visibility:hidden}
   .splash-caja{position:relative;max-width:390px;width:100%;text-align:center}
   .splash .sobre{font-family:var(--grot);font-size:13px;letter-spacing:1.4px;color:var(--humo);font-weight:600}
-  .splash h1{font-family:var(--serif);font-style:italic;font-weight:500;font-size:52px;line-height:.98;margin-top:14px;letter-spacing:-1px}
+  .splash h1{font-family:var(--serif);font-style:var(--serif-i);font-weight:var(--serif-w);font-size:52px;line-height:.98;margin-top:14px;letter-spacing:-1px}
   .splash h1 span{display:block;font-style:normal;font-size:21px;font-weight:400;letter-spacing:6px;margin-bottom:10px;color:var(--humo)}
   .splash .orn{margin:20px auto;display:flex;align-items:center;gap:12px;justify-content:center;color:var(--pomodoro)}
   .splash .orn i{display:block;width:44px;border-top:1px solid var(--linea2)}
   .splash .pregunta{font-family:var(--grot);font-size:13px;letter-spacing:1.4px;font-weight:600;color:var(--crema)}
   .mesas{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-top:18px;background:var(--linea);border:1px solid var(--linea)}
-  .mesa-btn{aspect-ratio:1.15;border:none;background:var(--esp);color:var(--crema);cursor:pointer;transition:.18s;font-family:var(--serif);font-size:21px;font-weight:500}
+  .mesa-btn{aspect-ratio:1.15;border:none;background:var(--esp);color:var(--crema);cursor:pointer;transition:.18s;font-family:var(--serif);font-size:21px;font-weight:var(--serif-w)}
   .mesa-btn small{display:block;font-family:var(--grot);font-size:12px;letter-spacing:1.4px;color:var(--humo2);margin-top:3px;font-weight:600}
   .mesa-btn:hover,.mesa-btn:active{background:var(--pomodoro);color:var(--papel)}
   .mesa-btn:hover small{color:rgba(242,235,221,.8)}
@@ -99,23 +120,23 @@
   .cab.con-portada .lema-cab{color:rgba(247,241,231,.9)}
   .cab.con-portada .sello text{fill:rgba(247,241,231,.68)}
   .cab.con-portada .mesa-pill{color:#F7F1E7;border-color:rgba(247,241,231,.42);background:rgba(12,10,8,.4)}
-  .mesa-pill{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:13px;font-weight:600;letter-spacing:1.4px;padding:11px 14px;border-radius:2px;cursor:pointer;min-height:44px}
+  .mesa-pill{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1px solid var(--linea2);color:var(--crema);font-family:var(--grot);font-size:13px;font-weight:600;letter-spacing:1.4px;padding:11px 14px;border-radius:var(--r-chico);cursor:pointer;min-height:44px}
   .mesa-pill b{color:var(--pomodoro);font-size:14.5px}
   .titulo-zona{position:relative;margin-top:16px}
   /* El padding derecho es el ancho del sello más su margen: sin él, un nombre largo
      —«Flautas El Crunch»— se le mete encima y las dos cosas se vuelven ilegibles. Y el
      tamaño se acomoda al ancho disponible en vez de ser fijo, para que un nombre de tres
      palabras no obligue a leer letras encimadas. */
-  .titulo-zona h1{font-family:var(--serif);font-weight:500;font-size:clamp(32px,10.5vw,44px);line-height:1.02;letter-spacing:-1.2px;padding-right:94px}
+  .titulo-zona h1{font-family:var(--serif);font-style:var(--serif-i);font-weight:var(--serif-w);font-size:clamp(32px,10.5vw,44px);line-height:1.02;letter-spacing:var(--h1-ls);padding-right:94px}
   .titulo-zona h1 em{font-style:italic;color:var(--pomodoro)}
   .titulo-zona .sello{position:absolute;right:-4px;top:4px;width:84px;height:84px;animation:gira 28s linear infinite;opacity:.9}
   .titulo-zona .sello-logo{display:none !important}
   #logoPrincipal{width:68%;max-width:230px;height:78px;object-fit:contain;object-position:left center;display:block;margin:0}
-  .lema-cab{margin-top:9px;font-family:var(--serif);font-style:italic;font-weight:500;font-size:17px;letter-spacing:.3px;color:var(--crema)}
+  .lema-cab{margin-top:9px;font-family:var(--serif);font-style:var(--serif-i);font-weight:var(--serif-w);font-size:17px;letter-spacing:.3px;color:var(--crema)}
   @media (min-width:700px){ #logoPrincipal{width:85%;max-width:310px;height:104px} .lema-cab{font-size:18px;margin-top:10px} .titulo-zona .sello{top:14px} .titulo-zona{margin-top:10px} .titulo-zona h1{padding-right:110px} }
   @keyframes gira{to{transform:rotate(360deg)}}
   .sello text{font-family:var(--grot);font-size:11px;letter-spacing:.6px;fill:var(--humo);font-weight:600}
-  .sello .centro{font-family:var(--serif);font-style:italic;font-size:21px;fill:var(--pomodoro)}
+  .sello .centro{font-family:var(--serif);font-style:var(--serif-i);font-size:21px;fill:var(--pomodoro)}
   .marquee{margin-top:0;border-bottom:1px solid var(--linea);overflow:hidden;padding:12px 0}
   .marquee .tira{display:flex;gap:34px;white-space:nowrap;animation:desliza 26s linear infinite;width:max-content}
   @keyframes desliza{to{transform:translateX(-50%)}}
@@ -133,13 +154,13 @@
   @keyframes parp{0%,100%{opacity:1}50%{opacity:.25}}
 
   /* ---------- Controles ---------- */
-  .controles{padding:14px 20px 0;position:sticky;top:0;background:var(--esp);box-shadow:0 14px 14px -14px rgba(0,0,0,.5);z-index:30}
-  .buscador{display:flex;align-items:center;gap:10px;border:1px solid var(--linea2);padding:12px 14px;background:var(--esp)}
+  .controles{padding:14px 20px 0;position:sticky;top:0;background:var(--barra-bg);-webkit-backdrop-filter:var(--vidrio);backdrop-filter:var(--vidrio);box-shadow:0 14px 14px -14px rgba(0,0,0,.5);z-index:30}
+  .buscador{display:flex;align-items:center;gap:10px;border:1px solid var(--linea2);padding:12px 14px;background:var(--esp);border-radius:var(--r-chico)}
   .buscador input{border:none;outline:none;flex:1;font-size:15px;background:transparent;color:var(--crema);font-family:var(--grot);letter-spacing:.4px}
   .buscador input::placeholder{color:var(--humo2);letter-spacing:1px}
   .chips{display:flex;gap:8px;overflow-x:auto;padding:10px 0 0;scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
-  .chip{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;min-height:44px;font-family:var(--grot);font-size:13px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;padding:10px 15px;border:1px solid var(--linea);background:transparent;color:var(--humo);cursor:pointer;transition:.15s;border-radius:2px}
+  .chip{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;min-height:44px;font-family:var(--grot);font-size:13px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;padding:10px 15px;border:1px solid var(--linea);background:transparent;color:var(--humo);cursor:pointer;transition:.15s;border-radius:var(--r-chico)}
   .chip.activo{border-color:var(--pomodoro);color:var(--pomodoro)}
   .tabs{display:flex;gap:2px;overflow-x:auto;padding:8px 0 10px;scrollbar-width:none}
   .tabs::-webkit-scrollbar{display:none}
@@ -150,19 +171,19 @@
   /* ---------- Destacados ---------- */
   .destacados{padding:26px 0 0}
   .dest-titulo{display:flex;align-items:center;gap:14px;padding:0 20px;line-height:1.6}
-  .dest-titulo .num{font-family:var(--serif);font-style:italic;font-size:17px;color:var(--pomodoro)}
+  .dest-titulo .num{font-family:var(--serif);font-style:var(--serif-i);font-size:17px;color:var(--pomodoro)}
   .dest-titulo h2{font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--crema)}
   .dest-titulo i{flex:1;border-top:1px solid var(--linea)}
   .dest-scroll{display:flex;gap:14px;overflow-x:auto;padding:18px 20px 6px;scroll-snap-type:x mandatory;scrollbar-width:none}
   .dest-scroll::-webkit-scrollbar{display:none}
   .dest-card{flex-shrink:0;width:230px;scroll-snap-align:start;cursor:pointer}
-  .dest-card .arco{position:relative;aspect-ratio:4/3;border-radius:4px;overflow:hidden;background:var(--esp2)}
+  .dest-card .arco{position:relative;aspect-ratio:4/3;border-radius:var(--r-foto);overflow:hidden;background:var(--esp2)}
   .dest-card .arco img{width:100%;height:100%;object-fit:cover;filter:saturate(.92) contrast(1.03);transition:transform .5s}
   .dest-card:active .arco img{transform:scale(1.05)}
   .dest-card .arco .svg-fb svg{width:100%;height:100%}
-  .dest-card .arco .tag-fav{position:absolute;top:10px;left:10px;background:var(--esp);border:1px solid var(--linea2);color:var(--oro);font-family:var(--grot);font-size:12px;font-weight:700;letter-spacing:1.4px;padding:6px 12px;border-radius:2px}
+  .dest-card .arco .tag-fav{position:absolute;top:10px;left:10px;background:var(--esp);border:1px solid var(--linea2);color:var(--oro);font-family:var(--grot);font-size:12px;font-weight:700;letter-spacing:1.4px;padding:6px 12px;border-radius:var(--r-chico)}
   .dest-card .dc-info{padding:11px 2px 0;text-align:left}
-  .dest-card h3{font-family:var(--serif);font-style:italic;font-weight:500;font-size:19px;line-height:1.25}
+  .dest-card h3{font-family:var(--serif);font-style:var(--serif-i);font-weight:var(--serif-w);font-size:19px;line-height:1.25;text-transform:var(--nom-tt);letter-spacing:var(--nom-ls)}
   .dest-card .dc-linea{display:flex;align-items:baseline;gap:8px;margin-top:7px;padding:0}
   .dest-card .dc-precio{font-family:var(--grot);font-weight:700;font-size:15px;color:var(--pomodoro);letter-spacing:.5px;white-space:nowrap}
   .dest-card .dc-kcal{font-family:var(--grot);font-size:12.5px;letter-spacing:1px;color:var(--humo2);font-weight:600;white-space:nowrap;line-height:1.5}
@@ -170,28 +191,34 @@
   /* ---------- Lista editorial ---------- */
   main{padding:4px 20px}
   .seccion-cab{display:flex;align-items:baseline;gap:14px;margin:30px 0 4px;position:relative}
-  .seccion-cab .gnum{font-family:var(--serif);font-style:italic;font-size:46px;line-height:1;color:transparent;-webkit-text-stroke:1px var(--linea2);position:absolute;right:0;top:-14px;pointer-events:none}
-  .seccion-cab .snum{font-family:var(--serif);font-style:italic;font-size:16px;color:var(--pomodoro)}
+  .seccion-cab .gnum{font-family:var(--serif);font-style:var(--serif-i);font-size:46px;line-height:1;color:transparent;-webkit-text-stroke:1px var(--linea2);position:absolute;right:0;top:-14px;pointer-events:none}
+  .seccion-cab .snum{font-family:var(--serif);font-style:var(--serif-i);font-size:16px;color:var(--pomodoro)}
   .seccion-cab h2{font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase}
   .seccion-cab small{font-size:12.5px;letter-spacing:1px;line-height:1.5;color:var(--humo2);font-weight:600;text-transform:uppercase}
   /* La caja de la foto es la misma en los dos formatos; solo cambia su proporcion. */
-  .foto-p{position:relative;width:100%;overflow:hidden;border-radius:4px;background:var(--esp2)}
+  .foto-p{position:relative;width:100%;overflow:hidden;border-radius:var(--r-foto);background:var(--esp2)}
   .foto-p img{width:100%;height:100%;object-fit:cover;filter:saturate(.92) contrast(1.03)}
   .foto-p .svg-fb svg{width:100%;height:100%}
   /* Tarjeta ancha: el platillo se lleva los 350 px de la columna. 3:2 y no 4:3 porque a
      ancho completo el 4:3 empuja el nombre fuera de la primera pantalla. */
-  .tarjeta-plato{cursor:pointer;padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--linea)}
+  .tarjeta-plato{cursor:pointer;padding:var(--tarjeta-pad);margin-bottom:20px;background:var(--tarjeta-bg);
+    border-radius:var(--r-tarjeta);box-shadow:var(--tarjeta-sombra);-webkit-backdrop-filter:var(--vidrio);
+    backdrop-filter:var(--vidrio);border:var(--tarjeta-borde);border-bottom:var(--divisor);overflow:hidden}
   .tarjeta-plato .foto-p{aspect-ratio:3/2}
   .tarjeta-plato .tp-nombre{display:flex;align-items:baseline;gap:12px;margin-top:13px}
-  .tarjeta-plato h3{font-family:var(--serif);font-weight:500;font-size:20px;line-height:1.25;flex:1;min-width:0}
+  .tarjeta-plato h3{font-family:var(--serif);font-style:var(--serif-i);font-weight:var(--serif-w);font-size:20px;
+    line-height:1.25;flex:1;min-width:0;text-transform:var(--nom-tt);letter-spacing:var(--nom-ls)}
   .tarjeta-plato .tp-precio{font-family:var(--grot);font-weight:700;font-size:17px;color:var(--pomodoro);letter-spacing:.5px;white-space:nowrap}
   .tarjeta-plato .tp-meta{display:flex;gap:12px;margin-top:11px;flex-wrap:wrap}
   /* Rejilla: dos por renglon. El 4:3 aqui si cabe y es el formato en que nacen las fotos,
      asi que la imagen entra completa sin recorte lateral. */
   .rejilla-platos{display:grid;grid-template-columns:1fr 1fr;gap:22px 12px;margin:12px 0 6px}
-  .celda-plato{cursor:pointer;min-width:0}
+  .celda-plato{cursor:pointer;min-width:0;padding:var(--celda-pad);background:var(--tarjeta-bg);
+    border-radius:var(--r-tarjeta);box-shadow:var(--tarjeta-sombra);-webkit-backdrop-filter:var(--vidrio);
+    backdrop-filter:var(--vidrio);border:var(--tarjeta-borde);overflow:hidden}
   .celda-plato .foto-p{aspect-ratio:4/3}
-  .celda-plato h3{font-family:var(--serif);font-weight:500;font-size:16px;line-height:1.25;margin-top:10px}
+  .celda-plato h3{font-family:var(--serif);font-style:var(--serif-i);font-weight:var(--serif-w);font-size:16px;
+    line-height:1.25;margin-top:10px;text-transform:var(--nom-tt);letter-spacing:var(--nom-ls)}
   .celda-plato .tp-precio{font-family:var(--grot);font-weight:700;font-size:15px;color:var(--pomodoro);letter-spacing:.5px;display:block;margin-top:4px}
   .celda-plato .tp-meta{display:flex;gap:9px;margin-top:9px;flex-wrap:wrap}
   .celda-plato .mini-tag{font-size:10.5px;letter-spacing:1px}
@@ -200,7 +227,7 @@
   .mini-tag.sg{color:#9DB6CE}
   .mini-tag.pop{color:var(--oro)}
   .mini-tag.kcal{color:var(--humo2);display:flex;align-items:center;gap:4px}
-  .btn-mas-foto{position:absolute;right:9px;bottom:9px;z-index:3;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;border-radius:50%;background:var(--crema);color:var(--esp);font-size:21px;font-weight:500;line-height:1;cursor:pointer;transition:.15s;font-family:var(--grot);box-shadow:0 2px 9px rgba(0,0,0,.45)}
+  .btn-mas-foto{position:absolute;right:9px;bottom:9px;z-index:3;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;border-radius:var(--r-mas);background:var(--crema);color:var(--esp);font-size:21px;font-weight:500;line-height:1;cursor:pointer;transition:.15s;font-family:var(--grot);box-shadow:0 2px 9px rgba(0,0,0,.45)}
   .btn-mas-foto:active{background:var(--pomodoro);color:var(--papel)}
   .celda-plato .btn-mas-foto{width:31px;height:31px;font-size:19px;right:7px;bottom:7px}
   .vacio{text-align:center;color:var(--humo);padding:60px 20px;font-size:15px;line-height:1.8}
@@ -221,14 +248,14 @@
   /* ---------- Vistas orden/cuenta: ticket ---------- */
   .vista-head{padding:26px 20px 8px}
   .vista-head .caps{color:var(--humo)}
-  .vista-head h2{font-family:var(--serif);font-style:italic;font-weight:500;font-size:34px;margin-top:6px;letter-spacing:-.5px}
-  .ticket{margin:16px 20px;background:var(--papel);color:var(--ink);border-radius:3px;position:relative;box-shadow:0 22px 50px rgba(0,0,0,.5)}
+  .vista-head h2{font-family:var(--serif);font-style:var(--serif-i);font-weight:var(--serif-w);font-size:34px;margin-top:6px;letter-spacing:-.5px}
+  .ticket{margin:16px 20px;background:var(--papel);color:var(--ink);border-radius:var(--r-chico);position:relative;box-shadow:0 22px 50px rgba(0,0,0,.5)}
   .ticket::before,.ticket::after{content:'';position:absolute;left:0;right:0;height:10px;background-image:radial-gradient(circle at 10px 0, transparent 6px, var(--papel) 6.5px);background-size:20px 10px;background-position:0 0}
   .ticket::before{top:-9px;transform:rotate(180deg)}
   .ticket::after{bottom:-9px}
   .ticket .t-int{padding:22px 22px 26px}
   .ticket .t-cab{text-align:center;border-bottom:1px dashed rgba(36,31,24,.35);padding-bottom:14px}
-  .ticket .t-cab .t-marca{font-family:var(--serif);font-style:italic;font-size:22px;font-weight:500}
+  .ticket .t-cab .t-marca{font-family:var(--serif);font-style:var(--serif-i);font-size:22px;font-weight:var(--serif-w)}
   .ticket .t-cab .caps{color:#6E6252;margin-top:4px}
   .ticket .t-item{display:flex;align-items:baseline;gap:8px;padding:13px 0;line-height:1.5;border-bottom:1px dotted rgba(36,31,24,.22);font-size:15px}
   .ticket .t-item .t-qty{font-family:var(--grot);font-weight:700;font-size:14px;color:var(--pomodoro);min-width:28px;flex-shrink:0}
@@ -241,7 +268,7 @@
   .ticket .t-item .part.pend{color:#A79A85}
   .ticket .t-item .part.pend i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#C4B7A0;margin-right:5px;vertical-align:1px}
   .ticket .t-item .t-precio{font-family:var(--grot);font-weight:700;font-size:15px;white-space:nowrap;flex-shrink:0}
-  .ticket .t-stepper{display:flex;align-items:center;gap:0;border:1px solid rgba(36,31,24,.3);border-radius:2px;margin-left:6px}
+  .ticket .t-stepper{display:flex;align-items:center;gap:0;border:1px solid rgba(36,31,24,.3);border-radius:var(--r-chico);margin-left:6px}
   .ticket .t-stepper button{width:38px;height:44px;border:none;background:transparent;color:var(--ink);font-size:16px;cursor:pointer;font-family:var(--grot)}
   .ticket .t-stepper span{min-width:18px;text-align:center;font-family:var(--grot);font-weight:700;font-size:14.5px}
   .ticket .t-tot{display:flex;align-items:baseline;gap:8px;padding-top:14px;font-family:var(--grot)}
@@ -252,9 +279,9 @@
   .ticket .t-bar{margin-top:18px;height:34px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 5px,var(--ink) 5px 6px,transparent 6px 10px)}
   .ticket .t-folio{text-align:center;font-family:var(--grot);font-size:12.5px;letter-spacing:1px;line-height:1.6;color:#6E6252;margin-top:8px;font-weight:600}
   .acciones-orden{padding:8px 20px 12px;display:flex;flex-direction:column;gap:10px}
-  .btn-primario{width:100%;min-height:44px;padding:16px;border:none;border-radius:2px;background:var(--pomodoro);color:var(--papel);font-size:14px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;font-family:var(--grot);transition:.15s}
+  .btn-primario{width:100%;min-height:44px;padding:16px;border:none;border-radius:var(--r-chico);background:var(--pomodoro);color:var(--papel);font-size:14px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;font-family:var(--grot);transition:.15s}
   .btn-primario:active{transform:scale(.98);background:#C94A2F}
-  .btn-fantasma{width:100%;min-height:46px;padding:14px 13px;border:1px solid var(--linea2);border-radius:2px;background:transparent;color:var(--crema);font-size:13px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;font-family:var(--grot)}
+  .btn-fantasma{width:100%;min-height:46px;padding:14px 13px;border:1px solid var(--linea2);border-radius:var(--r-chico);background:transparent;color:var(--crema);font-size:13px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;font-family:var(--grot)}
   /* Doble toque: el botón queda «armado» 4.5 s y lo dice con todas sus letras. Sustituye a los
      diálogos nativos del navegador, que aquí están prohibidos. */
   .btn-fantasma.armado,.btn-primario.armado{background:var(--al-ambar);border-color:var(--al-ambar);color:var(--al-txt)}
@@ -282,7 +309,7 @@
   /* Variante gruesa: las órdenes que pidió otro teléfono de la misma mesa se perdían entre los
      tickets propios. Aquí llevan marco y acento de oro —el oro es el color de «de la casa», el
      pomodoro está reservado para lo que se toca— para que se lean de lejos como algo aparte. */
-  .masinfo.grueso{margin:6px 20px 14px;border:1px solid var(--linea2);border-left:3px solid var(--oro);border-radius:2px;background:var(--esp2)}
+  .masinfo.grueso{margin:6px 20px 14px;border:1px solid var(--linea2);border-left:3px solid var(--oro);border-radius:var(--r-chico);background:var(--esp2)}
   .masinfo.grueso>summary{min-height:56px;padding:16px 14px;gap:6px;font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:.2px;color:var(--oro)}
   /* El conteo empuja y el monto nunca se parte: si el renglón no cabe, se parte la etiqueta,
      no la cifra —que es lo que el comensal vino a leer de un vistazo. */
@@ -325,14 +352,14 @@
   .hero-plato .svg-fb svg{width:100%;height:110%}
   .hero-plato::after{content:'';position:absolute;left:0;right:0;bottom:0;height:130px;background:linear-gradient(180deg,transparent,var(--esp))}
   .cerrar{position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(245,237,222,.35);background:rgba(21,18,16,.72);backdrop-filter:blur(6px);cursor:pointer;color:#F5EDDE;z-index:5;display:flex;align-items:center;justify-content:center}
-  .btn-full{position:absolute;top:16px;left:16px;display:flex;align-items:center;gap:9px;border:1px solid rgba(245,237,222,.35);background:rgba(21,18,16,.78);backdrop-filter:blur(6px);color:#F5EDDE;font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;padding:14px 16px;border-radius:2px;cursor:pointer;z-index:5;min-height:44px}
+  .btn-full{position:absolute;top:16px;left:16px;display:flex;align-items:center;gap:9px;border:1px solid rgba(245,237,222,.35);background:rgba(21,18,16,.78);backdrop-filter:blur(6px);color:#F5EDDE;font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;padding:14px 16px;border-radius:var(--r-chico);cursor:pointer;z-index:5;min-height:44px}
   .chip-lupa{position:absolute;right:14px;bottom:14px;width:42px;height:42px;border-radius:50%;background:rgba(18,15,12,.72);backdrop-filter:blur(5px);border:1px solid var(--linea2);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:4}
   .chip-lupa .ico{width:17px;height:17px;color:#F5EDDE;stroke-width:2}
-  .chip-video{position:absolute;left:14px;bottom:14px;display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:2px;background:rgba(18,15,12,.72);backdrop-filter:blur(5px);border:1px solid var(--linea2);pointer-events:none;z-index:4}
+  .chip-video{position:absolute;left:14px;bottom:14px;display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:var(--r-chico);background:rgba(18,15,12,.72);backdrop-filter:blur(5px);border:1px solid var(--linea2);pointer-events:none;z-index:4}
   .chip-video .ico{width:12px;height:12px;color:#F5EDDE}
   .hoja .contenido{padding:0 24px 36px;margin-top:-44px;position:relative;z-index:2}
   .hoja .f-cat{font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--pomodoro)}
-  .hoja h2{font-family:var(--serif);font-style:italic;font-weight:500;font-size:31px;line-height:1.05;margin-top:8px;letter-spacing:-.5px}
+  .hoja h2{font-family:var(--serif);font-style:var(--serif-i);font-weight:var(--serif-w);font-size:31px;line-height:1.05;margin-top:8px;letter-spacing:-.5px}
   .hoja .f-precio-linea{display:flex;align-items:baseline;gap:10px;margin-top:14px}
   .hoja .f-precio{font-family:var(--grot);font-weight:700;font-size:20px;color:var(--pomodoro)}
   .hoja .f-porcion{font-family:var(--grot);font-size:12.5px;letter-spacing:1.4px;color:var(--humo2);font-weight:600;text-transform:uppercase}
@@ -342,35 +369,35 @@
   .bloque .b-cab{display:flex;align-items:center;gap:12px;margin-bottom:12px}
   .bloque .b-cab .caps{color:var(--crema)}
   .bloque .b-cab i{flex:1;border-top:1px solid var(--linea)}
-  .tabla-nutri{display:flex;border:1px solid var(--linea);border-radius:2px}
+  .tabla-nutri{display:flex;border:1px solid var(--linea);border-radius:var(--r-chico)}
   .tabla-nutri .celda{flex:1;min-width:0;padding:13px 4px;text-align:center;border-right:1px solid var(--linea)}
   .tabla-nutri .celda:last-child{border-right:none}
-  .tabla-nutri .num{font-family:var(--serif);font-size:20px;font-weight:500}
+  .tabla-nutri .num{font-family:var(--serif);font-size:20px;font-weight:var(--serif-w)}
   .tabla-nutri .lbl{font-family:var(--grot);font-size:12px;color:var(--humo2);margin-top:4px;font-weight:700;letter-spacing:.4px;line-height:1.5;text-transform:uppercase}
   .pildoras{display:flex;flex-wrap:wrap;gap:0}
   .pildora{font-size:14.5px;color:var(--humo);padding:4px 0;letter-spacing:.3px}
   .pildora:not(:last-child)::after{content:'·';margin:0 10px;color:var(--pomodoro)}
   .alerg{display:flex;gap:10px;flex-wrap:wrap}
-  .alerg span{font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1px;line-height:1.5;text-transform:uppercase;color:var(--pomodoro);border:1px solid rgba(228,89,59,.4);padding:7px 12px;border-radius:2px}
-  .nota-vino{border-left:2px solid var(--oro);padding:4px 0 4px 14px;font-family:var(--serif);font-style:italic;font-size:16px;line-height:1.6;color:var(--crema)}
+  .alerg span{font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1px;line-height:1.5;text-transform:uppercase;color:var(--pomodoro);border:1px solid rgba(228,89,59,.4);padding:7px 12px;border-radius:var(--r-chico)}
+  .nota-vino{border-left:2px solid var(--oro);padding:4px 0 4px 14px;font-family:var(--serif);font-style:var(--serif-i);font-size:16px;line-height:1.6;color:var(--crema)}
   .sug-cards{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin-top:2px}
   .sug-cards::-webkit-scrollbar{display:none}
-  .sug-card{flex:0 0 auto;display:flex;align-items:center;gap:10px;border:1px solid var(--linea2);border-radius:3px;padding:8px 10px 8px 8px;min-width:252px;background:transparent}
+  .sug-card{flex:0 0 auto;display:flex;align-items:center;gap:10px;border:1px solid var(--linea2);border-radius:var(--r-chico);padding:8px 10px 8px 8px;min-width:252px;background:transparent}
   .sug-card .sug-img{width:46px;height:54px;border-radius:999px 999px 3px 3px;overflow:hidden;flex-shrink:0}
   .sug-card .sug-img img,.sug-card .sug-img svg{width:100%;height:100%;object-fit:cover;display:block}
   .sug-card .sug-info{min-width:0}
-  .sug-card .sug-nom{font-family:var(--serif);font-style:italic;font-size:15px;line-height:1.25;color:var(--crema);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:148px}
+  .sug-card .sug-nom{font-family:var(--serif);font-style:var(--serif-i);font-size:15px;line-height:1.25;color:var(--crema);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:148px}
   .sug-card .sug-precio{font-family:var(--grot);font-size:13.5px;font-weight:700;letter-spacing:1px;color:var(--pomodoro);margin-top:3px}
-  .sug-card .sug-mas{margin-left:auto;width:44px;height:44px;border:1px solid var(--linea2);border-radius:2px;background:transparent;color:var(--crema);font-size:17px;cursor:pointer;font-family:var(--grot);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.15s}
+  .sug-card .sug-mas{margin-left:auto;width:44px;height:44px;border:1px solid var(--linea2);border-radius:var(--r-chico);background:transparent;color:var(--crema);font-size:17px;cursor:pointer;font-family:var(--grot);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.15s}
   .sug-card .sug-mas:active{background:var(--pomodoro);border-color:var(--pomodoro);color:#fff}
-  .notas-inp{width:100%;border:1px solid var(--linea2);background:transparent;border-radius:2px;padding:13px 15px;font-size:15px;outline:none;font-family:var(--grot);color:var(--crema);letter-spacing:.4px}
+  .notas-inp{width:100%;border:1px solid var(--linea2);background:transparent;border-radius:var(--r-chico);padding:13px 15px;font-size:15px;outline:none;font-family:var(--grot);color:var(--crema);letter-spacing:.4px}
   .notas-inp::placeholder{color:var(--humo2)}
   .notas-inp:focus{border-color:var(--pomodoro)}
   .fila-agregar{display:flex;gap:12px;margin-top:24px;align-items:stretch;position:sticky;bottom:0;background:var(--esp);padding:14px 0 16px;box-shadow:0 -18px 18px -12px var(--esp);z-index:6}
-  .stepper-g{display:flex;align-items:center;border:1px solid var(--linea2);border-radius:2px}
+  .stepper-g{display:flex;align-items:center;border:1px solid var(--linea2);border-radius:var(--r-chico)}
   .stepper-g button{width:40px;height:48px;border:none;background:transparent;font-size:19px;color:var(--crema);cursor:pointer;font-family:var(--grot)}
   .stepper-g span{min-width:24px;text-align:center;font-family:var(--grot);font-weight:700;font-size:17px}
-  .btn-agregar{flex:1;border:none;border-radius:2px;background:var(--pomodoro);color:var(--papel);cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-family:var(--grot);transition:.15s}
+  .btn-agregar{flex:1;border:none;border-radius:var(--r-chico);background:var(--pomodoro);color:var(--papel);cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-family:var(--grot);transition:.15s}
   .btn-agregar:active{transform:scale(.98)}
   .btn-agregar span{font-size:13px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase}
   .btn-agregar b{font-size:16px;font-weight:700}
@@ -382,7 +409,7 @@
   .visor .v-img img{width:100%;height:100%;object-fit:cover}
   .visor .v-img .svg-fb svg{width:100%;height:100%}
   @keyframes v-in{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
-  .visor .v-nombre{margin-top:22px;font-family:var(--serif);font-style:italic;font-weight:500;font-size:26px;text-align:center;padding:0 20px}
+  .visor .v-nombre{margin-top:22px;font-family:var(--serif);font-style:var(--serif-i);font-weight:var(--serif-w);font-size:26px;text-align:center;padding:0 20px}
   .visor .v-datos{margin-top:10px;display:flex;gap:18px;flex-wrap:wrap;justify-content:center;font-family:var(--grot);font-size:13px;letter-spacing:1.4px;font-weight:700;text-transform:uppercase;line-height:1.5}
   .visor .v-datos .vp{color:var(--pomodoro)}
   .visor .v-datos .vk{color:var(--humo)}
@@ -393,8 +420,8 @@
   .conf-sello{width:122px;height:122px;margin:0 auto 20px;border:1.5px solid var(--pomodoro);border-radius:50%;display:flex;align-items:center;justify-content:center;transform:rotate(-8deg);animation:v-in .5s}
   .conf-sello .interior{width:106px;height:106px;border:1px dashed rgba(228,89,59,.6);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--pomodoro)}
   .conf-sello .interior b{font-family:var(--grot);font-size:12px;letter-spacing:1.4px;font-weight:700}
-  .conf-sello .interior span{font-family:var(--serif);font-style:italic;font-size:17px;margin-top:2px}
-  .confirmacion h2{font-family:var(--serif);font-style:italic;font-weight:500;font-size:27px}
+  .conf-sello .interior span{font-family:var(--serif);font-style:var(--serif-i);font-size:17px;margin-top:2px}
+  .confirmacion h2{font-family:var(--serif);font-style:var(--serif-i);font-weight:var(--serif-w);font-size:27px}
   .confirmacion .folio{margin-top:8px;font-family:var(--grot);font-size:13px;letter-spacing:1.4px;text-transform:uppercase;color:var(--humo);font-weight:600}
   .confirmacion .folio b{color:var(--pomodoro)}
 
@@ -410,28 +437,28 @@
      brinque cuando la imagen termina de dibujarse. */
   .despedida .dp-marca{min-height:52px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
   .despedida .dp-marca img{max-width:200px;max-height:52px;object-fit:contain;display:block}
-  .despedida .dp-marca .dp-nombre{font-family:var(--serif);font-style:italic;font-weight:500;font-size:24px;line-height:1.25}
+  .despedida .dp-marca .dp-nombre{font-family:var(--serif);font-style:var(--serif-i);font-weight:var(--serif-w);font-size:24px;line-height:1.25}
   /* El sello de siempre, un punto más grande: aquí es el protagonista de la pantalla y lo
      leen adultos con el teléfono a un brazo de distancia. */
   .despedida .conf-sello{width:120px;height:120px;margin:0 auto 14px}
   .despedida .conf-sello .interior{width:104px;height:104px}
   .despedida .conf-sello .interior b{font-size:14px}
   .despedida .conf-sello .interior span{font-size:19px}
-  .despedida h2{font-family:var(--serif);font-style:italic;font-weight:500;font-size:26px;line-height:1.2}
+  .despedida h2{font-family:var(--serif);font-style:var(--serif-i);font-weight:var(--serif-w);font-size:26px;line-height:1.2}
   .despedida .dp-sub{margin-top:10px;font-family:var(--grot);font-size:15px;line-height:1.6;color:var(--humo);max-width:34ch}
   .despedida .dp-cuenta{width:100%;margin-top:16px;padding:4px 0 2px;border-top:1px solid var(--linea2);border-bottom:1px solid var(--linea2)}
   .despedida .dp-ren{display:flex;align-items:baseline;gap:10px;padding:8px 0;font-family:var(--grot);text-align:left}
   .despedida .dp-ren .caps{font-size:14px;color:var(--humo);flex-shrink:0}
   .despedida .dp-ren b{font-size:20px;font-weight:700;letter-spacing:.4px;white-space:nowrap;flex-shrink:0}
   .despedida .dp-ren .dp-dicho{font-size:15px;font-weight:600;color:var(--crema);text-align:right}
-  .despedida .dp-puntos{width:100%;margin-top:14px;border:1px solid var(--oro);border-radius:2px;padding:12px 16px}
+  .despedida .dp-puntos{width:100%;margin-top:14px;border:1px solid var(--oro);border-radius:var(--r-chico);padding:12px 16px}
   .despedida .dp-puntos .caps{font-size:14px;color:var(--oro)}
-  .despedida .dp-puntos .dp-gano{margin-top:8px;font-family:var(--serif);font-style:italic;font-size:22px;line-height:1.35}
+  .despedida .dp-puntos .dp-gano{margin-top:8px;font-family:var(--serif);font-style:var(--serif-i);font-size:22px;line-height:1.35}
   .despedida .dp-puntos .dp-gano b{font-family:var(--grot);font-style:normal;font-weight:700;font-size:24px;color:var(--oro)}
   .despedida .dp-puntos .dp-saldo{margin-top:7px;font-family:var(--grot);font-size:14px;letter-spacing:1.3px;text-transform:uppercase;color:var(--humo);line-height:1.6}
   .despedida .dp-resena{width:100%;margin-top:16px}
-  .despedida .dp-resena .dp-r-tit{font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.3}
-  .despedida .dp-cierre{margin-top:18px;font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.45;color:var(--crema)}
+  .despedida .dp-resena .dp-r-tit{font-family:var(--serif);font-style:var(--serif-i);font-size:21px;line-height:1.3}
+  .despedida .dp-cierre{margin-top:18px;font-family:var(--serif);font-style:var(--serif-i);font-size:21px;line-height:1.45;color:var(--crema)}
   .despedida .dp-pie{margin-top:12px;font-family:var(--grot);font-size:14px;line-height:1.65;color:var(--humo2);max-width:38ch}
   /* El asterisco es sólo respiración tipográfica: en pantallas cortas estorba más de lo que
      adorna, y prefiero que quepa «Ya puedes cerrar esta ventana» a que quepa el adorno. */
@@ -460,13 +487,13 @@
   }
 
   /* ---------- Toast ---------- */
-  .toast{position:fixed;bottom:calc(146px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,30px);background:var(--papel);color:var(--ink);font-family:var(--grot);font-size:14px;font-weight:600;letter-spacing:.6px;padding:13px 20px;border-radius:2px;z-index:150;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 16px 44px rgba(0,0,0,.55);max-width:86%;text-align:center}
+  .toast{position:fixed;bottom:calc(146px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,30px);background:var(--papel);color:var(--ink);font-family:var(--grot);font-size:14px;font-weight:600;letter-spacing:.6px;padding:13px 20px;border-radius:var(--r-chico);z-index:150;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 16px 44px rgba(0,0,0,.55);max-width:86%;text-align:center}
   .toast.visible{opacity:1;transform:translate(-50%,0)}
   /* El toast sigue siendo neutro; solo se pinta de rojo cuando avisa de una falla. */
   .toast.falla{background:var(--al-roja);color:var(--al-txt);font-weight:700}
 
   /* ---------- Barra fija de orden (enviar a cocina) ---------- */
-  .barra-orden{position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,20px);width:calc(100% - 28px);max-width:452px;display:flex;align-items:center;gap:12px;background:var(--pomodoro);color:#FFF7EE;border:none;border-radius:3px;padding:15px 16px;z-index:74;cursor:pointer;box-shadow:0 14px 40px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:.25s;font-family:var(--grot);text-align:left}
+  .barra-orden{position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,20px);width:calc(100% - 28px);max-width:452px;display:flex;align-items:center;gap:12px;background:var(--pomodoro);color:#FFF7EE;border:none;border-radius:var(--r-chico);padding:15px 16px;z-index:74;cursor:pointer;box-shadow:0 14px 40px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:.25s;font-family:var(--grot);text-align:left}
   .barra-orden.visible{opacity:1;transform:translate(-50%,0);pointer-events:auto}
   .barra-orden .bo-num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
   .barra-orden .bo-txt{flex:1;min-width:0;font-size:14px;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -485,9 +512,9 @@
   .guia-caja{width:100%;max-width:480px;background:var(--papel);color:var(--ink);padding:30px 26px calc(26px + env(safe-area-inset-bottom));border-radius:14px 14px 0 0;animation:sube .35s}
   .g-paso{display:flex;gap:14px;margin-top:18px;align-items:flex-start}
   .g-paso b{width:32px;height:32px;border-radius:50%;background:var(--pomodoro);color:#FFF7EE;display:flex;align-items:center;justify-content:center;font-family:var(--grot);font-size:14.5px;flex-shrink:0}
-  .g-paso h4{font-family:var(--serif);font-style:italic;font-weight:500;font-size:18px;line-height:1.2}
+  .g-paso h4{font-family:var(--serif);font-style:var(--serif-i);font-weight:var(--serif-w);font-size:18px;line-height:1.2}
   .g-paso p{font-family:var(--grot);font-size:14px;line-height:1.6;color:#6E6557;margin-top:3px}
-  .g-nota{margin-top:20px;border-left:2px solid var(--oro);padding:2px 0 2px 12px;font-family:var(--serif);font-style:italic;font-size:15.5px;line-height:1.55}
+  .g-nota{margin-top:20px;border-left:2px solid var(--oro);padding:2px 0 2px 12px;font-family:var(--serif);font-style:var(--serif-i);font-size:15.5px;line-height:1.55}
   .guia .btn-primario{margin-top:22px;width:100%}
   /* ---------- Affordance de detalle ---------- */
   .banner-estado{display:flex;align-items:center;gap:14px;margin:0 18px 18px;border:1px solid var(--ce);border-radius:2px;padding:15px 16px;background:var(--ce);color:var(--al-txt);animation:sube .3s}
@@ -496,8 +523,8 @@
   .banner-estado small{display:block;font-family:var(--grot);font-size:13px;font-weight:600;letter-spacing:.6px;line-height:1.55;color:var(--al-txt);opacity:.92;margin-top:4px}
   .chip-estado{display:inline-flex;align-items:center;gap:7px;font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1.4px;line-height:1.5;text-transform:uppercase;color:var(--al-txt);background:var(--ce);border:1px solid var(--ce);padding:7px 11px;border-radius:2px}
   .chip-estado i{width:7px;height:7px;border-radius:50%;background:var(--al-txt);flex-shrink:0}
-  .mini-tag.detalle{color:var(--pomodoro);border:1px solid rgba(228,89,59,.5);font-size:13px;padding:4px 8px;border-radius:2px}
-  .tag-ver{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(18,15,12,.78);color:#F5EDDE;font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:1.6px;padding:7px 11px;border-radius:2px;backdrop-filter:blur(4px);white-space:nowrap}
+  .mini-tag.detalle{color:var(--pomodoro);border:1px solid rgba(228,89,59,.5);font-size:13px;padding:4px 8px;border-radius:var(--r-chico)}
+  .tag-ver{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(18,15,12,.78);color:#F5EDDE;font-family:var(--grot);font-size:13px;font-weight:700;letter-spacing:1.6px;padding:7px 11px;border-radius:var(--r-chico);backdrop-filter:blur(4px);white-space:nowrap}
 
   /* ---------- Responsive: tablet (≥700px) y escritorio (≥1100px) ---------- */
   @media(min-width:700px){
@@ -530,22 +557,22 @@
   }
 
   /* ---------- Código de la mesa: grande, legible de un vistazo y fácil de dictar ---------- */
-  .cod-caja{margin-top:18px;border:1px solid var(--linea2);border-radius:3px;padding:18px 16px 16px;text-align:center;background:transparent}
+  .cod-caja{margin-top:18px;border:1px solid var(--linea2);border-radius:var(--r-chico);padding:18px 16px 16px;text-align:center;background:transparent}
   .cod-caja .cod-rot{font-family:var(--grot);font-size:11.5px;font-weight:700;letter-spacing:1.6px;line-height:1.5;text-transform:uppercase;color:var(--humo)}
   .cod-caja .cod-num{font-family:var(--grot);font-weight:700;font-size:52px;line-height:1;letter-spacing:12px;color:var(--pomodoro);margin:10px 0 6px;padding-left:12px}
   .cod-caja .cod-pie{font-family:var(--grot);font-size:12.5px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--humo);line-height:1.7}
   /* Tira discreta: conserva el código a la vista sin estorbar, para quien llega tarde */
-  .cod-tira{display:flex;align-items:center;gap:14px;margin:0 20px 16px;min-height:46px;border:1px solid var(--linea2);border-radius:3px;padding:12px 14px;background:transparent;width:calc(100% - 40px);text-align:left;cursor:pointer;font-family:var(--grot);color:var(--crema);font-weight:700}
+  .cod-tira{display:flex;align-items:center;gap:14px;margin:0 20px 16px;min-height:46px;border:1px solid var(--linea2);border-radius:var(--r-chico);padding:12px 14px;background:transparent;width:calc(100% - 40px);text-align:left;cursor:pointer;font-family:var(--grot);color:var(--crema);font-weight:700}
   .cod-tira b{font-family:var(--grot);font-weight:700;font-size:23px;letter-spacing:4px;flex-shrink:0;color:var(--pomodoro)}
   .cod-tira span{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;line-height:1.6}
   .cod-tira em{display:block;font-style:normal;font-weight:600;letter-spacing:1.1px;color:var(--humo);margin-top:3px}
   /* ---------- Propina sugerida (el monto en pesos manda sobre el porcentaje) ---------- */
   .prop-ops{display:flex;flex-direction:column;gap:9px;margin-top:16px}
-  .prop-btn{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;border:1px solid var(--linea2);background:transparent;border-radius:2px;padding:15px 16px;cursor:pointer;font-family:var(--grot);color:var(--crema);text-align:left;transition:.18s;min-height:56px}
+  .prop-btn{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;border:1px solid var(--linea2);background:transparent;border-radius:var(--r-chico);padding:15px 16px;cursor:pointer;font-family:var(--grot);color:var(--crema);text-align:left;transition:.18s;min-height:56px}
   .prop-btn:hover,.prop-btn:active{border-color:var(--oro)}
   .prop-btn .pb-pct{font-size:14px;font-weight:700;letter-spacing:1.2px;line-height:1.5;text-transform:uppercase}
   /* El monto nunca se parte: «Sin propina» y «Tú decides» se leían en dos renglones. */
-  .prop-btn .pb-mto{font-family:var(--serif);font-style:italic;font-size:22px;color:var(--oro);white-space:nowrap;flex-shrink:0}
+  .prop-btn .pb-mto{font-family:var(--serif);font-style:var(--serif-i);font-size:22px;color:var(--oro);white-space:nowrap;flex-shrink:0}
   /* Sin propina: mismo tamaño y mismo peso visual que las demás. Nada de castigo visual. */
   .prop-btn.neutro .pb-pct{color:var(--humo)}
   .prop-btn.neutro .pb-mto{color:var(--humo2);font-size:18px}
@@ -555,7 +582,7 @@
   /* A 12px, cinco etiquetas en fila se pisaban unas a otras en un teléfono. Los puntos
      siguen contando el avance y debajo se nombra, en grande, el paso en el que va. */
   .p-etiq.cinco{display:block;text-align:center;font-size:12.5px;letter-spacing:1.4px;line-height:1.5;gap:0}
-  .p-etiq.cinco .p-cual{display:block;font-family:var(--serif);font-style:italic;font-size:19px;letter-spacing:0;text-transform:none;line-height:1.3;margin-top:2px;color:var(--ink)}
+  .p-etiq.cinco .p-cual{display:block;font-family:var(--serif);font-style:var(--serif-i);font-size:19px;letter-spacing:0;text-transform:none;line-height:1.3;margin-top:2px;color:var(--ink)}
   .p-etiq.cinco .p-cual.on{color:var(--pomodoro)}
 </style>
 </head>
@@ -991,16 +1018,85 @@ const TEMAS = {
   mare:{ nombre:'Mare', esp:'#0D1B22', esp2:'#12242D', crema:'#EAF3F1', humo:'#8FA6A8', humo2:'#5C7376',
     pomodoro:'#43AEC5', basilico:'#8FAE8B', oro:'#E9C46A', papel:'#EEF5F2',
     linea:'rgba(234,243,241,.13)', linea2:'rgba(234,243,241,.26)', 'nav-bg':'rgba(11,23,29,.96)' },
+
+  /* --- Los cuatro de abajo cambian letra y forma, no nada más color. Cada uno trae su
+     propia pareja de tipografías: una de titulares con carácter y una de lectura que se
+     quite del camino. Las familias son de Fontshare y se piden sólo si el tema se usa. --- */
+  mercado:{ nombre:'Mercado', esp:'#FFFFFF', esp2:'#F4F4F2', crema:'#111113', humo:'#6E6E75', humo2:'#9A9AA2',
+    pomodoro:'#E8452F', basilico:'#2E7D52', oro:'#B07D12', papel:'#FFFFFF',
+    linea:'rgba(17,17,19,.10)', linea2:'rgba(17,17,19,.18)', 'nav-bg':'rgba(255,255,255,.97)',
+    serif:"'Cabinet Grotesk',system-ui,sans-serif", grot:"'Switzer',system-ui,sans-serif",
+    'serif-i':'normal', 'serif-w':'800', 'h1-ls':'-1.4px', 'nom-ls':'-.5px',
+    'r-chico':'10px', 'r-foto':'12px', 'r-mas':'50%',
+    fuentes:['https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,800&display=swap','https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap'] },
+
+  cartel:{ nombre:'Cartel', esp:'#F1EFEA', esp2:'#FAF9F6', crema:'#0A0A0A', humo:'#6E6C66', humo2:'#94918A',
+    pomodoro:'#0A0A0A', basilico:'#4A4842', oro:'#0A0A0A', papel:'#FFFFFF',
+    linea:'rgba(10,10,10,.13)', linea2:'rgba(10,10,10,.21)', 'nav-bg':'rgba(241,239,234,.97)',
+    serif:"'Bespoke Stencil',Impact,sans-serif", grot:"'Switzer',system-ui,sans-serif",
+    'serif-i':'normal', 'serif-w':'500', 'h1-ls':'0', 'nom-tt':'uppercase', 'nom-ls':'.3px',
+    'r-chico':'12px', 'r-foto':'14px', 'r-mas':'12px', 'r-tarjeta':'16px',
+    'tarjeta-bg':'#FAF9F6', 'tarjeta-borde':'1px solid rgba(10,10,10,.08)',
+    'tarjeta-pad':'12px 12px 16px', 'celda-pad':'10px 10px 14px', divisor:'none',
+    fuentes:['https://api.fontshare.com/v2/css?f[]=bespoke-stencil@400,500&display=swap','https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap'] },
+
+  trompo:{ nombre:'Trompo', esp:'#0C0C0D', esp2:'#171719', crema:'#F2F2EF', humo:'#8E8E96', humo2:'#63636B',
+    pomodoro:'#C6F24E', basilico:'#8FD48F', oro:'#E0B44A', papel:'#F2F2EF',
+    linea:'rgba(242,242,239,.13)', linea2:'rgba(242,242,239,.25)', 'nav-bg':'rgba(10,10,11,.96)',
+    serif:"'Tanker',Impact,sans-serif", grot:"'Supreme',system-ui,sans-serif",
+    'serif-i':'normal', 'serif-w':'400', 'h1-ls':'0', 'nom-tt':'uppercase', 'nom-ls':'.2px',
+    'r-chico':'2px', 'r-foto':'2px', 'r-mas':'2px',
+    fuentes:['https://api.fontshare.com/v2/css?f[]=tanker@400&display=swap','https://api.fontshare.com/v2/css?f[]=supreme@400,500,700&display=swap'] },
+
+  cristal:{ nombre:'Cristal', esp:'#EDF0F9', esp2:'rgba(255,255,255,.58)', crema:'#14141A', humo:'#63636F', humo2:'#9A9AA6',
+    pomodoro:'#14141A', basilico:'#3E7D5C', oro:'#8A6E1C', papel:'#FFFFFF',
+    linea:'rgba(20,20,26,.10)', linea2:'rgba(20,20,26,.20)', 'nav-bg':'rgba(237,240,249,.92)',
+    serif:"'Chillax',system-ui,sans-serif", grot:"'General Sans',system-ui,sans-serif",
+    'serif-i':'normal', 'serif-w':'600', 'h1-ls':'-.8px', 'nom-ls':'-.2px',
+    'r-chico':'16px', 'r-foto':'18px', 'r-mas':'50%', 'r-tarjeta':'22px',
+    'fondo-app':'linear-gradient(158deg,#A8BCF0 0%,#B9DDE4 22%,#DCE9EC 44%,#F6DCE9 70%,#F0C3DA 100%)',
+    'tarjeta-bg':'rgba(255,255,255,.54)', 'tarjeta-borde':'1px solid rgba(255,255,255,.72)',
+    'tarjeta-pad':'12px 12px 16px', 'celda-pad':'10px 10px 14px', divisor:'none',
+    'tarjeta-sombra':'0 10px 30px rgba(64,72,110,.14)', vidrio:'blur(18px) saturate(1.25)', 'barra-bg':'rgba(237,240,249,.62)',
+    fuentes:['https://api.fontshare.com/v2/css?f[]=chillax@400,500,600&display=swap','https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap'] },
 };
+/* Todo tema arranca de esta base. Sin esto, cambiar de un tema con Tanker a uno sin
+   fuente propia dejaría Tanker pegado: aplicarTema escribe variables en línea y nadie
+   las borra. Con la base, cada cambio de tema reescribe el juego completo. */
+const TEMA_BASE = {
+  serif:"'Fraunces',Georgia,serif",
+  grot:"'Space Grotesk','Inter',system-ui,sans-serif",
+  'serif-i':'italic', 'serif-w':'500', 'h1-ls':'-1.2px', 'nom-tt':'none', 'nom-ls':'0',
+  'r-chico':'2px', 'r-foto':'4px', 'r-mas':'50%', 'r-tarjeta':'0',
+  'fondo-app':'var(--esp)', 'tarjeta-bg':'transparent', 'tarjeta-borde':'none',
+  'tarjeta-pad':'0 0 20px', 'celda-pad':'0', 'tarjeta-sombra':'none', 'vidrio':'none',
+  divisor:'1px solid var(--linea)', 'barra-bg':'var(--esp)',
+};
+
+/* Las tipografías de Fontshare se piden sólo cuando el restaurante usa un tema que las
+   necesita. Un menú en Editoriale no debe pagar siete familias que no va a dibujar,
+   y el comensal está en datos móviles afuera del local. */
+const fuentesPedidas = new Set();
+function cargarFuentes(urls){
+  for(const u of (urls || [])){
+    if(fuentesPedidas.has(u)) continue;
+    fuentesPedidas.add(u);
+    const l = document.createElement('link');
+    l.rel = 'stylesheet'; l.href = u;
+    document.head.appendChild(l);
+  }
+}
+
 let temaActual = '';
 /* Las variables de alerta (--al-*) quedan fuera del tema a propósito: un aviso urgente se ve
    igual en Editoriale, Notte Verde, Giorno y Mare. Si algún día un tema las trae por error,
    este guardia las ignora en vez de dejar que las pise. */
-const VARS_INTOCABLES = k => k === 'nombre' || k.startsWith('al-');
+const VARS_INTOCABLES = k => k === 'nombre' || k === 'fuentes' || k.startsWith('al-');
 function aplicarTema(t){
   if(!TEMAS[t] || t === temaActual) return;
   temaActual = t;
-  for(const [k,v] of Object.entries(TEMAS[t])){
+  cargarFuentes(TEMAS[t].fuentes);
+  for(const [k,v] of Object.entries(Object.assign({}, TEMA_BASE, TEMAS[t]))){
     if(!VARS_INTOCABLES(k)) document.documentElement.style.setProperty('--' + k, v);
   }
   marcaAplicada = ''; // el tema pisó las variables: re-aplicar colores corporativos
@@ -1097,7 +1193,7 @@ async function sincronizar(){
         window._rInexistente = true;
         document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:var(--esp);color:var(--crema);text-align:center;padding:30px;font-family:var(--grot)">
           <div class="caps al-etiq ambar" style="margin-bottom:14px">MENÚ NO DISPONIBLE</div>
-          <div style="font-family:var(--serif);font-style:italic;font-size:30px">Este menú ya no está disponible</div>
+          <div style="font-family:var(--serif);font-style:var(--serif-i);font-size:30px">Este menú ya no está disponible</div>
           <div style="font-size:14.5px;color:var(--humo);line-height:1.8;max-width:340px">El código QR que escaneaste no corresponde a un restaurante activo. Pide ayuda al personal del restaurante.</div>
         </div>`;
       }
@@ -1671,7 +1767,7 @@ function pintarAyuda(){
   if(!k) b.push('<button class="btn-fantasma" onclick="cerrarSheets();cambiarMesa()">Cambiar de mesa</button>');
   h.innerHTML = `
   <div class="confirmacion" style="text-align:left">
-    <div class="vista-head" style="padding:0 0 6px"><div class="caps" style="color:var(--humo)">¿Necesitas algo?</div><h2 style="font-family:var(--serif);font-style:italic;font-weight:500;font-size:30px">${k ? 'Aquí te echamos la mano' : 'Estamos para servirte'}</h2></div>
+    <div class="vista-head" style="padding:0 0 6px"><div class="caps" style="color:var(--humo)">¿Necesitas algo?</div><h2 style="font-family:var(--serif);font-style:var(--serif-i);font-weight:var(--serif-w);font-size:30px">${k ? 'Aquí te echamos la mano' : 'Estamos para servirte'}</h2></div>
     <div class="acciones-orden" style="padding:16px 0 0">${b.join('')}</div>
   </div>`;
 }
@@ -2337,7 +2433,7 @@ function abrirHojaUnirse(codPrellenado){
   $('#hojaUnirse').innerHTML = `
     <div class="confirmacion" style="text-align:left">
       <div class="caps" style="color:var(--pomodoro)">UNIRME A LA CUENTA DE MI MESA</div>
-      <h2 style="text-align:left;margin-top:8px;font-family:var(--serif);font-style:italic;font-weight:500;font-size:28px">Escribe el código de 4 dígitos</h2>
+      <h2 style="text-align:left;margin-top:8px;font-family:var(--serif);font-style:var(--serif-i);font-weight:var(--serif-w);font-size:28px">Escribe el código de 4 dígitos</h2>
       <div class="nota-pie" style="margin:10px 0 4px">Lo tiene en pantalla quien abrió la cuenta. Con ese código entras a la misma cuenta y a la misma sucursal — no tienes que elegir nada más.</div>
       <input class="notas-inp" id="unirseCodigo" inputmode="numeric" maxlength="4" placeholder="0000" value="${(codPrellenado || '').replace(/\D/g, '').slice(0,4)}" style="text-align:center;letter-spacing:8px;font-size:26px;margin-top:12px">
       <div class="nota-pie" id="unirseAviso" style="margin:8px 0 0"></div>
