@@ -333,7 +333,8 @@
   .tc-preview .p-linea.corta{width:45%}
   .tc-preview .p-boton{margin-top:auto;height:32px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;letter-spacing:1.4px}
   .tc-info{padding:13px 16px;border-top:1px solid var(--linea);display:flex;align-items:center;gap:10px}
-  .tc-info .nombre-t{font-family:var(--serif);font-style:italic;font-size:17px;flex:1}
+  .tc-info .nombre-t{font-family:var(--serif);font-style:italic;font-size:17px;flex:1;min-width:0}
+  .tc-letra{padding:0 16px 13px;font-family:var(--grot);font-size:11.5px;font-weight:600;letter-spacing:1.1px;text-transform:uppercase;color:var(--humo2)}
   .btn-aplicar{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid var(--linea2);background:transparent;color:var(--crema);font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:9px 13px;border-radius:2px;cursor:pointer;line-height:1.4}
   .tema-card.activo .btn-aplicar{background:var(--pomodoro);border-color:var(--pomodoro);color:var(--papel);pointer-events:none}
   .nota-pie{margin-top:18px;font-size:13.5px;color:var(--humo2);line-height:1.8;border-left:2px solid var(--linea2);padding-left:12px;max-width:74ch}
@@ -1848,7 +1849,39 @@ const TEMAS = {
   notte:{ nombre:'Notte Verde', fondo:'#0A111E', texto:'#EAF2EC', acento:'#2FD98B', papel:'#EDF6EF' },
   giorno:{ nombre:'Giorno', fondo:'#F5EFE4', texto:'#2A241C', acento:'#C94A2F', papel:'#FFFFFF' },
   mare:{ nombre:'Mare', fondo:'#0D1B22', texto:'#EAF3F1', acento:'#43AEC5', papel:'#EEF5F2' },
+  mercado:{ nombre:'Mercado', fondo:'#FFFFFF', texto:'#111113', acento:'#E8452F', papel:'#FFFFFF',
+    letra:"'Cabinet Grotesk',system-ui,sans-serif", cursiva:'normal', peso:'800', radio:'10px',
+    pareja:'Cabinet Grotesk + Switzer',
+    fuentes:['https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,800&display=swap','https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap'] },
+  cartel:{ nombre:'Cartel', fondo:'#F1EFEA', texto:'#0A0A0A', acento:'#0A0A0A', papel:'#FFFFFF',
+    letra:"'Bespoke Stencil',Impact,sans-serif", cursiva:'normal', peso:'500', radio:'14px',
+    pareja:'Bespoke Stencil + Switzer',
+    fuentes:['https://api.fontshare.com/v2/css?f[]=bespoke-stencil@400,500&display=swap','https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap'] },
+  trompo:{ nombre:'Trompo', fondo:'#0C0C0D', texto:'#F2F2EF', acento:'#C6F24E', papel:'#0C0C0D',
+    letra:"'Tanker',Impact,sans-serif", cursiva:'normal', peso:'400', radio:'2px',
+    pareja:'Tanker + Supreme',
+    fuentes:['https://api.fontshare.com/v2/css?f[]=tanker@400&display=swap','https://api.fontshare.com/v2/css?f[]=supreme@400,500,700&display=swap'] },
+  cristal:{ nombre:'Cristal', fondo:'linear-gradient(158deg,#A8BCF0,#B9DDE4 30%,#F6DCE9 75%,#F0C3DA)',
+    texto:'#14141A', acento:'#14141A', papel:'#FFFFFF',
+    letra:"'Chillax',system-ui,sans-serif", cursiva:'normal', peso:'600', radio:'18px',
+    pareja:'Chillax + General Sans',
+    fuentes:['https://api.fontshare.com/v2/css?f[]=chillax@400,500,600&display=swap','https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap'] },
 };
+/* Las familias de Fontshare se piden nada más al abrir la pestaña de temas, y una sola vez.
+   El panel del dueño vive abierto todo el turno; no tiene por qué cargar siete tipografías
+   que a lo mejor nunca mira. */
+const fuentesPedidas = new Set();
+function cargarFuentesTemas(){
+  for(const t of Object.values(TEMAS)){
+    for(const u of (t.fuentes || [])){
+      if(fuentesPedidas.has(u)) continue;
+      fuentesPedidas.add(u);
+      const l = document.createElement('link');
+      l.rel = 'stylesheet'; l.href = u;
+      document.head.appendChild(l);
+    }
+  }
+}
 /* El estado 2 dejó de ser un solo momento. La cocina lo marca listo y el mesero confirma que lo
    recogió; mientras no haya recogida_at el plato está en la barra enfriándose, no en camino. Decirle
    «en camino a la mesa» a algo que nadie ha levantado es justo el dato que el dueño no puede creer.
@@ -2184,17 +2217,27 @@ function render(){
   if(vista === 'equipo') pintarCocina();
 
   if(vista === 'temas'){
-    $('#temasGrid').innerHTML = Object.entries(TEMAS).map(([k,t]) => `
+    cargarFuentesTemas();
+    $('#temasGrid').innerHTML = Object.entries(TEMAS).map(([k,t]) => {
+      /* La miniatura se dibuja con la letra del tema. Un tema hoy cambia tipografía y
+         esquinas, no nada más color: si la muestra no lo enseña, el dueño elige a ciegas. */
+      const letra = t.letra ? `font-family:${t.letra};font-style:${t.cursiva || 'normal'};font-weight:${t.peso || 500}` : '';
+      const r = t.radio || '2px';
+      return `
       <div class="tema-card ${d.config.tema===k?'activo':''}">
         <div class="tc-preview" style="background:${t.fondo};color:${t.texto}">
-          <div class="p-marca">${marcaDe().nombre}</div>
-          <div class="p-linea" style="background:${t.texto};opacity:.25"></div>
-          <div class="p-linea corta" style="background:${t.texto};opacity:.15"></div>
-          <div class="p-boton" style="background:${t.acento};color:${t.papel}">AGREGAR</div>
+          <div class="p-marca" style="${letra}">${marcaDe().nombre}</div>
+          <div class="p-linea" style="background:${t.texto};opacity:.25;border-radius:${r}"></div>
+          <div class="p-linea corta" style="background:${t.texto};opacity:.15;border-radius:${r}"></div>
+          <div class="p-boton" style="background:${t.acento};color:${t.papel};border-radius:${r}">AGREGAR</div>
         </div>
-        <div class="tc-info"><span class="nombre-t">${t.nombre}</span>
-          <button class="btn-aplicar" onclick="aplicarTemaCliente('${k}')">${d.config.tema===k?'Activo':'Aplicar'}</button></div>
-      </div>`).join('');
+        <div class="tc-info">
+          <span class="nombre-t" style="${letra}">${t.nombre}</span>
+          <button class="btn-aplicar" onclick="aplicarTemaCliente('${k}')">${d.config.tema===k?'Activo':'Aplicar'}</button>
+        </div>
+        ${t.pareja ? `<div class="tc-letra">${t.pareja}</div>` : ''}
+      </div>`;
+    }).join('');
   }
 }
 
