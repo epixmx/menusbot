@@ -3140,7 +3140,7 @@ function listaEs(arr){
 }
 const pinAlAzar = () => String(Math.floor(1000 + Math.random() * 9000));
 function urlMesero(m){
-  const base = new URL('mesero.html', location.href).href;
+  const base = new URL('mesero.html', baseSitio()).href;
   return base + '?r=' + encodeURIComponent(RID) + (m && m.sucursal ? '&s=' + encodeURIComponent(m.sucursal) : '');
 }
 function copiarUrlMesero(id){
@@ -3387,7 +3387,7 @@ function cocinaDe(suc){
 const sucCocinaSel = () => { const s = document.getElementById('ckSucursal'); return (s && s.value) || ''; };
 function urlCocina(suc){
   const s = suc == null ? sucCocinaSel() : suc;
-  return new URL('cocina.html', location.href).href + '?r=' + encodeURIComponent(RID) + (s ? '&s=' + encodeURIComponent(s) : '');
+  return new URL('cocina.html', baseSitio()).href + '?r=' + encodeURIComponent(RID) + (s ? '&s=' + encodeURIComponent(s) : '');
 }
 function pintarEnlaceCocina(){
   const a = document.getElementById('ckLink');
@@ -5161,7 +5161,7 @@ function renderQRs(d){
   const clave = n + '|' + suc;
   if(qrListos === clave) return;
   qrListos = clave;
-  const base = new URL('carta.html', location.href).href;
+  const base = new URL('carta.html', baseSitio()).href;
   $('#qrGrid').innerHTML = '';
   for(let i = 1; i <= n; i++){
     const celda = document.createElement('div');
@@ -5289,7 +5289,18 @@ function abrirPanel(){
   cargar();
 }
 /* URL pública de la carta del restaurante (asignada por el sistema) */
-function urlPublicaCarta(){ return new URL('carta.html', location.href).href + '?r=' + encodeURIComponent(RID); }
+/* Usar location.href como base es una trampa: si el panel se abrió con una diagonal de más
+   —menusbot.vercel.app/panel.html/— el navegador resuelve 'carta.html' como
+   /panel.html/carta.html y el enlace da 404. Y lo mismo pasaba con los QR impresos, que es
+   peor: se pegan en las mesas y nadie se entera hasta que un comensal escanea.
+   Se corta la ruta en el primer .html y se arma desde ahí, así la diagonal sobrante no estorba. */
+function baseSitio(){
+  const p = location.pathname;
+  const i = p.toLowerCase().indexOf('.html');
+  const hasta = i >= 0 ? p.slice(0, i + 5) : p;
+  return location.origin + hasta.replace(/[^/]*$/, '');
+}
+function urlPublicaCarta(){ return new URL('carta.html', baseSitio()).href + '?r=' + encodeURIComponent(RID); }
 function pintarUrlPublica(){
   if(!RID) return;
   const z = $('#urlPublica');
