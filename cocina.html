@@ -13,6 +13,23 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=Space+Grotesk:wght@400;500;600;700&display=swap">
 <style>
+  #hojaComanda{display:none}
+  @media print{
+    @page{size:80mm auto;margin:0}
+    html,body{background:#fff !important;color:#000 !important;margin:0;padding:0}
+    body > *{display:none !important}
+    #hojaComanda{display:block !important;width:72mm;margin:0;padding:4mm 0 10mm;
+      font-family:'Courier New',ui-monospace,monospace;color:#000;font-size:12pt;line-height:1.35}
+    #hojaComanda .ci-marca{font-size:14pt;font-weight:700;text-align:center;letter-spacing:1px;text-transform:uppercase}
+    #hojaComanda .ci-tipo{font-size:20pt;font-weight:700;text-align:center;margin-top:3mm;letter-spacing:1px}
+    #hojaComanda .ci-dato{font-size:11pt;text-align:center;margin-top:1mm}
+    #hojaComanda .ci-regla{border-top:2px dashed #000;margin:3mm 0}
+    #hojaComanda .ci-item{display:flex;gap:3mm;margin:2.5mm 0;font-size:14pt;font-weight:700;line-height:1.25}
+    #hojaComanda .ci-item .ci-q{min-width:11mm}
+    #hojaComanda .ci-item em{display:block;font-style:normal;font-weight:400;font-size:11pt;margin-top:.8mm}
+    #hojaComanda .ci-pie{font-size:11pt;text-align:center;margin-top:3mm}
+    #hojaComanda .ci-copia{font-size:11pt;font-weight:700;text-align:center;margin-top:2mm;letter-spacing:1px}
+  }
   :root{
     --esp:#151210; --esp2:#1D1915; --crema:#EFE7D8; --humo:#A79D8C; --humo2:#6E665A;
     --pomodoro:#E4593B; --basilico:#8FAE8B; --oro:#C9A227; --papel:#F2EBDD; --ink:#241F18;
@@ -218,6 +235,13 @@
 </head>
 <body>
 
+<!-- ============ Comanda de papel ============
+     Vive fuera de las pantallas y siempre oculta; solo existe cuando el navegador imprime.
+     El rollo termico de 80 mm tiene ~72 mm utiles, asi que la hoja se declara de ese ancho
+     y de alto automatico: el papel se corta donde termina la comanda. -->
+<div id="hojaComanda"></div>
+
+
 <!-- ============ Sin restaurante en la URL ============ -->
 <section class="pantalla" id="sinRid">
   <div class="caja-centro">
@@ -291,6 +315,7 @@
     <div class="presencia" id="chipMeseros"><i></i><span id="chipMeserosTxt">COMPROBANDO MESEROS</span></div>
     <div class="acciones-sup">
       <button class="btn-sec" id="btnSonido">SONIDO</button>
+      <button class="btn-sec" id="btnImprimir">IMPRIMIR</button>
       <button class="btn-sec" id="btnCompleta">PANTALLA COMPLETA</button>
       <button class="btn-sec" id="btnTema">TEMA OSCURO</button>
       <button class="btn-sec" id="btnSalir">SALIR</button>
@@ -494,6 +519,92 @@ function tono(){
     });
   }catch(e){}
 }
+/* ==================================================================
+   Comandas en papel  --  OPCIONAL, apagado de fabrica
+   La pantalla es la comanda; el papel es para quien lo quiera. Una dark kitchen con una
+   tablet colgada no necesita imprimir nada, y por eso esto no se prende solo.
+   Como el navegador imprime la pagina completa, la comanda no se "manda" a ningun lado:
+   se escribe en una hoja oculta, se imprime, y el resto de la pantalla se esconde con CSS
+   mientras dura. Con Chrome levantado con --kiosk --kiosk-printing sale sin dialogo.
+   La cola existe justamente para que diez ordenes juntas salgan en diez tickets, uno tras
+   otro, sin perder ninguna: print() es bloqueante y dispararlo diez veces a la vez haria
+   que el navegador se comiera nueve. Encolar es lo que hace que eso no pase.
+   Lo ya impreso se recuerda en el disco del aparato, no en memoria, porque una pantalla de
+   cocina se recarga sola --se cae el wifi, alguien la desbloquea-- y sin memoria en disco
+   cada recarga volveria a escupir todas las comandas abiertas del turno.
+   ================================================================== */
+let imprimirOn = false;
+try{ imprimirOn = localStorage.getItem(LSK('mb_cocina_imprimir')) === '1'; }catch(e){}
+let impresas = new Set();
+try{ impresas = new Set(JSON.parse(localStorage.getItem(LSK('mb_cocina_impresas')) || '[]')); }catch(e){}
+function recordarImpresa(id){
+  impresas.add(id);
+  if(impresas.size > 300) impresas = new Set([...impresas].slice(-300));
+  try{ localStorage.setItem(LSK('mb_cocina_impresas'), JSON.stringify([...impresas])); }catch(e){}
+}
+
+const colaImpresion = [];
+let imprimiendo = false;
+
+function comandaHTML(o, copia){
+  const items = o.items.map(i =>
+    '<div class="ci-item"><span class="ci-q">' + escTxt(i.qty) + '&times;</span>' +
+    '<span>' + escTxt(String(i.nombre || '').toUpperCase()) +
+    (i.notas ? '<em>' + escTxt(i.notas) + '</em>' : '') + '</span></div>').join('');
+  const platos = o.items.reduce((x, i) => x + (+i.qty || 0), 0);
+  /* Sin mesa la orden no viene de una mesa: es para llevar, a domicilio o de kiosco. Poner
+     "MESA null" en el papel manda a la cocina a buscar una mesa que no existe. */
+  const rotulo = (o.mesa === null || o.mesa === undefined || o.mesa === '')
+    ? String(o.canal || 'PEDIDO').toUpperCase()
+    : 'MESA ' + String(o.mesa).padStart(2, '0');
+  const t = new Date(o.creada);
+  const hora = isNaN(t) ? '' : t.toLocaleString('es-MX', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+  return '<div class="ci-marca">' + escTxt(nombreDelLugar().toUpperCase()) + '</div>' +
+    '<div class="ci-tipo">' + escTxt(rotulo) + '</div>' +
+    '<div class="ci-dato">' + escTxt(o.folio || '') + (o.sucursal ? ' &middot; ' + escTxt(o.sucursal) : '') + '</div>' +
+    '<div class="ci-dato">' + escTxt(hora) + '</div>' +
+    (copia ? '<div class="ci-copia">** REIMPRESION **</div>' : '') +
+    '<div class="ci-regla"></div>' + items + '<div class="ci-regla"></div>' +
+    '<div class="ci-pie">' + platos + (platos === 1 ? ' platillo' : ' platillos') + '</div>';
+}
+
+function encolarComanda(o, copia){
+  colaImpresion.push({ o: o, copia: !!copia });
+  procesarCola();
+}
+function procesarCola(){
+  if(imprimiendo || !colaImpresion.length) return;
+  imprimiendo = true;
+  const trabajo = colaImpresion.shift();
+  $('#hojaComanda').innerHTML = comandaHTML(trabajo.o, trabajo.copia);
+  /* afterprint no llega en todos los navegadores ni siempre; el respaldo por tiempo evita
+     que un solo evento perdido deje la cola trabada para el resto del turno. */
+  let libre = false;
+  const soltar = () => {
+    if(libre) return; libre = true;
+    window.removeEventListener('afterprint', soltar);
+    imprimiendo = false;
+    setTimeout(procesarCola, 400);
+  };
+  window.addEventListener('afterprint', soltar);
+  setTimeout(soltar, 6000);
+  try{ window.print(); }catch(e){ soltar(); }
+}
+
+function imprimirOrden(id, copia){
+  const o = ordenes.find(x => x.dbId === id);
+  if(!o) return;
+  recordarImpresa(id);
+  encolarComanda(o, copia);
+}
+
+function pintarBtnImprimir(){
+  const b = $('#btnImprimir');
+  if(!b) return;
+  b.textContent = imprimirOn ? 'IMPRIMIR' : 'SIN IMPRIMIR';
+  b.classList.toggle('apagado', !imprimirOn);
+}
+
 function pintarBtnSonido(){
   const b = $('#btnSonido');
   b.textContent = sonidoOn ? 'SONIDO' : 'SILENCIO';
@@ -891,6 +1002,7 @@ function entrarApp(){
   }
   $('#pieAviso').innerHTML = sinPin ? '<span class="aviso-pin">' + avisoPin + '</span>' : '';
   pintarBtnSonido();
+  pintarBtnImprimir();
   pantallaViva();
   arrancarSondeo();
 }
@@ -901,6 +1013,25 @@ $('#btnTemaSuc').addEventListener('click', alternarTema);
 $('#btnTemaConf').addEventListener('click', alternarTema);
 $('#btnReintentar').addEventListener('click', () => { arrancar(); });
 $('#btnCompleta').addEventListener('click', () => { pantallaCompleta(); pantallaViva(); });
+/* Prender la impresion imprime una comanda de prueba en el momento: es la unica forma de
+   saber si el papel va a salir sin esperar a que caiga una orden de verdad. */
+$('#btnImprimir').addEventListener('click', () => {
+  imprimirOn = !imprimirOn;
+  try{ localStorage.setItem(LSK('mb_cocina_imprimir'), imprimirOn ? '1' : '0'); }catch(e){}
+  pintarBtnImprimir();
+  pintar();
+  if(imprimirOn){
+    toast('Impresión encendida — va una comanda de prueba');
+    encolarComanda({
+      dbId: 0, folio: 'PRUEBA', mesa: null, canal: 'PRUEBA DE IMPRESION',
+      sucursal: (typeof SUC !== 'undefined' && SUC) || '', creada: new Date().toISOString(),
+      items: [{ qty: 1, nombre: 'Si lees esto, el papel ya sale solo', notas: 'Las comandas nuevas se imprimen sin que nadie toque nada' }],
+    }, false);
+  } else {
+    toast('Impresión apagada — las comandas siguen en pantalla');
+  }
+});
+
 $('#btnSonido').addEventListener('click', () => {
   sonidoOn = !sonidoOn;
   try{ localStorage.setItem(LSK('mb_cocina_sonido'), sonidoOn ? '1' : '0'); }catch(e){}
@@ -1124,6 +1255,12 @@ function detectarNuevas(){
        como para que la pantalla parezca un árbol de navidad en hora pico. */
     if(destellando.has(id)) clearTimeout(destellando.get(id));
     destellando.set(id, setTimeout(() => { destellando.delete(id); pintar(); }, 3600));
+    /* El papel sale por la misma puerta que el destello y el tono. Si llegan varias juntas
+       se encolan todas aqui y salen en orden; ninguna se pierde. */
+    if(imprimirOn && !impresas.has(id)){
+      const o = ordenes.find(x => x.dbId === id);
+      if(o){ recordarImpresa(id); encolarComanda(o, false); }
+    }
   });
   vistos = ahora;
   if(hubo) tono();
@@ -1179,8 +1316,13 @@ function tarjeta(o){
       marca + '</div>';
   }).join('');
   let pie = '';
-  if(o.estado === 0) pie = '<div class="c-pie"><button class="btn-avanza" data-act="avanzar" data-id="' + o.dbId + '">Empezar preparación</button></div>';
-  if(o.estado === 1) pie = '<div class="c-pie"><button class="btn-avanza" data-act="avanzar" data-id="' + o.dbId + '">Lista — avisar al mesero</button></div>';
+  /* Reimprimir es de las cosas que se piden a gritos en una cocina: se atoro el papel, se
+     mojo, se lo llevo el aire. Solo aparece si la impresion esta prendida. */
+  const btnRe = imprimirOn
+    ? '<button class="btn-sec chico" data-act="imprimir" data-id="' + o.dbId + '">Reimprimir</button>'
+    : '';
+  if(o.estado === 0) pie = '<div class="c-pie">' + btnRe + '<button class="btn-avanza" data-act="avanzar" data-id="' + o.dbId + '">Empezar preparación</button></div>';
+  if(o.estado === 1) pie = '<div class="c-pie">' + btnRe + '<button class="btn-avanza" data-act="avanzar" data-id="' + o.dbId + '">Lista — avisar al mesero</button></div>';
   /* En la columna 03 la cocina ya no tiene nada que apretar, pero sí necesita distinguir el
      plato que sigue en la barra del que ya va caminando: uno hay que volver a gritarlo, el
      otro no. El nombre lo escribe el mesero, así que va escapado. */
@@ -1190,7 +1332,9 @@ function tarjeta(o){
     : '<div class="c-folio"><span class="p-ok pase espera">Lista para recoger</span></div>';
   return '<div class="comanda' + (destellando.has(o.dbId) ? ' nueva' : '') + '">' +
     '<div class="c-top">' +
-      '<span class="c-mesa"><small>Mesa</small><b>' + escTxt(String(o.mesa).padStart(2,'0')) + '</b></span>' +
+      '<span class="c-mesa">' + ((o.mesa === null || o.mesa === undefined || o.mesa === '')
+        ? '<b class="c-canal">' + escTxt(String(o.canal || 'Pedido').toUpperCase()) + '</b>'
+        : '<small>Mesa</small><b>' + escTxt(String(o.mesa).padStart(2,'0')) + '</b>') + '</span>' +
       '<span class="reloj' + claseReloj(min, o.estado) + '">' + min + ' min</span>' +
     '</div>' +
     '<div class="c-folio">' + escTxt(o.folio) + (o.sucursal ? ' · ' + escTxt(o.sucursal) : '') + '</div>' +
@@ -1207,6 +1351,7 @@ $('.tablero').addEventListener('click', e => {
   if(!b) return;
   arrancarAudio();
   if(b.dataset.act === 'avanzar') avanzar(+b.dataset.id);
+  if(b.dataset.act === 'imprimir') imprimirOrden(+b.dataset.id, true);
 });
 
 /* ==================================================================
