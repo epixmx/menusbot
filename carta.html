@@ -2,6 +2,16 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<script>
+/* Vercel también sirve la misma página con una diagonal de más —/panel.html/— y ahí el
+   navegador trata el archivo como si fuera carpeta: TODO lo relativo (enlaces, QR, manifest,
+   service worker, el propio botón de salir) se resuelve un nivel abajo y da 404. En vez de
+   parchar cada uso, se endereza la dirección al entrar. Va primero que nada a propósito. */
+(function(){
+  var p = location.pathname, i = p.toLowerCase().indexOf('.html');
+  if(i >= 0 && i + 5 < p.length) location.replace(p.slice(0, i + 5) + location.search + location.hash);
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Menú digital</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
