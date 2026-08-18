@@ -371,6 +371,16 @@ async function crearCuenta(){
   }
 }
 document.getElementById('rPass').addEventListener('keydown', e => { if(e.key === 'Enter') crearCuenta(); });
+/* La portada ya preguntó qué clase de negocio es y manda la respuesta en ?tipo=. Sin esto el
+   formulario la ignoraba y volvía a arrancar en «restaurante con mesero»: el dueño elegía dos
+   veces, y si no se fijaba en el segundo selector su cuenta nacía con el flujo equivocado. */
+(function(){
+  try{
+    const t = new URLSearchParams(location.search).get('tipo');
+    const el = document.getElementById('rTipo');
+    if(el && t && NEGOCIOS[t]) el.value = t;
+  }catch(e){}
+})();
 pintarAyudaTipo();
 </script>
 </body>
