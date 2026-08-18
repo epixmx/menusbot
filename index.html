@@ -13,41 +13,185 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Menú digital para restaurantes · Demo</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;1,9..144,500&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<title>Menú y órdenes desde el teléfono de tu cliente · MenusBot</title>
+<meta name="description" content="La carta y la orden en el teléfono de quien paga. Para restaurante con mesero, mostrador o cocina sin local. Sin comprar equipo y sin cambiar tu caja.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--esp:#151210;--crema:#EFE7D8;--humo:#A79D8C;--pomodoro:#E4593B;--papel:#F2EBDD;--linea:rgba(239,231,216,.15)}
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Space Grotesk',sans-serif;background:var(--esp);color:var(--crema);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-  .caja{max-width:520px;width:100%;text-align:center}
-  .caps{font-size:10px;letter-spacing:3px;font-weight:700;color:var(--humo);text-transform:uppercase}
-  h1{font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:40px;margin:14px 0 6px;line-height:1.15}
-  h1 em{font-style:italic;color:var(--pomodoro)}
-  p{font-size:13px;color:var(--humo);line-height:1.8;margin:14px auto 30px;max-width:430px}
-  .opciones{display:grid;gap:14px}
-  a.tarjeta{display:block;border:1px solid var(--linea);padding:22px;text-decoration:none;color:var(--crema);border-radius:3px;transition:.2s;text-align:left}
-  a.tarjeta:hover{border-color:var(--pomodoro)}
-  a.tarjeta b{font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:21px;display:block}
-  a.tarjeta span{font-size:11.5px;color:var(--humo);margin-top:6px;display:block;line-height:1.6}
-  a.tarjeta .flecha{float:right;color:var(--pomodoro);font-size:20px}
-  a.alta{display:block;margin-top:14px;border:1px solid var(--pomodoro);background:rgba(228,89,59,.08);padding:18px 22px;text-decoration:none;color:var(--crema);border-radius:3px;transition:.2s}
-  a.alta:hover{background:rgba(228,89,59,.16)}
-  a.alta b{font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:18px}
-  a.alta span{display:block;font-size:10px;letter-spacing:2px;color:var(--pomodoro);font-weight:700;text-transform:uppercase;margin-top:5px}
-  footer{margin-top:34px;font-size:9px;letter-spacing:2px;color:#6E665A;text-transform:uppercase}
+  :root{--esp:#151210;--esp2:#1D1915;--crema:#EFE7D8;--humo:#A79D8C;--humo2:#6E665A;
+        --pomodoro:#E4593B;--oro:#C9A227;--papel:#F2EBDD;
+        --linea:rgba(239,231,216,.14);--linea2:rgba(239,231,216,.28);
+        --serif:'Fraunces',Georgia,serif;--grot:'Space Grotesk','Inter',system-ui,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:var(--grot);background:var(--esp);color:var(--crema);line-height:1.7;
+       -webkit-font-smoothing:antialiased}
+  .cont{max-width:1020px;margin:0 auto;padding:0 22px}
+  .caps{font-family:var(--grot);font-size:10px;font-weight:700;letter-spacing:2.6px;text-transform:uppercase;line-height:1.6}
+
+  /* ---------- Encabezado ---------- */
+  header{border-bottom:1px solid var(--linea)}
+  header .cont{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:18px;padding-bottom:18px}
+  header .marca{font-family:var(--serif);font-style:italic;font-weight:500;font-size:21px;letter-spacing:-.3px}
+  header a{color:var(--humo);text-decoration:none;font-size:11.5px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;min-height:44px;display:flex;align-items:center}
+  header a:hover{color:var(--crema)}
+
+  /* ---------- Portada ---------- */
+  .hero{padding:60px 0 46px;max-width:760px}
+  .hero .caps{color:var(--pomodoro)}
+  .hero h1{font-family:var(--serif);font-weight:500;font-size:clamp(34px,7.4vw,58px);line-height:1.03;
+           letter-spacing:-1.4px;margin:16px 0 0}
+  .hero h1 em{font-style:italic;color:var(--pomodoro)}
+  .hero p{font-size:15px;color:var(--humo);margin-top:20px;max-width:64ch}
+  .hero p b{color:var(--crema);font-weight:600}
+
+  /* ---------- Elegir tipo de negocio ----------
+     Esta es la decisión que ordena todo lo demás. Se pregunta en la puerta y no después,
+     porque una taquería que arranca con pantallas de mesero y cuenta por mesa ya empezó
+     mal: va a ver media aplicación que no es para ella y va a pensar que el producto es
+     complicado, cuando lo complicado es que le dimos el flujo de otro negocio. */
+  .seccion{padding:44px 0;border-top:1px solid var(--linea)}
+  .seccion > .caps{color:var(--oro)}
+  .seccion h2{font-family:var(--serif);font-weight:500;font-size:clamp(26px,4.6vw,36px);
+              line-height:1.1;letter-spacing:-.8px;margin:12px 0 0}
+  .seccion > p{font-size:14px;color:var(--humo);margin-top:14px;max-width:62ch}
+
+  .tipos{display:grid;gap:14px;margin-top:26px}
+  @media(min-width:820px){ .tipos{grid-template-columns:repeat(3,1fr)} }
+  a.tipo{display:flex;flex-direction:column;border:1px solid var(--linea);border-radius:3px;
+         padding:22px 20px 20px;text-decoration:none;color:var(--crema);background:var(--esp2);
+         transition:border-color .18s,transform .18s}
+  a.tipo:hover{border-color:var(--pomodoro);transform:translateY(-2px)}
+  a.tipo .num{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--pomodoro)}
+  a.tipo b{font-family:var(--serif);font-style:normal;font-weight:600;font-size:21px;line-height:1.2;
+           margin-top:8px;letter-spacing:-.3px}
+  a.tipo .que{font-size:13px;color:var(--humo);margin-top:10px;line-height:1.65;flex:1}
+  a.tipo .quien{font-size:10px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;
+                color:var(--humo2);margin-top:16px;line-height:1.6}
+  a.tipo .ir{margin-top:14px;font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--pomodoro)}
+
+  /* ---------- Demos ---------- */
+  .demos{display:grid;gap:12px;margin-top:24px}
+  @media(min-width:700px){ .demos{grid-template-columns:1fr 1fr} }
+  a.demo{display:block;border:1px solid var(--linea);border-radius:3px;padding:20px;
+         text-decoration:none;color:var(--crema);transition:border-color .18s}
+  a.demo:hover{border-color:var(--oro)}
+  a.demo b{font-family:var(--serif);font-style:italic;font-weight:500;font-size:19px;display:block}
+  a.demo span{display:block;font-size:12.5px;color:var(--humo);margin-top:7px;line-height:1.65}
+  a.demo .flecha{float:right;color:var(--oro);font-size:19px;line-height:1.2}
+
+  /* ---------- Por qué ---------- */
+  .porques{display:grid;gap:22px;margin-top:26px}
+  @media(min-width:820px){ .porques{grid-template-columns:repeat(3,1fr);gap:30px} }
+  .porque b{font-family:var(--serif);font-style:italic;font-weight:500;font-size:20px;display:block;line-height:1.25}
+  .porque p{font-size:13.5px;color:var(--humo);margin-top:9px;line-height:1.75}
+
+  /* ---------- Cierre ---------- */
+  .cierre{border-top:1px solid var(--linea);padding:44px 0 10px}
+  a.alta{display:block;border:1px solid var(--pomodoro);background:rgba(228,89,59,.09);
+         border-radius:3px;padding:22px;text-decoration:none;color:var(--crema);transition:background .18s;text-align:center}
+  a.alta:hover{background:rgba(228,89,59,.18)}
+  a.alta b{font-family:var(--serif);font-style:italic;font-weight:500;font-size:22px;display:block}
+  a.alta span{display:block;font-size:10px;font-weight:700;letter-spacing:2.2px;text-transform:uppercase;
+              color:var(--pomodoro);margin-top:8px}
+  footer{padding:32px 0 40px}
+  footer .caps{color:var(--humo2)}
 </style>
 </head>
 <body>
-<div class="caja">
-  <div class="caps">Demo interactiva</div>
-  <h1>Tu menú digital, <em>en la mesa</em></h1>
-  <p>El comensal escanea el QR de su mesa, ordena desde su teléfono y el restaurante opera todo desde un panel en vivo. Funciona para cualquier cocina: mexicana, italiana, china, mariscos…</p>
-  <div class="opciones">
-    <a class="tarjeta" href="carta.html?mesa=1&r=bellavita"><span class="flecha">→</span><b>La carta del comensal</b><span>Lo que ve el cliente al escanear el QR de su mesa: menú con fotos, orden por tiempos y seguimiento en vivo hasta pagar la cuenta.</span></a>
-    <a class="tarjeta" href="panel.html?demo"><span class="flecha">→</span><b>Panel del restaurante</b><span>Comandas en vivo, entrega por partidas, mesas y sucursales, registro y corte, reportes, carta editable, temas y QRs imprimibles. PIN: 1987</span></a>
+
+<header><div class="cont">
+  <div class="marca">MenusBot</div>
+  <a href="panel.html">Ya tengo cuenta</a>
+</div></header>
+
+<div class="cont">
+
+  <div class="hero">
+    <div class="caps">La carta y la orden en el teléfono de quien paga</div>
+    <h1>El único sistema de tu negocio que <em>usa tu cliente</em></h1>
+    <p>Un punto de venta lo usa tu personal: ordena lo que ya vendiste, y por eso es un gasto.
+       Esto lo usa quien paga. Cada mesa y cada mostrador se vuelven un canal tuyo — fotos que
+       abren el apetito, favoritos y sugerencias que suben el ticket, tu marca en su teléfono y
+       una reseña al final. <b>No sólo te ordena la operación: te trae venta.</b></p>
   </div>
-  <a class="alta" href="alta.html"><b>¿Lo quieres en tu restaurante?</b><span>Crea tu cuenta gratis y arma tu menú hoy →</span></a>
-  <footer>Sistema en la nube · Órdenes por mesa en tiempo real</footer>
+
+  <div class="seccion">
+    <div class="caps">Empieza por aquí</div>
+    <h2>¿Cómo atiendes a tu gente?</h2>
+    <p>De esto depende todo lo que sigue. Un restaurante con mesero y una taquería de mostrador
+       no llevan la cuenta igual, y no queremos que ninguno de los dos cargue con las pantallas
+       del otro. Elige y tu panel nace configurado para tu forma de trabajar.</p>
+
+    <div class="tipos">
+      <a class="tipo" href="alta.html?tipo=mesas">
+        <span class="num">01</span>
+        <b>Restaurante con mesero</b>
+        <span class="que">Cada mesa lleva su QR. El comensal arma su orden desde su lugar, tu
+          mesero pasa a confirmarla y la cuenta se lleva por mesa, con propina y con división
+          entre quienes comieron.</span>
+        <span class="quien">Restaurante · marisquería · cantina</span>
+        <span class="ir">Empezar así →</span>
+      </a>
+
+      <a class="tipo" href="alta.html?tipo=mostrador">
+        <span class="num">02</span>
+        <b>Mostrador o para llevar</b>
+        <span class="que">Sin mesas y sin mesero. Tu cliente ordena desde su teléfono mientras
+          hace fila —o antes de llegar— y sólo pasa por lo suyo. Nada de cuentas abiertas ni de
+          propina por mesa.</span>
+        <span class="quien">Taquería · cafetería · fonda · food truck</span>
+        <span class="ir">Empezar así →</span>
+      </a>
+
+      <a class="tipo" href="alta.html?tipo=cocina">
+        <span class="num">03</span>
+        <b>Cocina sin local</b>
+        <span class="que">Sólo para recoger y a domicilio, con costo de envío y pedido mínimo.
+          Ni mesas ni mostrador: la orden entra derecho a tu cocina con los datos de entrega.</span>
+        <span class="quien">Dark kitchen · cocina de casa · reparto</span>
+        <span class="ir">Empezar así →</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="seccion">
+    <div class="caps">Míralo funcionando</div>
+    <h2>Demo, sin registrarte</h2>
+    <p>Dos pantallas de un restaurante de ejemplo. Puedes ordenar y ver cómo la comanda aparece
+       del otro lado en vivo.</p>
+    <div class="demos">
+      <a class="demo" href="carta.html?mesa=1&r=bellavita"><span class="flecha">→</span><b>La carta del comensal</b><span>Lo que ve tu cliente al escanear el QR de su mesa: menú con fotos, orden por tiempos y seguimiento en vivo hasta pagar la cuenta.</span></a>
+      <a class="demo" href="panel.html?demo"><span class="flecha">→</span><b>El panel del negocio</b><span>Comandas en vivo, entrega por partidas, mesas y sucursales, corte y reportes, carta editable, temas y QRs para imprimir. PIN: 1987</span></a>
+    </div>
+  </div>
+
+  <div class="seccion">
+    <div class="caps">Por qué esto y no un punto de venta más</div>
+    <div class="porques">
+      <div class="porque">
+        <b>No cambies tu caja</b>
+        <p>Sigue cobrando como cobras hoy. Esto vive encima de lo que ya tienes: no hay que
+           sacar nada, ni migrar nada, ni volver a capacitar a tu gente.</p>
+      </div>
+      <div class="porque">
+        <b>Sin comprar equipo</b>
+        <p>El aparato es el teléfono que tu cliente ya trae en la mano. Cero terminales, cero
+           renta de hardware, cero enganche para empezar.</p>
+      </div>
+      <div class="porque">
+        <b>Trabaja para traerte venta</b>
+        <p>Un sistema interno registra lo que ya te compraron. Éste le enseña tu carta completa
+           a quien todavía no decide, y le sugiere el postre que nadie le iba a ofrecer.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="cierre">
+    <a class="alta" href="alta.html"><b>Arma tu carta hoy</b><span>Cuenta gratis · sin tarjeta · listo en dos minutos</span></a>
+  </div>
+
+  <footer><div class="caps">MenusBot · Órdenes en tiempo real desde el teléfono del comensal</div></footer>
+
 </div>
 </body>
 </html>
