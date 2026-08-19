@@ -319,7 +319,8 @@
 <section class="pantalla" id="app">
   <header class="barra-sup">
     <div class="marca" id="marcaCocina">Cocina<small id="marcaSub">MenusBot</small></div>
-    <div class="vivo" id="chipVivo"><i></i><span id="chipVivoTxt">EN VIVO</span></div>
+    <!-- Nace en «CONECTANDO», no en «EN VIVO»: dar por buena una conexión que todavía no se ha probado es la clase de mentira chica que hace que nadie le crea al indicador cuando de verdad importa. -->
+    <div class="vivo caido" id="chipVivo"><i></i><span id="chipVivoTxt">CONECTANDO…</span></div>
     <!-- Nace en gris: dar por hecho que no hay meseros antes de haber podido preguntar sería
          encender la alarma por una consulta que todavía no volvía. -->
     <div class="presencia" id="chipMeseros"><i></i><span id="chipMeserosTxt">COMPROBANDO MESEROS</span></div>
@@ -986,6 +987,11 @@ function seguirAEntrada(){
    ================================================================== */
 let ordenes = [];
 let enLinea = false;
+/* Cuándo fue la última vez que estos datos vinieron de verdad del servidor. Sin este dato,
+   «SIN CONEXIÓN» no dice lo único que la cocina necesita saber: si lo que está viendo es de
+   hace diez segundos o de hace media hora. Una pantalla que enseña comandas viejas sin
+   avisarlo es peor que una pantalla apagada, porque la apagada no engaña a nadie. */
+let ultimoOk = 0;
 let primerSondeo = true;
 let timerSondeo = null;
 let vistos = null;                  // ids ya vistos, para saber qué es nuevo
@@ -1229,9 +1235,26 @@ async function sondear(){
       recogidaPor: f.recogida_por || '',
     }));
     enLinea = true;
+    ultimoOk = Date.now();
   }catch(e){ enLinea = false; }
   detectarNuevas();
   pintar();
+}
+
+/* La edad de lo que se está viendo, en palabras. Se dice en el mismo chip que ya decía «SIN
+   CONEXIÓN», porque es el lugar donde la cocina ya voltea a ver cuando algo se siente raro. */
+function edadDatos(){
+  const seg = Math.max(0, Math.round((Date.now() - ultimoOk) / 1000));
+  if(seg < 60) return 'HACE ' + seg + ' S';
+  const min = Math.round(seg / 60);
+  if(min < 60) return 'HACE ' + min + ' MIN';
+  const hrs = Math.floor(min / 60);
+  return 'HACE ' + hrs + ' H ' + (min % 60) + ' MIN';
+}
+function textoCaido(){
+  return ultimoOk
+    ? 'SIN CONEXIÓN — LO ÚLTIMO QUE SUPIMOS FUE ' + edadDatos()
+    : 'SIN CONEXIÓN — TODAVÍA NO CARGA NADA';
 }
 
 /* Lo que la cocina tiene derecho a ver: autorizado por el mesero, sin cerrar y de su
@@ -1297,7 +1320,7 @@ function pintar(){
 
   const chip = $('#chipVivo');
   chip.classList.toggle('caido', !enLinea);
-  $('#chipVivoTxt').textContent = enLinea ? 'EN VIVO' : 'SIN CONEXIÓN — REVISA EL INTERNET';
+  $('#chipVivoTxt').textContent = enLinea ? 'EN VIVO' : textoCaido();
   const platos = lista.filter(o => o.estado < 2).reduce((s, o) => s + o.items.reduce((x, i) => x + (+i.qty || 0), 0), 0);
   $('#pieResumen').textContent = lista.length
     ? lista.length + (lista.length === 1 ? ' comanda abierta · ' : ' comandas abiertas · ') + platos + (platos === 1 ? ' platillo por salir' : ' platillos por salir')
@@ -1393,6 +1416,49 @@ async function avanzar(id){
    desde la cocina —quien las hace es el mesero, y la firma tiene que decir la verdad—, así que
    aquí no hay forma de tocar recogida_at ni de llegar al estado 3. El nombre del pase es puro
    encabezado. */
+
+/* ---------- Que esta pantalla ABRA sin internet ----------
+   Guardar la aplicación no es guardar los datos: lo que queda en el aparato es el HTML, y lo
+   que se enseña sigue viniendo del servidor con su edad a la vista (el chip de arriba). Sin
+   esto, una cocina sin señal ni siquiera puede recargar la página que ya tenía abierta.
+
+   El interruptor va PRIMERO y manda sobre todo lo demás. Si sw-estado.json dice que no, esta
+   pantalla se desinstala el service worker y borra lo guardado, y quedamos exactamente como
+   estábamos antes de esta función. Es la salida de emergencia: si el caché resulta ser un
+   problema en un restaurante de verdad, se apaga cambiando una línea en ese archivo, sin
+   volver a publicar código y sin que nadie en el local tenga que hacer nada.
+
+   Si el interruptor no se puede consultar —porque justo no hay red— no se decide nada y todo
+   se queda como esté. Apagar el modo sin conexión por no tener conexión sería un chiste. */
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  const apagar = async () => {
+    try{
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for(const r of regs){
+        try{ if(r.active) r.active.postMessage({ mb:'apagar' }); }catch(e){}
+        try{ await r.unregister(); }catch(e){}
+      }
+      if(window.caches){
+        const ns = await caches.keys();
+        await Promise.all(ns.map(x => caches.delete(x)));
+      }
+    }catch(e){}
+  };
+  const arrancarSW = async () => {
+    let estado = null;
+    try{
+      const r = await fetch('sw-estado.json?t=' + Date.now(), { cache:'no-store' });
+      estado = await r.json();
+    }catch(e){ return; }
+    if(estado && estado.activo === false) return apagar();
+    try{ await navigator.serviceWorker.register('sw.js'); }catch(e){}
+  };
+  /* Después de pintar, no antes: registrar el service worker nunca puede retrasar la primera
+     comanda que aparece en pantalla. */
+  if(document.readyState === 'complete') setTimeout(arrancarSW, 1200);
+  else window.addEventListener('load', () => setTimeout(arrancarSW, 1200));
+})();
 
 arrancar();
 </script>
