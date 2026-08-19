@@ -1,0 +1,5 @@
+{
+  "activo": true,
+  "version": 2,
+  "nota": "Interruptor del modo sin conexion. Poner activo en false hace que cada pantalla, la proxima vez que abra, desinstale su service worker y borre lo que tenia guardado. Vuelve todo a como estaba antes, sin publicar codigo y sin que el restaurante haga nada."
+}
