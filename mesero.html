@@ -13,7 +13,8 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f0d0b">
+<link rel="icon" type="image/png" href="icono-192.png">
+<meta name="theme-color" content="#F5F4EF">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Mesero">
@@ -357,6 +358,24 @@
   .cambio b,.cierre b{font-style:normal}
   /* Etiquetas de urgencia, estados de cocina y globos: Space Mono */
   .et,.estado-cocina,.nav-btn .globo,.franja-coc{font-family:var(--mono);letter-spacing:.4px}
+  /* ---- Marca MenusBot en la app del mesero ----
+     Mismos tokens que el panel y el sitio. Nada se mueve de lugar: solo color,
+     radios y letra. */
+  :root{--mb-bosque:#0C3A30;--mb-verde:#1E6B52;--mb-verde2:#29594B;--mb-lima:#E6FD5A;--mb-crema:#EAF2EC}
+  .btn-primario{background:var(--mb-verde);color:#FFFFFF;border-radius:999px;letter-spacing:1.1px}
+  .btn-primario:active{background:var(--mb-verde2)}
+  .btn-fantasma,.btn-salir,.btn-tema{border-radius:999px}
+  .cnt{border-radius:12px}
+  .aviso-caja{border-radius:14px}
+  .mesero-card{border-radius:14px}
+  .bloque{border-radius:14px}
+  .campo input{border-radius:12px}
+  .et,.pill,.chip{border-radius:999px}
+  /* La pestaña activa de la barra de abajo se marca en lima, igual que en el panel */
+  .nav-btn.activo::after{border-top:3px solid var(--mb-lima)}
+  html.claro .nav-btn.activo::after{border-top-color:var(--mb-verde)}
+  .cab-entrada h1 em{color:var(--mb-verde)}
+  html.claro .bloque,html.claro .mesero-card{box-shadow:0 6px 18px rgba(14,62,47,.06)}
 </style>
 <script>if((localStorage.getItem('mb_mesero_tema')||'claro')==='claro')document.documentElement.classList.add('claro')</script>
 </head>
@@ -480,7 +499,7 @@ function pintarBtnTema(){
   const claro = document.documentElement.classList.contains('claro');
   $$('[data-tema-btn]').forEach(b => { b.textContent = claro ? 'TEMA OSCURO' : 'TEMA CLARO'; });
   const meta = document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.setAttribute('content', claro ? '#F6F1E7' : '#0f0d0b');
+  if(meta) meta.setAttribute('content', claro ? '#F5F4EF' : '#08281F'); /* papel y bosque del rebranding */
 }
 function alternarTemaMesero(){
   const claro = document.documentElement.classList.toggle('claro');

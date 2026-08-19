@@ -13,6 +13,7 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="icon" type="image/png" href="icono-192.png">
 <title>Menú digital</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -365,7 +366,10 @@
   .btn-full{position:absolute;top:16px;left:16px;display:flex;align-items:center;gap:9px;border:1px solid rgba(245,237,222,.35);background:rgba(21,18,16,.78);backdrop-filter:blur(6px);color:#F5EDDE;font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;padding:14px 16px;border-radius:var(--r-chico);cursor:pointer;z-index:5;min-height:44px}
   .chip-lupa{position:absolute;right:14px;bottom:14px;width:42px;height:42px;border-radius:50%;background:rgba(18,15,12,.72);backdrop-filter:blur(5px);border:1px solid var(--linea2);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:4}
   .chip-lupa .ico{width:17px;height:17px;color:#F5EDDE;stroke-width:2}
-  .chip-video{position:absolute;left:14px;bottom:14px;display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:var(--r-chico);background:rgba(18,15,12,.72);backdrop-filter:blur(5px);border:1px solid var(--linea2);pointer-events:none;z-index:4}
+  /* Arriba a la izquierda y no abajo: el contenido de la ficha sube 44px sobre la foto
+     (.hoja .contenido{margin-top:-44px}) y ahí abajo el chip le caía encima al texto.
+     Comparte esquina con «Ver foto en grande», que nunca aparece al mismo tiempo. */
+  .chip-video{position:absolute;left:16px;top:16px;display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:var(--r-chico);background:rgba(18,15,12,.72);backdrop-filter:blur(5px);border:1px solid var(--linea2);pointer-events:none;z-index:4}
   .chip-video .ico{width:12px;height:12px;color:#F5EDDE}
   .hoja .contenido{padding:0 24px 36px;margin-top:-44px;position:relative;z-index:2}
   .hoja .f-cat{font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--pomodoro)}
@@ -751,7 +755,7 @@
 
 <script>
 /* MENUSBOT v4 — datos que en producto real viven en la nube (Supabase) */
-const RESTAURANTE = { nombre:'Trattoria Bella Vita', moneda:'MXN' };
+const RESTAURANTE = { nombre:'Flautas El Crunch', moneda:'MXN' };
 const IMG_BASE = 'https://xwcgqhlsubyfmpdjabjt.supabase.co/storage/v1/object/public/menusbot-demo/';
 const IMG = id => IMG_BASE + id + '.jpg';
 /* Multi-restaurante: el QR SIEMPRE trae &r=slug. Sin restaurante en la URL → landing general. */
@@ -955,9 +959,17 @@ const $ = s => document.querySelector(s);
 const fmt = n => '$' + n;
 let filtroActivo = 'todo', catActiva = 'todas';
 let mesa = null, pedido = [], ordenes = [], vistaActual = 'menu';
-/* Cuenta de puntos (100% opcional) */
+/* ---------- Cuenta de puntos: RETIRADA el 19-ago-2026 ----------
+   La versión vieja daba de alta al comensal con un teléfono a 10 dígitos SIN VERIFICAR y
+   guardaba nombre, teléfono y saldo en menusbot_clientes, una tabla que estaba abierta a
+   la llave anónima: cualquiera podía leer los datos de todos los clientes de todos los
+   restaurantes y escribirles los puntos que quisiera. Además nunca hubo forma de canjear,
+   así que el programa prometía algo que no podía cumplir.
+   Se apaga aquí —no se borra el código— mientras se construye el reemplazo con cuenta de
+   verdad (Supabase Auth por correo), libro de movimientos y canje. Ver el plan de puntos.
+   `cliente` se queda en null a propósito: con eso ninguna pantalla ofrece el alta, ninguna
+   consulta toca menusbot_clientes, y las órdenes siguen viajando con cliente_id: null. */
 let cliente = null;
-try{ cliente = JSON.parse(localStorage.getItem(LSK('mb_cliente')) || 'null'); }catch(e){}
 let puntosOfrecido = false;
 
 /* ================================================================
@@ -1127,7 +1139,7 @@ function aplicarTema(t){
 }
 
 /* ---------- Identidad de marca (el restaurante la define en su panel) ---------- */
-let MARCA = { prefijo:'Trattoria', nombre:'Bella Vita', lema:'Est. 1987', logo:'', acento:'', secundario:'' };
+let MARCA = { prefijo:'Taquería', nombre:'Flautas El Crunch', lema:'Las más crujientes', logo:'', acento:'', secundario:'' };
 let marcaAplicada = '';
 const iniciales = n => (n || 'BV').split(/\s+/).filter(Boolean).slice(0,2).map(w => w[0].toUpperCase()).join('') || 'BV';
 function aplicarMarca(){
@@ -1786,7 +1798,6 @@ function pintarAyuda(){
   } else if(canalesCarta().length > 1){
     b.push('<button class="btn-primario" onclick="abrirHojaPedido()">Cambiar tipo de pedido</button>');
   }
-  b.push('<button class="btn-fantasma" onclick="abrirHojaCliente()">Mi cuenta de puntos</button>');
   b.push('<button class="btn-fantasma" onclick="cerrarSheets();mostrarGuia(true)">¿Cómo funciona esta carta?</button>');
   if(!k) b.push('<button class="btn-fantasma" onclick="cerrarSheets();cambiarMesa()">Cambiar de mesa</button>');
   h.innerHTML = `
@@ -4033,6 +4044,8 @@ function abrirHojaCliente(){
   history.pushState({ v: vistaActual, capa: 'cliente' }, '');
 }
 function ofrecerCuentaPuntos(){
+  return;   // programa de puntos retirado mientras se construye el nuevo (ver arriba)
+  /* eslint-disable no-unreachable */
   if(puntosOfrecido || cliente) return;
   try{ if(localStorage.getItem(LSK('mb_invitado')) || localStorage.getItem(LSK('mb_puntos_visto'))) return; }catch(e){}
   puntosOfrecido = true;

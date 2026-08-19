@@ -13,10 +13,12 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="icono-192.png">
 <title>Crea el menú digital de tu restaurante · Alta gratis</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400;1,9..144,500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- Piel «Huerto»: tipografías de marca (rebranding 2026) -->
 <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{--esp:#151210;--esp2:#1D1915;--crema:#EFE7D8;--humo:#A79D8C;--humo2:#6E665A;--pomodoro:#E4593B;--basilico:#8FAE8B;--oro:#C9A227;--papel:#F2EBDD;--ink:#241F18;--linea:rgba(239,231,216,.14);--linea2:rgba(239,231,216,.28);--serif:'Fraunces',Georgia,serif;--grot:'Space Grotesk',system-ui,sans-serif}
   *{margin:0;padding:0;box-sizing:border-box}
@@ -76,6 +78,19 @@
   }
   /* Clash Display no trae cursiva */
   h1,.paso .num,.paso b,.form h2,.lado b{font-style:normal}
+  /* ---- Marca MenusBot: mismos tokens que el sitio y el panel ---- */
+  :root{--mb-bosque:#0C3A30;--mb-verde:#1E6B52;--mb-verde2:#29594B;--mb-lima:#E6FD5A}
+  header{background:var(--mb-bosque);border-bottom:none;padding:18px 0}
+  header .caps{color:rgba(234,242,236,.72);font-family:'Space Mono','Courier New',monospace;letter-spacing:.8px}
+  header a{color:#FFFFFF;border-color:rgba(234,242,236,.34);border-radius:999px}
+  header a:hover{background:rgba(234,242,236,.14);border-color:var(--mb-lima);color:var(--mb-lima)}
+  h1 em{font-style:normal;color:#0E3E2F;background:linear-gradient(transparent 68%,var(--mb-lima) 68%);padding:0 2px}
+  .paso{border-radius:14px;box-shadow:0 6px 18px rgba(14,62,47,.05)}
+  .paso .num{color:var(--mb-verde)}
+  .form{border-radius:18px;box-shadow:0 10px 30px rgba(14,62,47,.07)}
+  input,select{border-radius:10px}
+  .btn{background:var(--mb-verde);color:#FFFFFF;border-radius:999px;letter-spacing:1.8px}
+  .btn:hover{background:var(--mb-verde2)}
 </style>
 </head>
 <body>

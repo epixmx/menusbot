@@ -13,7 +13,8 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#F6F1E7">
+<link rel="icon" type="image/png" href="icono-192.png">
+<meta name="theme-color" content="#0C3A30">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Cocina">
 <title>Cocina · MenusBot</title>
@@ -22,6 +23,9 @@
      queda sin internet, la pantalla sale igual con Georgia y la del sistema, sin esperar. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=satoshi@400,500,700,900&display=swap">
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap">
 <style>
   #hojaComanda{display:none}
   @media print{
@@ -248,6 +252,54 @@
     .columna{min-height:220px}
     .col-cuerpo{overflow:visible}
   }
+  /* ================= PIEL «HUERTO» (rebranding 2026) =================
+     Solo estilos: variables, tipografías, color y radios. La estructura y el
+     funcionamiento de la pantalla de cocina quedan idénticos. Las alertas
+     sólidas conservan sus cuatro tintas de siempre. Va al final a propósito:
+     pisa por cascada, sin tocar ninguna regla de arriba. */
+  :root{
+    --mb-bosque:#0C3A30; --mb-verde:#1E6B52; --mb-verde2:#29594B;
+    --mb-lima:#E6FD5A; --mb-crema:#EAF2EC;
+
+    --esp:#08281F; --esp2:#0E3E2F; --crema:#EAF2EC; --humo:#9FBBAD; --humo2:#6B8779;
+    --pomodoro:#63C89A; --basilico:#8FD4AE; --oro:#E9C46A; --papel:#F5F4EF; --ink:#0E3E2F;
+    --linea:rgba(234,242,236,.14); --linea2:rgba(234,242,236,.28);
+    --serif:'Clash Display','Space Grotesk',system-ui,sans-serif;
+    --grot:'Satoshi','Space Grotesk',system-ui,sans-serif;
+    --mono:'Space Mono','Courier New',monospace;
+  }
+  html.claro{
+    --esp:#F5F4EF; --esp2:#FFFFFF; --crema:#22302A; --humo:#5F6B62; --humo2:#98A198;
+    --pomodoro:#1E6B52; --basilico:#29594B; --oro:#8A7A1E; --papel:#FBFBF7; --ink:#0E3E2F;
+    --linea:rgba(14,62,47,.13); --linea2:rgba(14,62,47,.28);
+  }
+  html.claro .comanda{box-shadow:0 10px 26px rgba(14,62,47,.12);border:1px solid rgba(14,62,47,.09)}
+  /* Clash Display no trae cursiva: lo que era Fraunces itálica va derecho */
+  .marca,.col-cab .cuenta-col,.comanda .c-mesa,.caja-centro h1,.c-tipo{font-style:normal}
+  /* Estados, tiempos y datos de sistema: Space Mono */
+  .vivo,.cola-chip,.et,.c-hora,.c-tiempo,.pill-est{font-family:var(--mono);letter-spacing:.4px}
+
+  /* ---- La barra de arriba es la banda de marca, igual que en el panel ---- */
+  .barra-sup,html.claro .barra-sup{background:var(--mb-bosque);border-bottom:none}
+  .barra-sup .marca,html.claro .barra-sup .marca{color:#FFFFFF;letter-spacing:-.3px}
+  .barra-sup .marca small,html.claro .barra-sup .marca small{color:rgba(234,242,236,.66);font-family:var(--mono);font-weight:400;letter-spacing:1.1px}
+  .barra-sup .vivo,html.claro .barra-sup .vivo{color:var(--mb-lima);border-color:rgba(234,242,236,.3);border-radius:999px}
+  .barra-sup .vivo i,html.claro .barra-sup .vivo i{background:var(--mb-lima)}
+  .barra-sup .vivo.caido,html.claro .barra-sup .vivo.caido{color:var(--al-txt);background:var(--al-roja);border-color:var(--al-roja)}
+  .barra-sup .vivo.caido i{background:var(--al-txt)}
+  .barra-sup .btn-sec,html.claro .barra-sup .btn-sec{color:var(--mb-crema);border-color:rgba(234,242,236,.32)}
+  .barra-sup .btn-sec:hover,html.claro .barra-sup .btn-sec:hover{background:rgba(234,242,236,.14);border-color:rgba(234,242,236,.5);color:#fff}
+  .barra-sup .cola-chip{border-radius:999px}
+
+  /* ---- Botones y tarjetas con los radios de la marca ---- */
+  .btn-sec,.btn-grande,.btn-suc{border-radius:999px}
+  .btn-avanza{background:var(--mb-verde);color:#FFFFFF;border-radius:999px;letter-spacing:1.2px}
+  .btn-avanza:hover{background:var(--mb-verde2)}
+  .btn-sec:hover{border-color:var(--mb-verde);color:var(--mb-verde)}
+  .btn-suc:hover{border-color:var(--mb-verde);color:var(--mb-verde)}
+  .comanda{border-radius:14px}
+  .col-cab .cuenta-col{color:#9FE0BE}
+  html.claro .col-cab .cuenta-col{color:#0E3E2F}
 </style>
 <script>if((localStorage.getItem('mb_cocina_tema')||'claro')==='claro')document.documentElement.classList.add('claro')</script>
 </head>
@@ -389,7 +441,7 @@ function pintarBtnTema(){
   const txt = claro ? 'TEMA OSCURO' : 'TEMA CLARO';
   ['#btnTema','#btnTemaEntrada','#btnTemaSuc','#btnTemaConf'].forEach(s => { const b = $(s); if(b) b.textContent = txt; });
   const meta = document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.setAttribute('content', claro ? '#F6F1E7' : '#151210');
+  if(meta) meta.setAttribute('content', '#0C3A30'); /* la barra del navegador siempre en el verde de la marca */
 }
 function alternarTema(){
   const claro = document.documentElement.classList.toggle('claro');
