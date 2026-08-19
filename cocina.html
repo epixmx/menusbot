@@ -137,6 +137,14 @@
      enterarse desde el otro lado del pasillo, no leyendo letras chicas. */
   .vivo.caido{background:var(--al-roja);border-color:var(--al-roja);color:var(--al-txt)}
   .vivo.caido i{background:var(--al-txt);animation:none}
+  /* Cambios hechos que todavía no salen. Ámbar y no rojo a propósito: no es una falla, es
+     trabajo en camino. Desaparece solo cuando la cola queda vacía; mientras se vea, hay algo
+     que este aparato sabe y el resto del restaurante todavía no. */
+  .cola-chip{display:none;align-items:center;gap:9px;font-size:14px;letter-spacing:1.4px;
+    font-weight:700;white-space:nowrap;padding:9px 14px;border-radius:2px;
+    background:var(--al-ambar);border:1px solid var(--al-ambar);color:var(--al-txt)}
+  .cola-chip.hay{display:flex}
+  .cola-chip i{width:8px;height:8px;border-radius:50%;background:var(--al-txt);flex-shrink:0;animation:parp 1.6s infinite}
   /* ---------- Quiénes están del otro lado ----------
      Va en el encabezado y no en una ventana: en la cocina nadie tiene las manos libres para
      cerrar avisos, y el dato hace falta todo el turno, no una vez al entrar. */
@@ -323,6 +331,7 @@
     <div class="vivo caido" id="chipVivo"><i></i><span id="chipVivoTxt">CONECTANDO…</span></div>
     <!-- Nace en gris: dar por hecho que no hay meseros antes de haber podido preguntar sería
          encender la alarma por una consulta que todavía no volvía. -->
+    <div class="cola-chip" id="chipCola"><i></i><span id="chipColaTxt"></span></div>
     <div class="presencia" id="chipMeseros"><i></i><span id="chipMeserosTxt">COMPROBANDO MESEROS</span></div>
     <div class="acciones-sup">
       <button class="btn-sec" id="btnSonido">SONIDO</button>
@@ -1073,9 +1082,13 @@ function arrancarSondeo(){
   /* Se reinicia el contador para que el primer latido salga en la vuelta de ya, sin esperar
      los 30 s: el mesero que abre una mesa en ese momento tiene que ver la cocina encendida. */
   tickPres = 0;
+  pintarCola();
   sondear();
   timerSondeo = setInterval(sondear, 4000);
 }
+/* Cuando el sistema operativo dice que volvió la red no se espera a la siguiente vuelta de los
+   4 s: se intenta de inmediato. Que el aviso llegue a la barra tres segundos antes importa. */
+window.addEventListener('online', () => { if(RID) vaciarCola(); });
 
 /* ==================================================================
    PRESENCIA — QUIÉN ESTÁ DEL OTRO LADO
@@ -1237,6 +1250,10 @@ async function sondear(){
     enLinea = true;
     ultimoOk = Date.now();
   }catch(e){ enLinea = false; }
+  /* La cola se vacía justo después de una consulta que sí volvió: es la señal más honesta de
+     que hay red, mejor que navigator.onLine, que dice que sí con el wifi del local conectado
+     a un módem sin internet — que es exactamente lo que pasa en un restaurante. */
+  if(enLinea) vaciarCola();
   detectarNuevas();
   pintar();
 }
@@ -1255,6 +1272,78 @@ function textoCaido(){
   return ultimoOk
     ? 'SIN CONEXIÓN — LO ÚLTIMO QUE SUPIMOS FUE ' + edadDatos()
     : 'SIN CONEXIÓN — TODAVÍA NO CARGA NADA';
+}
+
+/* ==================================================================
+   LA COLA DE SALIDA
+   ==================================================================
+   Lo que esta pantalla escribe son dos cambios de estado: 0→1 y 1→2. Si la red no está, no se
+   pierden: se guardan aquí y salen solos cuando vuelve.
+
+   Tres reglas hacen que esto sea seguro, y sin las tres no valdría la pena hacerlo:
+
+   1. El estado NUNCA camina hacia atrás. Cada envío lleva el filtro «estado menor que el que
+      voy a poner». Si mientras tanto el mesero ya entregó el plato, mi cambio viejo llega y no
+      hace nada, en vez de resucitar una comanda ya cerrada. Es lo que vuelve inofensivo que
+      algo salga tarde.
+   2. Una sola entrada por comanda, con el estado más alto. Si el cocinero tocó dos veces, sale
+      un envío, no dos.
+   3. El aviso al mesero caduca aunque el cambio no. Un «ya está listo» que sale cuarenta
+      minutos tarde es cierto como dato e inútil como aviso: le suena el teléfono por un plato
+      que se comieron hace rato. Pasados diez minutos se guarda el estado y se calla el timbre.
+
+   La cola vive en el aparato, así que aguanta que alguien recargue o que se apague la tele. */
+const COLA_LS = LSK('mb_cocina_cola');
+const AVISO_CADUCA = 10 * 60 * 1000;   // 10 min: más viejo que esto se guarda pero no suena
+let cola = [];
+try{ cola = JSON.parse(localStorage.getItem(COLA_LS) || '[]'); }catch(e){ cola = []; }
+if(!Array.isArray(cola)) cola = [];
+
+function guardarCola(){
+  try{ localStorage.setItem(COLA_LS, JSON.stringify(cola)); }catch(e){}
+  pintarCola();
+}
+function pintarCola(){
+  const chip = $('#chipCola');
+  if(!chip) return;
+  chip.classList.toggle('hay', cola.length > 0);
+  if(cola.length) $('#chipColaTxt').textContent =
+    cola.length === 1 ? '1 CAMBIO SIN ENVIAR' : cola.length + ' CAMBIOS SIN ENVIAR';
+}
+function encolar(dbId, estado){
+  const ya = cola.find(x => x.dbId === dbId);
+  if(ya){ ya.estado = Math.max(ya.estado, estado); ya.ts = ya.ts || Date.now(); }
+  else cola.push({ dbId, estado, ts: Date.now(), mesa: '', sucursal: '' });
+  guardarCola();
+}
+let vaciando = false;
+async function vaciarCola(){
+  if(vaciando || !cola.length || !RID) return;
+  vaciando = true;
+  try{
+    /* De la más vieja a la más nueva y de una en una: si la red vuelve a medias, lo que ya
+       salió queda fuera de la cola y lo que no, se queda esperando su turno. */
+    for(const t of [...cola]){
+      try{
+        /* El filtro de estado es el candado. PostgREST aplica el cambio SOLO a las filas que
+           todavía están más atrás; si la comanda ya avanzó, no toca nada y contesta bien. */
+        await api('menusbot_ordenes?id=eq.' + t.dbId + '&estado=lt.' + t.estado,
+                  { method:'PATCH', body: JSON.stringify({ estado: t.estado }) });
+        if(t.estado === 2 && (Date.now() - (t.ts || 0)) < AVISO_CADUCA){
+          avisar({ restaurante_id: RID, sucursal: t.sucursal || '', mesa: t.mesa, tipo:'listo' });
+        }
+        cola = cola.filter(x => x.dbId !== t.dbId);
+        guardarCola();
+      }catch(e){
+        /* Sin status es que no hubo red: se corta aquí y se reintenta en la vuelta siguiente.
+           Con status es que el servidor contestó y dijo que no; reintentarlo cada 4 s para
+           siempre no lo va a arreglar y taparía la cola de lo que sí puede salir. */
+        if(e && e.status){ cola = cola.filter(x => x.dbId !== t.dbId); guardarCola();
+          toast('Un cambio de la mesa ' + (t.mesa || '?') + ' no se pudo guardar — revísalo', true); }
+        break;
+      }
+    }
+  } finally { vaciando = false; }
 }
 
 /* Lo que la cocina tiene derecho a ver: autorizado por el mesero, sin cerrar y de su
@@ -1399,16 +1488,31 @@ async function avanzar(id){
   const antes = o.estado;
   o.estado = antes + 1;
   pintar();
-  // Estado 2 = el platillo está listo: le suena el teléfono al mesero de esa mesa para que lo
-  // recoja. El aviso va suelto y con el error tragado: si falla, el cambio se guarda igual.
-  if(o.estado === 2) avisar({ restaurante_id: RID, sucursal: o.sucursal || '', mesa: o.mesa, tipo:'listo' });
   try{
-    await api('menusbot_ordenes?id=eq.' + o.dbId, { method:'PATCH', body: JSON.stringify({ estado: o.estado }) });
+    /* Mismo filtro de estado que usa la cola: el candado vale igual cuando sí hay red, porque
+       otra pantalla pudo haber movido esta comanda entre que se pintó y que se toca. */
+    await api('menusbot_ordenes?id=eq.' + o.dbId + '&estado=lt.' + o.estado,
+              { method:'PATCH', body: JSON.stringify({ estado: o.estado }) });
+    // Estado 2 = el platillo está listo: le suena el teléfono al mesero de esa mesa. El aviso
+    // va DESPUÉS de que el cambio se guardó: sonarle por algo que no quedó escrito es mandarlo
+    // a una barra donde no hay nada. Va suelto y con el error tragado.
+    if(o.estado === 2) avisar({ restaurante_id: RID, sucursal: o.sucursal || '', mesa: o.mesa, tipo:'listo' });
     toast(o.estado === 1 ? 'Mesa ' + o.mesa + ' — en preparación' : 'Mesa ' + o.mesa + ' — lista, ya le avisamos al mesero');
   }catch(e){
-    o.estado = antes;
-    pintar();
-    toast('Sin conexión — no se guardó, vuelve a intentar', true);
+    if(e && e.status){
+      /* El servidor contestó y dijo que no. Eso no lo arregla esperar, así que se revierte y
+         se avisa, como antes. */
+      o.estado = antes;
+      pintar();
+      toast('No se pudo guardar — vuelve a intentar', true);
+      return;
+    }
+    /* No hubo red. El cambio NO se revierte: el cocinero ya lo hizo de verdad y en su pantalla
+       tiene que seguir hecho. Se guarda para que salga solo cuando vuelva la señal. */
+    encolar(o.dbId, o.estado);
+    const nuevo = cola.find(x => x.dbId === o.dbId);
+    if(nuevo){ nuevo.mesa = o.mesa; nuevo.sucursal = o.sucursal || ''; guardarCola(); }
+    toast('Sin conexión — queda guardado y se manda solo al volver la señal');
   }
 }
 
