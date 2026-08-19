@@ -819,7 +819,14 @@ async function cargarConfig(){
     const cfgs = await api('menusbot_config?id=eq.' + encodeURIComponent(RID) + '&select=data');
     cfg = (cfgs && cfgs[0] && cfgs[0].data) || {};
     cfgOk = true;
-  }catch(e){ cfgOk = false; }
+    guardarMemoria(true);
+  }catch(e){
+    cfgOk = false;
+    /* Sin la configuración esta pantalla no sabe ni cómo se llama el lugar, ni qué sucursal
+       es, ni qué PIN pedir: sin ella no puede entrar aunque tenga las comandas guardadas. */
+    const g = leerMemoria();
+    if(g && g.cfg && Object.keys(g.cfg).length){ cfg = g.cfg; if(g.ts) ultimoOk = g.ts; }
+  }
   resolverPin();
 }
 
@@ -838,7 +845,11 @@ async function arrancar(){
 
   /* Si la nube no contestó pero esta pantalla ya había entrado antes, se entra igual: dejar
      la cocina a ciegas por un parpadeo de internet es peor que cualquier otra cosa. */
-  if(!cfgOk && !sesion){
+  /* Se entra si el servidor contestó, si esta pantalla ya había entrado antes, o si hay
+     memoria fresca de este mismo local. Lo que NO se hace es dejar pasar a ciegas: si se entra
+     con memoria, el encabezado ya viene en rojo diciendo de cuándo es lo que se está viendo. */
+  const recuerdo = leerMemoria();
+  if(!cfgOk && !sesion && !(recuerdo && recuerdo.cfg && Object.keys(recuerdo.cfg).length)){
     $('#entradaSub').textContent = 'No se pudo conectar con el restaurante. Revisa el internet del lugar.';
     $('#btnReintentar').style.display = 'inline-flex';
     return;
@@ -1249,7 +1260,19 @@ async function sondear(){
     }));
     enLinea = true;
     ultimoOk = Date.now();
-  }catch(e){ enLinea = false; }
+    guardarMemoria();
+  }catch(e){
+    enLinea = false;
+    /* Solo en el arranque en frío. A media caída, ordenes ya trae lo bueno de la vuelta
+       anterior y pisarlo con la memoria sería cambiar lo nuevo por lo viejo. */
+    if(!ordenes.length){
+      const g = leerMemoria();
+      if(g && Array.isArray(g.ordenes) && g.ordenes.length){
+        ordenes = g.ordenes;
+        ultimoOk = g.ts;
+      }
+    }
+  }
   /* La cola se vacía justo después de una consulta que sí volvió: es la señal más honesta de
      que hay red, mejor que navigator.onLine, que dice que sí con el wifi del local conectado
      a un módem sin internet — que es exactamente lo que pasa en un restaurante. */
@@ -1293,6 +1316,41 @@ function textoCaido(){
       que se comieron hace rato. Pasados diez minutos se guarda el estado y se calla el timbre.
 
    La cola vive en el aparato, así que aguanta que alguien recargue o que se apague la tele. */
+/* ---------- LA MEMORIA DE LA PANTALLA ----------
+   Se guarda lo último que contestó el servidor para poder enseñarlo si la tele abre sin señal.
+   No es «modo sin conexión» en el sentido de trabajar a ciegas: es que el cocinero vea lo que
+   ya había, sabiendo exactamente de cuándo es.
+
+   Caduca a las seis horas a propósito. Un turno dura menos que eso, así que dentro del turno
+   siempre sirve; y al día siguiente, cuando abren y no hay internet, la pantalla prefiere
+   decir que no sabe nada antes que enseñar las comandas de anoche como si fueran de hoy.
+   Enseñar comida vieja como pendiente es la única forma en que esta función podría hacer daño
+   de verdad, y es justo la que se corta aquí. */
+const MEM_LS = LSK('mb_cocina_memoria');
+const MEM_VENCE = 6 * 60 * 60 * 1000;   // 6 h
+const MEM_CADA = 20000;                 // no se escribe en disco cada 4 s: cada 20
+const MEM_TOPE = 120;                   // comandas guardadas; una cocina real no llega ni cerca
+let memGuardadaEn = 0;
+
+function guardarMemoria(forzar){
+  if(!ultimoOk) return;
+  if(!forzar && Date.now() - memGuardadaEn < MEM_CADA) return;
+  memGuardadaEn = Date.now();
+  try{
+    localStorage.setItem(MEM_LS, JSON.stringify({
+      ts: ultimoOk, suc: SUC || '', cfg: cfg, ordenes: ordenes.slice(0, MEM_TOPE),
+    }));
+  }catch(e){}   // sin espacio en el aparato se sigue trabajando, nada más sin memoria
+}
+function leerMemoria(){
+  try{
+    const g = JSON.parse(localStorage.getItem(MEM_LS) || 'null');
+    if(!g || !g.ts) return null;
+    if(Date.now() - g.ts > MEM_VENCE) return null;
+    return g;
+  }catch(e){ return null; }
+}
+
 const COLA_LS = LSK('mb_cocina_cola');
 const AVISO_CADUCA = 10 * 60 * 1000;   // 10 min: más viejo que esto se guarda pero no suena
 let cola = [];
