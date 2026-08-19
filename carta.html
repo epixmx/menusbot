@@ -260,7 +260,12 @@
   .vista-head{padding:26px 20px 8px}
   .vista-head .caps{color:var(--humo)}
   .vista-head h2{font-family:var(--serif);font-style:var(--serif-i);font-weight:var(--serif-w);font-size:34px;margin-top:6px;letter-spacing:-.5px}
-  .ticket{margin:16px 20px;background:var(--papel);color:var(--ink);border-radius:var(--r-chico);position:relative;box-shadow:0 22px 50px rgba(0,0,0,.5)}
+  /* La sombra era 0 22px 50px negra al 50%: nació para los temas oscuros, donde el ticket
+     claro flota sobre un fondo casi negro. Sobre papel claro esa misma sombra se lee como una
+     mancha gris debajo del ticket y ensucia el texto que sigue. Se baja a una sombra de
+     elevación, que funciona en los dos temas, y se le da aire abajo porque el borde dentado
+     sobresale 9px del recuadro. */
+  .ticket{margin:16px 20px 30px;background:var(--papel);color:var(--ink);border-radius:var(--r-chico);position:relative;box-shadow:0 6px 18px rgba(0,0,0,.13)}
   .ticket::before,.ticket::after{content:'';position:absolute;left:0;right:0;height:10px;background-image:radial-gradient(circle at 10px 0, transparent 6px, var(--papel) 6.5px);background-size:20px 10px;background-position:0 0}
   .ticket::before{top:-9px;transform:rotate(180deg)}
   .ticket::after{bottom:-9px}
@@ -358,10 +363,16 @@
      mesa válida, así que estas dos ganan a todo lo demás. */
   #hojaSucursal,#hojaUnirse{z-index:320}
   .velo.alto{z-index:310}
-  .hero-plato{position:relative;height:320px;overflow:hidden;background:var(--esp2)}
+  /* Cuadrado y no una franja: el platillo es el argumento de venta de esta pantalla y a
+     320px de alto quedaba chico. aspect-ratio en vez de height fijo para que crezca con el
+     ancho de la hoja y se vea igual en teléfono y en escritorio. */
+  .hero-plato{position:relative;aspect-ratio:1/1;overflow:hidden;background:var(--esp2)}
   .hero-plato img{width:100%;height:100%;object-fit:cover;filter:saturate(.94) contrast(1.04)}
   .hero-plato .svg-fb svg{width:100%;height:110%}
-  .hero-plato::after{content:'';position:absolute;left:0;right:0;bottom:0;height:130px;background:linear-gradient(180deg,transparent,var(--esp))}
+  /* El degradado va al 42% de la altura para que acompañe a la imagen cuadrada: es la capa
+     que le da fondo al nombre y al precio, que suben 44px sobre la foto. */
+  .hero-plato::after{content:'';position:absolute;left:0;right:0;bottom:0;height:42%;min-height:130px;
+    background:linear-gradient(180deg,transparent,var(--esp) 92%);pointer-events:none}
   .cerrar{position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(245,237,222,.35);background:rgba(21,18,16,.72);backdrop-filter:blur(6px);cursor:pointer;color:#F5EDDE;z-index:5;display:flex;align-items:center;justify-content:center}
   .btn-full{position:absolute;top:16px;left:16px;display:flex;align-items:center;gap:9px;border:1px solid rgba(245,237,222,.35);background:rgba(21,18,16,.78);backdrop-filter:blur(6px);color:#F5EDDE;font-family:var(--grot);font-size:14px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;padding:14px 16px;border-radius:var(--r-chico);cursor:pointer;z-index:5;min-height:44px}
   .chip-lupa{position:absolute;right:14px;bottom:14px;width:42px;height:42px;border-radius:50%;background:rgba(18,15,12,.72);backdrop-filter:blur(5px);border:1px solid var(--linea2);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:4}
@@ -397,7 +408,10 @@
   .sug-cards{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin-top:2px}
   .sug-cards::-webkit-scrollbar{display:none}
   .sug-card{flex:0 0 auto;display:flex;align-items:center;gap:10px;border:1px solid var(--linea2);border-radius:var(--r-chico);padding:8px 10px 8px 8px;min-width:252px;background:transparent}
-  .sug-card .sug-img{width:46px;height:54px;border-radius:999px 999px 3px 3px;overflow:hidden;flex-shrink:0}
+  /* Era un arco (999px arriba, 3px abajo). Ese recorte no existe en ninguna otra parte de la
+     carta y en una tira de sugerencias se leía como un error de maquetación. Cuadrada, con el
+     mismo radio que el resto de las fotos. */
+  .sug-card .sug-img{width:52px;height:52px;border-radius:var(--r-chico);overflow:hidden;flex-shrink:0}
   .sug-card .sug-img img,.sug-card .sug-img svg{width:100%;height:100%;object-fit:cover;display:block}
   .sug-card .sug-info{min-width:0}
   .sug-card .sug-nom{font-family:var(--serif);font-style:var(--serif-i);font-size:15px;line-height:1.25;color:var(--crema);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:148px}
@@ -780,6 +794,11 @@ const MODO_DEMO = PARAMS_URL.has('demo') || RID === 'bellavita';
    de la segunda visita en adelante se pinta la correcta de inmediato, sin esperar a nadie. */
 const marcaRecordada = () => { try{ return JSON.parse(localStorage.getItem(LSK('mb_marca')) || 'null'); }catch(e){ return null; } };
 const recordarMarca = m => { try{ localStorage.setItem(LSK('mb_marca'), JSON.stringify(m)); }catch(e){} };
+/* El botón del código se esconde ya, antes del primer pintado: si esperara a la primera
+   sincronización alcanzaría a verse un parpadeo en la carta de ejemplo. */
+if(MODO_DEMO){
+  ['btnUnirseSplash','guiaUnirse'].forEach(id => { const b = document.getElementById(id); if(b) b.style.display = 'none'; });
+}
 {
   const sm = document.getElementById('splashMarca'); if(sm) sm.innerHTML = '';
   const ct = document.getElementById('cabTitulo');   if(ct) ct.innerHTML = '';
@@ -982,7 +1001,20 @@ let puntosOfrecido = false;
    ================================================================ */
 const SUPA_URL = 'https://xwcgqhlsubyfmpdjabjt.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3Y2dxaGxzdWJ5Zm1wZGphYmp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMTc5NjYsImV4cCI6MjA5Nzg5Mzk2Nn0.DK4oPmMcNA0xLwkAkxGigiudIZUobxB_UYFurrMCc9g';
+/* Tablas de operación: son las que mueven la vida de un restaurante de verdad (comandas,
+   mesas, timbres al mesero, cobros). La carta de ejemplo NO escribe en ninguna. */
+const TABLAS_DE_OPERACION = /^menusbot_(ordenes|mesas_abiertas|llamadas|clientes|cobros)\b/;
 async function api(ruta, opc = {}){
+  /* Candado único del demo, aquí y no repartido por diez lugares: da igual desde qué botón
+     salga la escritura —mandar la orden, llamar al mesero, pedir la cuenta, pedir el siguiente
+     tiempo—, en la carta de ejemplo ninguna llega a la base. Es lo que permite que veinte
+     personas abran el demo a la vez sin pelearse por la mesa 1 y sin que al restaurante le
+     lluevan comandas y timbres de gente que sólo está viendo un ejemplo.
+     Se devuelve lo que el llamador espera: una fila con id cuando pidió representación, y
+     nada cuando no la pidió. Las LECTURAS siguen pasando: de ahí sale el menú. */
+  if(MODO_DEMO && opc.method && opc.method !== 'GET' && TABLAS_DE_OPERACION.test(ruta)){
+    return /return=representation/i.test((opc.headers && opc.headers.Prefer) || '') ? [{ id: --folioDemo }] : null;
+  }
   const r = await fetch(SUPA_URL + '/rest/v1/' + ruta, {
     ...opc,
     headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', ...(opc.headers || {}) },
@@ -998,6 +1030,9 @@ async function api(ruta, opc = {}){
    a la mesa). A propósito NO se espera y a propósito se traga el error: si el aviso falla,
    el comensal no se puede quedar mirando una rueda girando ni perder su orden. */
 function avisarMesero(tipo, extra){
+  /* En la carta de ejemplo no hay mesero del otro lado: ese timbre sonaría en el teléfono de
+     alguien que está trabajando, por una orden que no existe. */
+  if(MODO_DEMO) return;
   try{
     fetch(SUPA_URL + '/functions/v1/mb-avisar', {
       method:'POST',
@@ -1213,6 +1248,8 @@ let misIds = [];
    página. Es el freno de mano: mientras esté arriba, este teléfono no le pregunta nada a la
    nube ni deja que ningún temporizador viejo escriba en una mesa que ya se cobró. */
 let visitaCerrada = false;
+/* Folios de la carta de ejemplo: bajan desde 0 para que jamás coincidan con un id real */
+let folioDemo = 0;
 async function sincronizar(){
   if(visitaCerrada) return;
   try{
@@ -1288,7 +1325,11 @@ async function sincronizar(){
       pintarControles(); pintarDestacados(); pintarLista();
       if(vistaActual === 'orden') pintarVistaOrden();
     }
-    if(misIds.length){
+    /* El demo no tiene nada que sincronizar: sus órdenes viven en este teléfono y las hace
+       avanzar el simulador de cocina. Preguntar por ellas traería ids negativos que no existen,
+       y el bloque de la cuenta de abajo arrastraría las órdenes REALES de la mesa 1 del
+       restaurante a la pantalla de alguien que solo está viendo un ejemplo. */
+    if(!MODO_DEMO && misIds.length){
       /* recogida_at viaja siempre: sin ella el estado 2 se lee a medias y el comensal se
          queda en «lista en cocina» aunque el mesero ya vaya con su plato en la mano. */
       const filas = await api(`menusbot_ordenes?id=in.(${misIds.join(',')})&select=id,estado,recogida_at,entregada_por,entregada_at,cerrada,items,verificacion`);
@@ -1345,7 +1386,7 @@ async function sincronizar(){
     }
     // Cuenta de la MESA: todas las órdenes no cobradas de esta mesa (de cualquier teléfono),
     // para que el total del comensal sea el mismo que el "por cobrar" del panel.
-    if(mesa != null && !faltaElegirSucursal()){
+    if(!MODO_DEMO && mesa != null && !faltaElegirSucursal()){
       /* El filtro era sólo `cerrada=eq.false` y por eso el total que veía el comensal salía
          MUCHO más bajo que la suma de sus platillos: en cuanto el mesero cobraba una parte,
          esas órdenes —las suyas, las que sigue viendo pintadas en su ticket— dejaban de contar.
@@ -1794,7 +1835,7 @@ function pintarAyuda(){
     b.push('<button class="btn-primario" onclick="cerrarSheets();llamarMesero()">Llamar al mesero a mi mesa</button>');
     b.push('<button class="btn-fantasma" onclick="cerrarSheets();pedirCuenta()">Pedir la cuenta para pagar</button>');
     b.push('<button class="btn-fantasma" onclick="abrirHojaBienvenida()">Ver el código de mi mesa</button>');
-    b.push('<button class="btn-fantasma" onclick="abrirHojaUnirse()">Alguien de mi mesa ya abrió la cuenta — tengo el código</button>');
+    if(!MODO_DEMO) b.push('<button class="btn-fantasma" onclick="abrirHojaUnirse()">Alguien de mi mesa ya abrió la cuenta — tengo el código</button>');
   } else if(canalesCarta().length > 1){
     b.push('<button class="btn-primario" onclick="abrirHojaPedido()">Cambiar tipo de pedido</button>');
   }
@@ -1838,6 +1879,11 @@ function aplicarModoKiosco(){
 }
 /* La guia se escribio para el servicio en mesa. Sin mesero, el paso 3 miente. */
 function pintarGuiaSegunServicio(){
+  /* En la carta de ejemplo cada teléfono tiene su propia visita, así que no hay ninguna cuenta
+     ajena a la que unirse: el botón del código pediría algo que nadie puede dar. */
+  if(MODO_DEMO){
+    ['btnUnirseSplash','guiaUnirse'].forEach(id => { const b = document.getElementById(id); if(b) b.style.display = 'none'; });
+  }
   if(!esKiosco()) return;
   const p = $('#guiaPaso3'), n = $('#guiaNota'), u = $('#guiaUnirse');
   if(p) p.textContent = 'Tu orden entra derecho a la cocina en cuanto la mandes. Sigue su avance en «Cuenta».';
@@ -1979,6 +2025,15 @@ async function pedirCaducarMesa(f){
    { ok:false, motivo:'sinred' } si no se pudo verificar. En la duda NUNCA devuelve ok. */
 async function asegurarMesa(){
   if(mesa == null) return { ok:false, motivo:'bloqueada' };
+  /* ---------- El demo no aparta mesas ----------
+     La carta de ejemplo la abren muchas personas a la vez desde el sitio, todas con la misma
+     mesa 1. Con el camino normal, la primera se quedaba con la mesa y a las demás les tocaba
+     la pantalla de «alguien ya abrió la cuenta, pídele su código» — un código que nadie tiene,
+     porque no están sentadas juntas: están cada una en su casa mirando un ejemplo.
+     Aquí la visita es privada de cada teléfono: no se escribe nada en menusbot_mesas_abiertas,
+     así que no hay carrera que perder ni fila que ensucie el panel del restaurante. Todo lo
+     demás —ordenar, ver la cuenta, la cocina que avanza sola— se ve exactamente igual. */
+  if(MODO_DEMO){ mesaEsMia = true; return { ok:true, fila:{ autorizada:false } }; }
   /* Aquí está la guarda dura, en el único lugar por donde pasan TODOS los caminos que escriben
      en menusbot_mesas_abiertas. Sin sucursal no se escribe nada: el índice único es
      (restaurante_id, sucursal, mesa), así que una fila con sucursal vacía convive con la de
@@ -2086,6 +2141,7 @@ async function asegurarMesa(){
    multiplicaría las escrituras; basta con latir en los momentos que de verdad importan
    (una orden enviada, la cuenta pedida). Cualquier dispositivo autorizado cuenta. */
 function latirMesa(){
+  if(MODO_DEMO) return;   // el demo no tiene fila de mesa que mantener viva
   if(!mesaEsMia || !mesaFila || mesaFila.id == null) return;
   api(`menusbot_mesas_abiertas?id=eq.${mesaFila.id}`, {
     method:'PATCH', body: JSON.stringify({ latido_at: new Date().toISOString() }),
@@ -3347,6 +3403,12 @@ async function enviarOrden(){
   verificacion = 'pendiente';
   }
   let fila;
+  /* En el demo la orden se queda en este teléfono. Si se mandara a la base, cada visitante del
+     sitio le metería comandas de mentira al panel de un restaurante de verdad. El folio va con
+     id NEGATIVO: nunca choca con uno real y el filtro `+x > 0` de la cuenta lo ignora solo. */
+  if(MODO_DEMO){
+    fila = { id: --folioDemo };
+  } else {
   try{
     const filas = await api('menusbot_ordenes', {
       method:'POST', headers:{ 'Prefer':'return=representation' },
@@ -3358,6 +3420,7 @@ async function enviarOrden(){
   }catch(e){
     toast('Sin conexión con cocina — revisa tu internet e intenta de nuevo', true);
     return;
+  }
   }
   /* La bandera de bebidas se consume solo cuando la orden salió de verdad: si el envío se
      frenó por la mesa, al reintentar no lo volvemos a interrogar sobre lo mismo. */
@@ -3395,52 +3458,51 @@ async function enviarOrden(){
 function programarEstados(o){
   if(!MODO_DEMO) return;   // cinturón, además del tirante que hay en quien la llama
   const pausa = ms => new Promise(r => setTimeout(r, ms));
-  /* Se revisa antes de CADA paso, no una sola vez al principio: entre un paso y el siguiente
-     pasan segundos en los que la mesa se pudo cobrar y la visita pudo terminar. */
-  const vivo = () => !visitaCerrada && MODO_DEMO && !!o.dbId;
-  /* Los pasos van encadenados y no como temporizadores sueltos, porque el orden es el punto:
-     cada uno arranca cuando el anterior ya quedó escrito. Los tiempos están medidos contra el
-     sondeo de 4 s de esta misma pantalla — cada tramo dura al menos dos vueltas, así ningún
-     par de cambios se junta en el mismo refresco y el visitante ve los cuatro avisos por
-     separado, que es justo lo que se le quiere enseñar. En total 35 s: alcanza a contarse la
-     historia completa sin que nadie se quede mirando el teléfono a la espera. */
+  /* La orden del demo vive SOLO en este teléfono, así que la historia se cuenta aquí mismo en
+     vez de escribirla en la base y esperar a leerla de vuelta. Antes cada paso era un PATCH a
+     menusbot_ordenes y el sondeo lo descubría; eso obligaba a que la carta de ejemplo metiera
+     comandas de mentira al restaurante de verdad, y con muchas personas viendo el demo a la vez
+     también obligaba a repartirse una sola mesa. Los tiempos y los avisos son los mismos: lo
+     único que cambió es de dónde sale el avance.
+
+     Se avanza con los mismos textos que usa el sondeo (avisoEstado) para que el visitante vea
+     exactamente lo que vería un comensal de verdad: el mesero pasa y confirma, la cocina la
+     recibe, la prepara, la deja lista, y alguien la levanta y va en camino. */
+  const vivo = () => !visitaCerrada && MODO_DEMO && ordenes.includes(o);
+  const repintar = () => { guardarSesion(); refrescarEstadoUI(); if(vistaActual === 'orden') pintarVistaOrden(); };
+  /* Un solo lugar donde se anuncia el avance: si la frase que LEE el comensal no cambió, no se
+     le repite un toast que dice lo mismo. Igual criterio que en sincronizar(). */
+  const avanzar = cambio => {
+    if(!vivo() || esPendiente(o)) return false;
+    const antes = avisoEstado(o);
+    cambio();
+    const ahora = avisoEstado(o);
+    if(ahora !== antes) toast(`Orden ${o.folio} — ${ahora}`);
+    repintar();
+    return true;
+  };
   (async () => {
-    /* 1. El mesero simulado confirma la orden en la mesa. Este paso no existía y por eso el
-       demo se quedaba clavado en «por confirmar» para siempre. El filtro `verificacion=eq.pendiente`
-       va en la consulta: si algo real le pasó a la orden mientras tanto —la rechazaron, o un
-       mesero de carne y hueso se adelantó— aquí no se pisa nada. */
+    /* 1. El mesero simulado confirma la orden en la mesa. El nombre sale de los meseros que el
+       propio restaurante tiene configurados, no de uno inventado. */
     await pausa(7000);
     if(!vivo()) return;
-    /* El nombre sale de los meseros que el propio restaurante tiene configurados (en el demo,
-       la lista semilla del panel), no de uno inventado: así el registro del panel no acaba con
-       un nombre huérfano que nadie reconoce. */
     const equipo = ((config && config.meseros) || []).filter(Boolean);
-    const quien = equipo[0] || 'Marco';
-    try{
-      await api(`menusbot_ordenes?id=eq.${o.dbId}&verificacion=eq.pendiente`, { method:'PATCH',
-        body: JSON.stringify({ verificacion:'ok', autorizada_por: quien, autorizada_at: new Date().toISOString() }) });
-    }catch(e){ return; }
-    /* A propósito NO se toca `o.verificacion` aquí: se deja que el sondeo lo descubra solo,
-       que es lo que dispara el aviso «confirmada — ya está en la cocina». Adelantarlo en
-       memoria se comería ese paso de la historia. */
+    o.verificacion = 'ok';
+    o.autorizada_por = equipo[0] || 'Marco';
+    toast(`Orden ${o.folio} confirmada — ya está en la cocina`);
+    repintar();
 
-    /* 2 y 3. Ahora sí, la cocina. Cada avance lleva DOS candados en la propia consulta:
-       `estado=lt.N` para no retroceder nunca, y `verificacion=eq.ok` para que sea imposible
-       —por construcción, no por suerte— adelantar una orden que nadie autorizó. */
+    /* 2 y 3. La cocina la recibe y la deja lista. Cada tramo dura más que el sondeo de 4 s para
+       que ningún par de avisos se junte y se pierda uno. */
     for(const [nivel, espera] of [[1, 10000], [2, 10000]]){
       await pausa(espera);
-      /* Guarda local, redundante a propósito: si el mesero de verdad la rechazó, el sondeo ya
-         lo sabe y aquí se frena sin necesidad de preguntarle nada al servidor. */
-      if(!vivo() || esPendiente(o)) return;
-      try{ await api(`menusbot_ordenes?id=eq.${o.dbId}&estado=lt.${nivel}&verificacion=eq.ok`, { method:'PATCH', body: JSON.stringify({ estado: nivel }) }); }catch(e){ return; }
+      if(!avanzar(() => { o.estado = nivel; })) return;
     }
 
-    /* 4. El plato sale de la cocina y ahí se queda hasta que un mesero lo levanta: sin
-       `recogida_at` el estado 2 se lee a medias y la orden se congela en «Lista en cocina»
-       sin llegar nunca a «En camino a tu mesa». Éste es el paso que cierra la historia. */
+    /* 4. Alguien levanta el plato: sin recogida_at el estado 2 se lee a medias y la orden se
+       queda en «Lista en cocina» sin llegar nunca a «En camino a tu mesa». */
     await pausa(8000);
-    if(!vivo() || esPendiente(o)) return;
-    try{ await api(`menusbot_ordenes?id=eq.${o.dbId}&estado=eq.2&verificacion=eq.ok&recogida_at=is.null`, { method:'PATCH', body: JSON.stringify({ recogida_at: new Date().toISOString() }) }); }catch(e){}
+    avanzar(() => { o.recogida_at = new Date().toISOString(); });
   })();
 }
 function refrescarEstadoUI(){
