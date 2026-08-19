@@ -16,6 +16,9 @@
 <title>Panel del Restaurante — MenusBot</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Piel «Huerto»: tipografías de marca (rebranding 2026) -->
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --esp:#151210; --esp2:#1D1915; --crema:#EFE7D8; --humo:#A79D8C; --humo2:#6E665A;
@@ -453,6 +456,36 @@
   .toast.visible{opacity:1;transform:translate(-50%,0)}
   /* Un aviso normal es neutro; solo el que reporta una falla se pinta de rojo sólido */
   .toast.falla,html.claro .toast.falla{background:var(--al-roja);color:var(--al-txt);font-weight:700}
+
+  /* ================= PIEL «HUERTO» (rebranding 2026) =================
+     Solo estilos: variables, tipografías y detalles de color. La estructura, el
+     acomodo y el funcionamiento quedan idénticos. Las alertas sólidas conservan
+     sus cuatro tintas de siempre; lo único que cambia en ellas es la letra
+     (Space Mono, decisión de marca del 19-ago-2026). Este bloque va al final a
+     propósito: pisa por cascada, sin tocar ninguna regla de arriba. */
+  :root{
+    --esp:#08281F; --esp2:#0E3E2F; --crema:#EAF2EC; --humo:#9FBBAD; --humo2:#6B8779;
+    --pomodoro:#63C89A; --basilico:#8FD4AE; --oro:#E9C46A; --papel:#F5F4EF; --ink:#0E3E2F;
+    --linea:rgba(234,242,236,.14); --linea2:rgba(234,242,236,.28);
+    --serif:'Clash Display','Space Grotesk',system-ui,sans-serif;
+    --grot:'Satoshi','Space Grotesk',system-ui,sans-serif;
+    --mono:'Space Mono','Courier New',monospace;
+  }
+  html.claro{
+    --esp:#F5F4EF; --esp2:#FFFFFF; --crema:#22302A; --humo:#5F6B62; --humo2:#98A198;
+    --pomodoro:#1E6B52; --basilico:#29594B; --oro:#8A7A1E; --papel:#FBFBF7; --ink:#0E3E2F;
+    --linea:rgba(14,62,47,.13); --linea2:rgba(14,62,47,.28);
+  }
+  header{background:rgba(8,40,31,.96)}
+  html.claro header{background:rgba(245,244,239,.96)}
+  /* Clash Display no trae cursiva: los acentos que eran Fraunces itálica van derechos.
+     (Se excluye la vista previa de temas, que dibuja la letra del tema elegido.) */
+  .marca,.vista-titulo h1,.col-cab .cuenta-col,.comanda .c-mesa,.md-mesa,.md-nota,.md-vacio,
+  .pc-fila .pc-mesa,.chip-mesero b,.rechazadas .rz-mesa,.kpi .num em,.tc-info .nombre-t,
+  .top-fila .t-pos,.pp-cab b,.pp-grupo-tit .n{font-style:normal}
+  /* Avisos, pills de estado y datos de sistema hablan en Space Mono */
+  .md-tag,.md-suc,.md-codigo,.pill-est,.mini-badge,.pc-fila .pc-nadie,.rechazadas .rz-titulo{
+    font-family:var(--mono);letter-spacing:.4px}
 </style>
 <script>if((localStorage.getItem('mb_panel_tema')||'claro')==='claro')document.documentElement.classList.add('claro')</script>
 </head>
@@ -1876,6 +1909,10 @@ const TEMAS = {
     letra:"'Chillax',system-ui,sans-serif", cursiva:'normal', peso:'600', radio:'18px',
     pareja:'Chillax + General Sans',
     fuentes:['https://api.fontshare.com/v2/css?f[]=chillax@400,500,600&display=swap','https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap'] },
+  huerto:{ nombre:'Huerto', fondo:'#F5F4EF', texto:'#22302A', acento:'#1E6B52', papel:'#FFFFFF',
+    letra:"'Clash Display',system-ui,sans-serif", cursiva:'normal', peso:'600', radio:'14px',
+    pareja:'Clash Display + Satoshi',
+    fuentes:['https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap','https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap'] },
 };
 /* Las familias de Fontshare se piden nada más al abrir la pestaña de temas, y una sola vez.
    El panel del dueño vive abierto todo el turno; no tiene por qué cargar siete tipografías

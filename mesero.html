@@ -22,6 +22,9 @@
 <link rel="apple-touch-icon" href="icono-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Piel «Huerto»: tipografías de marca (rebranding 2026) -->
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --esp:#151210; --esp2:#1D1915;
@@ -324,6 +327,36 @@
     #impresion .tot{font-size:19px;margin-top:16px;border-top:2px solid #241F18;padding-top:10px;display:flex;justify-content:space-between}
     @page{margin:12mm}
   }
+
+  /* ================= PIEL «HUERTO» (rebranding 2026) =================
+     Solo estilos: variables, tipografías y detalles de color. Estructura, acomodo
+     y funcionamiento idénticos. Las alertas sólidas conservan sus cuatro tintas;
+     lo único que cambia en ellas es la letra (Space Mono). Va al final a propósito:
+     pisa por cascada, sin tocar ninguna regla de arriba. */
+  :root{
+    --esp:#08281F; --esp2:#0E3E2F; --papel:#F5F4EF; --papel2:#E9E7DE;
+    --crema:#EAF2EC; --humo:#9FBBAD; --humo2:#6B8779;
+    --pomodoro:#63C89A; --basilico:#8FD4AE; --oro:#E9C46A;
+    --linea:rgba(234,242,236,.14); --linea2:rgba(234,242,236,.28);
+    --ink:#0E3E2F; --nav-bg:rgba(8,40,31,.96);
+    --serif:'Clash Display','Space Grotesk',system-ui,sans-serif;
+    --grot:'Satoshi','Space Grotesk',system-ui,sans-serif;
+    --mono:'Space Mono','Courier New',monospace;
+  }
+  html.claro{
+    --esp:#F5F4EF; --esp2:#FFFFFF; --crema:#22302A; --humo:#5F6B62; --humo2:#98A198;
+    --pomodoro:#1E6B52; --basilico:#29594B; --oro:#8A7A1E; --papel:#FBFBF7; --ink:#0E3E2F;
+    --linea:rgba(14,62,47,.13); --linea2:rgba(14,62,47,.28);
+    --nav-bg:rgba(245,244,239,.97); --papel2:#EDEBE2;
+  }
+  html.claro body{background:#E7E5DC}
+  html.claro .telefono{box-shadow:0 0 60px rgba(14,62,47,.12)}
+  /* Clash Display no trae cursiva: lo que era Fraunces itálica va derecho */
+  #sinRid h1,.cab-entrada h1,.mesero-card .ini,.mesero-card b,.pin-cab .quien,.cab .yo,
+  .grupo-tit em,.tm-num,.nav-btn .gl,.h-top h2,.reng .n em,.propina-fija .cifra,
+  .cambio b,.cierre b{font-style:normal}
+  /* Etiquetas de urgencia, estados de cocina y globos: Space Mono */
+  .et,.estado-cocina,.nav-btn .globo,.franja-coc{font-family:var(--mono);letter-spacing:.4px}
 </style>
 <script>if((localStorage.getItem('mb_mesero_tema')||'claro')==='claro')document.documentElement.classList.add('claro')</script>
 </head>

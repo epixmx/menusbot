@@ -3,195 +3,427 @@
 <head>
 <meta charset="UTF-8">
 <script>
-/* Vercel también sirve la misma página con una diagonal de más —/panel.html/— y ahí el
-   navegador trata el archivo como si fuera carpeta: TODO lo relativo (enlaces, QR, manifest,
-   service worker, el propio botón de salir) se resuelve un nivel abajo y da 404. En vez de
-   parchar cada uso, se endereza la dirección al entrar. Va primero que nada a propósito. */
+/* Vercel también sirve la misma página con una diagonal de más —/index.html/— y ahí el
+   navegador trata el archivo como si fuera carpeta: TODO lo relativo se resuelve un nivel
+   abajo y da 404. En vez de parchar cada uso, se endereza la dirección al entrar. */
 (function(){
   var p = location.pathname, i = p.toLowerCase().indexOf('.html');
   if(i >= 0 && i + 5 < p.length) location.replace(p.slice(0, i + 5) + location.search + location.hash);
 })();
 </script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Menú y órdenes desde el teléfono de tu cliente · MenusBot</title>
-<meta name="description" content="La carta y la orden en el teléfono de quien paga. Para restaurante con mesero, mostrador o cocina sin local. Sin comprar equipo y sin cambiar tu caja.">
+<meta name="description" content="La carta viva de tu negocio: el cliente ve cada platillo con foto y calorías, ordena y recibe el aviso de orden lista en su teléfono. Con meseros, sin meseros o sin comedor. Sin comprar equipo.">
+<link rel="icon" type="image/png" href="icono-192.png">
+<link rel="preconnect" href="https://api.fontshare.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--esp:#151210;--esp2:#1D1915;--crema:#EFE7D8;--humo:#A79D8C;--humo2:#6E665A;
-        --pomodoro:#E4593B;--oro:#C9A227;--papel:#F2EBDD;
-        --linea:rgba(239,231,216,.14);--linea2:rgba(239,231,216,.28);
-        --serif:'Fraunces',Georgia,serif;--grot:'Space Grotesk','Inter',system-ui,sans-serif}
-  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  body{font-family:var(--grot);background:var(--esp);color:var(--crema);line-height:1.7;
-       -webkit-font-smoothing:antialiased}
-  .cont{max-width:1020px;margin:0 auto;padding:0 22px}
-  .caps{font-family:var(--grot);font-size:10px;font-weight:700;letter-spacing:2.6px;text-transform:uppercase;line-height:1.6}
-
-  /* ---------- Encabezado ---------- */
-  header{border-bottom:1px solid var(--linea)}
-  header .cont{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:18px;padding-bottom:18px}
-  header .marca{font-family:var(--serif);font-style:italic;font-weight:500;font-size:21px;letter-spacing:-.3px}
-  header a{color:var(--humo);text-decoration:none;font-size:11.5px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;min-height:44px;display:flex;align-items:center}
-  header a:hover{color:var(--crema)}
-
-  /* ---------- Portada ---------- */
-  .hero{padding:60px 0 46px;max-width:760px}
-  .hero .caps{color:var(--pomodoro)}
-  .hero h1{font-family:var(--serif);font-weight:500;font-size:clamp(34px,7.4vw,58px);line-height:1.03;
-           letter-spacing:-1.4px;margin:16px 0 0}
-  .hero h1 em{font-style:italic;color:var(--pomodoro)}
-  .hero p{font-size:15px;color:var(--humo);margin-top:20px;max-width:64ch}
-  .hero p b{color:var(--crema);font-weight:600}
-
-  /* ---------- Elegir tipo de negocio ----------
-     Esta es la decisión que ordena todo lo demás. Se pregunta en la puerta y no después,
-     porque una taquería que arranca con pantallas de mesero y cuenta por mesa ya empezó
-     mal: va a ver media aplicación que no es para ella y va a pensar que el producto es
-     complicado, cuando lo complicado es que le dimos el flujo de otro negocio. */
-  .seccion{padding:44px 0;border-top:1px solid var(--linea)}
-  .seccion > .caps{color:var(--oro)}
-  .seccion h2{font-family:var(--serif);font-weight:500;font-size:clamp(26px,4.6vw,36px);
-              line-height:1.1;letter-spacing:-.8px;margin:12px 0 0}
-  .seccion > p{font-size:14px;color:var(--humo);margin-top:14px;max-width:62ch}
-
-  .tipos{display:grid;gap:14px;margin-top:26px}
-  @media(min-width:820px){ .tipos{grid-template-columns:repeat(3,1fr)} }
-  a.tipo{display:flex;flex-direction:column;border:1px solid var(--linea);border-radius:3px;
-         padding:22px 20px 20px;text-decoration:none;color:var(--crema);background:var(--esp2);
-         transition:border-color .18s,transform .18s}
-  a.tipo:hover{border-color:var(--pomodoro);transform:translateY(-2px)}
-  a.tipo .num{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--pomodoro)}
-  a.tipo b{font-family:var(--serif);font-style:normal;font-weight:600;font-size:21px;line-height:1.2;
-           margin-top:8px;letter-spacing:-.3px}
-  a.tipo .que{font-size:13px;color:var(--humo);margin-top:10px;line-height:1.65;flex:1}
-  a.tipo .quien{font-size:10px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;
-                color:var(--humo2);margin-top:16px;line-height:1.6}
-  a.tipo .ir{margin-top:14px;font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--pomodoro)}
-
-  /* ---------- Demos ---------- */
-  .demos{display:grid;gap:12px;margin-top:24px}
-  @media(min-width:700px){ .demos{grid-template-columns:1fr 1fr} }
-  a.demo{display:block;border:1px solid var(--linea);border-radius:3px;padding:20px;
-         text-decoration:none;color:var(--crema);transition:border-color .18s}
-  a.demo:hover{border-color:var(--oro)}
-  a.demo b{font-family:var(--serif);font-style:italic;font-weight:500;font-size:19px;display:block}
-  a.demo span{display:block;font-size:12.5px;color:var(--humo);margin-top:7px;line-height:1.65}
-  a.demo .flecha{float:right;color:var(--oro);font-size:19px;line-height:1.2}
-
-  /* ---------- Por qué ---------- */
-  .porques{display:grid;gap:22px;margin-top:26px}
-  @media(min-width:820px){ .porques{grid-template-columns:repeat(3,1fr);gap:30px} }
-  .porque b{font-family:var(--serif);font-style:italic;font-weight:500;font-size:20px;display:block;line-height:1.25}
-  .porque p{font-size:13.5px;color:var(--humo);margin-top:9px;line-height:1.75}
-
-  /* ---------- Cierre ---------- */
-  .cierre{border-top:1px solid var(--linea);padding:44px 0 10px}
-  a.alta{display:block;border:1px solid var(--pomodoro);background:rgba(228,89,59,.09);
-         border-radius:3px;padding:22px;text-decoration:none;color:var(--crema);transition:background .18s;text-align:center}
-  a.alta:hover{background:rgba(228,89,59,.18)}
-  a.alta b{font-family:var(--serif);font-style:italic;font-weight:500;font-size:22px;display:block}
-  a.alta span{display:block;font-size:10px;font-weight:700;letter-spacing:2.2px;text-transform:uppercase;
-              color:var(--pomodoro);margin-top:8px}
-  footer{padding:32px 0 40px}
-  footer .caps{color:var(--humo2)}
+:root{
+  --bosque:#0C3A30;
+  --verde:#0E3E2F;
+  --verde-med:#29594B;
+  --lima:#E6FD5A;
+  --papel:#F5F4EF;
+  --blanco:#FFFFFF;
+  --tinta:#202020;
+  --gris:#5F6B62;
+  --borde:#E6E4DC;
+  --al-roja:#D92D20;--al-ambar:#C2410C;--al-verde:#15803D;--al-azul:#1D4ED8;--al-txt:#fff;
+  --d:'Clash Display','Poppins',system-ui,sans-serif;
+  --t:'Satoshi','Poppins',system-ui,sans-serif;
+  --s:'Caveat',cursive;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--t);color:#2A332C;background:var(--papel);font-size:16.5px;line-height:1.65;overflow-x:hidden}
+/* grano de papel */
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:200;opacity:.5;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.05 0 0 0 0 0.09 0 0 0 0 0.05 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E")}
+a{color:inherit;text-decoration:none}
+h2{font-family:var(--d);font-weight:600;font-size:clamp(34px,4.8vw,60px);color:var(--verde);line-height:1.05;letter-spacing:-.01em;margin-bottom:18px}
+.script{font-family:var(--s);font-weight:700;font-size:1.22em;color:var(--verde-med);letter-spacing:0;line-height:.9}
+.oscuro .script,.hero .script{color:var(--lima)}
+.subr{background:linear-gradient(transparent 70%, var(--lima) 70%)}
+.lead{color:var(--gris);max-width:58ch;font-size:17.5px}
+section{padding:120px 6vw;position:relative}
+.tagsec{font-family:var(--t);font-weight:900;font-size:12.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--verde-med);display:inline-flex;align-items:center;gap:10px;margin-bottom:20px}
+.tagsec svg{width:15px;height:15px}
+/* chispa svg */
+.sp{position:absolute;pointer-events:none;animation:spin 14s linear infinite}
+.sp.p{animation:pulse 3.2s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+@keyframes flota{0%,100%{transform:translateY(0) rotate(var(--rot,0deg))}50%{transform:translateY(-14px) rotate(var(--rot,0deg))}}
+/* reveal */
+.rv{opacity:0;transform:translateY(34px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+.rv.in{opacity:1;transform:none}
+.rv2{transition-delay:.12s}.rv3{transition-delay:.24s}
+/* botones */
+.pill-btn{font-family:var(--t);font-weight:700;font-size:15.5px;padding:17px 34px;border-radius:40px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:10px;transition:transform .18s,box-shadow .18s}
+.pill-btn:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(8,40,30,.18)}
+.pb-lima{background:var(--lima);color:#111}
+.pb-tinta{background:var(--tinta);color:#fff}
+.pb-blanco{background:var(--blanco);color:var(--verde)}
+.pb-borde{background:transparent;border:1.5px solid rgba(255,255,255,.45);color:#fff}
+/* HEADER */
+header.top{background:var(--bosque);color:#fff;display:flex;justify-content:space-between;align-items:center;padding:18px 6vw;position:sticky;top:0;z-index:90}
+.wordmark{font-family:var(--d);font-weight:600;font-size:26px;display:inline-flex;align-items:center;gap:11px}
+.wm-ico{width:36px;height:36px;border-radius:50%;background:conic-gradient(from 200deg, var(--lima) 0 140deg, #1E6B52 140deg 360deg);display:inline-block}
+nav{display:flex;gap:36px}
+nav a{font-weight:500;font-size:15.5px;opacity:.92;position:relative}
+nav a::after{content:"";position:absolute;left:0;bottom:-6px;height:2px;width:0;background:var(--lima);transition:width .25s}
+nav a:hover::after{width:100%}
+@media(max-width:900px){nav{display:none}}
+/* HERO */
+.hero{background:linear-gradient(160deg,#05221A 0%,#0C3A30 42%,#14523F 72%,#25714C 100%);color:#fff;padding:90px 6vw 150px;display:grid;grid-template-columns:1.05fr 1fr;gap:60px;align-items:center;position:relative;z-index:0;overflow:hidden}
+/* textura viva: foto de lino con hierbas + paneo lento tipo video */
+.hero::before{content:"";position:absolute;inset:-8%;z-index:-1;background:url("img/textura-hero.jpg") center/cover no-repeat;opacity:.75;mix-blend-mode:luminosity;animation:kb 36s ease-in-out infinite alternate;will-change:transform}
+.hero::after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(120% 90% at 30% 20%, transparent 40%, rgba(3,20,15,.55) 100%)}
+@keyframes kb{from{transform:scale(1) translate(0,0)}to{transform:scale(1.1) translate(-2%,2.5%)}}
+@media (prefers-reduced-motion: reduce){.hero::before{animation:none}}
+.hero h1{font-family:var(--d);font-weight:600;font-size:clamp(46px,6.6vw,94px);line-height:1;letter-spacing:-.01em}
+.hero h1 .l{color:var(--lima)}
+.hero .sub{margin-top:26px;font-size:18.5px;max-width:46ch;color:#DFEAE2}
+.hero-cta{margin-top:36px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.clientes{display:flex;align-items:center;gap:12px;margin-top:34px;font-size:14.5px;color:#CFE0D4}
+.caras{display:flex}
+.cara{width:42px;height:42px;border-radius:50%;border:2.5px solid #14523F;margin-left:-10px;display:grid;place-items:center;font-size:18px;background:#E9E4D8}
+.cara:first-child{margin-left:0}
+/* hero foto compuesta */
+.escena{position:relative;min-height:560px}
+.foto-hero{position:absolute;top:0;right:0;width:min(420px,88%);border-radius:28px;box-shadow:0 40px 90px rgba(3,22,16,.55);transform:rotate(2.5deg);--rot:2.5deg;animation:flota 7s ease-in-out infinite}
+.fl{position:absolute;border-radius:18px;box-shadow:0 22px 55px rgba(4,26,20,.4)}
+.fl-listo{top:12%;left:-4%;background:#fff;color:#14532D;padding:15px 20px;border-radius:40px;font-weight:700;font-size:15px;display:flex;gap:10px;align-items:center;--rot:-4deg;transform:rotate(-4deg);animation:flota 6s ease-in-out infinite .6s}
+.fl-listo::before{content:"✓";min-width:26px;height:26px;border-radius:50%;background:var(--al-verde);color:#fff;display:grid;place-items:center;font-size:14px}
+.fl-precio{bottom:2%;left:2%;background:var(--lima);color:#111;padding:22px 30px;font-family:var(--d);font-weight:700;font-size:46px;--rot:-7deg;transform:rotate(-7deg);border-radius:22px;letter-spacing:-.02em;animation:flota 8s ease-in-out infinite .3s}
+.fl-precio small{display:block;font-family:var(--t);font-weight:700;font-size:12.5px;letter-spacing:0}
+.fl-kcal{top:52%;right:-3%;background:#fff;color:#2A332C;padding:14px 18px;border-radius:18px;font-weight:700;font-size:13.5px;--rot:5deg;transform:rotate(5deg);animation:flota 6.5s ease-in-out infinite 1s}
+.fl-kcal b{font-family:var(--d);font-size:19px;color:var(--verde);display:block;letter-spacing:0}
+@media(max-width:980px){.hero{grid-template-columns:1fr}.escena{min-height:520px;margin-top:10px}.foto-hero{right:auto;left:50%;transform:translateX(-50%) rotate(2.5deg)}}
+/* curva de transición */
+.curva{display:block;width:100%;height:70px;margin-top:-69px;position:relative;z-index:5}
+/* SERVICIOS */
+.serv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:26px;margin-top:56px}
+.serv{background:var(--blanco);border-radius:26px;overflow:hidden;display:flex;flex-direction:column;border:1px solid var(--borde);position:relative;transition:transform .25s,box-shadow .25s}
+.serv:hover{transform:translateY(-6px);box-shadow:0 24px 50px rgba(8,40,30,.12)}
+.serv .foto{height:190px;overflow:hidden;position:relative}
+.serv .foto img,.serv .foto video{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s}
+.serv:hover .foto img,.serv:hover .foto video{transform:scale(1.05)}
+.vivo{position:absolute;right:12px;bottom:10px;z-index:2;font-weight:900;font-size:9px;letter-spacing:.12em;background:rgba(0,0,0,.45);color:#fff;border-radius:30px;padding:5px 10px;display:inline-flex;align-items:center;gap:6px;backdrop-filter:blur(4px)}
+.vivo::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--lima);animation:pulse 2s ease-in-out infinite}
+.serv .cuerpo{padding:30px 30px 34px;display:flex;flex-direction:column;gap:14px;flex:1}
+.serv.mercado{background:var(--bosque);color:#E8F0E9;border-color:var(--bosque)}
+.serv .sello{position:absolute;top:16px;left:16px;background:var(--lima);color:#111;font-weight:900;font-size:11px;letter-spacing:.12em;padding:9px 16px;border-radius:30px;z-index:3;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.serv h3{font-family:var(--d);font-weight:600;font-size:25px;color:var(--verde)}
+.serv.mercado h3{color:#fff}
+.serv .quien{font-weight:900;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--verde-med)}
+.serv.mercado .quien{color:var(--lima)}
+.serv p{font-size:15.5px;color:var(--gris)}
+.serv.mercado p{color:#CFE0D4}
+.flujo{display:flex;flex-wrap:wrap;gap:7px;margin-top:auto;padding-top:14px}
+.flujo span{font-weight:700;font-size:11px;letter-spacing:.05em;text-transform:uppercase;background:var(--papel);border-radius:30px;padding:8px 13px;white-space:nowrap}
+.serv.mercado .flujo span{background:rgba(255,255,255,.1);color:#E8F0E9}
+.flujo em{font-style:normal;align-self:center;color:var(--gris)}
+.serv-cta{display:inline-block;margin-top:14px;font-weight:900;font-size:13.5px;letter-spacing:.04em;color:var(--verde-med);text-decoration:none}
+.serv-cta:hover{text-decoration:underline}
+.serv.mercado .serv-cta{color:var(--lima)}
+.serv-nota{margin-top:32px;background:var(--blanco);border:1px solid var(--borde);border-radius:40px;padding:18px 26px;display:flex;align-items:center;gap:16px;font-size:15px;flex-wrap:wrap}
+.serv-nota b{font-weight:900;font-size:12.5px;letter-spacing:.1em;background:var(--lima);border-radius:30px;padding:10px 18px;white-space:nowrap}
+/* STATS */
+.stats{background:var(--blanco);border-radius:36px;margin:0 4vw;padding:100px 5vw;position:relative}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:46px;margin-top:54px}
+.stat b{font-family:var(--d);font-weight:600;font-size:clamp(46px,5.6vw,76px);color:var(--verde);display:inline-block;line-height:1.1;position:relative;padding:4px 10px}
+.stat b.sub{background:linear-gradient(transparent 72%, var(--lima) 72%)}
+.stat b .ovalo{position:absolute;inset:-12px -20px;pointer-events:none}
+.stat span{display:block;color:var(--gris);margin-top:12px;max-width:26ch}
+/* MEDIA — carta que se antoja */
+.media{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center}
+.media .foto{position:relative}
+.media .foto>img{width:100%;border-radius:30px;display:block;box-shadow:0 30px 70px rgba(8,40,30,.2);transform:rotate(-1.5deg)}
+.media .stick{position:absolute;bottom:-26px;right:-14px;background:var(--lima);border-radius:20px;padding:18px 24px;font-family:var(--d);font-weight:700;font-size:22px;color:#111;--rot:4deg;transform:rotate(4deg);box-shadow:0 18px 40px rgba(8,40,30,.25);animation:flota 7s ease-in-out infinite}
+.media .stick small{display:block;font-family:var(--t);font-weight:700;font-size:12.5px}
+.media ul{list-style:none;display:flex;flex-direction:column;gap:14px;margin-top:26px;font-size:16.5px}
+.media li{display:flex;gap:12px;align-items:flex-start}
+.media li::before{content:"✓";min-width:26px;height:26px;border-radius:50%;background:var(--papel);color:var(--verde-med);display:grid;place-items:center;font-size:13px;font-weight:900;margin-top:2px}
+@media(max-width:900px){.media{grid-template-columns:1fr}}
+/* FUNCIONES */
+.func-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-top:56px}
+.func{background:var(--blanco);border-radius:26px;border:1px solid var(--borde);padding:36px 30px;transition:transform .25s,box-shadow .25s}
+.func:hover{transform:translateY(-5px);box-shadow:0 20px 45px rgba(8,40,30,.1)}
+.func .ico{width:60px;height:60px;border-radius:50%;background:var(--papel);display:grid;place-items:center;font-size:27px;margin-bottom:18px}
+.func h3{font-family:var(--d);font-weight:600;font-size:21.5px;color:var(--verde);margin-bottom:8px}
+.func p{font-size:15px;color:var(--gris)}
+.func .arrow{margin-top:18px;width:40px;height:40px;border-radius:50%;border:1.5px solid var(--borde);display:grid;place-items:center;color:var(--verde-med);transition:background .2s,color .2s,border .2s}
+.func:hover .arrow{background:var(--lima);color:#111;border-color:var(--lima)}
+/* PASOS */
+.pasos{background:var(--bosque);color:#fff;border-radius:36px;margin:0 4vw;padding:100px 5vw;position:relative;overflow:hidden}
+.pasos h2{color:#fff}
+.pasos-lista{margin-top:54px;display:flex;flex-direction:column}
+.paso{display:grid;grid-template-columns:110px 1fr 2fr;gap:26px;align-items:center;padding:30px 0;border-top:1px solid rgba(255,255,255,.14)}
+.paso:last-child{border-bottom:1px solid rgba(255,255,255,.14)}
+.paso b{font-family:var(--d);font-weight:600;font-size:46px;color:var(--lima)}
+.paso h3{font-family:var(--d);font-weight:600;font-size:23px}
+.paso p{color:#CFE0D4;font-size:15.5px}
+@media(max-width:820px){.paso{grid-template-columns:70px 1fr}.paso p{grid-column:2}}
+/* PRECIOS */
+.planes{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:26px;margin-top:56px}
+.plan{background:var(--blanco);border:1px solid var(--borde);border-radius:28px;padding:44px 36px;display:flex;flex-direction:column;gap:18px;transition:transform .25s,box-shadow .25s}
+.plan:hover{transform:translateY(-6px);box-shadow:0 24px 50px rgba(8,40,30,.12)}
+.plan.destacado{background:var(--bosque);color:#E8F0E9;border-color:var(--bosque);position:relative}
+.plan.destacado::before{content:"EL DEL PILOTO";position:absolute;top:-15px;left:36px;background:var(--lima);color:#111;font-weight:900;font-size:11px;letter-spacing:.12em;padding:9px 16px;border-radius:30px}
+.plan h3{font-family:var(--d);font-weight:600;font-size:19px;letter-spacing:.06em;text-transform:uppercase;color:var(--verde)}
+.plan.destacado h3{color:var(--lima)}
+.plan .pr{font-family:var(--d);font-weight:600;font-size:50px;color:var(--verde)}
+.plan.destacado .pr{color:#fff}
+.plan .pr small{font-family:var(--t);font-weight:500;font-size:14px}
+.plan ul{list-style:none;display:flex;flex-direction:column;gap:11px;font-size:15px}
+.plan li{display:flex;gap:10px}
+.plan li::before{content:"✓";min-width:22px;height:22px;border-radius:50%;background:var(--papel);color:var(--verde-med);display:grid;place-items:center;font-size:12px;font-weight:900}
+.plan.destacado li::before{background:rgba(230,253,90,.16);color:var(--lima)}
+.plan .pill-btn{justify-content:center;margin-top:auto}
+/* CTA */
+.cta{background:linear-gradient(160deg,#0C3A30,#1E6B52);color:#fff;border-radius:36px;margin:0 4vw 110px;text-align:center;padding:120px 6vw;position:relative;overflow:hidden}
+.cta h2{color:#fff;font-size:clamp(38px,5.8vw,76px)}
+.cta p{color:#DFEAE2;max-width:52ch;margin:20px auto 38px}
+footer{color:var(--gris);padding:0 6vw 50px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:14px}
+footer .wordmark{font-size:19px;color:var(--verde)}
+footer .wm-ico{width:26px;height:26px}
 </style>
 </head>
 <body>
 
-<header><div class="cont">
-  <div class="marca">MenusBot</div>
-  <a href="panel.html">Ya tengo cuenta</a>
-</div></header>
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="star4" viewBox="0 0 24 24"><path d="M12 0c1 7 5 11 12 12-7 1-11 5-12 12-1-7-5-11-12-12 7-1 11-5 12-12z"/></symbol>
+</defs></svg>
 
-<div class="cont">
+<header class="top">
+  <span class="wordmark"><span class="wm-ico"></span>menusbot</span>
+  <nav>
+    <a href="#servicios">Para quién</a>
+    <a href="#funciones">Funciones</a>
+    <a href="#pasos">Cómo funciona</a>
+    <a href="#precios">Precios</a>
+    <a href="panel.html">Ya tengo cuenta</a>
+  </nav>
+  <a class="pill-btn pb-lima" style="padding:14px 28px" href="alta.html">Probar gratis</a>
+</header>
 
-  <div class="hero">
-    <div class="caps">La carta y la orden en el teléfono de quien paga</div>
-    <h1>El único sistema de tu negocio que <em>usa tu cliente</em></h1>
-    <p>Un punto de venta lo usa tu personal: ordena lo que ya vendiste, y por eso es un gasto.
-       Esto lo usa quien paga. Cada mesa y cada mostrador se vuelven un canal tuyo — fotos que
-       abren el apetito, favoritos y sugerencias que suben el ticket, tu marca en su teléfono y
-       una reseña al final. <b>No sólo te ordena la operación: te trae venta.</b></p>
-  </div>
+<main>
 
-  <div class="seccion">
-    <div class="caps">Empieza por aquí</div>
-    <h2>¿Cómo atiendes a tu gente?</h2>
-    <p>De esto depende todo lo que sigue. Un restaurante con mesero y una taquería de mostrador
-       no llevan la cuenta igual, y no queremos que ninguno de los dos cargue con las pantallas
-       del otro. Elige y tu panel nace configurado para tu forma de trabajar.</p>
-
-    <div class="tipos">
-      <a class="tipo" href="alta.html?tipo=mesas">
-        <span class="num">01</span>
-        <b>Restaurante con mesero</b>
-        <span class="que">Cada mesa lleva su QR. El comensal arma su orden desde su lugar, tu
-          mesero pasa a confirmarla y la cuenta se lleva por mesa, con propina y con división
-          entre quienes comieron.</span>
-        <span class="quien">Restaurante · marisquería · cantina</span>
-        <span class="ir">Empezar así →</span>
-      </a>
-
-      <a class="tipo" href="alta.html?tipo=mostrador">
-        <span class="num">02</span>
-        <b>Mostrador o para llevar</b>
-        <span class="que">Sin mesas y sin mesero. Tu cliente ordena desde su teléfono mientras
-          hace fila —o antes de llegar— y sólo pasa por lo suyo. Nada de cuentas abiertas ni de
-          propina por mesa.</span>
-        <span class="quien">Taquería · cafetería · fonda · food truck</span>
-        <span class="ir">Empezar así →</span>
-      </a>
-
-      <a class="tipo" href="alta.html?tipo=cocina">
-        <span class="num">03</span>
-        <b>Cocina sin local</b>
-        <span class="que">Sólo para recoger y a domicilio, con costo de envío y pedido mínimo.
-          Ni mesas ni mostrador: la orden entra derecho a tu cocina con los datos de entrega.</span>
-        <span class="quien">Dark kitchen · cocina de casa · reparto</span>
-        <span class="ir">Empezar así →</span>
-      </a>
+<!-- HERO -->
+<div class="hero">
+  <svg class="sp p" style="top:12%;left:46%;width:22px;fill:var(--lima)"><use href="#star4"/></svg>
+  <svg class="sp" style="bottom:16%;left:4%;width:15px;fill:#9FD9AE"><use href="#star4"/></svg>
+  <div>
+    <h1>Atiende más<br>mesas con<br><span class="l">cero meseros.</span></h1>
+    <p class="sub">La carta viva de tu negocio: el cliente ve cada platillo con foto y calorías, ordena y recibe el aviso de <span class="script" style="font-size:1.35em">orden lista!</span> en su teléfono. Con meseros, sin meseros o sin comedor.</p>
+    <div class="hero-cta">
+      <a class="pill-btn pb-lima" href="alta.html">Quiero mi carta →</a>
+      <a class="pill-btn pb-borde" href="#pasos">Ver cómo funciona</a>
+    </div>
+    <div class="clientes">
+      <div class="caras"><span class="cara">🌮</span><span class="cara">🍕</span><span class="cara">☕</span><span class="cara" style="background:var(--lima);font-family:var(--d);font-weight:700;font-size:13px">+</span></div>
+      De la fonda al fine dining — un solo sistema
     </div>
   </div>
-
-  <div class="seccion">
-    <div class="caps">Míralo funcionando</div>
-    <h2>Demo, sin registrarte</h2>
-    <p>Dos pantallas de un restaurante de ejemplo. Puedes ordenar y ver cómo la comanda aparece
-       del otro lado en vivo.</p>
-    <div class="demos">
-      <a class="demo" href="carta.html?mesa=1&r=bellavita"><span class="flecha">→</span><b>La carta del comensal</b><span>Lo que ve tu cliente al escanear el QR de su mesa: menú con fotos, orden por tiempos y seguimiento en vivo hasta pagar la cuenta.</span></a>
-      <a class="demo" href="panel.html?demo"><span class="flecha">→</span><b>El panel del negocio</b><span>Comandas en vivo, entrega por partidas, mesas y sucursales, corte y reportes, carta editable, temas y QRs para imprimir. PIN: 1987</span></a>
-    </div>
+  <div class="escena">
+    <img class="foto-hero" src="img/hero-mano.jpg" alt="Cliente viendo un platillo en la carta digital de menusbot">
+    <div class="fl fl-listo">Tu orden está lista, Ana</div>
+    <div class="fl fl-kcal">Carbonara clásica<b>610 kcal · $245</b></div>
+    <div class="fl fl-precio">$18,430<small>ventas de hoy, sumadas solitas</small></div>
   </div>
-
-  <div class="seccion">
-    <div class="caps">Por qué esto y no un punto de venta más</div>
-    <div class="porques">
-      <div class="porque">
-        <b>No cambies tu caja</b>
-        <p>Sigue cobrando como cobras hoy. Esto vive encima de lo que ya tienes: no hay que
-           sacar nada, ni migrar nada, ni volver a capacitar a tu gente.</p>
-      </div>
-      <div class="porque">
-        <b>Sin comprar equipo</b>
-        <p>El aparato es el teléfono que tu cliente ya trae en la mano. Cero terminales, cero
-           renta de hardware, cero enganche para empezar.</p>
-      </div>
-      <div class="porque">
-        <b>Trabaja para traerte venta</b>
-        <p>Un sistema interno registra lo que ya te compraron. Éste le enseña tu carta completa
-           a quien todavía no decide, y le sugiere el postre que nadie le iba a ofrecer.</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="cierre">
-    <a class="alta" href="alta.html"><b>Arma tu carta hoy</b><span>Cuenta gratis · sin tarjeta · listo en dos minutos</span></a>
-  </div>
-
-  <footer><div class="caps">MenusBot · Órdenes en tiempo real desde el teléfono del comensal</div></footer>
-
 </div>
+<svg class="curva" viewBox="0 0 1440 70" preserveAspectRatio="none"><path d="M0 70 C 360 0 1080 0 1440 70 Z" fill="#F5F4EF"/></svg>
+
+<!-- SERVICIOS -->
+<section id="servicios">
+  <svg class="sp" style="top:70px;right:8%;width:20px;fill:var(--verde)"><use href="#star4"/></svg>
+  <span class="tagsec rv"><svg viewBox="0 0 24 24" fill="#29594B"><use href="#star4"/></svg>PARA QUIÉN</span>
+  <h2 class="rv">Un sistema, tres formas<br>de <span class="script">servir.</span></h2>
+  <p class="lead rv">El mismo menusbot se acomoda a tu negocio. Lo activas desde el panel, sin instalar nada y sin cambiar de QR.</p>
+  <div class="serv-grid">
+
+    <div class="serv rv">
+      <div class="foto"><video autoplay muted loop playsinline preload="metadata" poster="img/mesa-qr.jpg" aria-label="Comensales escaneando el código QR de la mesa y viendo el menú en su teléfono"><source src="video/video-restaurante.mp4" type="video/mp4"></video><span class="vivo">EN VIVO</span></div>
+      <div class="cuerpo">
+        <div><h3>Restaurantes con servicio</h3><div class="quien">Comedor con meseros</div></div>
+        <p>El comensal ordena de su teléfono y tu mesero <b>autoriza en la mesa</b> antes de que entre a cocina. El mesero cobra; la propina la marca el cliente.</p>
+        <div class="flujo"><span>QR</span><em>→</em><span>Ordena</span><em>→</em><span>Mesero autoriza</span><em>→</em><span>Cocina</span><em>→</em><span>Cobra</span></div>
+        <a class="serv-cta" href="alta.html?tipo=mesas">Empezar con este modo →</a>
+      </div>
+    </div>
+
+    <div class="serv mercado rv rv2">
+      <span class="sello">NUESTRO MERCADO ✦</span>
+      <div class="foto"><video autoplay muted loop playsinline preload="metadata" poster="img/darkkitchen.jpg" aria-label="Chef sonriente recibiendo órdenes en la tablet de su dark kitchen"><source src="video/video-darkkitchen-ui.mp4" type="video/mp4"></video><span class="vivo">EN VIVO</span></div>
+      <div class="cuerpo">
+        <div><h3>Dark kitchens</h3><div class="quien">Cocina sin comedor</div></div>
+        <p>Sin mesas y sin meseros: el pedido entra <b style="color:var(--lima)">directo a cocina</b> desde el link o QR que compartes. Tú solo preparas y entregas — a domicilio o para recoger.</p>
+        <div class="flujo"><span>Link / QR</span><em>→</em><span>Ordena</span><em>→</em><span>Cocina</span><em>→</em><span>Entrega o reparto</span></div>
+        <a class="serv-cta" href="alta.html?tipo=cocina">Empezar con este modo →</a>
+      </div>
+    </div>
+
+    <div class="serv mercado rv rv3">
+      <span class="sello">NUESTRO MERCADO ✦</span>
+      <div class="foto"><video autoplay muted loop playsinline preload="metadata" poster="img/mostrador.jpg" aria-label="Clienta recogiendo sus cafés para llevar: ordenó y pagó desde su teléfono"><source src="video/video-barras.mp4" type="video/mp4"></video><span class="vivo">EN VIVO</span></div>
+      <div class="cuerpo">
+        <div><h3>Negocios sin meseros</h3><div class="quien">Cafeterías · food trucks · fondas · barras</div></div>
+        <p>El cliente ordena y paga desde su teléfono, tú lo ves en una sola pantalla y le avisas con un <b style="color:var(--lima)">«tu orden está lista»</b>. Cero filas, cero nombres gritados.</p>
+        <div class="flujo"><span>QR en mostrador</span><em>→</em><span>Ordena</span><em>→</em><span>Cocina</span><em>→</em><span>Aviso al teléfono</span></div>
+        <a class="serv-cta" href="alta.html?tipo=mostrador">Empezar con este modo →</a>
+      </div>
+    </div>
+
+  </div>
+  <div class="serv-nota rv"><b>SIN PLANES DISTINTOS</b><span>Enciendes o apagas el paso del mesero desde tu panel, hoy mismo. Es la misma renta mensual.</span></div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <svg class="sp p" style="top:60px;right:10%;width:18px;fill:var(--lima);stroke:#0E3E2F;stroke-width:.5"><use href="#star4"/></svg>
+  <span class="tagsec rv"><svg viewBox="0 0 24 24" fill="#29594B"><use href="#star4"/></svg>POR QUÉ MENUSBOT</span>
+  <h2 class="rv">Menos errores,<br><span class="subr">más cocina.</span></h2>
+  <div class="stats-grid">
+    <div class="stat rv"><b>0%
+      <svg class="ovalo" viewBox="0 0 200 100" preserveAspectRatio="none"><ellipse cx="100" cy="50" rx="92" ry="42" fill="none" stroke="#29594B" stroke-width="3" stroke-linecap="round" stroke-dasharray="480" transform="rotate(-4 100 50)"/></svg>
+      </b><span>de comandas mal escuchadas: la orden la escribe el propio cliente</span></div>
+    <div class="stat rv rv2"><b class="sub">4s</b><span>tarda una orden en llegar a la pantalla de la cocina</span></div>
+    <div class="stat rv rv3"><b class="sub">14/14</b><span>platillos importados de un PDF real con AI, con precio y kcal</span></div>
+    <div class="stat rv rv3"><b class="sub">$0</b><span>de hardware: los teléfonos que ya traen todos</span></div>
+  </div>
+</div>
+
+<!-- MEDIA: LA CARTA -->
+<section>
+  <div class="media">
+    <div class="foto rv">
+      <img src="img/platillos.jpg" alt="Platillos fotografiados para la carta digital">
+      <div class="stick">Se ve. Se antoja.<small>Se ordena solo.</small></div>
+    </div>
+    <div>
+      <span class="tagsec rv"><svg viewBox="0 0 24 24" fill="#29594B"><use href="#star4"/></svg>LA CARTA</span>
+      <h2 class="rv">Una carta que<br><span class="script">se antoja.</span></h2>
+      <p class="lead rv">El comensal ve el plato antes de pedirlo — sin que tú lo prepares. Cada platillo con su foto, su historia y sus números.</p>
+      <ul class="rv">
+        <li>Fotos y video de cada platillo, sin app y sin registro</li>
+        <li>Calorías e ingredientes desglosados, alérgenos marcados</li>
+        <li>Tu menú entra solo: súbelo en PDF o foto y la AI lo captura</li>
+        <li>Cambia precios y agotados al momento, desde tu teléfono</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- FUNCIONES -->
+<section id="funciones" style="padding-top:20px">
+  <span class="tagsec rv"><svg viewBox="0 0 24 24" fill="#29594B"><use href="#star4"/></svg>FUNCIONES</span>
+  <h2 class="rv">Todo el servicio,<br>de un <span class="subr">QR.</span></h2>
+  <div class="func-grid">
+    <div class="func rv"><div class="ico">🔒</div><h3>Mesa amarrada, orden segura</h3><p>La mesa queda ligada al primer teléfono que ordena; los acompañantes se unen con un código de 4 dígitos.</p><div class="arrow">→</div></div>
+    <div class="func rv rv2"><div class="ico">🛎️</div><h3>App del mesero</h3><p>PIN propio, sus mesas, avisos push. Autoriza órdenes, cobra y saca su corte — y la propina siempre la marca el cliente.</p><div class="arrow">→</div></div>
+    <div class="func rv rv3"><div class="ico">📊</div><h3>Panel del negocio</h3><p>Ve tu cocina en tiempo real, maneja a tu equipo y tus sucursales, y revisa las cuentas del día por mesa, mesero o fechas.</p><div class="arrow">→</div></div>
+    <div class="func rv"><div class="ico">💳</div><h3>Cuenta sin esperas</h3><p>El cliente pide la cuenta y marca su propina desde su pantalla. El corte del día se arma solo.</p><div class="arrow">→</div></div>
+    <div class="func rv rv2"><div class="ico">⭐</div><h3>Reseñas al cerrar</h3><p>Al pedir la cuenta, el cliente ve tus botones de Google y Facebook. El mejor momento para una estrella más.</p><div class="arrow">→</div></div>
+    <div class="func rv rv3"><div class="ico">📶</div><h3>Avisos que sí llegan</h3><p>Push real al teléfono de tu equipo y de tus clientes: nueva orden, orden lista, cuenta pedida.</p><div class="arrow">→</div></div>
+  </div>
+</section>
+
+<!-- PASOS -->
+<div class="pasos" id="pasos">
+  <svg class="sp" style="top:50px;right:7%;width:24px;fill:var(--lima)"><use href="#star4"/></svg>
+  <span class="tagsec rv" style="color:var(--lima)"><svg viewBox="0 0 24 24" fill="#E6FD5A"><use href="#star4"/></svg>CÓMO FUNCIONA</span>
+  <h2 class="rv">Cinco pasos, cero<br>gritos a <span class="script">cocina.</span></h2>
+  <div class="pasos-lista">
+    <div class="paso rv"><b>01</b><h3>Escanea</h3><p>El cliente abre tu carta desde el QR. Sin app, sin registro.</p></div>
+    <div class="paso rv"><b>02</b><h3>Ordena</h3><p>Elige con fotos, kcal e ingredientes, desde su propio teléfono.</p></div>
+    <div class="paso rv"><b>03</b><h3>Confirmas</h3><p>Con meseros: tu equipo autoriza en la mesa. Sin meseros: entra directo a cocina.</p></div>
+    <div class="paso rv"><b>04</b><h3>Cocina prepara</h3><p>La orden aparece en la pantalla de la cocina, acomodada por tiempos: entradas, platos fuertes y postres.</p></div>
+    <div class="paso rv"><b>05</b><h3>Cuenta y aviso</h3><p>Cobro en mesa con propina del cliente, o aviso de «orden lista» al teléfono.</p></div>
+  </div>
+</div>
+
+<!-- DEMO EN VIVO -->
+<section style="padding-top:70px;padding-bottom:0">
+  <div class="serv-nota rv"><b>MÍRALO EN VIVO</b><span>
+    <a href="carta.html?mesa=1&r=bellavita" style="font-weight:700;color:var(--verde-med)">La carta del comensal →</a>
+    &nbsp;&nbsp;·&nbsp;&nbsp;
+    <a href="panel.html?demo" style="font-weight:700;color:var(--verde-med)">El panel del negocio (PIN 1987) →</a>
+  </span></div>
+</section>
+
+<!-- PRECIOS -->
+<section id="precios">
+  <span class="tagsec rv"><svg viewBox="0 0 24 24" fill="#29594B"><use href="#star4"/></svg>PRECIOS</span>
+  <h2 class="rv">Renta mensual. Sin contrato,<br>sin hardware, <span class="script">sin letras chiquitas.</span></h2>
+  <div class="planes">
+    <div class="plan rv">
+      <h3>Demo</h3>
+      <div class="pr">$0<small> /siempre</small></div>
+      <ul>
+        <li>Carta digital con tu menú real</li>
+        <li>Importador AI (PDF o foto)</li>
+        <li>QR de prueba para tus mesas</li>
+        <li>Hasta 20 platillos</li>
+      </ul>
+      <a class="pill-btn pb-blanco" style="border:1.5px solid var(--borde)" href="alta.html">Empezar gratis</a>
+    </div>
+    <div class="plan destacado rv rv2">
+      <h3>Negocio</h3>
+      <div class="pr">$—<small> /mes por sucursal</small></div>
+      <ul>
+        <li>Todo lo del demo, sin límites</li>
+        <li>Los 3 modos: con meseros, sin meseros, dark kitchen</li>
+        <li>Órdenes a cocina + app del mesero</li>
+        <li>Propinas, cortes y cuentas claras</li>
+        <li>Reseñas Google y Facebook</li>
+      </ul>
+      <a class="pill-btn pb-lima" href="alta.html">Quiero mi carta →</a>
+    </div>
+    <div class="plan rv rv3">
+      <h3>Cadenas</h3>
+      <div class="pr">Hablemos</div>
+      <ul>
+        <li>Multi-sucursal con equipo por sede</li>
+        <li>Reportes consolidados</li>
+        <li>Marca blanca de tu grupo</li>
+        <li>Acompañamiento de arranque</li>
+      </ul>
+      <a class="pill-btn pb-tinta" href="#contacto">Agendar llamada</a>
+    </div>
+  </div>
+  <p style="margin-top:18px;font-size:13.5px;color:var(--gris)">* El precio del plan Negocio se define al cerrar la etapa de piloto.</p>
+</section>
+
+<!-- CTA -->
+<div class="cta" id="contacto">
+  <svg class="sp p" style="top:16%;left:12%;width:22px;fill:var(--lima)"><use href="#star4"/></svg>
+  <svg class="sp" style="bottom:18%;right:10%;width:16px;fill:#9FD9AE"><use href="#star4"/></svg>
+  <h2 class="rv">¿Armamos tu carta<br><span class="script" style="font-size:1.25em">hoy mismo?</span></h2>
+  <p class="rv">Cuenta gratis, sin tarjeta y lista en dos minutos: sube tu menú en PDF o foto y la AI lo captura con precios y calorías. ¿Dudas? Escríbenos a hola@menusbot.mx</p>
+  <a class="pill-btn pb-lima rv" href="alta.html">Arma tu carta hoy →</a>
+</div>
+
+</main>
+
+<footer>
+  <span class="wordmark"><span class="wm-ico"></span>menusbot</span>
+  <span>© 2026 menusbot · Hecho en México · La mesa se atiende sola.</span>
+</footer>
+
+<script>
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .15 });
+document.querySelectorAll('.rv').forEach(el => io.observe(el));
+// los videos solo corren cuando están en pantalla (batería y datos del visitante)
+const iov = new IntersectionObserver(es => es.forEach(e => {
+  const v = e.target;
+  if (e.isIntersecting) { v.play().catch(() => {}); } else { v.pause(); }
+}), { threshold: .25 });
+document.querySelectorAll('video').forEach(v => iov.observe(v));
+</script>
+
 </body>
 </html>

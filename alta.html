@@ -15,6 +15,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Crea el menú digital de tu restaurante · Alta gratis</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400;1,9..144,500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Piel «Huerto»: tipografías de marca (rebranding 2026) -->
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
 <style>
   :root{--esp:#151210;--esp2:#1D1915;--crema:#EFE7D8;--humo:#A79D8C;--humo2:#6E665A;--pomodoro:#E4593B;--basilico:#8FAE8B;--oro:#C9A227;--papel:#F2EBDD;--ink:#241F18;--linea:rgba(239,231,216,.14);--linea2:rgba(239,231,216,.28);--serif:'Fraunces',Georgia,serif;--grot:'Space Grotesk',system-ui,sans-serif}
   *{margin:0;padding:0;box-sizing:border-box}
@@ -61,6 +63,19 @@
   .lado li::before{content:'✓';position:absolute;left:0;color:var(--basilico);font-weight:700}
   footer{border-top:1px solid var(--linea);padding:22px 0;text-align:center}
   footer .caps{color:var(--humo2)}
+
+  /* ================= PIEL «HUERTO» (rebranding 2026) =================
+     Solo estilos. Esta pantalla pasa del oscuro Editoriale al papel claro de la
+     marca; todo corre por variables, así que nada de estructura cambia. */
+  :root{
+    --esp:#F5F4EF; --esp2:#FFFFFF; --crema:#22302A; --humo:#5F6B62; --humo2:#98A198;
+    --pomodoro:#1E6B52; --basilico:#29594B; --oro:#8A7A1E; --papel:#FBFBF7; --ink:#0E3E2F;
+    --linea:rgba(14,62,47,.13); --linea2:rgba(14,62,47,.28);
+    --serif:'Clash Display','Space Grotesk',system-ui,sans-serif;
+    --grot:'Satoshi','Space Grotesk',system-ui,sans-serif;
+  }
+  /* Clash Display no trae cursiva */
+  h1,.paso .num,.paso b,.form h2,.lado b{font-style:normal}
 </style>
 </head>
 <body>
@@ -124,7 +139,7 @@
         <li>Comandas en vivo con entrega por tiempos (partidas)</li>
         <li>Cuenta por mesa idéntica en el teléfono y en tu panel</li>
         <li>Sucursales: QRs, órdenes y reportes separados</li>
-        <li>Tu logo, tus colores y 4 temas visuales</li>
+        <li>Tu logo, tus colores y 9 temas visuales</li>
         <li>Reportes de ventas, top de platillos y desempeño de meseros</li>
         <li>Clientes frecuentes con puntos (opcional)</li>
       </ul>
@@ -284,7 +299,7 @@ function configSemilla(nombre, cocina, sucursal){
   const neg = NEGOCIOS[tipo];
   return {
     config: {
-      tema: 'editoriale',
+      tema: 'huerto', /* el tema de la casa desde el rebranding 2026; se cambia en PANEL → Identidad */
       meseros: [],
       pin: '1987',
       /* El tipo se guarda como dato, no como consecuencia: de él salen las pantallas que el
