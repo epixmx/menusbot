@@ -2090,6 +2090,9 @@ async function asegurarMesa(){
      así que no hay carrera que perder ni fila que ensucie el panel del restaurante. Todo lo
      demás —ordenar, ver la cuenta, la cocina que avanza sola— se ve exactamente igual. */
   if(MODO_DEMO){ mesaEsMia = true; return { ok:true, fila:{ autorizada:false } }; }
+  /* Cinturón del plan «carta», además del tirante de abrirMesaAlLlegar: ningún camino aparta
+     mesa cuando el restaurante no toma órdenes. */
+  if(!cartaOrdena()) return { ok:false, motivo:'sinordenes' };
   /* Aquí está la guarda dura, en el único lugar por donde pasan TODOS los caminos que escriben
      en menusbot_mesas_abiertas. Sin sucursal no se escribe nada: el índice único es
      (restaurante_id, sucursal, mesa), así que una fila con sucursal vacía convive con la de
@@ -2372,6 +2375,11 @@ const faltaElegirSucursal = () => !configCargada
   || (!SUC && sucursalesConfig().length > 0);
 async function abrirMesaAlLlegar(){
   if(mesa == null || mesaChequeada || abriendoMesa) return;
+  /* Plan «carta»: si no se ordena, no hay mesa que apartar ni código que repartir. Sin esto la
+     carta seguía escribiendo en menusbot_mesas_abiertas y le enseñaba al comensal un código
+     para compartir una cuenta que no existe. Se marca chequeada para que el sondeo de 4 s no
+     vuelva a intentarlo cada vuelta. */
+  if(!cartaOrdena()){ mesaChequeada = true; return; }
   /* Mientras se está uniendo con código, la mesa (y la sucursal) las manda el código: que este
      camino no se adelante a apartar la mesa equivocada por debajo. */
   if(uniendoseMesa || $('#hojaUnirse').classList.contains('abierta')) return;

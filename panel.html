@@ -1948,10 +1948,18 @@ function quitarLogo(){
   toast('Logo retirado — se muestra el sello tipográfico');
 }
 setInterval(() => { if(accesoOk) cargar(); }, 4000);
+/* Latido del panel: le avisa a la carta del comensal que el dueño está mirando.
+   ANTES esto reescribía TODO el documento de configuración cada 10 segundos, desde la copia
+   que este navegador tuviera en memoria. Dos problemas serios:
+     1. Pisaba lo que cualquier otro hubiera guardado en esos 10 segundos. Con dos paneles
+        abiertos —el dueño en su laptop y el encargado en la tablet— lo que guardaba uno se
+        revertía solo, sin aviso: precios, platillos, disponibilidad, todo. Se descubrió
+        justo así, viendo desaparecer una llave recién escrita una y otra vez.
+     2. Mandaba el menú completo a la base 8,640 veces al día por cada panel abierto.
+   Ahora va por una función que toca ESA sola llave dentro del jsonb y nada más. */
 setInterval(() => {
-  if(!accesoOk) return;
-  cfgCache.adminVisto = Date.now();
-  api(`menusbot_config?id=eq.${RID}`, { method:'PATCH', body: JSON.stringify({ data: cfgCache }) }).catch(() => {});
+  if(!accesoOk || MODO_DEMO || !RID) return;
+  api('rpc/menusbot_admin_visto', { method:'POST', body: JSON.stringify({ p_rest: RID }) }).catch(() => {});
 }, 10000);
 
 const CARTA = [
