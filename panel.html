@@ -412,6 +412,8 @@
   .nutri-mini.pendiente{color:var(--humo2)}
   .btn-mini{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid var(--linea2);background:transparent;color:var(--crema);font-family:var(--grot);font-size:12.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:8px 11px;border-radius:2px;cursor:pointer;white-space:nowrap;line-height:1.4}
   .btn-mini:hover{border-color:var(--pomodoro);color:var(--pomodoro)}
+  /* El platillo que ya trae video se distingue de un vistazo, sin abrir nada */
+  .btn-mini.con-video{border-color:var(--al-verde);color:var(--al-verde)}
   .cf-foto{width:44px;height:44px;border-radius:3px;overflow:hidden;background:var(--esp);border:1px solid var(--linea);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--humo2);font-size:12.5px}
   .cf-foto img{width:100%;height:100%;object-fit:cover}
 
@@ -1898,27 +1900,21 @@ function subirLogo(){
     const f = inp.files[0];
     if(!f) return;
     const img = new Image();
-    img.onload = () => {
+    img.onload = async () => {
       const rec = recortarLogo(img);
-      const esc = Math.min(1, 560 / Math.max(rec.width, rec.height));
-      const cv = document.createElement('canvas');
-      cv.width = Math.max(1, Math.round(rec.width * esc));
-      cv.height = Math.max(1, Math.round(rec.height * esc));
-      cv.getContext('2d').drawImage(rec, 0, 0, cv.width, cv.height);
-      cv.toBlob(async blob => {
-        const rutaF = `fotos/logo_${Date.now()}.png`;
-        try{
-          const r = await fetch(`${SUPA_URL}/storage/v1/object/menusbot-demo/${rutaF}`, {
-            method:'POST',
-            headers:{ 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type':'image/png', 'x-upsert':'true' },
-            body: blob,
-          });
-          if(!r.ok) throw new Error(await r.text());
-          configEscribir(d => { d.config.marca = { ...marcaDe(), logo: `${SUPA_URL}/storage/v1/object/public/menusbot-demo/${rutaF}` }; });
-          aplicarMarcaPanel(); llenarFormMarca(true);
-          toast('Logo publicado — carta y panel actualizados');
-        }catch(e){ toast('No se pudo subir el logo — revisa tu conexión'); }
-      }, 'image/png');
+      /* conTransparencia: el logo casi siempre viene recortado sobre fondo transparente */
+      const { blob, tipo, ext } = await comprimirImagen(rec, 560, TOPE_LOGO, true);
+      if(!blob){ toast('No se pudo preparar el logo — intenta con otro archivo'); return; }
+      const rutaF = `fotos/logo_${Date.now()}.${ext}`;
+      try{
+        const r = await fetch(`${SUPA_URL}/storage/v1/object/menusbot-demo/${rutaF}`, {
+          method:'POST', headers: CABECERAS_SUBIDA(tipo), body: blob,
+        });
+        if(!r.ok) throw new Error(await r.text());
+        configEscribir(d => { d.config.marca = { ...marcaDe(), logo: `${SUPA_URL}/storage/v1/object/public/menusbot-demo/${rutaF}` }; });
+        aplicarMarcaPanel(); llenarFormMarca(true);
+        toast(`Logo publicado — carta y panel actualizados (${Math.round(blob.size/1024)} KB)`);
+      }catch(e){ toast('No se pudo subir el logo — revisa tu conexión'); }
     };
     img.src = URL.createObjectURL(f);
   };
@@ -2313,6 +2309,7 @@ function render(){
         <div class="cf-foto">${fotoUrl ? `<img src="${fotoUrl}">` : 'SIN<br>FOTO'}</div>
         <div class="cf-nombre">${p.nombre}<small>${p.cat}</small></div>
         <button class="btn-mini" onclick="subirFoto('${p.id}')" title="Subir foto propia del platillo">Foto</button>
+        ${puedeSubirVideo() ? `<button class="btn-mini${(d.videos||{})[p.id] ? ' con-video' : ''}" onclick="${(d.videos||{})[p.id] ? `quitarVideo('${p.id}')` : `subirVideo('${p.id}')`}" title="${(d.videos||{})[p.id] ? 'Quitar el video de este platillo' : `Subir un video corto (máx ${VIDEO_MAX_SEG} s, ${VIDEO_MAX_MB} MB, ${VIDEO_MAX_ALTO}p)`}">${(d.videos||{})[p.id] ? 'Video ✓' : 'Video'}</button>` : ''}
         <div class="cf-precio"><span>$</span><input type="number" value="${precio}" onchange="cambiarPrecio('${p.id}', this.value)"></div>
         <button class="switch ${oculto?'':'on'}" title="${oculto?'Agotado — no visible para el comensal':'Disponible'}" onclick="alternarDisp('${p.id}')"><i></i></button>
         ${p.extra ? `<button class="btn-mini" onclick="quitarPlatillo('${p.id}')" title="Eliminar de la carta">×</button>` : ''}
@@ -3173,6 +3170,144 @@ function publicarBorrador(){
 function descartarBorrador(){ borrador = []; $('#borradorZona').style.display = 'none'; $('#impError').style.display = 'none'; }
 
 /* ---------- Fotos propias por platillo ---------- */
+/* ---------- Comprimir antes de subir ----------
+   Lo que el dueño sube sale de su teléfono: una foto de iPhone son 3 o 4 MB y 4000px de ancho,
+   y quien la paga es el comensal, que abre la carta con datos móviles en la mesa. Aquí se
+   reduce y se reencoda ANTES de que salga del navegador.
+   WebP cuando el navegador sabe hacerlo (pesa como un 30% menos que JPEG a la misma calidad) y
+   JPEG si no. La calidad baja por escalones hasta que la imagen entra en el tope: así el peso
+   tiene techo de verdad, en vez de depender de qué tan detallada venga la foto.
+   De regalo, pasar por el canvas borra los metadatos EXIF, que en una foto de teléfono suelen
+   traer la ubicación exacta de donde se tomó. */
+/* ---------- Reglas del video de platillo ----------
+   El video es lo único del sistema cuyo costo crece con cada COMENSAL que abre la carta, no
+   con cada restaurante que se vende. Por eso se revisa ANTES de subir nada: el navegador puede
+   leer duración, tamaño y peso del archivo local sin mandar un solo byte, así que un video que
+   no cumple jamás llega a ocupar almacenamiento ni a gastar tráfico.
+   Diez segundos alcanzan de sobra para un platillo —el trompo girando, el queso estirándose— y
+   720p sobra porque en el teléfono se muestra en un recuadro de 344px de ancho. A esa medida,
+   un clip bien codificado pesa entre 1.5 y 2 MB. */
+const VIDEO_MAX_SEG = 10;
+const VIDEO_MAX_MB = 2;
+const VIDEO_MAX_ALTO = 720;
+/* Qué planes pueden subir video. Hoy todos los restaurantes están en 'demo' y no existe
+   todavía el sistema de planes de paga; cuando exista, esta lista es el único lugar que hay
+   que tocar para que el video quede del lado de los que pagan. */
+const PLANES_CON_VIDEO = ['demo', 'pro'];
+const puedeSubirVideo = () => PLANES_CON_VIDEO.includes(((SESION && SESION.plan) || 'demo').toLowerCase());
+
+const TOPE_FOTO = 190 * 1024;   // bytes
+const TOPE_LOGO = 120 * 1024;
+let _webp = null;
+function haceWebp(){
+  if(_webp === null){
+    const c = document.createElement('canvas'); c.width = c.height = 1;
+    _webp = c.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+  }
+  return _webp;
+}
+async function comprimirImagen(fuente, maxLado, tope, conTransparencia){
+  const esc = Math.min(1, maxLado / Math.max(fuente.width, fuente.height));
+  const cv = document.createElement('canvas');
+  cv.width = Math.max(1, Math.round(fuente.width * esc));
+  cv.height = Math.max(1, Math.round(fuente.height * esc));
+  cv.getContext('2d').drawImage(fuente, 0, 0, cv.width, cv.height);
+  /* Un logo con fondo transparente no puede terminar en JPEG: el transparente se volvería
+     negro. Si no hay WebP, ese caso se queda en PNG aunque pese más. */
+  const tipo = haceWebp() ? 'image/webp' : (conTransparencia ? 'image/png' : 'image/jpeg');
+  const ext = tipo === 'image/webp' ? 'webp' : (tipo === 'image/png' ? 'png' : 'jpg');
+  const aBlob = q => new Promise(r => cv.toBlob(r, tipo, q));
+  let blob = await aBlob(.82);
+  if(tipo !== 'image/png'){
+    for(const q of [.72, .62, .52]){
+      if(blob && blob.size <= tope) break;
+      blob = await aBlob(q);
+    }
+  }
+  return { blob, tipo, ext, ancho: cv.width, alto: cv.height };
+}
+/* Los nombres llevan la hora dentro, así que un archivo nunca cambia de contenido: se puede
+   cachear un año. Sin esto Supabase manda max-age=3600 y el comensal que vuelve mañana se
+   baja otra vez todas las fotos de la carta. */
+const CABECERAS_SUBIDA = tipo => ({
+  'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + llaveActual(),
+  'Content-Type': tipo, 'x-upsert': 'true',
+  'cache-control': 'public, max-age=31536000, immutable',
+});
+/* ---------- Video del platillo ----------
+   Todo el filtro ocurre ANTES de subir: se lee el archivo local con un <video> en memoria, que
+   da duración y medidas sin mandar nada a ningún lado. El que no cumple ni siquiera sale del
+   teléfono, y el mensaje le dice al dueño exactamente qué pasa y qué hacer — tanto iPhone como
+   Android traen recortador en la galería, así que la salida es de dos deslizadas. */
+function medirVideo(archivo){
+  return new Promise(resolve => {
+    const url = URL.createObjectURL(archivo);
+    const v = document.createElement('video');
+    v.preload = 'metadata';
+    v.muted = true;
+    const listo = ok => { URL.revokeObjectURL(url); resolve(ok ? { seg: v.duration, ancho: v.videoWidth, alto: v.videoHeight } : null); };
+    v.onloadedmetadata = () => listo(true);
+    v.onerror = () => listo(false);
+    /* Si el navegador no logra leerlo en 8 s, se trata como ilegible en vez de dejar al dueño
+       mirando un botón que no responde. */
+    setTimeout(() => listo(false), 8000);
+    v.src = url;
+  });
+}
+async function subirVideo(id){
+  if(MODO_DEMO){ toast('El menú de ejemplo no guarda videos — entra con la cuenta de tu restaurante', true); return; }
+  if(!puedeSubirVideo()){ toast('El video de platillo viene en el plan Pro. Escríbenos y lo activamos.'); return; }
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'video/*';
+  inp.onchange = async () => {
+    const f = inp.files[0];
+    if(!f) return;
+    const mb = f.size / 1024 / 1024;
+    const m = await medirVideo(f);
+    if(!m){ toast('No se pudo leer ese video. Prueba con uno grabado o recortado desde tu teléfono.', true); return; }
+    /* Los tres motivos se juntan en un solo aviso: si se le dijeran de uno en uno, el dueño
+       recortaría, volvería a intentar y se toparía con el siguiente. */
+    const fallas = [];
+    if(m.seg > VIDEO_MAX_SEG + 0.4) fallas.push(`dura ${m.seg.toFixed(0)} segundos y el máximo son ${VIDEO_MAX_SEG}`);
+    if(mb > VIDEO_MAX_MB) fallas.push(`pesa ${mb.toFixed(1)} MB y el máximo son ${VIDEO_MAX_MB}`);
+    if(Math.min(m.ancho, m.alto) > VIDEO_MAX_ALTO) fallas.push(`es de ${m.ancho}×${m.alto} y el máximo son ${VIDEO_MAX_ALTO}p`);
+    if(fallas.length){
+      toast(`Tu video ${fallas.join(', ')}. Recórtalo desde la galería de tu teléfono y vuelve a intentarlo.`, true);
+      return;
+    }
+    const ext = (f.name.split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 4) || 'mp4';
+    const rutaV = `videos/${id}_${Date.now()}.${ext}`;
+    const anterior = ((dbCache.videos || {})[id]) || '';
+    try{
+      const r = await fetch(`${SUPA_URL}/storage/v1/object/menusbot-demo/${rutaV}`, {
+        method:'POST', headers: CABECERAS_SUBIDA(f.type || 'video/mp4'), body: f,
+      });
+      if(!r.ok) throw new Error(await r.text());
+      configEscribir(d => { d.videos = d.videos || {}; d.videos[id] = `${SUPA_URL}/storage/v1/object/public/menusbot-demo/${rutaV}`; });
+      borrarDeStorage(anterior);   // el que reemplazó ya no lo ve nadie: que no siga ocupando
+      toast(`Video publicado — ${m.seg.toFixed(0)} s, ${mb.toFixed(1)} MB`);
+    }catch(e){ toast('No se pudo subir el video — revisa tu conexión', true); }
+  };
+  inp.click();
+}
+function quitarVideo(id){
+  if(MODO_DEMO) return;
+  const anterior = ((dbCache.videos || {})[id]) || '';
+  configEscribir(d => { if(d.videos) delete d.videos[id]; });
+  borrarDeStorage(anterior);
+  toast('Video quitado — el platillo vuelve a mostrar su foto');
+}
+/* Un archivo que ya nadie referencia sigue costando almacenamiento. Se borra en silencio: si
+   falla, no es algo que el dueño pueda arreglar ni tenga por qué enterarse. */
+function borrarDeStorage(url){
+  const i = url.indexOf('/public/menusbot-demo/');
+  if(i < 0) return;
+  const ruta = url.slice(i + '/public/menusbot-demo/'.length);
+  fetch(`${SUPA_URL}/storage/v1/object/menusbot-demo/${ruta}`, {
+    method:'DELETE', headers:{ 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + llaveActual() },
+  }).catch(() => {});
+}
 function subirFoto(id){
   const inp = document.createElement('input');
   inp.type = 'file';
@@ -3181,25 +3316,18 @@ function subirFoto(id){
     const f = inp.files[0];
     if(!f) return;
     const img = new Image();
-    img.onload = () => {
-      const esc = Math.min(1, 900 / img.width);
-      const cv = document.createElement('canvas');
-      cv.width = Math.round(img.width * esc);
-      cv.height = Math.round(img.height * esc);
-      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-      cv.toBlob(async blob => {
-        const rutaF = `fotos/${id}_${Date.now()}.jpg`;
-        try{
-          const r = await fetch(`${SUPA_URL}/storage/v1/object/menusbot-demo/${rutaF}`, {
-            method:'POST',
-            headers:{ 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type':'image/jpeg', 'x-upsert':'true' },
-            body: blob,
-          });
-          if(!r.ok) throw new Error(await r.text());
-          configEscribir(d => { d.fotos = d.fotos || {}; d.fotos[id] = `${SUPA_URL}/storage/v1/object/public/menusbot-demo/${rutaF}`; });
-          toast('Foto publicada — el comensal ya la ve');
-        }catch(e){ toast('No se pudo subir la foto — revisa tu conexión'); }
-      }, 'image/jpeg', .78);
+    img.onload = async () => {
+      const { blob, tipo, ext } = await comprimirImagen(img, 900, TOPE_FOTO, false);
+      if(!blob){ toast('No se pudo preparar la foto — intenta con otra'); return; }
+      const rutaF = `fotos/${id}_${Date.now()}.${ext}`;
+      try{
+        const r = await fetch(`${SUPA_URL}/storage/v1/object/menusbot-demo/${rutaF}`, {
+          method:'POST', headers: CABECERAS_SUBIDA(tipo), body: blob,
+        });
+        if(!r.ok) throw new Error(await r.text());
+        configEscribir(d => { d.fotos = d.fotos || {}; d.fotos[id] = `${SUPA_URL}/storage/v1/object/public/menusbot-demo/${rutaF}`; });
+        toast(`Foto publicada — el comensal ya la ve (${Math.round(blob.size/1024)} KB)`);
+      }catch(e){ toast('No se pudo subir la foto — revisa tu conexión'); }
     };
     img.src = URL.createObjectURL(f);
   };
@@ -5454,7 +5582,7 @@ async function entrarPanel(){
         err.style.visibility = 'visible';
         return;
       }
-      const rs = await api(`menusbot_restaurantes?slug=eq.${encodeURIComponent(slug)}&select=slug,nombre,email,activo`);
+      const rs = await api(`menusbot_restaurantes?slug=eq.${encodeURIComponent(slug)}&select=slug,nombre,email,activo,plan`);
       const rr = rs && rs[0];
       if(rr && rr.activo === false){
         authSalir();
@@ -5465,7 +5593,7 @@ async function entrarPanel(){
       /* Aquí ya no se guarda ningún hash. La identidad viaja firmada en el token y las
          funciones del servidor ya saben leerla, que era el último motivo para tener el
          hash a la mano en el navegador. */
-      SESION = { slug, nombre: (rr && rr.nombre) || slug, email, auth: true };
+      SESION = { slug, nombre: (rr && rr.nombre) || slug, email, plan: (rr && rr.plan) || 'demo', auth: true };
       try{ localStorage.setItem('mb_panel_sesion', JSON.stringify(SESION)); }catch(e){}
       RID = slug;
       abrirPanel();
