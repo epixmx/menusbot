@@ -543,6 +543,13 @@
   .vista-titulo h1{color:#9FE0BE}
   html.claro .vista-titulo h1{color:#0E3E2F}
   .vista-titulo .caps{font-family:var(--mono);letter-spacing:.6px;text-transform:none}
+
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{
+      animation-duration:.001ms !important; animation-iteration-count:1 !important;
+      transition-duration:.001ms !important; scroll-behavior:auto !important;
+    }
+  }
 </style>
 <script>if((localStorage.getItem('mb_panel_tema')||'claro')==='claro')document.documentElement.classList.add('claro')</script>
 </head>
@@ -1298,8 +1305,20 @@ async function cargar(){
 async function configEscribir(mut){
   mut(cfgCache);
   render();
-  try{ await api(`menusbot_config?id=eq.${RID}`, { method:'PATCH', body: JSON.stringify({ data: cfgCache, actualizado: new Date().toISOString() }) }); }
-  catch(e){ toast('Sin conexión — el cambio se reintentará'); }
+  try{
+    await api(`menusbot_config?id=eq.${RID}`, { method:'PATCH', body: JSON.stringify({ data: cfgCache, actualizado: new Date().toISOString() }) });
+  }catch(e){
+    /* Antes aquí decía «el cambio se reintentará» y era mentira: no había ningún reintento, y
+       cuatro segundos después el sondeo traía la configuración del servidor y borraba el cambio
+       de la pantalla sin decir nada. El dueño se iba creyendo que había subido un precio.
+       Ahora se dice la verdad y se intenta una vez más de verdad, ya con el aviso puesto. */
+    try{
+      await new Promise(r => setTimeout(r, 1500));
+      await api(`menusbot_config?id=eq.${RID}`, { method:'PATCH', body: JSON.stringify({ data: cfgCache, actualizado: new Date().toISOString() }) });
+      return;
+    }catch(e2){}
+    toast('NO se guardó — revisa el internet y vuelve a hacer el cambio', true);
+  }
 }
 const dbEscribir = configEscribir; // los escritores de carta / temas / equipo mutan el documento de configuración
 
@@ -1334,7 +1353,7 @@ function marcaTemprana(){
   const leyenda = '<small>PANEL DEL RESTAURANTE</small>';
   ['marcaHead','marcaCandado'].forEach(id => {
     const el = document.getElementById(id);
-    if(el) el.innerHTML = m.logo ? leyenda : `${m.nombre}${leyenda}`;
+    if(el) el.innerHTML = m.logo ? leyenda : `${escTxt(m.nombre)}${leyenda}`;
   });
   if(m.logo) ['logoHead','logoCandado'].forEach(id => {
     const el = document.getElementById(id);
@@ -1372,8 +1391,8 @@ function aplicarMarcaPanel(){
     document.title = `${m.nombre} · Panel del Restaurante — MenusBot`;
     // Logo O nombre — nunca los dos; la leyenda va debajo del que se muestre
     const leyenda = '<small>PANEL DEL RESTAURANTE</small>';
-    $('#marcaHead').innerHTML = m.logo ? leyenda : `${m.nombre}${leyenda}`;
-    $('#marcaCandado').innerHTML = m.logo ? leyenda : `${m.nombre}${leyenda}`;
+    $('#marcaHead').innerHTML = m.logo ? leyenda : `${escTxt(m.nombre)}${leyenda}`;
+    $('#marcaCandado').innerHTML = m.logo ? leyenda : `${escTxt(m.nombre)}${leyenda}`;
     ['logoHead','logoCandado'].forEach(id => {
       const el = document.getElementById(id);
       if(!el) return;
@@ -1390,7 +1409,7 @@ function aplicarMarcaPanel(){
       setTimeout(() => {
         if(el.style.display !== 'none') return;
         const cont = document.getElementById(id === 'logoHead' ? 'marcaHead' : 'marcaCandado');
-        if(cont && !/\w/.test(cont.textContent.replace(/PANEL DEL RESTAURANTE/i,''))) cont.innerHTML = `${m.nombre}${leyenda}`;
+        if(cont && !/\w/.test(cont.textContent.replace(/PANEL DEL RESTAURANTE/i,''))) cont.innerHTML = `${escTxt(m.nombre)}${leyenda}`;
       }, 4000);
     });
     marcaPanelRecordar(m);
@@ -2182,7 +2201,12 @@ function tarjetaComanda(o, d){
     const marca = !conPartidas ? '' : (i.entregado
       ? `<span class="p-ok">✓ ${i.entregado_por || 'Entregado'}</span>`
       : `<button class="p-btn" onclick="marcarItem('${o.folio}',${ix})">Entregar</button>`);
-    return `<div class="c-item"><b>${i.qty}×</b><span>${i.nombre}${i.notas?`<small>— ${i.notas}</small>`:''}</span>${marca}</div>`;
+    /* escTxt en el nombre y en la nota: la nota la escribe el COMENSAL, texto libre, y esto
+       se pinta en la pantalla del dueño —la que tiene la sesión del panel. Sin escapar, una
+       nota como «<img src=x onerror=...>» corre como código aquí dentro y puede llevarse la
+       sesión del dueño a otro lado. El nombre del platillo lo pone el dueño, pero se escapa
+       igual: la regla es que nada que venga de la base se pinta crudo. */
+    return `<div class="c-item"><b>${i.qty}×</b><span>${escTxt(i.nombre)}${i.notas?`<small>— ${escTxt(i.notas)}</small>`:''}</span>${marca}</div>`;
   }).join('');
   return `<div class="comanda">
     <div class="c-top"><span class="c-folio">${o.folio}</span><span class="c-mesa">Mesa ${String(o.mesa).padStart(2,'0')}${o.sucursal ? ' · ' + o.sucursal : ''}</span>
@@ -2342,8 +2366,8 @@ function render(){
     $('#tablaRegistro').innerHTML = filas.length ? filas.map(o => `<tr>
       <td class="serif">${o.folio}</td>
       <td>${hora(o.creada)}</td>
-      <td>Mesa ${String(o.mesa).padStart(2,'0')}${o.sucursal ? '<br><small>' + o.sucursal + '</small>' : ''}</td>
-      <td>${o.items.map(i => `${i.qty}× ${i.nombre}`).join('<br>')}${o.items.some(i=>i.notas) ? '<br><small>'+o.items.filter(i=>i.notas).map(i=>'— '+i.notas).join(' · ')+'</small>' : ''}</td>
+      <td>Mesa ${String(o.mesa).padStart(2,'0')}${o.sucursal ? '<br><small>' + escTxt(o.sucursal) + '</small>' : ''}</td>
+      <td>${o.items.map(i => `${i.qty}× ${escTxt(i.nombre)}`).join('<br>')}${o.items.some(i=>i.notas) ? '<br><small>'+o.items.filter(i=>i.notas).map(i=>'— '+escTxt(i.notas)).join(' · ')+'</small>' : ''}</td>
       <td><b>${fmt(o.total)}</b></td>
       <td><span class="pill-est e${o.estado}">${escTxt(estadoTxt(o))}</span></td>
       <td>${escTxt(o.entregada_por || '') || '<small>—</small>'}${

@@ -379,6 +379,13 @@
   html.claro .nav-btn.activo::after{border-top-color:var(--mb-verde)}
   .cab-entrada h1 em{color:var(--mb-verde)}
   html.claro .bloque,html.claro .mesero-card{box-shadow:0 6px 18px rgba(14,62,47,.06)}
+
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{
+      animation-duration:.001ms !important; animation-iteration-count:1 !important;
+      transition-duration:.001ms !important; scroll-behavior:auto !important;
+    }
+  }
 </style>
 <script>if((localStorage.getItem('mb_mesero_tema')||'claro')==='claro')document.documentElement.classList.add('claro')</script>
 </head>
@@ -543,10 +550,22 @@ const VAPID_PUB = 'BGYJ9MASrj82-B-QdYjAcLVQYSBVEMoLrhfSBVejPmSk5n9m1c1LDY21aSEmF
 
 /* Declaración de función a propósito (no const): las pruebas la reemplazan.
    El status viaja en el error porque no es lo mismo un 409 que una caída de red. */
+/* El pase del mesero. Lo entrega el servidor cuando el PIN es correcto y viaja en cada
+   peticion: es lo que le permite a la base distinguir «el mesero autoriza esta orden» de
+   «un desconocido autoriza la suya». Sin esto, las dos peticiones se ven identicas. */
+function paseOp(){ return (sesion && sesion.token) || ''; }
+/* Las columnas que esta pantalla usa de verdad. Se nombran una por una a proposito: el
+   nombre, telefono y domicilio del comensal NO se bajan porque esta pantalla nunca los
+   enseña, y un dato que no viaja es un dato que no se puede filtrar. */
+const COLS_ORDEN = 'id,restaurante_id,mesa,items,total,estado,creada,sucursal,cerrada,verificacion,' +
+  'autorizada_por,autorizada_at,entregada_at,entregada_por,recogida_at,recogida_por,canal,' +
+  'pago_estado,pago_metodo,envio,repartidor,recoger_at,op_id';
+let revisando = false;
 async function api(ruta, opc = {}){
+  const pase = paseOp();
   const r = await fetch(SUPA_URL + '/rest/v1/' + ruta, {
     ...opc,
-    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', ...(opc.headers || {}) },
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', ...(pase ? { 'x-mb-op': pase } : {}), ...(opc.headers || {}) },
   });
   if(!r.ok){ const err = new Error(await r.text()); err.status = r.status; throw err; }
   const tx = await r.text();
@@ -699,7 +718,22 @@ async function revisarMudanza(){
 async function arrancar(){
   if(!RID){ pantalla('sinRid'); return; }
   if(await revisarMudanza()) return; // la página se está recargando en la dirección nueva
-  if(sesion && sesion.id != null){ entrarApp(); return; }
+  /* Una sesión guardada solo vale si su pase sigue vivo. Se le pregunta al servidor: él es el
+     único que sabe si caduco o si al mesero lo dieron de baja. Un teléfono que estuvo apagado
+     el fin de semana vuelve a pedir el PIN, que es exactamente lo que debe pasar. */
+  if(sesion && sesion.id != null && sesion.token){
+    try{
+      const v = await api('rpc/menusbot_op_refrescar', { method:'POST', body:'{}' });
+      if(v && v.ok){ entrarApp(); return; }
+    }catch(e){
+      /* Sin internet no se le cierra la puerta en la cara: entra con lo último que sabíamos y
+         el sondeo le dirá enseguida si el pase ya no sirve. Cerrarle aquí sería dejar sin app a
+         un mesero cuyo único pecado fue estar en una zona sin señal. */
+      entrarApp(); return;
+    }
+  }
+  sesion = null;
+  try{ localStorage.removeItem(LSK('mb_mesero')); }catch(e){}
   pantalla('entrada');
   cargarMeseros();
 }
@@ -711,7 +745,9 @@ async function cargarMeseros(){
   const cont = $('#listaMeseros');
   cont.innerHTML = '<div class="vacio">Cargando la lista&hellip;</div>';
   try{
-    meseros = await api('menusbot_meseros?restaurante_id=eq.' + encodeURIComponent(RID) + '&activo=eq.true&order=nombre') || [];
+    /* Vista sin la columna del PIN: la pantalla solo necesita nombres para pintar botones.
+       El PIN ya no sale de la base ni para esta lista. */
+    meseros = await api('menusbot_meseros_publicos?restaurante_id=eq.' + encodeURIComponent(RID) + '&order=nombre') || [];
   }catch(e){
     cont.innerHTML = '<div class="vacio">No se pudo cargar la lista de meseros.<br>Revisa el internet del lugar y vuelve a abrir esta pantalla.</div>';
     return;
@@ -805,20 +841,33 @@ $('#teclado').addEventListener('click', e => {
   if(pinBuf.length === 4) setTimeout(revisarPin, 140);
 });
 
-function revisarPin(){
-  if(bloqueado() || !elegido) return;
-  if(String(elegido.pin == null ? '' : elegido.pin).trim() === pinBuf){
+async function revisarPin(){
+  if(bloqueado() || !elegido || revisando) return;
+  revisando = true;
+  let r = null;
+  try{
+    /* El PIN se compara EN EL SERVIDOR. Antes se comparaba aqui, lo que obligaba a que la
+       lista de meseros trajera el PIN de todos —legible por cualquiera con la llave publica.
+       Ahora sube, se compara adentro, y baja un pase temporal en su lugar. */
+    r = await api('rpc/menusbot_mesero_login', { method:'POST', body: JSON.stringify({
+      p_rest: RID, p_mesero_id: elegido.id, p_pin: pinBuf }) });
+  }catch(e){
+    revisando = false;
+    $('#pinAviso').textContent = 'Sin conexion. Revisa el internet del lugar y vuelve a intentar.';
+    pinBuf = ''; pintarPin();
+    return;
+  }
+  revisando = false;
+  if(r && r.ok){
     fallos = 0;
     try{ localStorage.removeItem(LSK('mb_mesero_fallos')); localStorage.removeItem(LSK('mb_mesero_bloqueo')); }catch(e){}
-    /* El PIN se queda guardado en el teléfono del propio mesero, a propósito. No es un secreto
-       nuevo que se esté soltando: esta pantalla ya lee la lista de meseros con la llave pública
-       y el PIN viene en esa lista, o sea que ya lo tenía enfrente. Guardarlo aquí sirve para que
-       cuando pida soltar una mesa pueda decir en el servidor quién es. Así la regla de quién
-       puede cerrar una mesa vive en la base y no en un botón de esta página, que cualquiera
-       puede abrir. */
+    /* Lo que se guarda en el teléfono es el PASE, no el PIN. Son cosas distintas: el PIN abre
+       la puerta siempre y el pase caduca solo a las 16 horas —un turno largo con margen—, así
+       que un teléfono perdido deja de servir sin que nadie tenga que hacer nada. El pase
+       tampoco sirve en otro restaurante: nace amarrado a este. */
     sesion = {
-      id: elegido.id, nombre: elegido.nombre, sucursal: elegido.sucursal || '',
-      mesas: normalizarMesas(elegido.mesas), pin: elegido.pin, ts: Date.now(),
+      id: r.id, nombre: r.nombre, sucursal: r.sucursal || '',
+      mesas: normalizarMesas(r.mesas), token: r.token, ts: Date.now(),
     };
     try{ localStorage.setItem(LSK('mb_mesero'), JSON.stringify(sesion)); }catch(e){}
     entrarApp();
@@ -1090,7 +1139,7 @@ async function sondear(){
          completa, así que recogida_at y recogida_por llegan solos. Si alguien le pone un select=
          para ahorrar bytes, que no se le olviden esos dos: sin ellos toda orden lista se pintaría
          «Lista para recoger» para siempre y el mesero iría al pase por una charola que ya trae. */
-      api('menusbot_ordenes?restaurante_id=eq.' + encodeURIComponent(RID) + '&cerrada=eq.false&order=creada.desc'),
+      api('menusbot_ordenes?restaurante_id=eq.' + encodeURIComponent(RID) + '&cerrada=eq.false&order=creada.desc&select=' + COLS_ORDEN),
       /* order= explícito: sin él PostgREST no promete un orden estable y dos filas de la misma
          mesa se alternan entre peticiones. La fila viva (latido más nuevo) va primero. */
       api('menusbot_mesas_abiertas?restaurante_id=eq.' + encodeURIComponent(RID) + '&order=mesa.asc,latido_at.desc.nullslast,id.desc'),
@@ -1129,11 +1178,8 @@ async function refrescarMiFicha(){
     sesion.nombre = m.nombre;
     sesion.sucursal = m.sucursal || '';
     sesion.mesas = normalizarMesas(m.mesas);
-    /* Rescate del PIN para los teléfonos que ya traían sesión guardada de antes de que esto
-       existiera: sin él, soltar una mesa le respondería «sin permiso» sin que él entienda por
-       qué, y tendría que salirse y volver a teclearlo a media hora pico. Esta consulta ya lo
-       traía en el select, así que no cuesta un viaje más. */
-    if(m.pin != null) sesion.pin = m.pin;
+    /* Ya no se rescata ningun PIN: quien identifica al mesero es el pase que le dio el
+       servidor al entrar. Si el pase vencio, se le pide el PIN otra vez y se acabo. */
     try{ localStorage.setItem(LSK('mb_mesero'), JSON.stringify(sesion)); }catch(e){}
     $('#miNombre').textContent = sesion.nombre;
     $('#miDonde').textContent = (sesion.sucursal ? 'Sucursal ' + sesion.sucursal + ' · ' : '') +
@@ -1620,9 +1666,20 @@ async function entregarPartida(id, ix){
 }
 
 async function atender(id){
+  /* Se quita de la pantalla de inmediato porque el mesero ya la vio, pero si el servidor no
+     se entera hay que devolverla: si no, cuatro segundos después el sondeo la trae de vuelta
+     sola y el mesero no entiende por qué reapareció algo que ya había resuelto. Sus funciones
+     hermanas (autorizar, recogiOrden) ya revertían así; esta se había quedado sin hacerlo. */
+  const previas = llamadas.slice();
   llamadas = llamadas.filter(l => +l.id !== id);
   pintarMesas(); if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
-  try{ await api('menusbot_llamadas?id=eq.' + id, { method:'PATCH', body: JSON.stringify({ atendida:true }) }); }catch(e){}
+  try{
+    await api('menusbot_llamadas?id=eq.' + id, { method:'PATCH', body: JSON.stringify({ atendida:true }) });
+  }catch(e){
+    llamadas = previas;
+    pintarMesas(); if(mesaAbiertaEnDetalle != null) pintarDetalle(mesaAbiertaEnDetalle);
+    toast('No se pudo marcar como atendida. Revisa el internet y vuelve a intentar.');
+  }
 }
 
 /* ---------- Retirar una petición de cuenta ----------
@@ -1713,7 +1770,7 @@ async function soltarMesa(mesa, suc, modo){
   try{
     d = await rpcSoltarMesa({
       p_mesa: +mesa, p_modo: modo, p_suc: suc || '',
-      p_mesero_id: sesion.id, p_pin: sesion.pin || null, p_confirmado: confirmado,
+      p_mesero_id: sesion.id, p_confirmado: confirmado,
     });
   }catch(e){
     delete soltarEnVuelo[clave];

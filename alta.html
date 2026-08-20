@@ -91,6 +91,13 @@
   input,select{border-radius:10px}
   .btn{background:var(--mb-verde);color:#FFFFFF;border-radius:999px;letter-spacing:1.8px}
   .btn:hover{background:var(--mb-verde2)}
+
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{
+      animation-duration:.001ms !important; animation-iteration-count:1 !important;
+      transition-duration:.001ms !important; scroll-behavior:auto !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -143,6 +150,10 @@
       <div class="campo"><label class="caps" for="rEmail">Correo electrónico</label><input id="rEmail" type="email" autocomplete="username" placeholder="tucorreo@restaurante.com"></div>
       <div class="campo"><label class="caps" for="rPass">Contraseña</label><input id="rPass" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres"></div>
       <button class="btn" id="btnAlta" onclick="crearCuenta()">Crear mi cuenta gratis</button>
+    <p style="margin-top:14px;font-size:12.8px;line-height:1.6;color:var(--gris,#5F6B62);text-align:center">
+      Al crear tu cuenta aceptas nuestro
+      <a href="privacidad.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:2px">Aviso de Privacidad</a>.
+    </p>
       <div class="error" id="altaError"></div>
       <div class="nota">Al crearla entras directo a tu panel. ¿Ya tienes cuenta? <a href="panel.html">Inicia sesión aquí</a>.</div>
     </div>

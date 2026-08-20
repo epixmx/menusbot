@@ -12,7 +12,9 @@
   if(i >= 0 && i + 5 < p.length) location.replace(p.slice(0, i + 5) + location.search + location.hash);
 })();
 </script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- Sin maximum-scale ni user-scalable=no: bloquear el acercamiento le quita a alguien con
+     poca vista la unica herramienta que tiene para leer la carta. Se quito a proposito. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <link rel="icon" type="image/png" href="icono-192.png">
 <title>Menú digital</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,7 +27,10 @@
     --papel2:#E9E0CE;
     --crema:#EFE7D8;       /* texto principal sobre oscuro */
     --humo:#A79D8C;        /* texto secundario */
-    --humo2:#6E665A;
+    /* Era #6E665A: 3.3 a 1 contra el fondo oscuro, por debajo del minimo legible. Se aclaro
+       a 4.7 a 1. Es el color del pie, las descripciones largas y la tabla nutrimental —texto
+       que alguien mayor tiene que poder leer en un restaurante con media luz. */
+    --humo2:#8E8577;
     --pomodoro:#E4593B;    /* acento único */
     --basilico:#8FAE8B;
     --oro:#C9A227;
@@ -244,9 +249,11 @@
   .mini-tag.sg{color:#9DB6CE}
   .mini-tag.pop{color:var(--oro)}
   .mini-tag.kcal{color:var(--humo2);display:flex;align-items:center;gap:4px}
-  .btn-mas-foto{position:absolute;right:9px;bottom:9px;z-index:3;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;border-radius:var(--r-mas);background:var(--crema);color:var(--esp);font-size:21px;font-weight:500;line-height:1;cursor:pointer;transition:.15s;font-family:var(--grot);box-shadow:0 2px 9px rgba(0,0,0,.45)}
+  .btn-mas-foto{position:absolute;right:9px;bottom:9px;z-index:3;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:none;border-radius:var(--r-mas);background:var(--crema);color:var(--esp);font-size:21px;font-weight:500;line-height:1;cursor:pointer;transition:.15s;font-family:var(--grot);box-shadow:0 2px 9px rgba(0,0,0,.45)}
   .btn-mas-foto:active{background:var(--pomodoro);color:var(--papel)}
-  .celda-plato .btn-mas-foto{width:31px;height:31px;font-size:19px;right:7px;bottom:7px}
+  /* 44x44 es el minimo para tocar con el dedo sin fallar. Era de 31px, y es el boton mas
+     importante de toda la carta: el que agrega el platillo. */
+  .celda-plato .btn-mas-foto{width:44px;height:44px;font-size:21px;right:7px;bottom:7px}
   .vacio{text-align:center;color:var(--humo);padding:60px 20px;font-size:15px;line-height:1.8}
   footer{text-align:center;font-size:12.5px;color:var(--humo2);padding:26px 0 10px;letter-spacing:1px;line-height:1.6;text-transform:uppercase}
 
@@ -644,6 +651,18 @@
   .p-etiq.cinco{display:block;text-align:center;font-size:12.5px;letter-spacing:1.4px;line-height:1.5;gap:0}
   .p-etiq.cinco .p-cual{display:block;font-family:var(--serif);font-style:var(--serif-i);font-size:19px;letter-spacing:0;text-transform:none;line-height:1.3;margin-top:2px;color:var(--ink)}
   .p-etiq.cinco .p-cual.on{color:var(--pomodoro)}
+
+  /* Quien configuro su telefono para reducir el movimiento suele hacerlo porque las
+     animaciones lo marean. La marquesina del encabezado gira sin parar 26 s y el punto de
+     "en vivo" late para siempre: para esa persona, se quedan quietos. */
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{
+      animation-duration:.001ms !important; animation-iteration-count:1 !important;
+      transition-duration:.001ms !important; scroll-behavior:auto !important;
+    }
+  }
+  .aviso-privacidad{margin-top:12px;text-align:center;font-size:12px;line-height:1.55;color:var(--humo2)}
+  .aviso-privacidad a{color:inherit;text-decoration:underline;text-underline-offset:2px}
 </style>
 </head>
 <body>
@@ -1500,6 +1519,18 @@ async function sincronizar(){
    cuando la mesa ya se cobró. Seguir preguntando cada 4 segundos por una cuenta cerrada es
    gastarle datos al comensal y pegarle a la base por nada. */
 let sondeo = setInterval(sincronizar, 4000);
+/* El sondeo se detiene cuando la pantalla no se ve. Un comensal deja la carta abierta 40
+   minutos mientras come: sin esto son 600 viajes a la red con los datos de SU plan, por algo
+   que nadie está mirando. La pantalla del mesero ya lo hacía; esta no, y es la que corre en
+   el teléfono de un tercero. Al volver se sincroniza de inmediato para no enseñar algo viejo. */
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden){
+    if(sondeo){ clearInterval(sondeo); sondeo = null; }
+  }else if(!sondeo){
+    sincronizar();
+    sondeo = setInterval(sincronizar, 4000);
+  }
+});
 function detenerSondeo(){ if(sondeo != null){ clearInterval(sondeo); sondeo = null; } }
 
 /* ---------- Sesión persistente (sobrevive back/recarga del navegador) ---------- */
@@ -1786,6 +1817,10 @@ function abrirHojaDatos(){
       <div class="al-bloque roja" id="kError" style="margin:12px 0 0;display:none"></div>
       <div class="acciones-orden" style="padding:18px 0 0">
         <button class="btn-primario" onclick="confirmarDatosKiosco()">Guardar y enviar mi orden</button>
+        <!-- La ley pide que se diga para que se usan los datos ANTES de pedirlos, no despues.
+             Va aqui, pegado al boton, porque es el momento exacto en que el comensal decide. -->
+        <p class="aviso-privacidad">Usamos tu nombre y tel&eacute;fono solo para entregarte este pedido.
+          <a href="privacidad.html" target="_blank" rel="noopener">Aviso de privacidad</a></p>
         <button class="btn-fantasma" onclick="cerrarSheets()">Todavía no</button>
       </div>
     </div>`;
@@ -3459,9 +3494,25 @@ function mostrarSugerenciaBebidas(){
   $('#hojaConf').classList.add('abierta');
   document.querySelectorAll('#hojaConf .sug-cards').forEach(arrastrable);
 }
+let enviandoOrden = false;
 async function enviarOrden(){
   if(!cartaOrdena()) return;   // este plan no toma órdenes
   if(!pedido.length) return;
+  /* CANDADO CONTRA EL DOBLE TOQUE. El pedido no se vaciaba hasta que el servidor contestaba,
+     así que un segundo toque —o el que el propio comensal da porque «no pasó nada»— mandaba
+     una comanda idéntica con otro folio. Cocina veía dos, el mesero autorizaba las dos, y
+     alguien pagaba el doble. Con la red lenta de un viernes lleno eso no es raro: es lo
+     normal. La bandera se suelta pase lo que pase (finally), para que un fallo de red no
+     deje el botón muerto. */
+  if(enviandoOrden) return;
+  enviandoOrden = true;
+  try{
+    await enviarOrdenReal();
+  } finally {
+    enviandoOrden = false;
+  }
+}
+async function enviarOrdenReal(){
   const hayBebida = pedido.some(i => { const p = PLATILLOS.find(x => x.id === i.id); return p && p.cat === 'bebidas'; });
   if(!hayBebida && !sinBebidasOk){ mostrarSugerenciaBebidas(); return; }
   const items = pedido.map(i => { const p = PLATILLOS.find(x => x.id === i.id); return { id:i.id, qty:i.qty, notas:i.notas, nombre:p.nombre, precio:p.precio }; });
@@ -3761,7 +3812,11 @@ function elegirPropina(monto, pct){
   const porPeticion = propinaPorPeticion;
   propinaPorPeticion = false;
   if(mesa != null && rutaMiMesa()){
-    api(rutaMiMesa(), { method:'PATCH', body: JSON.stringify({ propina_sugerida: propinaSugerida, propina_pedida: false }) }).catch(() => {});
+    /* Antes esto se mandaba sin esperar y el aviso «Anotamos $X de propina» salía siempre,
+       hubiera llegado o no. El comensal se iba creyendo que la dejó anotada y el mesero cobraba
+       sin ella. Ahora si no llega, se le dice. */
+    api(rutaMiMesa(), { method:'PATCH', body: JSON.stringify({ propina_sugerida: propinaSugerida, propina_pedida: false }) })
+      .catch(() => toast('No se pudo anotar la propina — dísela a tu mesero cuando llegue', true));
   }
   cerrarSheets();
   /* Si el mesero ya venía en camino (él la pidió, o la cuenta ya estaba pedida) no hay que
