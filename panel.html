@@ -594,6 +594,16 @@
 
 <div class="cont">
 
+  <!-- Lo que se ve en lugar de una vista que el plan no incluye. Se enseña la pestaña y no se
+       esconde: el dueño tiene que poder ver qué se está perdiendo, que para eso está. -->
+  <div class="vista" id="v-candado">
+    <div class="vista-titulo"><h1 id="candadoTitulo">Esto viene en el plan Negocio</h1><span class="caps">Tu plan actual es Carta</span></div>
+    <div class="pp-aviso" style="align-items:flex-start">
+      <span id="candadoTexto"></span>
+      <div class="pp-acc"><button class="btn-avanza" onclick="window.open('index.html#precios','_blank')">Ver los planes</button></div>
+    </div>
+  </div>
+
   <!-- COMANDAS -->
   <div class="vista activa" id="v-comandas">
     <div class="vista-titulo"><h1>Comandas en vivo</h1><span class="caps" id="resumenHoy"></span></div>
@@ -1342,6 +1352,17 @@ function marcaTemprana(){
   else document.documentElement.style.removeProperty('--oro');
 }
 
+/* El plan vive en menusbot_restaurantes, que está cerrada a su dueño: la carta del comensal
+   —que entra con la llave anónima— no puede leerla. Así que el panel deja una copia en la
+   config, que es lo único que la carta sí lee. La verdad sigue siendo la tabla; esto es un
+   espejo, y por eso se reescribe solo cuando cambia. */
+function espejarPlanEnConfig(){
+  if(MODO_DEMO) return;
+  const p = ((SESION && SESION.plan) || '').toLowerCase().trim();
+  if(!p) return;
+  if(((dbCache.config || {}).plan || '') === p) return;
+  configEscribir(d => { d.config.plan = p; });
+}
 let marcaPanelHash = '', marcaFormHash = '';
 function aplicarMarcaPanel(){
   const m = marcaDe();
@@ -1382,6 +1403,7 @@ function aplicarMarcaPanel(){
     else document.documentElement.style.removeProperty('--oro');
   }
   llenarFormMarca(false);
+  espejarPlanEnConfig();
   llenarFormResenas(false); /* mismo arranque que la identidad: el formulario de reseñas también vive en esta vista */
   llenarFormServicio(false);
   aplicarNegocioAlPanel();
@@ -2005,13 +2027,40 @@ function estadoTxt(o){
 
 /* ---------- vistas ---------- */
 let vista = 'comandas';
-document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
-  vista = t.dataset.v;
-  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('activo', x === t));
+/* Qué necesita cada pestaña para poder abrirse, y qué se le dice al dueño si su plan no la
+   trae. Lo que no aparece aquí —carta, temas, QR, primeros pasos— es justo lo que el plan
+   gratis sí incluye: verse bien. */
+const VISTA_PIDE = {
+  comandas: { capacidad:'ordena',   titulo:'Las comandas vienen en el plan Negocio',
+    texto:'Con tu plan <b>Carta</b> el comensal ve tu menú, pero no ordena desde su teléfono. En el plan <b>Negocio</b> las órdenes llegan aquí en vivo, pasan a tu cocina y tu mesero las confirma en la mesa.' },
+  registro: { capacidad:'ordena',   titulo:'El registro viene en el plan Negocio',
+    texto:'Aquí queda todo lo que pasó en el día: cada orden, quién la tomó, quién la cobró y a qué hora. Se llena solo en cuanto tu carta empieza a recibir órdenes.' },
+  reportes: { capacidad:'reportes', titulo:'Los reportes vienen en el plan Negocio',
+    texto:'Ventas por día, por mesero y por sucursal, propinas y platillos que más salen. Se arman solos con las órdenes que entran; por eso van del lado que opera.' },
+  equipo:   { capacidad:'equipo',   titulo:'Tu equipo viene en el plan Negocio',
+    texto:'Aquí das de alta a tus meseros con su PIN, les repartes mesas y configuras la pantalla de cocina. Es lo que hace que las órdenes lleguen a alguien.' },
+};
+function vistaBloqueada(v){
+  const pide = VISTA_PIDE[v];
+  return !!(pide && !puede(pide.capacidad));
+}
+function mostrarVistaPanel(v){
+  vista = v;
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('activo', x.dataset.v === v));
   document.querySelectorAll('.vista').forEach(x => x.classList.remove('activa'));
-  $('#v-' + vista).classList.add('activa');
+  if(vistaBloqueada(v)){
+    /* La vista real ni se pinta: se enseña el candado en su lugar. Así no hay forma de que se
+       alcance a ver medio segundo de contenido que este plan no incluye. */
+    const pide = VISTA_PIDE[v];
+    $('#candadoTitulo').textContent = pide.titulo;
+    $('#candadoTexto').innerHTML = pide.texto;
+    $('#v-candado').classList.add('activa');
+    return;
+  }
+  $('#v-' + v).classList.add('activa');
   render();
-});
+}
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => mostrarVistaPanel(t.dataset.v));
 
 let toastTimer = null;
 // El aviso normal es neutro. El que reporta una falla se pinta de rojo sólido: si algo no se
@@ -2148,6 +2197,9 @@ function render(){
   const ppGr = ppGrupos();
   ppAviso(ppFaltantes(ppGr));
   if(vista === 'pasos') ppPintar(ppGr);
+  /* Si la vista de turno no la trae el plan, aquí no hay nada que pintar: el candado ya está
+     puesto y el resto de este render escribiría en contenedores que nadie está viendo. */
+  if(vistaBloqueada(vista)) return;
 
   if(vista === 'comandas'){
     const llamadas = (d.llamadas || []).filter(l => !l.atendida && Date.now() - l.ts < 30*60000);
@@ -3193,12 +3245,35 @@ const VIDEO_MAX_ALTO = 720;
 /* Qué planes pueden subir video. Hoy todos los restaurantes están en 'demo' y no existe
    todavía el sistema de planes de paga; cuando exista, esta lista es el único lugar que hay
    que tocar para que el video quede del lado de los que pagan. */
-/* Los nombres son los que ya dice el sitio —Carta, Negocio, Cadenas— y no inventos del
-   código: si aquí dijera 'pro' y allá 'Negocio', el día del cobro serían dos vocabularios.
-   'demo' sigue en la lista SOLO mientras dura el piloto, para poder probar el video sin
-   sistema de planes; al integrarlos, se quita de aquí y el video queda del lado que paga. */
-const PLANES_CON_VIDEO = ['demo', 'negocio', 'cadenas'];
-const puedeSubirVideo = () => PLANES_CON_VIDEO.includes(((SESION && SESION.plan) || 'demo').toLowerCase());
+/* ---------- Qué trae cada plan ----------
+   Los nombres son los que ya dice el sitio —Carta, Negocio, Cadenas— y no inventos del código:
+   si aquí dijera 'pro' y allá 'Negocio', el día del cobro serían dos vocabularios.
+   La línea es la misma que promete el sitio: el gratis sirve para VERSE BIEN (menú, fotos,
+   marca, QR) y lo de paga sirve para OPERAR (órdenes, mesero, cocina, reportes, video). */
+const CAPACIDADES = {
+  carta:   { ordena:false, equipo:false, reportes:false, video:false },
+  negocio: { ordena:true,  equipo:true,  reportes:true,  video:true  },
+  cadenas: { ordena:true,  equipo:true,  reportes:true,  video:true  },
+};
+/* 'demo' es el escaparate y tiene que enseñar el producto completo; 'pro' es como se llamó
+   un rato en el código. Los dos apuntan al plan de paga mientras dura el piloto. */
+const ALIAS_PLAN = { demo:'negocio', pro:'negocio' };
+function planActual(){
+  const p = ((SESION && SESION.plan) || '').toLowerCase().trim();
+  return ALIAS_PLAN[p] || p;
+}
+/* FALLA ABIERTO, y es a propósito: un plan vacío, mal escrito o que no llegó por un problema
+   de red da acceso COMPLETO. Un restaurante en plena comida no puede dejar de ver sus
+   comandas porque un dato no cargó; el costo de equivocarse hacia el otro lado es mucho peor
+   que el de regalar una función. El candado de verdad —el que sí aguanta a alguien con malas
+   intenciones— va en la base con RLS, y ese es requisito antes de cobrarle a nadie. Esto de
+   aquí es lo que le explica el plan al dueño, no una barrera de seguridad. */
+function puede(que){
+  const c = CAPACIDADES[planActual()];
+  if(!c) return true;
+  return c[que] !== false;
+}
+const puedeSubirVideo = () => puede('video');
 
 const TOPE_FOTO = 190 * 1024;   // bytes
 const TOPE_LOGO = 120 * 1024;
@@ -5527,6 +5602,10 @@ function abrirPanel(){
      lo que más se hace desde una computadora prestada. */
   if(SESION && SESION.slug) $('#btnSalir').style.display = '';
   pintarUrlPublica();
+  /* La pestaña de arranque también pasa por el filtro del plan. El HTML nace con «Comandas»
+     abierta; si este plan no la trae, sin esta línea el dueño entraría directo a una vista
+     que no le toca. */
+  mostrarVistaPanel(vista);
   cargar();
 }
 /* URL pública de la carta del restaurante (asignada por el sistema) */

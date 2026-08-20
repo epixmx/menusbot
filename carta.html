@@ -448,6 +448,11 @@
   .notas-inp{width:100%;border:1px solid var(--linea2);background:transparent;border-radius:var(--r-chico);padding:13px 15px;font-size:15px;outline:none;font-family:var(--grot);color:var(--crema);letter-spacing:.4px}
   .notas-inp::placeholder{color:var(--humo2)}
   .notas-inp:focus{border-color:var(--pomodoro)}
+  /* Plan «carta»: todo lo que sirve para ordenar deja de existir en la pantalla. Va por CSS
+     además de por JS para que no haya un parpadeo entre que carga la página y llega el plan. */
+  html.sin-ordenar .fila-agregar,html.sin-ordenar .barra-orden,html.sin-ordenar .sug-mas,
+  html.sin-ordenar .btn-mas-foto,html.sin-ordenar #navOrden,html.sin-ordenar #navCuenta,
+  html.sin-ordenar #navMesa{display:none !important}
   .fila-agregar{display:flex;gap:12px;margin-top:24px;align-items:stretch;position:sticky;bottom:0;background:var(--esp);padding:14px 0 16px;box-shadow:0 -18px 18px -12px var(--esp);z-index:6}
   .stepper-g{display:flex;align-items:center;border:1px solid var(--linea2);border-radius:var(--r-chico)}
   .stepper-g button{width:40px;height:48px;border:none;background:transparent;font-size:19px;color:var(--crema);cursor:pointer;font-family:var(--grot)}
@@ -812,6 +817,19 @@ const LSK = k => RID === 'bellavita' ? k : k + '::' + RID;
    simular la cocina. En un restaurante de verdad la cocina son personas, no un temporizador.
    Se define igual que en el panel para que las dos pantallas entiendan lo mismo por «demo». */
 const MODO_DEMO = PARAMS_URL.has('demo') || RID === 'bellavita';
+
+/* ---------- Qué trae el plan del restaurante ----------
+   El plan vive en menusbot_restaurantes, cerrada a su dueño; aquí llega por el espejo que el
+   panel deja en la config. Solo el plan «carta» —el gratis— apaga las órdenes: la carta se ve
+   completa y el comensal pide con su mesero, como toda la vida.
+   FALLA ABIERTO a propósito: cualquier otro valor, vacío, mal escrito o que no llegó, deja
+   ordenar. Un restaurante en plena comida no puede dejar de recibir órdenes porque un dato no
+   cargó; equivocarse hacia ese lado cuesta muchísimo más que regalar una función. */
+const cartaOrdena = () => {
+  if(MODO_DEMO) return true;   // el escaparate enseña el producto completo
+  const p = ((dbCache.config || {}).plan || '').toLowerCase().trim();
+  return p !== 'carta';
+};
 
 /* ---------- Que la marca no parpadee ----------
    El HTML trae un nombre escrito porque algo tiene que haber antes de que la nube conteste.
@@ -1886,13 +1904,24 @@ function aplicarModoKiosco(){
   /* Un tipo de pedido que el negocio ya no ofrece no se puede quedar pegado del localStorage */
   if(k && PEDIDO && canales.indexOf(PEDIDO) < 0) PEDIDO = null;
   if(k && !PEDIDO && canales.length === 1) fijarPedido(canales[0], true);
-  const huella = JSON.stringify([k, canales, PEDIDO]);
+  const huella = JSON.stringify([k, canales, PEDIDO, cartaOrdena()]);
   if(huella !== kioscoAplicado){
     kioscoAplicado = huella;
     /* La pestana «Mesero» no tiene a quien llamar: fuera. Los otros tres son flex:1 y se
        reparten el ancho solos en cuanto este deja de ocupar lugar. */
     const nm = $('#navMesa');
     if(nm) nm.style.display = k ? 'none' : '';
+    /* Plan «carta»: se ve el menú y se pide con el mesero. Se apagan las tres pestañas que
+       solo existen para ordenar y la barra flotante; la del menú se queda sola y a ancho
+       completo. Los botones «+» se apagan desde pintarLista/abrirPlatillo, que consultan
+       cartaOrdena() al pintar. */
+    document.documentElement.classList.toggle('sin-ordenar', !cartaOrdena());
+    ['#navOrden','#navCuenta','#navMesa'].forEach(sel => {
+      const el = $(sel); if(!el) return;
+      if(!cartaOrdena()) el.style.display = 'none';
+      else if(sel !== '#navMesa') el.style.display = '';
+    });
+    if(!cartaOrdena() && vistaActual !== 'menu') mostrarVista('menu');
     pintarPillPedido();
     pintarNavCuenta();
     pintarMarquee();
@@ -2868,6 +2897,8 @@ function etiquetasPlato(d){
        + (d.tags.includes('sin gluten')  ? '<span class="mini-tag sg">Sin gluten</span>'   : '');
 }
 function fotoConMas(d){
+  /* Sin órdenes no hay nada que agregar: la foto se queda sola y el «+» no se pinta. */
+  if(!cartaOrdena()) return `<div class="foto-p">${foto(d.id)}</div>`;
   return `<div class="foto-p">${foto(d.id)}<button class="btn-mas-foto" onclick="event.stopPropagation();agregarRapido('${d.id}')" title="Agregar ${escAtr(d.nombre)}" aria-label="Agregar ${escAtr(d.nombre)}">+</button></div>`;
 }
 function tarjetaPlato(d){
@@ -3146,6 +3177,7 @@ $('#velo').onclick = cerrarSheets;
 
 /* ============ ORDEN ============ */
 function agregarAlPedido(id, qty, notas){
+  if(!cartaOrdena()) return;   // este plan no toma órdenes
   const previo = pedido.find(i => i.id === id && (i.notas||'') === (notas||''));
   if(previo) previo.qty = Math.min(9, previo.qty + qty);
   else pedido.push({id, qty, notas: notas||''});
@@ -3420,6 +3452,7 @@ function mostrarSugerenciaBebidas(){
   document.querySelectorAll('#hojaConf .sug-cards').forEach(arrastrable);
 }
 async function enviarOrden(){
+  if(!cartaOrdena()) return;   // este plan no toma órdenes
   if(!pedido.length) return;
   const hayBebida = pedido.some(i => { const p = PLATILLOS.find(x => x.id === i.id); return p && p.cat === 'bebidas'; });
   if(!hayBebida && !sinBebidasOk){ mostrarSugerenciaBebidas(); return; }
