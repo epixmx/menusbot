@@ -10,36 +10,26 @@ cuándo.
 
 ## Bloquea cobrar — no negociable
 
-> **Estado al 20 ago 2026:** una auditoria completa encontro que el hueco era mucho
-> mas ancho de lo que creiamos. Las politicas de la base decian `true` para el
-> publico en las tablas de operacion, o sea: cualquiera con la direccion del sitio
-> podia leer las ventas de todos los restaurantes, los telefonos y domicilios de
-> los comensales, y los PIN de meseros y cocina; y podia mandar ordenes con precio
-> cero o brincarse al mesero. Ver `tecnico-seguridad.md`.
+> **20 ago 2026 — cerrado y verificado en produccion.** Ver
+> [`tecnico-seguridad.md`](tecnico-seguridad.md) para el modelo completo, lo que
+> se cerro y las trampas que costaron caro.
 
-### 1. Cerrar las politicas de la base *(en curso — falta el ultimo paso)*
-Ya esta hecho: identidad real para mesero y cocina (pase temporal en vez de PIN
-viajando), el total y el precio se recalculan en el servidor, y el sello de
-«autorizada» solo lo puede poner el dueño o un mesero con pase.
-**Falta:** cerrar los permisos de lectura y escritura de `anon` sobre
-`menusbot_ordenes`, `menusbot_cobros`, `menusbot_meseros`, `menusbot_config`,
-`menusbot_mesas_abiertas` y `menusbot_llamadas`. Ese paso NO se puede aplicar
-hasta que las pantallas nuevas esten publicadas, porque las que estan corriendo
-hoy en los telefonos usan el camino viejo y se quedarian mudas.
+### 1. Lo que sigue abierto de seguridad
+- **El contenido de las ordenes se lee entre restaurantes** (platillos, mesa y
+  total; ya no datos personales). Cerrarlo requiere darle identidad tambien al
+  comensal anonimo — proyecto aparte.
+- **`configEscribir()` escribe el documento completo.** Dos paneles abiertos se
+  pisan en silencio. Es el mismo patron del bicho del latido.
+- **Cobros duplicados**: cobrar desde el panel y desde el telefono del mesero a
+  la vez puede meter dos veces la misma venta al corte.
 
-### 2. Sacar el PIN de cocina del documento publico
-La funcion de entrada ya lo lee del servidor, pero el PIN sigue guardado dentro
-de `menusbot_config.data`, que la carta publica descarga entera. Hay que moverlo
-a su propia tabla sin lectura publica.
+### 2. Activar la proteccion de contraseñas filtradas
+Un interruptor en el panel de Supabase (Auth → Password security). Compara
+contra contraseñas ya filtradas en internet. Gratis, un clic.
 
-### 3. `configEscribir()` sigue escribiendo el documento completo
-Dos paneles abiertos guardando cosas distintas se pisan en silencio. Ya dejo de
-mentir sobre el reintento, pero el patron de fondo sigue ahi.
-
-### 4. Cobros duplicados
-Cobrar desde el panel y desde el telefono del mesero al mismo tiempo puede meter
-dos veces la misma venta al corte. El cierre normal de mesa si esta protegido;
-estos dos atajos no pasan por ese candado.
+### 3. Separar la base de la otra app
+El proyecto de Supabase comparte tablas con una app de coleccion de estampas.
+No es urgente, pero conviene separarlas antes de crecer.
 
 ## Bloquea vender
 
