@@ -37,8 +37,15 @@
   --s:'Caveat',cursive;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{font-family:var(--t);color:#2A332C;background:var(--papel);font-size:16.5px;line-height:1.65;overflow-x:hidden}
+/* El corte horizontal va en html Y en body. Estaba solo en body, y eso no alcanza: el
+   documento seguía siendo más ancho que la pantalla, así que en el teléfono aparecía una
+   franja lateral y el ancho brincaba mientras se hacía scroll, según qué pieza decorativa
+   —fotos flotantes, estrellas, gajos— asomara en ese momento.
+   `clip` y no `hidden`: hidden convierte al elemento en contenedor de scroll y rompe el
+   encabezado sticky. `hidden` se deja escrito antes como respaldo para navegadores viejos
+   que todavía no entienden clip. */
+html{scroll-behavior:smooth;max-width:100%;overflow-x:hidden;overflow-x:clip}
+body{font-family:var(--t);color:#2A332C;background:var(--papel);font-size:16.5px;line-height:1.65;max-width:100%;overflow-x:hidden;overflow-x:clip}
 /* grano de papel */
 body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:200;opacity:.5;mix-blend-mode:multiply;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.05 0 0 0 0 0.09 0 0 0 0 0.05 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E")}

@@ -74,8 +74,14 @@
   .al-bloque{padding:13px 15px;font-family:var(--grot);font-size:14px;line-height:1.55;letter-spacing:.2px}
   .al-bloque b{color:var(--al-txt)}
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html{scroll-behavior:smooth}
-  body{font-family:var(--grot);background:#0B0908;color:var(--crema)}
+  /* Nada puede hacer el documento más ancho que la pantalla: sin esto, cualquier pieza que
+     asome un poco por un lado —una tira que se desplaza, una tarjeta rotada— deja al teléfono
+     con scroll horizontal y una franja lateral. `clip` en vez de `hidden` para no convertir la
+     raíz en contenedor de scroll (rompería los encabezados sticky); `hidden` queda antes como
+     respaldo para navegadores viejos. Las tiras que SÍ se deslizan de lado siguen igual:
+     tienen su propio overflow y esto solo corta a nivel de página. */
+  html{scroll-behavior:smooth;max-width:100%;overflow-x:hidden;overflow-x:clip}
+  body{font-family:var(--grot);background:#0B0908;color:var(--crema);max-width:100%;overflow-x:hidden;overflow-x:clip}
   .telefono{max-width:480px;margin:0 auto;min-height:100vh;background:var(--fondo-app);position:relative;box-shadow:0 0 90px rgba(0,0,0,.9)}
   @media(min-width:900px){
     body{background:#0B0908;padding:34px 0}
@@ -356,8 +362,15 @@
   /* ---------- Sheets ---------- */
   .velo{position:fixed;inset:0;background:rgba(6,4,3,.9);z-index:80;opacity:0;pointer-events:none;transition:.25s}
   .velo.abierto{opacity:1;pointer-events:auto}
-  .hoja{position:fixed;left:50%;transform:translate(-50%,105%);bottom:0;width:100%;max-width:480px;max-height:93vh;background:var(--esp);border-top:1px solid var(--linea2);z-index:90;transition:transform .38s cubic-bezier(.22,.9,.24,1);overflow-y:auto;overscroll-behavior:contain}
-  .hoja.abierta{transform:translate(-50%,0)}
+  /* Centrado con margin y no con left:50% + translateX(-50%). Con el transform, en pantallas
+     de densidad fraccionaria (la mayoría de los teléfonos: 2.75x, 3x) la hoja caía a medio
+     pixel del borde y se veía una rayita del fondo colándose por la derecha. Al centrar por
+     margen la caja cae en pixeles enteros y la costura desaparece. El transform ahora solo
+     mueve en vertical, que es lo que necesita la animación de entrada.
+     Sin border-top: sobre la foto del platillo —que llega hasta el borde de arriba— esa línea
+     de 1px se leía como un marco suelto. La hoja ya se separa del fondo por el velo oscuro. */
+  .hoja{position:fixed;left:0;right:0;margin:0 auto;transform:translateY(105%);bottom:0;width:100%;max-width:480px;max-height:93vh;background:var(--esp);z-index:90;transition:transform .38s cubic-bezier(.22,.9,.24,1);overflow-y:auto;overscroll-behavior:contain}
+  .hoja.abierta{transform:translateY(0)}
   /* Carril propio para las dos hojas que NO pueden quedar tapadas: el splash y la guía viven
      en z-index 300, y la hoja de sucursal se pintaba debajo de ellos. Sin sucursal no hay
      mesa válida, así que estas dos ganan a todo lo demás. */
