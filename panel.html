@@ -498,26 +498,55 @@
      los dos temas. Es lo primero que se ve y es lo que dice de quién es la
      herramienta; el logo y el nombre del restaurante siguen exactamente donde
      estaban, solo cambian de color de fondo. */
-  header,html.claro header{background:var(--mb-bosque);border-bottom:none;backdrop-filter:none}
-  header .marca,html.claro header .marca{color:#FFFFFF;letter-spacing:-.3px}
-  header .marca small,html.claro header .marca small{color:rgba(234,242,236,.66);font-family:var(--mono);letter-spacing:1.1px;font-weight:400}
-  header .head-nav,html.claro header .head-nav{border-top:1px solid rgba(234,242,236,.16)}
-  header .head-sesion .sep{background:rgba(234,242,236,.28)}
-  header .head-acciones{border-color:rgba(234,242,236,.3);border-radius:999px}
-  header .head-acciones .btn-sec,html.claro header .head-acciones .btn-sec{color:var(--mb-crema);border-radius:0}
-  header .head-acciones .btn-sec+.btn-sec{border-left-color:rgba(234,242,236,.3)}
-  header .head-acciones .btn-sec:hover,html.claro header .head-acciones .btn-sec:hover{background:rgba(234,242,236,.14);color:#fff}
-  header .vivo,html.claro header .vivo{color:var(--mb-lima);font-family:var(--mono);letter-spacing:.8px}
-  header .tab,html.claro header .tab{color:rgba(234,242,236,.58)}
-  header .tab:hover,html.claro header .tab:hover{color:rgba(255,255,255,.9)}
-  /* La pestaña activa se subraya en lima: el gesto de la marca, no el color del cliente */
-  header .tab.activo,html.claro header .tab.activo{color:#FFFFFF;border-bottom:3px solid var(--mb-lima)}
-  header .carta-publica .caps,html.claro header .carta-publica .caps{color:rgba(234,242,236,.6);font-family:var(--mono);letter-spacing:.6px}
-  header .carta-publica a,html.claro header .carta-publica a{color:var(--mb-lima)}
-  header .carta-publica .btn-sec,html.claro header .carta-publica .btn-sec{color:var(--mb-crema);border-color:rgba(234,242,236,.32);border-radius:999px}
-  header .carta-publica .btn-sec:hover,html.claro header .carta-publica .btn-sec:hover{background:rgba(234,242,236,.14);border-color:rgba(234,242,236,.5);color:#fff}
-  /* Sobre verde, un logo oscuro se pierde: se le da su propio respaldo claro sin moverlo */
-  header #logoHead{background:rgba(255,255,255,.94);border-radius:10px;padding:5px 9px}
+  /* Los tres colores de la banda. Por omision son los de la casa; en cuanto el
+     restaurante tiene un tema elegido, aplicarPielHeader() los reemplaza por los suyos.
+     Todo lo translucido se calcula A PARTIR de --hd-texto, para que funcione igual con
+     banda oscura y con banda clara sin escribir dos juegos de reglas. */
+  :root{ --hd-fondo:var(--mb-bosque); --hd-texto:#FFFFFF; --hd-acento:var(--mb-lima); }
+  header,html.claro header{background:var(--hd-fondo);border-bottom:none;backdrop-filter:none}
+  header .marca,html.claro header .marca{color:var(--hd-texto);letter-spacing:-.3px}
+  header .marca small,html.claro header .marca small{
+    color:color-mix(in srgb, var(--hd-texto) 66%, transparent);
+    font-family:var(--mono);letter-spacing:1.1px;font-weight:400}
+  header .head-nav,html.claro header .head-nav{border-top:1px solid color-mix(in srgb, var(--hd-texto) 16%, transparent)}
+  header .head-sesion .sep{background:color-mix(in srgb, var(--hd-texto) 28%, transparent)}
+  header .head-acciones{border-color:color-mix(in srgb, var(--hd-texto) 30%, transparent);border-radius:999px}
+  header .head-acciones .btn-sec,html.claro header .head-acciones .btn-sec{
+    color:color-mix(in srgb, var(--hd-texto) 86%, transparent);border-radius:0}
+  header .head-acciones .btn-sec+.btn-sec{border-left-color:color-mix(in srgb, var(--hd-texto) 30%, transparent)}
+  header .head-acciones .btn-sec:hover,html.claro header .head-acciones .btn-sec:hover{
+    background:color-mix(in srgb, var(--hd-texto) 14%, transparent);color:var(--hd-texto)}
+  header .vivo,html.claro header .vivo{color:var(--hd-acento);font-family:var(--mono);letter-spacing:.8px}
+  header .tab,html.claro header .tab{color:color-mix(in srgb, var(--hd-texto) 58%, transparent)}
+  header .tab:hover,html.claro header .tab:hover{color:color-mix(in srgb, var(--hd-texto) 90%, transparent)}
+  /* La pestaña activa se subraya con el acento del restaurante: es donde mejor se le ve
+     su color sin que estorbe a la lectura. */
+  header .tab.activo,html.claro header .tab.activo{color:var(--hd-texto);border-bottom:3px solid var(--hd-acento)}
+  header .carta-publica .caps,html.claro header .carta-publica .caps{
+    color:color-mix(in srgb, var(--hd-texto) 60%, transparent);font-family:var(--mono);letter-spacing:.6px}
+  header .carta-publica a,html.claro header .carta-publica a{color:var(--hd-acento)}
+  header .carta-publica .btn-sec,html.claro header .carta-publica .btn-sec{
+    color:color-mix(in srgb, var(--hd-texto) 86%, transparent);
+    border-color:color-mix(in srgb, var(--hd-texto) 32%, transparent);border-radius:999px}
+  header .carta-publica .btn-sec:hover,html.claro header .carta-publica .btn-sec:hover{
+    background:color-mix(in srgb, var(--hd-texto) 14%, transparent);
+    border-color:color-mix(in srgb, var(--hd-texto) 50%, transparent);color:var(--hd-texto)}
+
+  /* ---- El logo ----
+     Mas grande —es la identidad del negocio, no un adorno— y SIN pastilla blanca. Esa
+     pastilla era lo que lo convertia en un recuadro apagado. Sobre banda oscura se le deja
+     un respaldo apenas insinuado, por si el logo viene en tinta oscura; sobre banda clara
+     no lleva nada. */
+  /* Limpio por omision: la mayoria de los logos se ven bien sobre la banda de su propio
+     tema, y una pastilla que no hace falta es justo lo que apaga la identidad. */
+  header #logoHead{height:54px;max-width:210px;background:transparent;padding:0;border-radius:10px;
+    transition:background .18s}
+  /* Solo si se midio que se pierde: respaldo del tono contrario, y del que si alcanza. */
+  header #logoHead.logo-sobre-claro{background:#FFFFFF;padding:5px 10px}
+  header #logoHead.logo-sobre-oscuro{background:#141414;padding:5px 10px}
+  /* Con banda clara hace falta una linea que separe el encabezado del contenido: sin ella
+     los dos blancos se funden y el encabezado deja de leerse como una banda. */
+  html.hd-claro header,html.hd-claro.claro header{border-bottom:1px solid color-mix(in srgb, var(--hd-texto) 15%, transparent)}
 
   /* ---- Botones y controles: radios de la marca ---- */
   .btn-avanza{background:var(--mb-verde);color:#FFFFFF;border-radius:999px;letter-spacing:1.1px}
@@ -561,7 +590,9 @@
     <!-- Banda 1 · identidad a la izquierda, estado y sesión a la derecha -->
     <div class="head-identidad">
       <div class="head-marca">
-        <img id="logoHead" alt="" style="display:none;height:38px;width:auto;max-width:150px;object-fit:contain">
+        <!-- El alto y el ancho maximo se dejan al CSS (regla «header #logoHead»): escritos aqui
+             le ganaban a la hoja de estilos y el logo se quedaba chico por mas que se cambiara. -->
+        <img id="logoHead" alt="" style="display:none;width:auto;object-fit:contain">
         <!-- Sin nombre escrito a mano: lo pone marcaTemprana() antes del primer pintado, con lo
              que este navegador ya sabe. Si aquí hubiera un nombre, se alcanzaría a leer. -->
         <div class="marca" id="marcaHead"><small>PANEL DEL RESTAURANTE</small></div>
@@ -1383,8 +1414,103 @@ function espejarPlanEnConfig(){
   configEscribir(d => { d.config.plan = p; });
 }
 let marcaPanelHash = '', marcaFormHash = '';
+/* ---------- La banda del encabezado se viste con el tema del restaurante ----------
+   Antes era verde bosque fijo en todos los paneles. Se veia nuestro, si, pero el dueño
+   entraba a su propia herramienta y no reconocia nada suyo: su logo quedaba metido en una
+   pastilla blanca que lo apagaba, y el color de su negocio no aparecia por ningun lado.
+   Ahora la banda toma el fondo, la letra y el acento del tema que el mismo eligio para su
+   carta —y si puso color corporativo, ese manda sobre el acento del tema.
+   Lo unico que NO cambia son las cuatro tintas de alerta: rojo, ambar, verde y azul
+   quieren decir lo mismo en todos los restaurantes y no se tocan. */
+function claridadDe(hex){
+  const h = String(hex || '').replace('#','').trim();
+  const c = h.length === 3 ? h.split('').map(x => x + x).join('') : h;
+  if(!/^[0-9a-fA-F]{6}$/.test(c)) return null;
+  const v = i => { const x = parseInt(c.slice(i, i + 2), 16) / 255;
+                   return x <= .03928 ? x / 12.92 : Math.pow((x + .055) / 1.055, 2.4); };
+  return .2126 * v(0) + .7152 * v(2) + .0722 * v(4);
+}
+/* ---------- ¿Este logo se ve sobre esta banda? ----------
+   El panel no sabe como es el logo que subio el restaurante: puede venir en tinta oscura,
+   en blanco, o con su propio fondo. Antes se le ponia SIEMPRE una pastilla blanca por si
+   acaso, y eso es lo que lo convertia en un recuadro apagado aunque no hiciera falta.
+   Aqui se mide de verdad: se dibuja en un lienzo, se saca el promedio de luz de lo que no
+   es transparente, y solo si se confunde con el fondo se le pone respaldo —del tono
+   contrario, y del que si alcanza para verse. */
+function medirLuzDeImagen(img){
+  try{
+    const L = 90, c = document.createElement('canvas');
+    c.width = L; c.height = L;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    g.drawImage(img, 0, 0, L, L);
+    const d = g.getImageData(0, 0, L, L).data;
+    let suma = 0, n = 0;
+    const v = x => { const y = x / 255; return y <= .03928 ? y / 12.92 : Math.pow((y + .055) / 1.055, 2.4); };
+    for(let i = 0; i < d.length; i += 4){
+      const a = d[i + 3] / 255;
+      if(a < .35) continue;              // lo transparente no cuenta
+      suma += (.2126 * v(d[i]) + .7152 * v(d[i+1]) + .0722 * v(d[i+2])) * a;
+      n += a;
+    }
+    return n < 40 ? null : suma / n;     // casi vacio: no se opina
+  }catch(e){
+    /* Un logo servido desde otro dominio sin permiso de lectura hace que el lienzo se
+       "manche" y getImageData truene. No es un error que el dueño pueda arreglar: se
+       devuelve null y se usa el respaldo prudente. */
+    return null;
+  }
+}
+function vestirLogo(img){
+  if(!img || img.style.display === 'none') return;
+  const raiz = document.documentElement;
+  const bandaClara = raiz.classList.contains('hd-claro');
+  const luzBanda = bandaClara ? .85 : .06;
+  const luzLogo = medirLuzDeImagen(img);
+  img.classList.remove('logo-sobre-claro', 'logo-sobre-oscuro');
+  if(luzLogo == null){
+    /* Sin poder medirlo: respaldo prudente solo en banda oscura, que es donde un logo en
+       tinta negra desaparece del todo. En banda clara se deja limpio. */
+    if(!bandaClara) img.classList.add('logo-sobre-claro');
+    return;
+  }
+  const c = (Math.max(luzLogo, luzBanda) + .05) / (Math.min(luzLogo, luzBanda) + .05);
+  if(c >= 2.2) return;                              // se ve bien: sin respaldo, limpio
+  img.classList.add(luzLogo < .5 ? 'logo-sobre-claro' : 'logo-sobre-oscuro');
+}
+
+let pielHeaderHash = '';
+function aplicarPielHeader(){
+  const m = marcaDe();
+  const clave = (cfgCache.config && cfgCache.config.tema) || '';
+  const t = (typeof TEMAS !== 'undefined' && TEMAS[clave]) ? TEMAS[clave] : null;
+  const hash = clave + '|' + (m.acento || '') + '|' + (t ? t.fondo : '');
+  if(hash === pielHeaderHash) return;
+  pielHeaderHash = hash;
+
+  const raiz = document.documentElement;
+  if(!t){
+    /* Sin tema elegido se queda el verde de la casa: es mejor respaldo que un color
+       inventado, y es lo que ve un restaurante recien dado de alta. */
+    ['--hd-fondo','--hd-texto','--hd-acento'].forEach(v => raiz.style.removeProperty(v));
+    raiz.classList.remove('hd-claro');
+    const lg0 = document.getElementById('logoHead');
+    if(lg0 && lg0.style.display !== 'none') vestirLogo(lg0);
+    return;
+  }
+  const luz = claridadDe(t.fondo);
+  raiz.style.setProperty('--hd-fondo', t.fondo);
+  raiz.style.setProperty('--hd-texto', t.texto);
+  raiz.style.setProperty('--hd-acento', m.acento || t.acento);
+  /* Con la banda clara, la letra tiene que ser oscura y el logo NO lleva respaldo blanco
+     —encima de claro, un respaldo blanco es justo lo que hace que se vea un recuadro. */
+  raiz.classList.toggle('hd-claro', luz != null && luz > .5);
+  const lg = document.getElementById('logoHead');
+  if(lg && lg.style.display !== 'none') vestirLogo(lg);
+}
+
 function aplicarMarcaPanel(){
   const m = marcaDe();
+  aplicarPielHeader();
   const hash = JSON.stringify(m);
   if(hash !== marcaPanelHash){
     marcaPanelHash = hash;
@@ -1399,10 +1525,13 @@ function aplicarMarcaPanel(){
       if(!m.logo){ el.style.display = 'none'; return; }
       // El logo se enseña cuando ya está DIBUJADO, no cuando se le asigna el src: si no,
       // primero se ve el hueco y luego la imagen aparece de golpe encima.
-      if(el.getAttribute('src') === m.logo){ el.style.display = 'block'; return; }
+      if(el.getAttribute('src') === m.logo){ el.style.display = 'block'; if(id === 'logoHead') vestirLogo(el); return; }
       el.style.display = 'none';
+      /* Hace falta para poder LEER los pixeles del logo mas abajo: sin esto el lienzo se
+         mancha y no se puede saber si el logo se ve o no sobre la banda. */
+      el.crossOrigin = 'anonymous';
       el.src = m.logo;
-      const mostrar = () => { el.style.display = 'block'; };
+      const mostrar = () => { el.style.display = 'block'; if(id === 'logoHead') vestirLogo(el); };
       if(el.decode) el.decode().then(mostrar).catch(mostrar);
       else { el.onload = mostrar; el.onerror = mostrar; }
       // Si la imagen nunca llega, mejor el nombre en texto que un encabezado vacío
@@ -5346,6 +5475,7 @@ function alternarDisp(id){
 }
 function aplicarTemaCliente(t){
   dbEscribir(d => { d.config.tema = t; });
+  aplicarPielHeader();   // la banda del encabezado sigue al tema, no espera al siguiente sondeo
   toast(`Tema «${TEMAS[t].nombre}» aplicado — la app del comensal cambió al instante`);
 }
 /* ---------- Filtros del registro: mesa, mesero y fecha ----------

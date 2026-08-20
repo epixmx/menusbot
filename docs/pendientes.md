@@ -72,10 +72,6 @@ Pesan entre 1.8 y 3.3 MB. La receta que ya se usó para los del landing —bajó
 21 MB a 2.4 MB sin diferencia visible— está al final de este documento. Los
 archivos originales tiene que ponerlos el dueño en su carpeta MENUSBOT.
 
-### 11. Dos mesas abiertas que quedaron colgadas
-`flautas-el-crunch` mesa 1 (sucursal PLAYAS) y `xina-chinese-bisrto` mesa 3
-(sucursal Principal). Cerrarlas a mano.
-
 ### 12. El aviso «Te faltan 5 pasos» del panel en modo demo
 Aparece en el demo donde no aplica.
 
@@ -134,6 +130,13 @@ Verificar con SSIM antes de reemplazar.
 ---
 
 ## Cerrados
+
+- **20 ago 2026** — Auditoria completa de seguridad, confiabilidad, datos
+  personales y rendimiento. Se cerraron once huecos y se verifico cada uno
+  atacando el sitio en produccion. Ver `tecnico-seguridad.md`.
+- **20 ago 2026** — Aviso de privacidad publicado (con datos por llenar) y
+  enlazado desde el sitio, el alta y la carta.
+- **20 ago 2026** — Mesas colgadas de Flautas limpiadas.
 
 - **20 ago 2026** — Límites de plan aplicados en panel y carta, incluida la
   reserva de mesa. Probado en vivo con Xiná.
