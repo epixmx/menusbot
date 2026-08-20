@@ -3558,7 +3558,12 @@ async function enviarOrdenReal(){
     fila = { id: --folioDemo };
   } else {
   try{
-    const filas = await api('menusbot_ordenes', {
+    /* «?select=id» no es un detalle: al mandar la comanda pedimos de vuelta SOLO el folio.
+       Sin eso, PostgREST devuelve la fila entera y para devolverla necesita permiso de lectura
+       sobre TODAS las columnas —incluidas el nombre, telefono y domicilio del comensal, que
+       justamente queremos que la llave publica no pueda leer. Pedir solo el folio es lo que
+       permite cerrar esas dos columnas sin romper el envio de ordenes. */
+    const filas = await api('menusbot_ordenes?select=id', {
       method:'POST', headers:{ 'Prefer':'return=representation' },
       body: JSON.stringify(esKiosco()
         ? cuerpoOrdenKiosco(items, total, verificacion)

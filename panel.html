@@ -3722,14 +3722,26 @@ function pintarEquipo(d){
    Todo esto vive fuera de .config porque cocina.html lee el documento de una sola vez y sin
    conocer el resto del panel. */
 const sucsCfg = () => ((cfgCache.config && cfgCache.config.sucursales) || []).filter(Boolean);
-const cocinasMapa = () => (cfgCache.cocinas && typeof cfgCache.cocinas === 'object') ? cfgCache.cocinas : {};
+/* Los PIN de cocina YA NO viven en el documento de configuracion. Vivian ahi, y ese documento
+   es el mismo que descarga la carta publica de cualquier comensal: el PIN de la cocina se podia
+   leer sin abrir siquiera la pantalla de cocina. Ahora estan en su propia tabla, sin lectura
+   publica, y solo el dueño autenticado los pide con menusbot_pines_ver. */
+let pinesCache = { cocina_pin:'', cocina_nombre:'', cocinas:{} };
+async function cargarPines(){
+  if(!RID) return;
+  try{
+    const r = await api('rpc/menusbot_pines_ver', { method:'POST', body: JSON.stringify({ p_rest: RID }) });
+    if(r && r.ok) pinesCache = { cocina_pin: r.cocina_pin || '', cocina_nombre: r.cocina_nombre || '', cocinas: r.cocinas || {} };
+  }catch(e){}
+}
+const cocinasMapa = () => (pinesCache.cocinas && typeof pinesCache.cocinas === 'object') ? pinesCache.cocinas : {};
 /* Lo GUARDADO para esa sucursal, sin heredar. Quien está editando necesita ver el campo vacío
    cuando la sucursal no tiene nada propio; si le pintáramos el PIN general creería que ya es suyo
    y al guardar lo convertiría en propio sin querer. */
 function cocinaDe(suc){
   if(!suc) return {
-    pin: String(cfgCache.cocina_pin == null ? '' : cfgCache.cocina_pin),
-    nombre: String(cfgCache.cocina_nombre == null ? '' : cfgCache.cocina_nombre),
+    pin: String(pinesCache.cocina_pin == null ? '' : pinesCache.cocina_pin),
+    nombre: String(pinesCache.cocina_nombre == null ? '' : pinesCache.cocina_nombre),
   };
   const e = cocinasMapa()[suc];
   return { pin: String(e && e.pin != null ? e.pin : ''), nombre: String((e && e.nombre) || '') };
@@ -3809,7 +3821,7 @@ function pintarListaCocinas(){
   if(!z) return;
   const sucs = sucsCfg();
   if(!sucs.length){ if(listaCocinasHtml !== ''){ listaCocinasHtml = ''; z.innerHTML = ''; } return; }
-  const gen = String(cfgCache.cocina_pin == null ? '' : cfgCache.cocina_pin);
+  const gen = String(pinesCache.cocina_pin == null ? '' : pinesCache.cocina_pin);
   const genNom = String(cfgCache.cocina_nombre || '') || 'Cocina';
   const map = cocinasMapa();
   const elegida = sucCocinaSel();
@@ -3881,24 +3893,43 @@ function guardarCocina(){
   cocinaSucPintada = suc;
   cocinaFormHash = suc + '\n' + pin + '\n' + nom;
   if(suc){
-    configEscribir(d => {
-      if(!d.cocinas || typeof d.cocinas !== 'object') d.cocinas = {};
-      /* Sin PIN propio se BORRA la entrada, no se guarda vacía: en cocina.html una entrada con el
-         PIN en blanco le gana al general y dejaría esa cocina abierta de par en par. Borrarla es
-         lo que la hace volver a heredar. */
-      if(pin) d.cocinas[suc] = { pin: pin, nombre: nom };
-      else delete d.cocinas[suc];
-    });
+    /* Sin PIN propio se BORRA la entrada, no se guarda vacía: en cocina.html una entrada con el
+       PIN en blanco le gana al general y dejaría esa cocina abierta de par en par. Borrarla es
+       lo que la hace volver a heredar. El servidor hace exactamente eso cuando el PIN va vacío. */
+    guardarPinCocina(suc, pin, nom);
     if(pin) toast('Cocina de ' + suc + ' guardada — su PIN es ' + pin);
     else if(escrito) toast(suc + ' se queda sin cocina propia: hereda el PIN y la firma de la cocina general');
     else toast(suc + ' vuelve a la cocina general — hereda su PIN y su firma');
     return;
   }
-  configEscribir(d => { d.cocina_pin = pin; d.cocina_nombre = nom; });
+  guardarPinCocina('', pin, nom);
   const hayHerederas = sucsCfg().some(s => !(cocinasMapa()[s] || {}).pin);
   toast(pin
     ? 'Cocina general guardada — su PIN es ' + pin + (hayHerederas ? ' (y el de las sucursales sin PIN propio)' : '')
     : 'Cocina general guardada sin PIN: entra cualquiera que tenga el enlace' + (hayHerederas ? ', también en las sucursales que la heredan' : ''));
+}
+/* El PIN nunca vuelve a pasar por el documento de configuracion: se manda a su propia tabla,
+   que el comensal no puede leer. La pantalla se pinta de inmediato con lo que el dueño acaba de
+   escribir para que no parpadee, y si el guardado falla se lo dice en lugar de dejarlo creer
+   que quedo —el error que ya nos costo caro con los precios. */
+async function guardarPinCocina(suc, pin, nom){
+  if(suc) { if(pin) pinesCache.cocinas[suc] = { pin, nombre: nom }; else delete pinesCache.cocinas[suc]; }
+  else    { pinesCache.cocina_pin = pin; pinesCache.cocina_nombre = nom; }
+  render();
+  try{
+    const r = await api('rpc/menusbot_pines_guardar', { method:'POST', body: JSON.stringify({
+      p_rest: RID, p_suc: suc || '', p_pin: pin || '', p_nombre: nom || '' }) });
+    if(r && r.ok){
+      pinesCache = { cocina_pin: r.cocina_pin || '', cocina_nombre: r.cocina_nombre || '', cocinas: r.cocinas || {} };
+      render();
+      return;
+    }
+    throw new Error((r && r.error) || 'falla');
+  }catch(e){
+    await cargarPines();
+    render();
+    toast('NO se guardó el PIN de cocina — revisa el internet y vuelve a intentar', true);
+  }
 }
 function copiarUrlCocina(){
   const u = urlCocina();
@@ -4093,7 +4124,7 @@ function ppGrupos(){
 
   /* --- 4 · La cocina, una por sucursal --- */
   const mapa = cocinasMapa();
-  const gen = String(cfgCache.cocina_pin == null ? '' : cfgCache.cocina_pin);
+  const gen = String(pinesCache.cocina_pin == null ? '' : pinesCache.cocina_pin);
   const propias = sucs.filter(s => !!(mapa[s] && mapa[s].pin));
   const heredan = sucs.filter(s => !(mapa[s] && mapa[s].pin));
   let coEstado, coDato = '', coOjo = '', coFalta = '';
@@ -5627,6 +5658,9 @@ function imprimirQRs(){
 function abrirPanel(){
   accesoOk = true;
   $('#candado').style.display = 'none';
+  /* Los PIN de cocina se piden aparte, en cuanto el dueño entra: ya no vienen dentro del
+     documento de configuracion porque ese lo descarga cualquier comensal. */
+  cargarPines().then(() => { if(accesoOk) render(); });
   /* El botón de salir se enciende aquí y no en el arranque. Antes solo se prendía cuando la
      sesión YA estaba guardada al cargar la página, así que quien acababa de entrar con su
      correo —o de recuperar su contraseña— se quedaba dentro del panel sin ninguna forma de
