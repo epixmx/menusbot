@@ -189,6 +189,10 @@ nav a:hover::after{width:100%}
 .plan ul{list-style:none;display:flex;flex-direction:column;gap:11px;font-size:15px}
 .plan li{display:flex;gap:10px}
 .plan li::before{content:"✓";min-width:22px;height:22px;border-radius:50%;background:var(--papel);color:var(--verde-med);display:grid;place-items:center;font-size:12px;font-weight:900}
+/* Lo que el plan NO trae, dicho de frente. Un plan gratis que no aclara dónde termina se
+   siente a trampa cuando el dueño se topa con el límite ya con el menú cargado. */
+.plan li.tope{color:var(--gris)}
+.plan li.tope::before{content:"—";background:transparent;color:var(--gris);font-weight:700}
 .plan.destacado li::before{background:rgba(230,253,90,.16);color:var(--lima)}
 .plan .pill-btn{justify-content:center;margin-top:auto}
 /* CTA */
@@ -368,27 +372,29 @@ footer .wm-ico{width:26px;height:26px}
   <h2 class="rv">Renta mensual. Sin contrato,<br>sin hardware, <span class="script">sin letras chiquitas.</span></h2>
   <div class="planes">
     <div class="plan rv">
-      <h3>Demo</h3>
+      <h3>Carta</h3>
       <div class="pr">$0<small> /siempre</small></div>
       <ul>
-        <li>Carta digital con tu menú real</li>
-        <li>Importador AI (PDF o foto)</li>
-        <li>QR de prueba para tus mesas</li>
-        <li>Hasta 20 platillos</li>
+        <li>Tu menú completo con fotos, sin tope de platillos</li>
+        <li>Importador AI: sube tu carta en PDF o foto</li>
+        <li>QR para todas tus mesas</li>
+        <li>Tu marca: logo, colores y tipografía</li>
+        <li class="tope">Se ve, pero no toma órdenes</li>
       </ul>
-      <a class="pill-btn pb-blanco" style="border:1.5px solid var(--borde)" href="alta.html">Empezar gratis</a>
+      <a class="pill-btn pb-blanco" style="border:1.5px solid var(--borde)" href="alta.html">Quiero mi carta gratis</a>
     </div>
     <div class="plan destacado rv rv2">
       <h3>Negocio</h3>
       <div class="pr">$—<small> /mes por sucursal</small></div>
       <ul>
-        <li>Todo lo del demo, sin límites</li>
-        <li>Los 3 modos: con meseros, sin meseros, dark kitchen</li>
-        <li>Órdenes a cocina + app del mesero</li>
-        <li>Propinas, cortes y cuentas claras</li>
-        <li>Reseñas Google y Facebook</li>
+        <li>Toda la carta, y aquí sí se ordena desde la mesa</li>
+        <li>Órdenes a la cocina y app del mesero</li>
+        <li>Los 3 modos: con meseros, sin meseros o dark kitchen</li>
+        <li>Propinas, cortes y cuenta por mesa</li>
+        <li>Reseñas de Google y Facebook</li>
+        <li>Video en tus platillos</li>
       </ul>
-      <a class="pill-btn pb-lima" href="alta.html">Quiero mi carta →</a>
+      <a class="pill-btn pb-lima" href="alta.html">Quiero que tome órdenes →</a>
     </div>
     <div class="plan rv rv3">
       <h3>Cadenas</h3>

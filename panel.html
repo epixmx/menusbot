@@ -3193,7 +3193,11 @@ const VIDEO_MAX_ALTO = 720;
 /* Qué planes pueden subir video. Hoy todos los restaurantes están en 'demo' y no existe
    todavía el sistema de planes de paga; cuando exista, esta lista es el único lugar que hay
    que tocar para que el video quede del lado de los que pagan. */
-const PLANES_CON_VIDEO = ['demo', 'pro'];
+/* Los nombres son los que ya dice el sitio —Carta, Negocio, Cadenas— y no inventos del
+   código: si aquí dijera 'pro' y allá 'Negocio', el día del cobro serían dos vocabularios.
+   'demo' sigue en la lista SOLO mientras dura el piloto, para poder probar el video sin
+   sistema de planes; al integrarlos, se quita de aquí y el video queda del lado que paga. */
+const PLANES_CON_VIDEO = ['demo', 'negocio', 'cadenas'];
 const puedeSubirVideo = () => PLANES_CON_VIDEO.includes(((SESION && SESION.plan) || 'demo').toLowerCase());
 
 const TOPE_FOTO = 190 * 1024;   // bytes
@@ -3256,7 +3260,7 @@ function medirVideo(archivo){
 }
 async function subirVideo(id){
   if(MODO_DEMO){ toast('El menú de ejemplo no guarda videos — entra con la cuenta de tu restaurante', true); return; }
-  if(!puedeSubirVideo()){ toast('El video de platillo viene en el plan Pro. Escríbenos y lo activamos.'); return; }
+  if(!puedeSubirVideo()){ toast('El video de platillo viene en el plan Negocio. Escríbenos y lo activamos.'); return; }
   const inp = document.createElement('input');
   inp.type = 'file';
   inp.accept = 'video/*';
