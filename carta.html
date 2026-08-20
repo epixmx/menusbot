@@ -369,8 +369,22 @@
      mueve en vertical, que es lo que necesita la animación de entrada.
      Sin border-top: sobre la foto del platillo —que llega hasta el borde de arriba— esa línea
      de 1px se leía como un marco suelto. La hoja ya se separa del fondo por el velo oscuro. */
-  .hoja{position:fixed;left:0;right:0;margin:0 auto;transform:translateY(105%);bottom:0;width:100%;max-width:480px;max-height:93vh;background:var(--esp);z-index:90;transition:transform .38s cubic-bezier(.22,.9,.24,1);overflow-y:auto;overscroll-behavior:contain}
+  /* max-height 100dvh y no 93vh: el 7% que sobraba dejaba asomar la pantalla de atrás por
+     arriba, y con la foto del platillo ya en 1:1 la hoja siempre llega al tope, así que ese
+     hueco se veía SIEMPRE. Es un tope, no una altura: las hojas cortas —«¿sin bebidas?», la
+     propina— siguen midiendo lo que mide su contenido y se quedan abajo.
+     dvh y no vh porque en el teléfono la barra del navegador aparece y desaparece; con vh la
+     hoja se pasaba de largo cuando la barra estaba visible. Se deja 93vh escrito antes como
+     respaldo para navegadores que no entienden dvh. */
+  .hoja{position:fixed;left:0;right:0;margin:0 auto;transform:translateY(105%);bottom:0;width:100%;max-width:480px;max-height:93vh;max-height:100dvh;background:var(--esp);z-index:90;transition:transform .38s cubic-bezier(.22,.9,.24,1);overflow-y:auto;overscroll-behavior:contain}
   .hoja.abierta{transform:translateY(0)}
+  /* Con una hoja abierta, la pantalla de atrás se congela. Sin esto el dedo arrastraba la
+     carta por debajo —el overscroll-behavior de la hoja solo frena el encadenado cuando el
+     gesto empieza DENTRO de ella— y el fondo se movía mientras la hoja seguía quieta.
+     body en position:fixed y no solo overflow:hidden, porque en iOS overflow:hidden en la
+     raíz no detiene el scroll; el desplazamiento se guarda en `top` y se devuelve al cerrar. */
+  html.fondo-quieto,html.fondo-quieto body{overflow:hidden}
+  html.fondo-quieto body{position:fixed;left:0;right:0;width:100%}
   /* Carril propio para las dos hojas que NO pueden quedar tapadas: el splash y la guía viven
      en z-index 300, y la hoja de sucursal se pintaba debajo de ellos. Sin sucursal no hay
      mesa válida, así que estas dos ganan a todo lo demás. */
@@ -3006,8 +3020,15 @@ function abrirVisor(id){
   $('#visorNombre').textContent = d.nombre;
   $('#visorDatos').innerHTML = `<span class="vp">${fmt(d.precio)}</span><span class="vk">${d.kcal} kcal · ${d.porcion}</span>`;
   $('#visor').classList.add('abierto');
+  quietoElFondo();
 }
-function cerrarVisor(){ $('#visor').classList.remove('abierto'); }
+function cerrarVisor(){
+  $('#visor').classList.remove('abierto');
+  /* Solo se suelta el fondo si no queda ninguna hoja encima: el visor se abre DESDE la ficha
+     y al cerrarlo la ficha sigue ahí, así que descongelar aquí dejaría el fondo suelto con la
+     ficha todavía abierta. */
+  if(!document.querySelector('.hoja.abierta') && !$('#velo').classList.contains('abierto')) sueltaElFondo();
+}
 /* Abre el velo de cualquier hoja. Existe para un motivo concreto: la guía de bienvenida vive en
    z-index 300, encima de las hojas (z-index 90). Si algo abre una hoja mientras la guía está
    visible —el bloqueo de mesa, el selector de sucursal, un error— el comensal ve el velo de la
@@ -3020,6 +3041,27 @@ function abrirVelo(){
     try{ localStorage.setItem(LSK('mb_guia_v1'), '1'); }catch(e){}
   }
   $('#velo').classList.add('abierto');
+  quietoElFondo();
+}
+
+/* Congelar y descongelar la pantalla de atrás mientras hay una hoja encima. Va aquí y no
+   repartido por las quince hojas: todas pasan por abrirVelo() y por cerrarSheets(). */
+let scrollGuardado = 0;
+function quietoElFondo(){
+  const raiz = document.documentElement;
+  if(raiz.classList.contains('fondo-quieto')) return;   // ya estaba: no se pisa el scroll guardado
+  scrollGuardado = window.scrollY || window.pageYOffset || 0;
+  document.body.style.top = '-' + scrollGuardado + 'px';
+  raiz.classList.add('fondo-quieto');
+}
+function sueltaElFondo(){
+  const raiz = document.documentElement;
+  if(!raiz.classList.contains('fondo-quieto')) return;
+  raiz.classList.remove('fondo-quieto');
+  document.body.style.top = '';
+  /* Se vuelve exactamente a donde estaba: si no, al cerrar la hoja la carta salta hasta arriba
+     y el comensal pierde el lugar donde iba leyendo. */
+  window.scrollTo(0, scrollGuardado);
 }
 
 function cerrarSheets(){
@@ -3037,6 +3079,7 @@ function cerrarSheets(){
   $('#hojaPedido').classList.remove('abierta');
   $('#hojaDatos').classList.remove('abierta');
   $('#velo').classList.remove('alto');
+  sueltaElFondo();
 }
 
 /* ---------- Selector de sucursal (cuando el QR no la trae) ----------
